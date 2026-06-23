@@ -1,0 +1,27 @@
+# ===== 日志 =====
+*.log
+*.err
+auto-deploy-current.*
+server-current.*
+
+# ===== Node =====
+node_modules/
+
+# ===== 私钥与已知主机（严禁入库）=====
+serveo_fixed_ed25519
+serveo_fixed_ed25519.pub
+known_hosts
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# ===== IDE / 工具配置 =====
+.vscode/
+.claude/
+.idea/
+
+# ===== OS 杂项 =====
+Thumbs.db
+.DS_Store
+desktop.ini

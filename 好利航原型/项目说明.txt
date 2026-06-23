@@ -1,0 +1,47 @@
+好利航国际物流管理系统 - 原型图项目
+========================================
+
+一、文件说明
+-----------
+1. 好利航国际物流_原型图.html  - 核心原型文件（单HTML文件，包含所有功能）
+2. deploy/index.html            - 部署副本（与主文件同步）
+3. tunnel.js                    - localtunnel公网穿透备选脚本
+4. server.js                    - Node.js本地HTTP服务（端口8090）
+5. auto_deploy.js               - 自动部署监听脚本（文件修改自动同步到deploy）
+6. 启动公网访问.bat              - 一键启动脚本（自动部署+HTTP服务+localhost.run公网隧道）
+7. package.json                 - Node.js依赖配置
+8. package-lock.json            - Node.js依赖锁定
+
+二、新电脑环境准备
+-----------------
+1. 安装 Node.js（v16+）：https://nodejs.org/
+2. 打开命令行，进入本项目目录，执行：
+   npm.cmd install
+3. 双击"启动公网访问.bat"即可启动服务
+
+三、本地预览
+-----------
+1. 打开命令行，进入本项目目录
+2. 执行：npm.cmd run start
+3. 浏览器访问：http://localhost:8090/index.html
+
+四、公网访问
+-----------
+1. 双击"启动公网访问.bat"
+2. 等待出现公网URL（类似 https://xxxx.lhr.life）
+3. 将URL发送给客户即可访问
+
+五、继续开发
+-----------
+1. 用任意文本编辑器或IDE打开"好利航国际物流_原型图.html"
+2. 修改后保存，auto_deploy.js会自动同步到deploy目录
+3. 刷新浏览器即可看到最新效果
+
+六、技术栈
+---------
+- 纯前端单HTML文件
+- Tailwind CSS（CDN）
+- Plus Jakarta Sans字体
+- QRCode.js（企业微信二维码）
+- localhost.run（公网穿透）
+- localtunnel（备选公网穿透）

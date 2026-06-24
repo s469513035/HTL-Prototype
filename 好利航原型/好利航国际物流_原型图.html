@@ -2991,12 +2991,12 @@ addPrototypeTable('wh-parcel-out','小包出库单','出库单号|出库计划|�
     {label:'状态',type:'select',options:['待出库','已提交','已出库','已取消']}
 ]);
 
-addPrototypeTable('wh-sort-bag','分拣装袋管理','袋号|件数|尺寸|重量(KG)|目的国家|运输方式|品名大类|目的仓库|最大限重(KG)|装袋时间|装袋操作人|状态|操作',['进行中','已完成','已打印'],[
-    ['BAG-20260613001','12','45×35×30','62.50','尼日利亚','海运','电子产品','拉各斯仓','80','2026-06-13 14:20','张志伟','已打印'],
-    ['BAG-20260613002','8','40×30×25','48.00','塞内加尔','海运','服装鞋帽','达喀尔仓','60','2026-06-13 15:05','李慧敏','已完成'],
-    ['BAG-20260613003','15','50×40×35','71.50','科特迪瓦','海运','五金工具','阿比让仓','80','2026-06-13 16:18','陈志远','已打印'],
-    ['BAG-20260613004','6','35×30×20','35.20','多哥','海运','家居用品','洛美仓','50','2026-06-13 17:30','王明辉','已完成'],
-    ['BAG-20260613005','10','45×35×30','55.00','喀麦隆','海运','食品','杜阿拉仓','60','2026-06-14 09:15','张志伟','进行中']
+addPrototypeTable('wh-sort-bag','分拣装袋管理','袋号|件数|尺寸|重量(KG)|体积(CBM)|目的国家|运输方式|品名大类|目的仓库|最大限重(KG)|装袋时间|装袋操作人|状态|操作',['进行中','已完成','已打印'],[
+    ['BAG-20260613001','12','45×35×30','62.50','0.567','尼日利亚','海运','电子产品','拉各斯仓','80','2026-06-13 14:20','张志伟','已打印'],
+    ['BAG-20260613002','8','40×30×25','48.00','0.240','塞内加尔','海运','服装鞋帽','达喀尔仓','60','2026-06-13 15:05','李慧敏','已完成'],
+    ['BAG-20260613003','15','50×40×35','71.50','1.050','科特迪瓦','海运','五金工具','阿比让仓','80','2026-06-13 16:18','陈志远','已打印'],
+    ['BAG-20260613004','6','35×30×20','35.20','0.126','多哥','海运','家居用品','洛美仓','50','2026-06-13 17:30','王明辉','已完成'],
+    ['BAG-20260613005','10','45×35×30','55.00','0.473','喀麦隆','海运','食品','杜阿拉仓','60','2026-06-14 09:15','张志伟','进行中']
 ],[
     {label:'袋号',type:'text',field:'bagNo'},
     {label:'目的国家',type:'select',field:'country',options:['尼日利亚','塞内加尔','科特迪瓦','多哥','喀麦隆']},
@@ -13346,20 +13346,20 @@ function openWaybillBusinessConfirmModal(id){
 /* ========== 分拣装袋管理 ========== */
 function sortBagCandidateOrders(){
     return [
-        {wb:'WB-20260613010',cust:'深圳市华运达国际货运',qty:2,size:'30×20×15',weight:8.5,country:'尼日利亚',transport:'海运',category:'电子产品',warehouse:'拉各斯仓'},
-        {wb:'WB-20260613011',cust:'广州远洋进出口贸易',qty:3,size:'35×25×20',weight:12.0,country:'尼日利亚',transport:'海运',category:'电子产品',warehouse:'拉各斯仓'},
-        {wb:'WB-20260613012',cust:'东莞市鑫海物流',qty:1,size:'20×15×10',weight:3.5,country:'尼日利亚',transport:'海运',category:'电子产品',warehouse:'拉各斯仓'},
-        {wb:'WB-20260613013',cust:'上海锦程国际贸易',qty:4,size:'40×30×25',weight:18.0,country:'尼日利亚',transport:'海运',category:'电子产品',warehouse:'拉各斯仓'},
-        {wb:'WB-20260613014',cust:'佛山恒通货运代理',qty:2,size:'30×25×20',weight:9.5,country:'尼日利亚',transport:'海运',category:'电子产品',warehouse:'拉各斯仓'},
-        {wb:'WB-20260613020',cust:'深圳市华运达国际货运',qty:3,size:'35×30×25',weight:14.5,country:'塞内加尔',transport:'海运',category:'服装鞋帽',warehouse:'达喀尔仓'},
-        {wb:'WB-20260613021',cust:'广州远洋进出口贸易',qty:2,size:'25×20×15',weight:6.0,country:'塞内加尔',transport:'海运',category:'服装鞋帽',warehouse:'达喀尔仓'},
-        {wb:'WB-20260613022',cust:'东莞市鑫海物流',qty:5,size:'45×35×30',weight:22.0,country:'塞内加尔',transport:'海运',category:'服装鞋帽',warehouse:'达喀尔仓'},
-        {wb:'WB-20260613030',cust:'上海锦程国际贸易',qty:6,size:'50×40×35',weight:28.0,country:'科特迪瓦',transport:'海运',category:'五金工具',warehouse:'阿比让仓'},
-        {wb:'WB-20260613031',cust:'佛山恒通货运代理',qty:4,size:'40×35×30',weight:19.5,country:'科特迪瓦',transport:'海运',category:'五金工具',warehouse:'阿比让仓'},
-        {wb:'WB-20260613040',cust:'深圳市华运达国际货运',qty:2,size:'30×25×20',weight:10.5,country:'多哥',transport:'海运',category:'家居用品',warehouse:'洛美仓'},
-        {wb:'WB-20260613041',cust:'广州远洋进出口贸易',qty:3,size:'35×25×20',weight:13.0,country:'多哥',transport:'海运',category:'家居用品',warehouse:'洛美仓'},
-        {wb:'WB-20260613050',cust:'东莞市鑫海物流',qty:4,size:'40×30×25',weight:17.5,country:'喀麦隆',transport:'海运',category:'食品',warehouse:'杜阿拉仓'},
-        {wb:'WB-20260613051',cust:'上海锦程国际贸易',qty:2,size:'25×20×15',weight:7.5,country:'喀麦隆',transport:'海运',category:'食品',warehouse:'杜阿拉仓'}
+        {wb:'WB-20260613010',cust:'深圳市华运达国际货运',qty:2,size:'30×20×15',weight:8.5,vol:0.018,country:'尼日利亚',transport:'海运',category:'电子产品',warehouse:'拉各斯仓'},
+        {wb:'WB-20260613011',cust:'广州远洋进出口贸易',qty:3,size:'35×25×20',weight:12.0,vol:0.053,country:'尼日利亚',transport:'海运',category:'电子产品',warehouse:'拉各斯仓'},
+        {wb:'WB-20260613012',cust:'东莞市鑫海物流',qty:1,size:'20×15×10',weight:3.5,vol:0.003,country:'尼日利亚',transport:'海运',category:'电子产品',warehouse:'拉各斯仓'},
+        {wb:'WB-20260613013',cust:'上海锦程国际贸易',qty:4,size:'40×30×25',weight:18.0,vol:0.120,country:'尼日利亚',transport:'海运',category:'电子产品',warehouse:'拉各斯仓'},
+        {wb:'WB-20260613014',cust:'佛山恒通货运代理',qty:2,size:'30×25×20',weight:9.5,vol:0.030,country:'尼日利亚',transport:'海运',category:'电子产品',warehouse:'拉各斯仓'},
+        {wb:'WB-20260613020',cust:'深圳市华运达国际货运',qty:3,size:'35×30×25',weight:14.5,vol:0.079,country:'塞内加尔',transport:'海运',category:'服装鞋帽',warehouse:'达喀尔仓'},
+        {wb:'WB-20260613021',cust:'广州远洋进出口贸易',qty:2,size:'25×20×15',weight:6.0,vol:0.015,country:'塞内加尔',transport:'海运',category:'服装鞋帽',warehouse:'达喀尔仓'},
+        {wb:'WB-20260613022',cust:'东莞市鑫海物流',qty:5,size:'45×35×30',weight:22.0,vol:0.236,country:'塞内加尔',transport:'海运',category:'服装鞋帽',warehouse:'达喀尔仓'},
+        {wb:'WB-20260613030',cust:'上海锦程国际贸易',qty:6,size:'50×40×35',weight:28.0,vol:0.420,country:'科特迪瓦',transport:'海运',category:'五金工具',warehouse:'阿比让仓'},
+        {wb:'WB-20260613031',cust:'佛山恒通货运代理',qty:4,size:'40×35×30',weight:19.5,vol:0.168,country:'科特迪瓦',transport:'海运',category:'五金工具',warehouse:'阿比让仓'},
+        {wb:'WB-20260613040',cust:'深圳市华运达国际货运',qty:2,size:'30×25×20',weight:10.5,vol:0.030,country:'多哥',transport:'海运',category:'家居用品',warehouse:'洛美仓'},
+        {wb:'WB-20260613041',cust:'广州远洋进出口贸易',qty:3,size:'35×25×20',weight:13.0,vol:0.053,country:'多哥',transport:'海运',category:'家居用品',warehouse:'洛美仓'},
+        {wb:'WB-20260613050',cust:'东莞市鑫海物流',qty:4,size:'40×30×25',weight:17.5,vol:0.120,country:'喀麦隆',transport:'海运',category:'食品',warehouse:'杜阿拉仓'},
+        {wb:'WB-20260613051',cust:'上海锦程国际贸易',qty:2,size:'25×20×15',weight:7.5,vol:0.015,country:'喀麦隆',transport:'海运',category:'食品',warehouse:'杜阿拉仓'}
     ];
 }
 
@@ -13382,15 +13382,15 @@ function openSortBagDetailModal(id,idx){
     for(let i=0;i<candidates.length&&qtyAcc<targetQty;i++){items.push(candidates[i]);qtyAcc+=candidates[i].qty;}
     let h='<div class="mb-3 rounded-xl border border-primary-100 bg-primary-50/60 p-3">';
     h+='<div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">';
-    [['袋号',bagNo],['目的国家',country],['运输方式',transport],['品名大类',category],['目的仓库',warehouse],['总件数',get('件数')],['总重量(KG)',get('重量(KG)')],['装袋操作人',get('装袋操作人')]].forEach(function(p){
+    [['袋号',bagNo],['目的国家',country],['运输方式',transport],['品名大类',category],['目的仓库',warehouse],['总件数',get('件数')],['总重量(KG)',get('重量(KG)')],['总体积(CBM)',get('体积(CBM)')],['装袋操作人',get('装袋操作人')]].forEach(function(p){
         h+='<div><span class="text-text-muted">'+tr(p[0])+'：</span><span class="font-medium text-text-primary">'+esc(p[1])+'</span></div>';
     });
     h+='</div></div>';
     h+='<div class="rounded-lg border border-surface-200 overflow-hidden bg-white"><div class="px-3 py-2 bg-surface-50 text-xs font-semibold text-text-secondary">'+tr('订单明细')+'（'+items.length+' '+tr('条')+'）</div>';
     h+='<div class="overflow-auto"><table class="w-full text-xs"><thead class="bg-surface-50 text-text-secondary"><tr>';
-    ['订单号','客户名称','件数','尺寸','重量(KG)','目的国家','运输方式','品名大类','目的仓库'].forEach(function(hd){h+='<th class="px-3 py-2 text-left whitespace-nowrap">'+tr(hd)+'</th>';});
+    ['订单号','客户名称','件数','尺寸','重量(KG)','体积(CBM)','目的国家','运输方式','品名大类','目的仓库'].forEach(function(hd){h+='<th class="px-3 py-2 text-left whitespace-nowrap">'+tr(hd)+'</th>';});
     h+='</tr></thead><tbody>';
-    if(!items.length){h+='<tr><td colspan="9" class="px-3 py-6 text-center text-text-muted">'+tr('暂无订单明细')+'</td></tr>';}
+    if(!items.length){h+='<tr><td colspan="10" class="px-3 py-6 text-center text-text-muted">'+tr('暂无订单明细')+'</td></tr>';}
     items.forEach(function(o){
         h+='<tr class="border-t border-surface-100">';
         h+='<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(o.wb)+'</td>';
@@ -13398,6 +13398,7 @@ function openSortBagDetailModal(id,idx){
         h+='<td class="px-3 py-2 text-right text-text-secondary">'+o.qty+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.size)+'</td>';
         h+='<td class="px-3 py-2 text-right text-text-secondary">'+o.weight.toFixed(1)+'</td>';
+        h+='<td class="px-3 py-2 text-right text-text-secondary">'+(o.vol||0).toFixed(3)+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.country)+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.transport)+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.category)+'</td>';
@@ -13495,9 +13496,9 @@ function renderSortBagScanScreen(){
     h+='<section class="rounded-xl border border-surface-200 bg-white">';
     h+='<div class="px-3 py-2 bg-surface-50 text-xs font-semibold text-text-secondary flex items-center justify-between"><span>'+tr('扫描列表')+'（'+st.items.length+' '+tr('票')+'）</span><span class="text-text-muted">'+tr('按规则过滤的可入袋订单')+'</span></div>';
     h+='<div class="overflow-auto" style="max-height:280px"><table class="w-full text-xs"><thead class="bg-surface-50 text-text-secondary sticky top-0"><tr>';
-    ['序号','运单号','客户名称','件数','尺寸','重量(KG)','操作'].forEach(function(hd){h+='<th class="px-3 py-2 text-left whitespace-nowrap">'+tr(hd)+'</th>';});
+    ['序号','运单号','客户名称','件数','尺寸','重量(KG)','体积(CBM)','操作'].forEach(function(hd){h+='<th class="px-3 py-2 text-left whitespace-nowrap">'+tr(hd)+'</th>';});
     h+='</tr></thead><tbody>';
-    if(!st.items.length){h+='<tr><td colspan="7" class="px-3 py-6 text-center text-text-muted">'+tr('暂无扫描记录，请扫描运单号')+'</td></tr>';}
+    if(!st.items.length){h+='<tr><td colspan="8" class="px-3 py-6 text-center text-text-muted">'+tr('暂无扫描记录，请扫描运单号')+'</td></tr>';}
     st.items.forEach(function(o,i){
         h+='<tr class="border-t border-surface-100">';
         h+='<td class="px-3 py-2 text-text-muted">'+(i+1)+'</td>';
@@ -13506,6 +13507,7 @@ function renderSortBagScanScreen(){
         h+='<td class="px-3 py-2 text-right text-text-secondary">'+o.qty+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.size)+'</td>';
         h+='<td class="px-3 py-2 text-right text-text-secondary">'+o.weight.toFixed(1)+'</td>';
+        h+='<td class="px-3 py-2 text-right text-text-secondary">'+(o.vol||0).toFixed(3)+'</td>';
         h+='<td class="px-3 py-2"><a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="removeSortBagScanItem('+i+')">'+tr('移除')+'</a></td>';
         h+='</tr>';
     });
@@ -13563,6 +13565,7 @@ function finishSortBag(){
     const r=st.rule;
     const totalQty=st.items.reduce(function(a,o){return a+o.qty;},0);
     const totalWeight=st.items.reduce(function(a,o){return a+o.weight;},0);
+    const totalVol=st.items.reduce(function(a,o){return a+(o.vol||0);},0);
     const sizes=st.items.map(function(o){return (o.size||'').split(/[×x]/).map(function(s){return parseFloat(s)||0;});}).filter(function(a){return a.length===3;});
     const maxL=sizes.length?Math.max.apply(null,sizes.map(function(s){return s[0];})):0;
     const maxW=sizes.length?Math.max.apply(null,sizes.map(function(s){return s[1];})):0;
@@ -13572,7 +13575,7 @@ function finishSortBag(){
     const pad=function(n){return String(n).padStart(2,'0');};
     const ts=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+' '+pad(now.getHours())+':'+pad(now.getMinutes());
     const status=r.printLabel?'已打印':'已完成';
-    const newRow=[st.bagNo,String(totalQty),bagSize,totalWeight.toFixed(2),r.country,r.transport,r.category,r.warehouse,String(r.maxWeight),ts,'当前操作员',status];
+    const newRow=[st.bagNo,String(totalQty),bagSize,totalWeight.toFixed(2),totalVol.toFixed(3),r.country,r.transport,r.category,r.warehouse,String(r.maxWeight),ts,'当前操作员',status];
     if(TC[st.id]&&TC[st.id].d)TC[st.id].d.unshift(newRow);
     showToast(r.printLabel?(tr('已完成装袋并打印袋标签')+'：'+st.bagNo):(tr('已完成装袋')+'：'+st.bagNo));
     _sortBagState={id:st.id,rule:r,bagNo:nextSortBagNo(),items:[],scanInput:''};

@@ -8849,7 +8849,8 @@ function generateShipmentEntryPage(id,options){
     if(isAdmin)h+=shipmentCustomerDatalistHtml();
     h+=shipmentSenderDatalistHtml();
     h+=shipmentEntryTabs(id,_shipmentEntryTab);
-    h+='<div class="bg-white rounded-xl border border-surface-200 p-5">';
+    h+='<div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">';
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-5 lg:col-span-8">';
     h+='<div class="flex items-center justify-between gap-4 mb-5"><div><h2 class="text-lg font-semibold text-text-primary">'+tr(options.title||'专线下单录入')+'</h2></div><span class="badge bg-amber-100 text-amber-700">'+tr('待提交')+'</span></div>';
     h+='<div class="space-y-6">';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
@@ -8857,9 +8858,8 @@ function generateShipmentEntryPage(id,options){
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('产品渠道说明')+'</div><div class="rounded-lg border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-700" id="shipment-channel-desc">'+tr('适合普货和常规敏感货，默认走深圳/广州仓集货，报价按散货海运产品规则带出。')+'</div></section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+renderFields(other,4)+'</section>';
     h+='</div></div>';
-    h+='<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">';
-    h+='<div class="bg-white rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用预估')+'</div><div class="space-y-2 text-sm text-text-secondary"><div class="flex justify-between"><span>'+tr('预计重量')+'</span><span class="font-medium text-text-primary" id="shipment-est-weight">0 KG</span></div><div class="flex justify-between"><span>'+tr('预计体积')+'</span><span class="font-medium text-text-primary" id="shipment-est-cbm">0 CBM</span></div><div class="flex justify-between"><span>'+tr('参考运费')+'</span><span class="font-medium text-primary-600" id="shipment-ref-fee">USD 0</span></div></div></div>';
-    h+='<div class="bg-white rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('入仓要求')+'</div><div class="space-y-2 text-sm text-text-secondary"><div>'+tr('报关资料：商业发票、装箱单')+'</div><div>'+tr('仓库时段：09:00-18:00')+'</div><div>'+tr('标签要求：外箱粘贴客户代号')+'</div></div></div>';
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-4 lg:col-span-2"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用预估')+'</div><div class="space-y-2 text-sm text-text-secondary"><div class="flex justify-between gap-2"><span>'+tr('预计重量')+'</span><span class="font-medium text-text-primary text-right" id="shipment-est-weight">0 KG</span></div><div class="flex justify-between gap-2"><span>'+tr('预计体积')+'</span><span class="font-medium text-text-primary text-right" id="shipment-est-cbm">0 CBM</span></div><div class="flex justify-between gap-2"><span>'+tr('参考运费')+'</span><span class="font-medium text-primary-600 text-right" id="shipment-ref-fee">USD 0</span></div></div></div>';
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-4 lg:col-span-2"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('入仓要求')+'</div><div class="space-y-2 text-sm text-text-secondary leading-relaxed"><div>'+tr('报关资料：商业发票、装箱单')+'</div><div>'+tr('仓库时段：09:00-18:00')+'</div><div>'+tr('标签要求：外箱粘贴客户代号')+'</div></div></div>';
     h+='</div>';
     h+='<div class="bg-white rounded-xl border border-surface-200 p-4 flex flex-wrap justify-end gap-2">'+
         '<button type="button" onclick="showRequirementDoc(\''+id+'\')" class="h-9 px-5 text-sm font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('需求说明')+'</button>'+

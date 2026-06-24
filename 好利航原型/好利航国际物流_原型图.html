@@ -9294,20 +9294,33 @@ function warehousePdaOperationConfigs(){
             sections:[
                 {title:'收货信息',fields:[
                     {label:'运单号',type:'scan',value:'WB-20260613001',required:true},
+                    {label:'件数',type:'number',value:'8',required:true},
+                    {label:'客户信息',value:'深圳市华运达国际货运 / C10001',readonly:true},
                     {label:'到货仓库',type:'select',options:wh,required:true},
                     {label:'到货货区',type:'select',options:zones,required:true},
-                    {label:'到货时间',type:'datetime-local',value:'2026-06-13T14:30',required:true},
                     {label:'运输方式',type:'select',options:transport,required:true}
                 ]},
                 {title:'货物信息',fields:[
                     {label:'品名',value:'服装配件',required:true,placeholder:'输入品名信息带出大类'},
-                    {label:'品名大类',value:'普货'},
-                    {label:'长(CM)',type:'number',value:'48',required:true},
-                    {label:'宽(CM)',type:'number',value:'36',required:true},
-                    {label:'高(CM)',type:'number',value:'30',required:true},
-                    {label:'重量(KG)',type:'number',value:'12.5',required:true}
+                    {label:'品名大类',value:'普货'}
                 ]}
             ],
+            tableSection:{
+                tableId:'pda-in-manual-size',
+                title:'尺寸明细',
+                columns:[
+                    {label:'长(CM)',type:'number',field:'l'},
+                    {label:'宽(CM)',type:'number',field:'w'},
+                    {label:'高(CM)',type:'number',field:'h'},
+                    {label:'重量(KG)',type:'number',field:'wt'},
+                    {label:'件数',type:'number',field:'qty'}
+                ],
+                rows:[
+                    {l:48,w:36,h:30,wt:12.5,qty:1},
+                    {l:40,w:30,h:25,wt:8.0,qty:2},
+                    {l:35,w:28,h:22,wt:6.5,qty:3}
+                ]
+            },
             primary:'保存入仓',secondary:['打印入仓单','继续扫码']
         },
         'pda-receive-check':{
@@ -9568,26 +9581,28 @@ function pdaServicePanel(open){
 }
 
 function pdaField(f){
-    /* 扁平 PDA 字段 - 大字号大触摸区 */
+    /* 扁平 PDA 字段 - 大字号大触摸区，支持 readonly */
     const label=tr(f.label);
     const required=f.required?'<span class="text-red-500 ml-1">*</span>':'';
     const placeholder=f.placeholder?tr(f.placeholder):(tr('请输入')+label);
     const value=f.value===undefined?'':f.value;
-    const base='w-full h-11 px-3 text-sm rounded-md border border-slate-300 bg-white focus:border-sky-500 focus:outline-none';
+    const readonly=f.readonly?' readonly':'';
+    const roClass=f.readonly?' bg-slate-100 text-slate-600 cursor-not-allowed':' bg-white';
+    const base='w-full h-11 px-3 text-sm rounded-md border border-slate-300 focus:border-sky-500 focus:outline-none'+roClass;
     let control='';
     if(f.type==='select'){
-        control='<select class="'+base+'"><option value="">'+tr('请选择')+'</option>';
+        control='<select class="'+base+'"'+readonly+(f.readonly?' disabled':'')+'><option value="">'+tr('请选择')+'</option>';
         (f.options||[]).forEach(function(o){control+='<option value="'+esc(o)+'"'+(value===o?' selected':'')+'>'+esc(tr(o))+'</option>';});
         control+='</select>';
     }else if(f.type==='textarea'){
-        control='<textarea rows="3" class="w-full px-3 py-2 text-sm rounded-md border border-slate-300 bg-white resize-none focus:border-sky-500 focus:outline-none" placeholder="'+esc(placeholder)+'">'+esc(value)+'</textarea>';
+        control='<textarea rows="3" class="w-full px-3 py-2 text-sm rounded-md border border-slate-300 resize-none focus:border-sky-500 focus:outline-none'+roClass+'" placeholder="'+esc(placeholder)+'"'+readonly+'>'+esc(value)+'</textarea>';
     }else if(f.type==='checkbox'){
         control='<label class="h-11 px-3 rounded-md border border-slate-300 bg-white flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" class="w-4 h-4"'+(f.checked?' checked':'')+'><span>'+tr(f.label)+'</span></label>';
         return '<div class="min-w-0">'+control+'</div>';
     }else if(f.type==='scan'){
-        control='<div class="flex gap-2"><input type="text" class="'+base+'" placeholder="'+esc(placeholder)+'" value="'+esc(value)+'"><button type="button" onclick="openPdaScanModal(\'\',\''+esc(value||'WB-20260613001')+'\',\'\')" class="shrink-0 h-11 px-4 rounded-md bg-sky-600 text-white text-sm font-bold">'+tr('扫码')+'</button></div>';
+        control='<div class="flex gap-2"><input type="text" class="'+base+'" placeholder="'+esc(placeholder)+'" value="'+esc(value)+'"'+readonly+'><button type="button" onclick="openPdaScanModal(\'\',\''+esc(value||'WB-20260613001')+'\',\'\')" class="shrink-0 h-11 px-4 rounded-md bg-sky-600 text-white text-sm font-bold">'+tr('扫码')+'</button></div>';
     }else{
-        control='<input type="'+(f.type||'text')+'" class="'+base+'" placeholder="'+esc(placeholder)+'" value="'+esc(value)+'">';
+        control='<input type="'+(f.type||'text')+'" class="'+base+'" placeholder="'+esc(placeholder)+'" value="'+esc(value)+'"'+readonly+'>';
     }
     return '<div class="min-w-0 flex flex-col gap-1"><label class="text-xs font-bold text-slate-700 break-all">'+esc(label)+required+'</label>'+control+'</div>';
 }
@@ -9603,6 +9618,65 @@ function pdaPhotoUploader(limit){
     }
     h+='</div></div>';
     return h;
+}
+
+/* ====== PDA 多行可编辑表格（用于尺寸明细等场景） ====== */
+var _pdaTableState={};
+
+function pdaMultiRowTable(section){
+    const tableId=section.tableId||'pda-tbl-default';
+    if(!_pdaTableState[tableId])_pdaTableState[tableId]=(section.rows||[]).map(function(r){return Object.assign({},r);});
+    const rows=_pdaTableState[tableId];
+    const cols=section.columns||[];
+    let h='<div class="bg-white border border-slate-200 rounded-md mb-3">';
+    h+='<div class="px-3 py-2 bg-slate-50 border-b border-slate-200 text-[13px] font-bold text-slate-800 flex items-center gap-2"><span class="w-1 h-3.5 bg-sky-600 rounded-sm"></span>'+tr(section.title)+'<span class="text-[10px] font-normal text-slate-500 ml-1">· '+rows.length+' '+tr('行')+'</span></div>';
+    /* 表头行 */
+    h+='<div class="px-2 pt-2 grid gap-1" style="grid-template-columns:repeat('+cols.length+',1fr) 36px">';
+    cols.forEach(function(c){h+='<div class="text-[10px] text-slate-500 font-bold text-center">'+tr(c.label)+'</div>';});
+    h+='<div></div>';
+    h+='</div>';
+    /* 数据行 */
+    h+='<div class="p-2 pt-1 space-y-1">';
+    if(rows.length===0){
+        h+='<div class="text-center text-xs text-slate-400 py-4">'+tr('暂无尺寸明细，点击下方"新增行"添加')+'</div>';
+    }
+    rows.forEach(function(row,idx){
+        h+='<div class="grid gap-1 items-center" style="grid-template-columns:repeat('+cols.length+',1fr) 36px">';
+        cols.forEach(function(c){
+            const v=row[c.field]!==undefined?row[c.field]:'';
+            h+='<input type="'+(c.type||'text')+'" value="'+esc(String(v))+'" data-tbl-id="'+esc(tableId)+'" data-tbl-row="'+idx+'" data-tbl-field="'+esc(c.field)+'" oninput="updatePdaTableCell(this)" class="w-full h-9 px-1 text-xs rounded border border-slate-300 bg-white text-center focus:border-sky-500 focus:outline-none">';
+        });
+        h+='<button type="button" onclick="removePdaTableRow(\''+esc(tableId)+'\','+idx+')" class="w-9 h-9 rounded bg-red-50 text-red-500 text-lg flex items-center justify-center active:bg-red-100" title="'+tr('删除')+'">×</button>';
+        h+='</div>';
+    });
+    h+='</div>';
+    /* 新增行按钮 */
+    h+='<div class="px-2 pb-2">';
+    h+='<button type="button" onclick="addPdaTableRow(\''+esc(tableId)+'\')" class="w-full h-10 rounded-md border-2 border-dashed border-sky-300 text-sky-600 text-sm font-bold active:bg-sky-50">+ '+tr('新增行')+'</button>';
+    h+='</div>';
+    h+='</div>';
+    return h;
+}
+
+function updatePdaTableCell(inp){
+    const tableId=inp.getAttribute('data-tbl-id');
+    const rowIdx=parseInt(inp.getAttribute('data-tbl-row'));
+    const field=inp.getAttribute('data-tbl-field');
+    if(!_pdaTableState[tableId]||!_pdaTableState[tableId][rowIdx])return;
+    _pdaTableState[tableId][rowIdx][field]=inp.value;
+    /* 不重渲，避免输入框失焦 */
+}
+
+function addPdaTableRow(tableId){
+    if(!_pdaTableState[tableId])_pdaTableState[tableId]=[];
+    _pdaTableState[tableId].push({});
+    refreshWarehousePdaPrototype();
+}
+
+function removePdaTableRow(tableId,idx){
+    if(!_pdaTableState[tableId])return;
+    _pdaTableState[tableId].splice(idx,1);
+    refreshWarehousePdaPrototype();
 }
 
 function showPdaAppOverlay(html){
@@ -9713,20 +9787,27 @@ function pdaBottomNav(active){
 }
 
 function generateWarehousePdaWorkbench(tasks){
-    /* 顶部分类 tab 横滑 + 当前类卡片网格 - 扁平风格 */
+    /* 板块化工作台 - 参考 pda端-框架模型.html，所有 6 板块同屏可见 */
     let h=pdaAppHeader('工作台');
-    h+='<div class="bg-white border-b-2 border-slate-200 px-2 py-2 flex gap-1.5 overflow-x-auto">';
-    PDA_CATEGORIES.forEach(function(cat){
-        const on=cat.key===_warehousePdaCategory;
-        const count=tasks.filter(function(t){return t[3]===cat.key;}).length;
-        h+='<button type="button" onclick="selectPdaCategory(\''+cat.key+'\')" class="flex-shrink-0 px-3 h-10 rounded-md text-xs font-bold border-2 '+(on?'bg-slate-800 text-white border-slate-800':'bg-white text-slate-600 border-slate-200')+'">'+tr(cat.label)+'<span class="ml-1 text-[10px] '+(on?'text-amber-300':'text-slate-400')+'">'+count+'</span></button>';
-    });
+    /* 顶部仓库信息条 */
+    h+='<div class="bg-white border-b border-slate-200 px-3 py-2 flex items-center justify-between text-xs">';
+    h+='<div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-slate-500">'+tr('当前仓库')+'</span><span class="font-bold text-slate-800">深圳盐田仓</span></div>';
+    h+='<div class="text-slate-500 font-mono">YY0001</div>';
     h+='</div>';
-    const currentTasks=pdaTasksInCurrentCategory(tasks);
-    const currentCat=PDA_CATEGORIES.find(function(c){return c.key===_warehousePdaCategory;});
-    h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-slate-100">';
-    h+='<div class="flex items-center gap-2 mb-3 px-1"><span class="inline-block w-1 h-5 rounded '+(currentCat?currentCat.accent:'bg-slate-500')+'"></span><span class="text-sm font-bold text-slate-800">'+tr(currentCat?currentCat.label:'')+'</span><span class="text-xs text-slate-500">· '+currentTasks.length+' '+tr('项功能')+'</span></div>';
-    h+='<div class="grid grid-cols-2 gap-2">'+currentTasks.map(pdaTaskCard).join('')+'</div>';
+    /* 6 板块依次铺开 */
+    h+='<div class="flex-1 min-h-0 overflow-y-auto bg-slate-100 p-2 space-y-2">';
+    PDA_CATEGORIES.forEach(function(cat){
+        const items=tasks.filter(function(t){return t[3]===cat.key;});
+        if(!items.length)return;
+        h+='<section class="bg-white border border-slate-200 rounded-md overflow-hidden">';
+        h+='<div class="px-3 py-2 bg-slate-50 border-b border-slate-200 flex items-center gap-2">';
+        h+='<span class="inline-block w-1 h-4 rounded '+cat.accent+'"></span>';
+        h+='<span class="text-sm font-bold text-slate-800">'+tr(cat.label)+'</span>';
+        h+='<span class="text-[10px] text-slate-500">· '+items.length+' '+tr('项')+'</span>';
+        h+='</div>';
+        h+='<div class="p-2 grid grid-cols-2 gap-2">'+items.map(pdaTaskCard).join('')+'</div>';
+        h+='</section>';
+    });
     h+='</div>';
     h+=pdaBottomNav('workbench');
     return h;
@@ -10338,6 +10419,8 @@ function generateWarehousePdaOperationScreen(taskId){
     }
     /* 节段 */
     (config.sections||[]).forEach(function(section){h+=pdaSection(section);});
+    /* 多行表格节段（如尺寸明细） */
+    if(config.tableSection)h+=pdaMultiRowTable(config.tableSection);
     /* 附加服务 */
     if(config.servicePanel)h+=pdaServicePanel(false);
     /* 图片上传 */

@@ -9183,40 +9183,42 @@ function generateWarehouseHeadlessInboundPage(id){
 }
 
 function warehousePdaTaskItems(){
-    /* 18 PDA 业务 + 分类，按用户确认重设计（基线：pda端-移动框架.html 精简版 + 操作查验）*/
+    /* 18 PDA 业务 + 4 板块（完全复刻 pda端-移动框架.html 工作台结构）*/
     return [
-        ['pda-in-no-order','无单入库','无运单货物先入仓登记，后补单','in'],
-        ['pda-in-manual','手动入库','手动录入运单号扫码入仓','in'],
-        ['pda-receive-check','收货复核','扫码+尺寸/重量复核','in'],
-        ['pda-open-check','开箱验货','拆箱核对内件、拍照存证','in'],
-        ['pda-pallet-on','仓库上托','货上托盘扫码绑定','pallet'],
-        ['pda-pallet-adjust','调整托盘','调整托盘明细、下托换托','pallet'],
+        /* 收货管理 (4) */
+        ['pda-in-no-order','无单入库','无运单货物先入仓登记，后补单','receive'],
+        ['pda-in-manual','手动入库','手动录入运单号扫码入仓','receive'],
+        ['pda-receive-check','收货复核','扫码+尺寸/重量复核','receive'],
+        ['pda-pallet-on','仓库上托','货上托盘扫码绑定','receive'],
+        /* 在库管理 (5) */
+        ['pda-waybill-query','运单查询','扫单号查运单详情','inside'],
+        ['pda-pallet-adjust','调整托盘','调整托盘明细、下托换托','inside'],
         ['pda-find-scan','找货扫描','按指令找货定位','inside'],
+        ['pda-open-check','开箱验货','拆箱核对内件、拍照存证','inside'],
         ['pda-inventory','库内盘点','PDA 在库盘点','inside'],
-        ['pda-replenish','补货','已订订单补货','inside'],
-        ['pda-drop','落货','落货分拣到具体区位','inside'],
-        ['pda-ship-check','出货复核','扫码+尺寸/重量复核','out'],
-        ['pda-express-bind','快递绑定','快递单号扫码绑定运单','out'],
-        ['pda-load-scan','装柜扫描','装柜过程逐件扫描','out'],
-        ['pda-load-finish','装柜完成','关柜确认与封条','out'],
+        /* 出货管理 (7) */
+        ['pda-ship-check','出货复核','出库前扫码+尺寸/重量复核','ship'],
+        ['pda-express-bind','快递绑定','快递单号扫码绑定运单','ship'],
+        ['pda-label-scan','贴标扫描','扫码后打印/贴客户箱唛','ship'],
+        ['pda-load-scan','装柜扫描','装柜过程逐件扫描','ship'],
+        ['pda-load-finish','装柜完成','关柜确认与封条','ship'],
+        ['pda-replenish','补货','已订订单补货','ship'],
+        ['pda-drop','落货','落货分拣到具体区位','ship'],
+        /* 调拨管理 (2) */
         ['pda-transfer-out','调拨出库','跨仓发出调拨','transfer'],
-        ['pda-transfer-in','调拨入库','跨仓接收调拨','transfer'],
-        ['pda-customs-check','操作查验','海关查验配合、拍照存证','other'],
-        ['pda-waybill-query','运单查询','扫单号查运单详情','other']
+        ['pda-transfer-in','调拨入库','跨仓接收调拨','transfer']
     ];
 }
 
-var _warehousePdaCategory='in';
+var _warehousePdaCategory='receive';
 var PDA_CATEGORIES=[
-    {key:'in',label:'入库',accent:'bg-sky-500'},
-    {key:'pallet',label:'上托',accent:'bg-amber-500'},
-    {key:'inside',label:'库内',accent:'bg-orange-500'},
-    {key:'out',label:'出库',accent:'bg-emerald-500'},
-    {key:'transfer',label:'调拨',accent:'bg-violet-500'},
-    {key:'other',label:'查验·查询',accent:'bg-slate-500'}
+    {key:'receive',label:'收货管理',accent:'bg-sky-500'},
+    {key:'inside',label:'在库管理',accent:'bg-amber-500'},
+    {key:'ship',label:'出货管理',accent:'bg-emerald-500'},
+    {key:'transfer',label:'调拨管理',accent:'bg-violet-500'}
 ];
 function selectPdaCategory(key){
-    _warehousePdaCategory=key||'in';
+    _warehousePdaCategory=key||'receive';
     refreshWarehousePdaPrototype();
 }
 
@@ -9290,35 +9292,35 @@ function warehousePdaOperationConfigs(){
             primary:'保存登记',secondary:['继续扫码']
         },
         'pda-in-manual':{
-            title:'手动入库',subtitle:'手动录入运单号扫码入仓',scanLabel:'运单号/物流单号',
+            title:'手动入库',subtitle:'扫描运单子单号/运单号，登记尺寸完成入库',scanLabel:'运单子单号/运单号',
             sections:[
                 {title:'收货信息',fields:[
-                    {label:'运单号',type:'scan',value:'WB-20260613001',required:true},
-                    {label:'件数',type:'number',value:'8',required:true},
-                    {label:'客户信息',value:'深圳市华运达国际货运 / C10001',readonly:true},
-                    {label:'到货仓库',type:'select',options:wh,required:true},
-                    {label:'到货货区',type:'select',options:zones,required:true},
-                    {label:'运输方式',type:'select',options:transport,required:true}
-                ]},
-                {title:'货物信息',fields:[
-                    {label:'品名',value:'服装配件',required:true,placeholder:'输入品名信息带出大类'},
-                    {label:'品名大类',value:'普货'}
+                    {label:'运单号',type:'scan',value:'H82512230001',required:true},
+                    {label:'件数',type:'number',value:'10',required:true},
+                    {label:'客户信息',value:'0404美森限时达 / C10001',readonly:true},
+                    {label:'预配仓单号',value:'PRE-20260613001',readonly:true},
+                    {label:'预报件数',type:'number',value:'10',readonly:true},
+                    {label:'收货件数',type:'number',value:'0',required:true},
+                    {label:'剩余最大收货件数',type:'number',value:'10',readonly:true},
+                    {label:'收货仓库',type:'select',options:wh,required:true}
                 ]}
             ],
             tableSection:{
                 tableId:'pda-in-manual-size',
-                title:'尺寸明细',
+                title:'当前登记尺寸',
+                tip:'单击编辑单元格',
+                showFooterActions:true,
                 columns:[
-                    {label:'长(CM)',type:'number',field:'l'},
-                    {label:'宽(CM)',type:'number',field:'w'},
-                    {label:'高(CM)',type:'number',field:'h'},
-                    {label:'重量(KG)',type:'number',field:'wt'},
+                    {label:'长',type:'number',field:'l'},
+                    {label:'宽',type:'number',field:'w'},
+                    {label:'高',type:'number',field:'h'},
+                    {label:'重量',type:'number',field:'wt'},
                     {label:'件数',type:'number',field:'qty'}
                 ],
                 rows:[
-                    {l:48,w:36,h:30,wt:12.5,qty:1},
-                    {l:40,w:30,h:25,wt:8.0,qty:2},
-                    {l:35,w:28,h:22,wt:6.5,qty:3}
+                    {l:50,w:40,h:30,wt:150,qty:2},
+                    {l:50,w:40,h:30,wt:'',qty:''},
+                    {l:'',w:'',h:'',wt:'',qty:''}
                 ]
             },
             primary:'保存入仓',secondary:['打印入仓单','继续扫码']
@@ -9495,6 +9497,22 @@ function warehousePdaOperationConfigs(){
             records:[pdaListRecord('CNTR-40HQ-002','待关柜',['已装：35/35 件','封条：未扫'])],
             primary:'完成关柜',secondary:['打印关柜单']
         },
+        'pda-label-scan':{
+            title:'贴标扫描',subtitle:'扫码后打印/贴客户箱唛',scanLabel:'运单号/箱号',
+            sections:[{title:'贴标信息',fields:[
+                {label:'运单号',type:'scan',value:'WB-20260613001',required:true},
+                {label:'客户代码',value:'C10001',readonly:true},
+                {label:'标签类型',type:'select',options:['客户箱唛','物流标签','危险品标签','空运标签'],required:true},
+                {label:'打印张数',type:'number',value:'1',required:true},
+                {label:'打印机',type:'select',options:['1号打印机','2号打印机','移动打印机'],required:true},
+                {label:'备注',type:'textarea',placeholder:'特殊说明'}
+            ]}],
+            records:[
+                pdaListRecord('WB-20260613001','已贴标',['标签类型：客户箱唛','打印：3 张','操作员：李仓管']),
+                pdaListRecord('WB-20260613008','待贴标',['标签类型：物流标签','打印：2 张'])
+            ],
+            primary:'打印并贴标',secondary:['重新打印']
+        },
         /* 调拨 2 项 */
         'pda-transfer-out':{
             title:'调拨出库',subtitle:'跨仓发出调拨扫码确认',scanLabel:'调拨单号/运单号',
@@ -9624,21 +9642,26 @@ function pdaPhotoUploader(limit){
 var _pdaTableState={};
 
 function pdaMultiRowTable(section){
+    /* 复刻 pda端-手动入库.html "当前登记尺寸" 表格风格 */
     const tableId=section.tableId||'pda-tbl-default';
     if(!_pdaTableState[tableId])_pdaTableState[tableId]=(section.rows||[]).map(function(r){return Object.assign({},r);});
     const rows=_pdaTableState[tableId];
     const cols=section.columns||[];
     let h='<div class="bg-white border border-slate-200 rounded-md mb-3">';
-    h+='<div class="px-3 py-2 bg-slate-50 border-b border-slate-200 text-[13px] font-bold text-slate-800 flex items-center gap-2"><span class="w-1 h-3.5 bg-sky-600 rounded-sm"></span>'+tr(section.title)+'<span class="text-[10px] font-normal text-slate-500 ml-1">· '+rows.length+' '+tr('行')+'</span></div>';
+    /* 标题栏 */
+    h+='<div class="px-3 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between">';
+    h+='<div class="flex items-center gap-2"><span class="w-1 h-3.5 bg-sky-600 rounded-sm"></span><span class="text-[13px] font-bold text-slate-800">'+tr(section.title)+'</span><span class="text-[10px] font-normal text-slate-500">· '+rows.length+' '+tr('行')+'</span></div>';
+    if(section.tip){h+='<span class="text-[10px] text-amber-600">'+tr(section.tip)+'</span>';}
+    h+='</div>';
     /* 表头行 */
     h+='<div class="px-2 pt-2 grid gap-1" style="grid-template-columns:repeat('+cols.length+',1fr) 36px">';
-    cols.forEach(function(c){h+='<div class="text-[10px] text-slate-500 font-bold text-center">'+tr(c.label)+'</div>';});
-    h+='<div></div>';
+    cols.forEach(function(c){h+='<div class="text-[11px] text-slate-600 font-bold text-center bg-slate-100 py-1 rounded">'+tr(c.label)+'</div>';});
+    h+='<div class="text-[11px] text-slate-600 font-bold text-center bg-slate-100 py-1 rounded">'+tr('操作')+'</div>';
     h+='</div>';
     /* 数据行 */
     h+='<div class="p-2 pt-1 space-y-1">';
     if(rows.length===0){
-        h+='<div class="text-center text-xs text-slate-400 py-4">'+tr('暂无尺寸明细，点击下方"新增行"添加')+'</div>';
+        h+='<div class="text-center text-xs text-slate-400 py-4">'+tr('暂无数据，点击下方"新增行"添加')+'</div>';
     }
     rows.forEach(function(row,idx){
         h+='<div class="grid gap-1 items-center" style="grid-template-columns:repeat('+cols.length+',1fr) 36px">';
@@ -9650,12 +9673,34 @@ function pdaMultiRowTable(section){
         h+='</div>';
     });
     h+='</div>';
-    /* 新增行按钮 */
-    h+='<div class="px-2 pb-2">';
-    h+='<button type="button" onclick="addPdaTableRow(\''+esc(tableId)+'\')" class="w-full h-10 rounded-md border-2 border-dashed border-sky-300 text-sky-600 text-sm font-bold active:bg-sky-50">+ '+tr('新增行')+'</button>';
-    h+='</div>';
+    /* 底部 3 个操作按钮：新增行 / 重置行 / 删除行 */
+    if(section.showFooterActions){
+        h+='<div class="px-2 pb-2 grid grid-cols-3 gap-2">';
+        h+='<button type="button" onclick="addPdaTableRow(\''+esc(tableId)+'\')" class="h-10 rounded-md bg-sky-600 text-white text-sm font-bold active:bg-sky-700">'+tr('新增行')+'</button>';
+        h+='<button type="button" onclick="resetPdaTableRows(\''+esc(tableId)+'\')" class="h-10 rounded-md border-2 border-slate-300 bg-white text-slate-700 text-sm font-bold active:bg-slate-100">'+tr('重置行')+'</button>';
+        h+='<button type="button" onclick="clearPdaTableRows(\''+esc(tableId)+'\')" class="h-10 rounded-md border-2 border-red-300 bg-white text-red-600 text-sm font-bold active:bg-red-50">'+tr('删除行')+'</button>';
+        h+='</div>';
+    }else{
+        h+='<div class="px-2 pb-2">';
+        h+='<button type="button" onclick="addPdaTableRow(\''+esc(tableId)+'\')" class="w-full h-10 rounded-md border-2 border-dashed border-sky-300 text-sky-600 text-sm font-bold active:bg-sky-50">+ '+tr('新增行')+'</button>';
+        h+='</div>';
+    }
     h+='</div>';
     return h;
+}
+
+function resetPdaTableRows(tableId){
+    /* 重置 = 清空所有行的值（保留行数） */
+    if(!_pdaTableState[tableId])return;
+    _pdaTableState[tableId]=_pdaTableState[tableId].map(function(){return {};});
+    refreshWarehousePdaPrototype();
+}
+
+function clearPdaTableRows(tableId){
+    /* 删除全部行 */
+    if(!_pdaTableState[tableId])return;
+    _pdaTableState[tableId]=[];
+    refreshWarehousePdaPrototype();
 }
 
 function updatePdaTableCell(inp){
@@ -9843,26 +9888,51 @@ function openPdaOverviewDetail(title){
 }
 
 function generateWarehousePdaProfile(){
-    /* 扁平 PDA 风格 我的页 */
-    let h='<div class="bg-slate-900 text-white flex items-center justify-between px-4 py-1 text-[10px] font-mono opacity-90"><span>17:37</span><span class="flex items-center gap-1"><span class="text-emerald-400">●</span><span>5G</span><span>81%</span></span></div>';
+    /* 复刻 pda端-移动框架.html "我的"：演示用户/仓库文员 + 5 个功能列表 + 退出登录 */
+    let h='<div class="bg-slate-900 text-white flex items-center justify-between px-4 py-1 text-[10px] font-mono opacity-90"><span>16:30</span><span class="flex items-center gap-1"><span class="text-emerald-400">●</span><span>5G</span><span>81%</span></span></div>';
     h+='<div class="flex-1 min-h-0 overflow-y-auto bg-slate-100">';
-    h+='<div class="bg-sky-700 px-4 pt-5 pb-8">';
-    h+='<div class="flex items-center gap-3"><div class="w-16 h-16 rounded-md bg-sky-900 text-amber-400 flex items-center justify-center text-2xl font-bold border-2 border-sky-500">仓</div><div><div class="text-lg font-bold text-white">IT开发测试专用</div><div class="text-xs text-sky-200 font-mono mt-0.5">工号 YY0001 · 深圳盐田仓</div></div></div>';
+    /* 用户信息头部 */
+    h+='<div class="bg-gradient-to-b from-sky-600 to-sky-500 px-4 pt-6 pb-10">';
+    h+='<div class="flex items-center gap-3">';
+    h+='<div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur text-white flex items-center justify-center text-2xl font-bold border-2 border-white/40">演</div>';
+    h+='<div class="flex-1 min-w-0">';
+    h+='<div class="text-lg font-bold text-white">'+tr('演示用户')+'</div>';
+    h+='<div class="text-xs text-white/85 mt-0.5">'+tr('仓库文员')+'（'+tr('角色名称')+'）</div>';
+    h+='<div class="text-[10px] text-white/70 mt-1 font-mono">v2.2.0</div>';
+    h+='</div></div>';
     h+='</div>';
-    h+='<div class="px-3 -mt-4">';
-    h+='<section class="bg-white border border-slate-200 rounded-md p-3 mb-3">';
-    h+='<div class="text-xs font-bold text-slate-700 mb-3">'+tr('语言切换')+'</div><div class="grid grid-cols-2 gap-2">';
-    [['zh','中文'],['en','English'],['fr','Français'],['pt','Português']].forEach(function(lang){
-        h+='<button type="button" onclick="selectLanguageOption(\''+lang[0]+'\');refreshWarehousePdaPrototype()" class="h-10 rounded-md border-2 text-xs font-bold '+(_currentLang===lang[0]?'border-sky-500 bg-sky-50 text-sky-700':'border-slate-200 text-slate-600 bg-white')+'">'+lang[1]+'</button>';
-    });
-    h+='</div></section>';
-    h+='<section class="bg-white border border-slate-200 rounded-md overflow-hidden mb-3">';
-    [['日志上传','▤',''],['清理缓存','◇','0K'],['检查更新','↺','2.2.8.test'],['分享App给好友','✓',''],['退出登录','⏻','']].forEach(function(row){
-        const isLogout=row[0]==='退出登录';
-        const click=isLogout?'logoutWarehousePda()':"showToast('"+tr(row[0])+"')";
-        h+='<button type="button" onclick="'+click+'" class="w-full h-14 px-4 flex items-center gap-3 border-t border-slate-100 first:border-t-0 text-left '+(isLogout?'text-red-600':'text-slate-700')+'"><span class="w-7 h-7 rounded bg-slate-100 flex items-center justify-center text-base">'+row[1]+'</span><span class="flex-1 text-sm font-medium">'+tr(row[0])+'</span><span class="text-xs text-slate-400">'+esc(row[2])+' ›</span></button>';
+    h+='<div class="px-3 -mt-5">';
+    /* 5 个系统功能 */
+    h+='<section class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">';
+    [
+        ['日志上传','上传操作日志，帮助优化体验','📋','正在收集日志...'],
+        ['分享APP','邀请同事使用仓库助手','🔗','分享链接已复制'],
+        ['清除缓存','清除临时数据，释放空间','🗑','缓存已清除,释放约1.5MB空间'],
+        ['检查更新','当前版本 v2.2.0','↻','当前已是最新版本v2.2.0']
+    ].forEach(function(row){
+        const click="showToast('"+tr(row[3])+"')";
+        h+='<button type="button" onclick="'+click+'" class="w-full px-4 py-3 flex items-center gap-3 border-t border-slate-100 first:border-t-0 text-left active:bg-slate-50">';
+        h+='<span class="w-10 h-10 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-lg shrink-0">'+row[2]+'</span>';
+        h+='<div class="flex-1 min-w-0"><div class="text-sm font-bold text-slate-800">'+tr(row[0])+'</div><div class="text-xs text-slate-500 mt-0.5">'+tr(row[1])+'</div></div>';
+        h+='<span class="text-slate-300 text-lg">›</span>';
+        h+='</button>';
     });
     h+='</section>';
+    /* 退出登录单独一个红色卡片 */
+    h+='<section class="mt-3 bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">';
+    h+='<button type="button" onclick="logoutWarehousePda()" class="w-full px-4 py-3 flex items-center gap-3 text-left active:bg-red-50">';
+    h+='<span class="w-10 h-10 rounded-lg bg-red-50 text-red-500 flex items-center justify-center text-lg shrink-0">⏻</span>';
+    h+='<div class="flex-1 min-w-0"><div class="text-sm font-bold text-red-600">'+tr('退出登录')+'</div><div class="text-xs text-slate-500 mt-0.5">'+tr('退出当前账号，返回登录页')+'</div></div>';
+    h+='<span class="text-slate-300 text-lg">›</span>';
+    h+='</button>';
+    h+='</section>';
+    /* 语言切换（保留） */
+    h+='<section class="mt-3 mb-4 bg-white border border-slate-200 rounded-lg p-3 shadow-sm">';
+    h+='<div class="text-xs font-bold text-slate-700 mb-2">'+tr('语言切换')+'</div><div class="grid grid-cols-2 gap-2">';
+    [['zh','中文'],['en','English'],['fr','Français'],['pt','Português']].forEach(function(lang){
+        h+='<button type="button" onclick="selectLanguageOption(\''+lang[0]+'\');refreshWarehousePdaPrototype()" class="h-9 rounded-md border-2 text-xs font-bold '+(_currentLang===lang[0]?'border-sky-500 bg-sky-50 text-sky-700':'border-slate-200 text-slate-600 bg-white')+'">'+lang[1]+'</button>';
+    });
+    h+='</div></section>';
     h+='</div></div>';
     h+=pdaBottomNav('profile');
     return h;
@@ -9876,33 +9946,37 @@ function generateWarehousePdaHome(tasks){
 }
 
 function generateWarehousePdaLoginScreen(){
-    /* 扁平 PDA 风格登录页 */
-    let h='<div class="bg-slate-900 text-white flex items-center justify-between px-4 py-1 text-[10px] font-mono opacity-90"><span>17:36</span><span class="flex items-center gap-1"><span class="text-emerald-400">●</span><span>5G</span><span>81%</span></span></div>';
-    h+='<div class="flex-1 min-h-0 overflow-y-auto bg-slate-100">';
-    /* Hero */
-    h+='<div class="bg-sky-700 px-5 pt-10 pb-12 text-center">';
-    h+='<div class="w-20 h-20 mx-auto rounded-md bg-sky-900 text-amber-400 flex items-center justify-center text-3xl font-bold border-2 border-sky-500">PDA</div>';
-    h+='<div class="mt-4 text-xl font-bold text-white tracking-wide">仓库 PDA 终端</div>';
-    h+='<div class="mt-1 text-[11px] text-sky-200 font-mono">HLH-WMS / Industrial Terminal</div>';
+    /* 复刻 pda端-登录页.html：物流仓主题 + 双 slogan + 账号/密码/记住密码/自动登录 */
+    let h='<div class="bg-slate-900 text-white flex items-center justify-between px-4 py-1 text-[10px] font-mono opacity-90"><span>16:30</span><span class="flex items-center gap-1"><span class="text-emerald-400">●</span><span>5G</span><span>81%</span></span></div>';
+    h+='<div class="flex-1 min-h-0 overflow-y-auto bg-gradient-to-b from-sky-600 via-sky-500 to-sky-100">';
+    /* Hero - 物流仓主题 */
+    h+='<div class="px-5 pt-10 pb-8 text-center text-white">';
+    h+='<div class="w-20 h-20 mx-auto rounded-2xl bg-white/15 backdrop-blur text-white flex items-center justify-center text-4xl font-bold border border-white/30">仓</div>';
+    h+='<div class="mt-5 text-3xl font-bold tracking-wider">物流仓</div>';
+    h+='<div class="mt-2 text-xs opacity-90">极速 · 效率仓储</div>';
+    h+='<div class="text-xs opacity-90">智慧仓库 · 标准流程</div>';
     h+='</div>';
     /* 表单 */
-    h+='<div class="-mt-6 px-4">';
-    h+='<section class="bg-white rounded-md border border-slate-200 p-4 shadow-sm">';
+    h+='<div class="px-5">';
+    h+='<section class="bg-white rounded-xl shadow-lg p-5">';
     h+='<div class="space-y-3">';
-    h+=pdaField({label:'账号',value:'warehouse01',required:true});
+    h+=pdaField({label:'账号',value:'ADMIN',required:true});
     h+=pdaField({label:'密码',type:'password',value:'123456',required:true});
-    h+=pdaField({label:'所属仓库',type:'select',options:getWarehouseNameOptions(),value:currentAccountWarehouse(),required:true});
     h+='</div>';
-    h+='<button type="button" onclick="loginWarehousePda()" class="mt-5 h-14 w-full rounded-md bg-sky-600 text-white text-base font-bold shadow-md active:bg-sky-700">'+tr('登录')+'</button>';
+    h+='<div class="mt-3 flex items-center justify-between text-xs">';
+    h+='<label class="flex items-center gap-1.5 text-slate-600"><input type="checkbox" checked class="w-4 h-4 rounded border-slate-300"><span>'+tr('记住密码')+'</span></label>';
+    h+='<label class="flex items-center gap-1.5 text-slate-600"><input type="checkbox" class="w-4 h-4 rounded border-slate-300"><span>'+tr('自动登录')+'</span></label>';
+    h+='</div>';
+    h+='<button type="button" onclick="loginWarehousePda()" class="mt-5 h-14 w-full rounded-md bg-sky-600 text-white text-base font-bold shadow-md active:bg-sky-700">'+tr('登录')+' · '+tr('仓储操作台')+'</button>';
     h+='</section>';
-    /* 语言 */
-    h+='<section class="mt-3 bg-white rounded-md border border-slate-200 p-4 shadow-sm">';
+    /* 语言切换（保留功能） */
+    h+='<section class="mt-3 bg-white rounded-xl shadow-lg p-4">';
     h+='<div class="text-xs font-bold text-slate-700 mb-3">'+tr('语言切换')+'</div><div class="grid grid-cols-2 gap-2">';
     [['zh','中文'],['en','English'],['fr','Français'],['pt','Português']].forEach(function(lang){
         h+='<button type="button" onclick="selectLanguageOption(\''+lang[0]+'\');refreshWarehousePdaPrototype()" class="h-10 rounded-md border-2 text-xs font-bold '+(_currentLang===lang[0]?'border-sky-500 bg-sky-50 text-sky-700':'border-slate-200 text-slate-600 bg-white')+'">'+lang[1]+'</button>';
     });
     h+='</div></section>';
-    h+='<div class="mt-3 mb-6 text-center text-[10px] text-slate-400 font-mono">v2.2.8 · YY-Terminal · '+tr('扁平工业风')+'</div>';
+    h+='<div class="mt-3 mb-6 text-center text-[10px] text-slate-500 font-mono">v2.2.0 · HLH-PDA</div>';
     h+='</div></div>';
     return h;
 }

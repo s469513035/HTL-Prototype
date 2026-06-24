@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -9183,41 +9183,41 @@ function generateWarehouseHeadlessInboundPage(id){
 }
 
 function warehousePdaTaskItems(){
-    const domesticMenu=menuData.find(function(item){return item.id==='wh-domestic';});
-    const descriptions={
-        'wh-in-one':'扫码收货、称重、长宽高录入',
-        'wh-in-multi':'多件尺寸维护、子单收货、托盘绑定',
-        'wh-headless':'无头件登记、拍照上传',
-        'wh-transfer-in':'调拨到仓扫码确认入库',
-        'wh-transfer-out':'调拨离仓扫码确认出库',
-        'wh-cargo-search':'现场查货、定位货区和托盘',
-        'wh-out-scan':'出库扫描和子单出库复核',
-        'wh-replenish-drop':'补货、落货确认',
-        'wh-air-bag':'空运装袋封袋和袋号扫描',
-        'pda-waybill-query':'移动端运单查询和详情查看',
-        'pda-work-order':'蓝鲸风格工单处理、SLA和流转跟进'
-    };
-    const hiddenForPda={'wh-no-pre-in':true,'wh-issue':true,'wh-transfer-fee':true,'wh-pack-rule':true,'wh-scan-out':true,'wh-pallet-mgmt':true,'wh-preload':true,'wh-air-sort':true,'wh-air-pack':true,'wh-air-arrival-scan':true,'wh-air-sort-scan':true,'wh-air-checkin-sort-scan':true,'wh-air-checkout-scan':true,'wh-loading-list':true,'wh-parcel-out':true};
-    const items=[];
-    function collect(children){
-        (children||[]).forEach(function(child){
-            if(child.children){
-                collect(child.children);
-                return;
-            }
-            if(child.page==='wh-domestic'&&child.tab&&!hiddenForPda[child.tab]){
-                items.push([child.tab,child.label,descriptions[child.tab]||'国内仓库现场作业入口']);
-            }
-        });
-    }
-    collect(domesticMenu&&domesticMenu.children);
-    items.unshift(['pda-waybill-query','运单查询',descriptions['pda-waybill-query']]);
-    items.push(['pda-air-checkin','空运签入','空运扫码签入、尺寸录入和拍照']);
-    items.push(['pda-air-bag-sort','空运签入分拣装袋管理','空运袋号/单号扫码、尺寸录入和拍照装袋']);
-    items.push(['pda-air-out-scan','空运出库扫描','空运袋号扫码出库、备注和拍照']);
-    items.push(['pda-work-order','工单管理',descriptions['pda-work-order']]);
-    items.push(['pda-work-order-register','工单登记','工单单号扫码、客户和类型登记、上传图片']);
-    return items;
+    /* 18 PDA 业务 + 分类，按用户确认重设计（基线：pda端-移动框架.html 精简版 + 操作查验）*/
+    return [
+        ['pda-in-no-order','无单入库','无运单货物先入仓登记，后补单','in'],
+        ['pda-in-manual','手动入库','手动录入运单号扫码入仓','in'],
+        ['pda-receive-check','收货复核','扫码+尺寸/重量复核','in'],
+        ['pda-open-check','开箱验货','拆箱核对内件、拍照存证','in'],
+        ['pda-pallet-on','仓库上托','货上托盘扫码绑定','pallet'],
+        ['pda-pallet-adjust','调整托盘','调整托盘明细、下托换托','pallet'],
+        ['pda-find-scan','找货扫描','按指令找货定位','inside'],
+        ['pda-inventory','库内盘点','PDA 在库盘点','inside'],
+        ['pda-replenish','补货','已订订单补货','inside'],
+        ['pda-drop','落货','落货分拣到具体区位','inside'],
+        ['pda-ship-check','出货复核','扫码+尺寸/重量复核','out'],
+        ['pda-express-bind','快递绑定','快递单号扫码绑定运单','out'],
+        ['pda-load-scan','装柜扫描','装柜过程逐件扫描','out'],
+        ['pda-load-finish','装柜完成','关柜确认与封条','out'],
+        ['pda-transfer-out','调拨出库','跨仓发出调拨','transfer'],
+        ['pda-transfer-in','调拨入库','跨仓接收调拨','transfer'],
+        ['pda-customs-check','操作查验','海关查验配合、拍照存证','other'],
+        ['pda-waybill-query','运单查询','扫单号查运单详情','other']
+    ];
+}
+
+var _warehousePdaCategory='in';
+var PDA_CATEGORIES=[
+    {key:'in',label:'入库',accent:'bg-sky-500'},
+    {key:'pallet',label:'上托',accent:'bg-amber-500'},
+    {key:'inside',label:'库内',accent:'bg-orange-500'},
+    {key:'out',label:'出库',accent:'bg-emerald-500'},
+    {key:'transfer',label:'调拨',accent:'bg-violet-500'},
+    {key:'other',label:'查验·查询',accent:'bg-slate-500'}
+];
+function selectPdaCategory(key){
+    _warehousePdaCategory=key||'in';
+    refreshWarehousePdaPrototype();
 }
 
 function refreshWarehousePdaPrototype(){
@@ -9271,160 +9271,278 @@ function warehousePdaOperationConfigs(){
     const customers=['东莞市鑫海物流','上海锦程国际贸易','广州远航贸易'];
     const staff=['李仓管','王海波','陈志远'];
     const transport=['空运','海运','卡航','快递'];
+    const containers=['CNTR-20GP-001','CNTR-40HQ-002','CNTR-40GP-003'];
+    /* 新 18 PDA 业务配置 */
     return {
-        'pda-waybill-query':{
-            title:'运单查询',subtitle:'移动端查询运单基础信息和查看详情',
-            records:[pdaListRecord('WB-20260613001','已入仓',['物流单号：SF10086523','客户代码：CUS-001','销售产品：西非海运普货','件数：8']),pdaListRecord('WB-20260613002','待出库',['物流单号：YT98876543','客户代码：CUS-002','销售产品：空运敏感货','件数：3'])],
-            primary:'查看详情',secondary:['查询数据']
+        /* 入库 4 项 */
+        'pda-in-no-order':{
+            title:'无单入库',subtitle:'无运单货物先入仓登记，后补单',scanLabel:'物流单号',
+            sections:[{title:'登记信息',fields:[
+                {label:'物流单号',type:'scan',value:'JD30088991'},
+                {label:'到货仓库',type:'select',options:wh,required:true},
+                {label:'货区',type:'select',options:zones,required:true},
+                {label:'入仓件数',type:'number',value:'3',required:true},
+                {label:'重量(KG)',type:'number',value:'15.5'},
+                {label:'备注说明',type:'textarea',value:'外箱无客户唛头，待补客户信息'}
+            ]}],
+            photos:true,photoLimit:5,
+            records:[pdaListRecord('NS-20260613001','待补单',['物流单号：JD30088991','件数：3','照片：3张'])],
+            primary:'保存登记',secondary:['继续扫码']
         },
-        'wh-in-one':{
-            title:'入仓操作（一票一件）',subtitle:'单票单件移动收货，支持扫码、称重和尺寸录入',scanLabel:'运单号/物流单号',
+        'pda-in-manual':{
+            title:'手动入库',subtitle:'手动录入运单号扫码入仓',scanLabel:'运单号/物流单号',
             sections:[
-                {title:'收货信息',fields:[{label:'运单号',type:'scan',value:'WB-20260613001',required:true},{label:'到货仓库',type:'select',options:wh,required:true},{label:'到货货区',type:'select',options:zones,required:true},{label:'到货时间',type:'datetime-local',value:'2026-06-13T14:30',required:true},{label:'运输方式',type:'select',options:transport,required:true},{label:'托盘号',value:'TP-YT-001',required:true}]},
-                {title:'货物信息',fields:[{label:'品名',value:'服装配件',required:true,placeholder:'输入品名信息带出大类'},{label:'品名大类',value:'普货'},{label:'长(CM)',type:'number',value:'48',required:true},{label:'宽(CM)',type:'number',value:'36',required:true},{label:'高(CM)',type:'number',value:'30',required:true},{label:'重量(KG)',type:'number',value:'12.5',required:true}]}
+                {title:'收货信息',fields:[
+                    {label:'运单号',type:'scan',value:'WB-20260613001',required:true},
+                    {label:'到货仓库',type:'select',options:wh,required:true},
+                    {label:'到货货区',type:'select',options:zones,required:true},
+                    {label:'到货时间',type:'datetime-local',value:'2026-06-13T14:30',required:true},
+                    {label:'运输方式',type:'select',options:transport,required:true}
+                ]},
+                {title:'货物信息',fields:[
+                    {label:'品名',value:'服装配件',required:true,placeholder:'输入品名信息带出大类'},
+                    {label:'品名大类',value:'普货'},
+                    {label:'长(CM)',type:'number',value:'48',required:true},
+                    {label:'宽(CM)',type:'number',value:'36',required:true},
+                    {label:'高(CM)',type:'number',value:'30',required:true},
+                    {label:'重量(KG)',type:'number',value:'12.5',required:true}
+                ]}
             ],
-            servicePanel:true,primary:'保存入仓',secondary:['打印入仓单'],sameRowActions:true
+            primary:'保存入仓',secondary:['打印入仓单','继续扫码']
         },
-        'wh-in-multi':{
-            title:'入仓操作（一票多件）',subtitle:'多件货物逐件收货，支持同步生成运单和货物明细复核',scanLabel:'运单号/物流单号',
-            sections:[
-                {title:'基础信息',fields:[{label:'运单号',type:'scan',value:'WB-20260613008',required:true},{label:'勾选同步生成运单',type:'checkbox',checked:true},{label:'到货仓库',type:'select',options:wh,required:true},{label:'到货时间',type:'datetime-local',value:'2026-06-13T15:00',required:true},{label:'运输方式',type:'select',options:transport,required:true}]},
-                {title:'货物明细',fields:[{label:'品名',value:'手机配件',required:true,placeholder:'输入品名信息带出大类'},{label:'品名大类',value:'带电产品'},{label:'长(CM)',type:'number',value:'55',required:true},{label:'宽(CM)',type:'number',value:'42',required:true},{label:'高(CM)',type:'number',value:'38',required:true},{label:'重量(KG)',type:'number',value:'18.4',required:true},{label:'附加服务',type:'checkbox',checked:true}]}
+        'pda-receive-check':{
+            title:'收货复核',subtitle:'扫码+尺寸/重量复核，确保入库数据准确',scanLabel:'运单号/物流单号',
+            sections:[{title:'复核信息',fields:[
+                {label:'运单号',type:'scan',value:'WB-20260613008',required:true},
+                {label:'实测件数',type:'number',value:'8',required:true},
+                {label:'实测长(CM)',type:'number',value:'48',required:true},
+                {label:'实测宽(CM)',type:'number',value:'36',required:true},
+                {label:'实测高(CM)',type:'number',value:'30',required:true},
+                {label:'实测重量(KG)',type:'number',value:'12.5',required:true},
+                {label:'差异说明',type:'textarea',placeholder:'如有差异请说明'}
+            ]}],
+            records:[
+                pdaListRecord('WB-20260613008','已复核',['原始：8件 / 12.5KG','实测：8件 / 12.5KG','差异：无']),
+                pdaListRecord('WB-20260613009','有差异',['原始：5件 / 8.0KG','实测：5件 / 9.2KG','超重 1.2KG'])
             ],
-            servicePanel:true,
-            records:[pdaListRecord('WB-20260613008','已收货',['快递单号：SF10020001','件数：3','尺寸：55*42*38 CM','重量：18.4 KG']),pdaListRecord('WB-20260613008','待收货',['快递单号：SF10020002','件数：2','等待扫码复核'])],
-            recordsTitle:'收货明细',
-            primary:'确认收货'
+            primary:'确认复核',secondary:['标记差异']
         },
-        'wh-headless':{
-            title:'无头件',subtitle:'现场登记无法识别订单的到货，保留图片和仓库位置',scanLabel:'物流单号',
-            sections:[{title:'登记信息',fields:[{label:'物流单号',type:'scan',value:'JD30088991'},{label:'到货仓库',type:'select',options:wh,required:true},{label:'货区',type:'select',options:zones,required:true},{label:'入仓件数',type:'number',value:'3',required:true},{label:'备注说明',type:'textarea',value:'外箱无客户唛头，等待客户认领'}]}],
-            photos:true,photoLimit:5,primary:'保存'
+        'pda-open-check':{
+            title:'开箱验货',subtitle:'拆箱核对内件、拍照存证',scanLabel:'运单号/箱号',
+            sections:[{title:'验货信息',fields:[
+                {label:'运单号',type:'scan',value:'WB-20260613011',required:true},
+                {label:'验货件数',type:'number',value:'1',required:true},
+                {label:'内件品名',value:'手机配件',required:true},
+                {label:'实际数量',type:'number',value:'200'},
+                {label:'是否相符',type:'select',options:['相符','不符'],required:true},
+                {label:'问题描述',type:'textarea',placeholder:'不符时填写'}
+            ]}],
+            photos:true,photoLimit:8,
+            records:[pdaListRecord('WB-20260613011','已验货',['箱内：200件 手机配件','照片：4张'])],
+            primary:'保存验货',secondary:['报异常']
         },
-        'wh-no-pre-in':{
-            title:'无头件认领',subtitle:'查看无头件图片并认领客户，生成预录单',scanLabel:'无头单号/物流单号',
-            sections:[{title:'认领信息',fields:[{label:'所属客户',type:'select',options:customers,required:true},{label:'所属业务员',type:'select',options:staff,required:true},{label:'品名',value:'鞋材',required:true},{label:'入库件数',type:'number',value:'3',required:true}]}],
-            photos:true,
-            records:[pdaListRecord('HT-20260613001','待认领',['到货仓库：广州南沙仓','物流单号：JD30088991','图片：3张']),pdaListRecord('HT-20260612005','已生成预录单',['客户：东莞市鑫海物流','品名：服装配件'])],
-            primary:'生成预录单',secondary:['上传图片','认领']
-        },
-        'wh-transfer-in':{
-            title:'调拨入库',subtitle:'按调拨单或按票扫码确认入库'
-        },
-        'wh-transfer-out':{
-            title:'调拨出库',subtitle:'扫描运单形成调拨出库记录'
-        },
-        'wh-transfer-fee':{
-            title:'调拨费用查询',subtitle:'移动端查询调拨费用和审核状态',scanLabel:'调拨单号/费用单号',
-            records:[pdaListRecord('TF-20260613001','待审核',['调拨单号：TR-20260613001','费用名称：跨仓调拨费','金额：CNY 268.00']),pdaListRecord('TF-20260612003','已审核',['费用名称：装卸费','金额：CNY 80.00'])],
-            primary:'审核费用',secondary:['查询']
-        },
-        'wh-scan-out':{
-            title:'扫描出库',subtitle:'按运单、托盘或装箱单连续扫描出库',scanLabel:'运单号/托盘号/装箱单号',
-            sections:[{title:'扫描信息',fields:[{label:'扫描单号',type:'scan',value:'WB-20260613009',required:true},{label:'出库仓库',type:'select',options:wh,required:true},{label:'出库口',type:'select',options:['1号口','2号口','空运口','海运口'],required:true},{label:'扫描件数',type:'number',value:'1',required:true}]}],
-            records:[pdaListRecord('SO-20260613001','扫描中',['已扫：18件','待扫：2件','出库口：1号口'])],
-            primary:'确认出库',secondary:['继续扫码']
-        },
-        'wh-out-scan':{
-            title:'出库扫描',subtitle:'按运单号或客户单号查询后连续扫描子单出库',scanLabel:'运单号/客户单号',
-            records:[pdaListRecord('WB-20260613001','待出库',['子单：SUB-20260613001-01','是否出库：否']),pdaListRecord('WB-20260613001','已出库',['子单：SUB-20260613001-02','是否出库：是'])],
-            primary:'确认出库'
-        },
-        'wh-pallet-mgmt':{
-            title:'上托管理',subtitle:'绑定托盘、货区和运单，复核件数重量',scanLabel:'托盘号/运单号',
-            sections:[{title:'上托信息',fields:[{label:'托盘号',type:'scan',value:'PLT-GZ-018',required:true},{label:'到货仓库',type:'select',options:wh,required:true},{label:'货区',type:'select',options:zones,required:true},{label:'运单号',value:'WB-20260613011',required:true},{label:'件数',type:'number',value:'8',required:true},{label:'重量(KG)',type:'number',value:'96.2'}]}],
+        /* 上托 2 项 */
+        'pda-pallet-on':{
+            title:'仓库上托',subtitle:'货上托盘扫码绑定，复核件数重量',scanLabel:'托盘号/运单号',
+            sections:[{title:'上托信息',fields:[
+                {label:'托盘号',type:'scan',value:'PLT-GZ-018',required:true},
+                {label:'到货仓库',type:'select',options:wh,required:true},
+                {label:'货区',type:'select',options:zones,required:true},
+                {label:'运单号',value:'WB-20260613011',required:true},
+                {label:'件数',type:'number',value:'8',required:true},
+                {label:'重量(KG)',type:'number',value:'96.2'}
+            ]}],
             records:[pdaListRecord('PLT-GZ-018','上托中',['已绑定运单：3票','件数：8','货区：A区-01'])],
             primary:'完成上托',secondary:['解绑','打印托盘标']
         },
-        'wh-pack-rule':{
-            title:'装箱单规则管理',subtitle:'移动端查看和启停装箱单规则',scanLabel:'规则编号/目的港',
-            records:[pdaListRecord('RULE-001','启用',['适用产品：空运普货','目的港：LOS','规则：按航班+目的港合并']),pdaListRecord('RULE-002','停用',['适用产品：带电产品','规则：单独装箱'])],
-            sections:[{title:'规则快速维护',fields:[{label:'规则名称',value:'空运目的港合并',required:true},{label:'目的港',value:'LOS',required:true},{label:'启用状态',type:'select',options:['启用','停用'],required:true}]}],
-            primary:'保存规则',secondary:['启停规则']
-        },
-        'wh-cargo-search':{
-            title:'查货管理',subtitle:'扫码定位货物所在仓库、货区、托盘和状态',scanLabel:'运单号/物流单号/托盘号',
-            records:[pdaListRecord('WB-20260613012','在库',['仓库：广州南沙仓','货区：A区-01','托盘：PLT-GZ-018']),pdaListRecord('WB-20260612006','已出库',['出库时间：2026-06-12 18:22','操作人：李仓管'])],
-            primary:'查询'
-        },
-        'wh-preload':{
-            title:'预载单管理',subtitle:'移动端查看预载计划并执行扫描复核',scanLabel:'预载单号/运单号',
-            records:[pdaListRecord('PRE-20260613001','待复核',['航班号：ET605','目的机场：ADD','件数：46']),pdaListRecord('PRE-20260613002','复核中',['航班号：TK073','已扫：28/35'])],
-            primary:'开始复核',secondary:['生成装箱单']
-        },
-        'wh-replenish-drop':{
-            title:'补货落货管理',subtitle:'现场确认补货、落货操作',scanLabel:'操作单号/运单号',
-            sections:[{title:'操作信息',fields:[{label:'操作类型',type:'select',options:['补货','落货'],required:true},{label:'预载单号',type:'scan',value:'PRE-20260613001',required:true},{label:'件数',type:'number',value:'2',required:true},{label:'原因',type:'textarea',value:'客户要求调整航班'}]}],
-            records:[pdaListRecord('RD-20260613001','待确认',['操作类型：落货','件数：2','责任人：陈志远'])],
-            primary:'确认处理'
-        },
-        'wh-issue':{
-            title:'问题件管理',subtitle:'登记库内/库外问题件并流转处理人',scanLabel:'运单号/物流单号',
-            sections:[{title:'问题登记',fields:[{label:'问题件类型',type:'select',options:['库内问题件','库外问题件'],required:true},{label:'运单号',type:'scan',value:'WB-20260613015',required:true},{label:'所属仓库',type:'select',options:wh,required:true},{label:'当前处理人',type:'select',options:staff,required:true},{label:'问题描述',type:'textarea',value:'外箱破损，需要复核货损情况',required:true}]}],
-            photos:true,
-            records:[pdaListRecord('ISS-20260613001','处理中',['类型：库内问题件','处理人：陈志远','图片：2张'])],
-            primary:'创建工单',secondary:['保存问题件','上传图片']
-        },
-        'wh-air-sort':{
-            title:'空运分拣管理',subtitle:'按航班、目的机场和分拣区域执行空运分拣',scanLabel:'运单号/航班号',
-            sections:[{title:'分拣信息',fields:[{label:'航班号',value:'ET605',required:true},{label:'目的机场',value:'ADD',required:true},{label:'分拣区域',type:'select',options:['空运A区','空运B区','异常区'],required:true},{label:'件数',type:'number',value:'6',required:true},{label:'重量(KG)',type:'number',value:'72.4'}]}],
-            records:[pdaListRecord('SORT-20260613001','分拣中',['航班：ET605','目的机场：ADD','已分拣：32件'])],
-            primary:'确认分拣',secondary:['继续扫码']
-        },
-        'wh-air-bag':{
-            title:'空运装袋管理',subtitle:'扫描袋号、封袋并记录袋重',scanLabel:'袋号/分拣单号',
-            sections:[{title:'装袋信息',fields:[{label:'袋号',type:'scan',value:'BAG-ET605-001',required:true},{label:'航班号',value:'ET605',required:true},{label:'目的机场',value:'ADD',required:true},{label:'袋内件数',type:'number',value:'18',required:true},{label:'袋重(KG)',type:'number',value:'215.6',required:true}]}],
-            records:[pdaListRecord('BAG-ET605-001','待封袋',['袋内件数：18','袋重：215.6 KG'])],
-            primary:'新增装袋',secondary:['扫码','确认封袋','打印袋标']
-        },
-        'wh-air-pack':{
-            title:'空运装箱单管理',subtitle:'按袋号生成和确认空运装箱单',scanLabel:'装箱单号/袋号',
-            records:[pdaListRecord('APL-20260613001','待生成',['袋号：BAG-ET605-001','航班：ET605','件数：18']),pdaListRecord('APL-20260612004','已确认',['目的机场：ADD','体积：2.18 CBM'])],
-            sections:[{title:'装箱单信息',fields:[{label:'装箱单号',value:'APL-20260613001',required:true},{label:'航班号',value:'ET605',required:true},{label:'目的机场',value:'ADD',required:true},{label:'件数',type:'number',value:'18',required:true},{label:'重量(KG)',type:'number',value:'215.6'}]}],
-            primary:'生成装箱单',secondary:['确认装箱单']
-        },
-        'pda-work-order-register':{
-            title:'工单登记',subtitle:'扫码单号、登记客户和工单类型并上传图片',scanLabel:'单号',
-            sections:[{title:'工单信息',fields:[
-                {label:'单号',type:'scan',value:'WB-20260613001',required:true},
-                {label:'所属客户',type:'select',options:customers,required:true},
-                {label:'工单类型',type:'select',options:['异常处理','费用争议','资料补充','客户咨询'],required:true},
-                {label:'备注',type:'textarea',placeholder:'请输入工单备注内容'}
+        'pda-pallet-adjust':{
+            title:'调整托盘',subtitle:'下托、换托与托盘明细调整',scanLabel:'托盘号',
+            sections:[{title:'调整信息',fields:[
+                {label:'操作类型',type:'select',options:['下托','换托','调整明细'],required:true},
+                {label:'源托盘号',type:'scan',value:'PLT-GZ-018',required:true},
+                {label:'目标托盘号',type:'scan',value:''},
+                {label:'调整件数',type:'number',value:'2'},
+                {label:'原因',type:'textarea',placeholder:'请说明调整原因'}
             ]}],
-            photos:true,photoLimit:5,primary:'保存'
+            records:[pdaListRecord('PLT-GZ-018','可调整',['绑定运单：3票','件数：8','货区：A区-01'])],
+            primary:'确认调整'
         },
-        'pda-air-checkin':{
-            title:'空运签入',subtitle:'扫码单号、录入尺寸并拍照签入',scanLabel:'单号',
-            sections:[{title:'签入信息',fields:[
-                {label:'单号',type:'scan',value:'WB-AIR-260613001',required:true},
-                {label:'长(CM)',type:'number',value:'48',required:true},
-                {label:'宽(CM)',type:'number',value:'36',required:true},
-                {label:'高(CM)',type:'number',value:'30',required:true}
+        /* 库内 4 项 */
+        'pda-find-scan':{
+            title:'找货扫描',subtitle:'按指令找货定位货区、托盘',scanLabel:'运单号/物流单号',
+            sections:[{title:'查找信息',fields:[
+                {label:'运单号',type:'scan',value:'WB-20260613012',required:true},
+                {label:'指令单号',value:'PICK-20260613001'},
+                {label:'查找件数',type:'number',value:'8'},
+                {label:'已找件数',type:'number',value:'0'}
             ]}],
-            photos:true,photoLimit:5,primary:'保存'
+            records:[
+                pdaListRecord('WB-20260613012','已定位',['仓库：广州南沙仓','货区：A区-01','托盘：PLT-GZ-018']),
+                pdaListRecord('WB-20260612006','已找到',['货区：B区-重货','托盘：PLT-GZ-009'])
+            ],
+            primary:'确认找到',secondary:['报缺失']
         },
-        'pda-air-bag-sort':{
-            title:'空运签入分拣装袋管理',subtitle:'扫描袋号、单号，录入尺寸并拍照装袋',scanLabel:'袋号/单号',
-            sections:[{title:'装袋信息',fields:[
-                {label:'袋号',type:'scan',value:'BAG-ET605-001',required:true},
-                {label:'单号',type:'scan',value:'WB-AIR-260613001',required:true},
-                {label:'长(CM)',type:'number',value:'48',required:true},
-                {label:'宽(CM)',type:'number',value:'36',required:true},
-                {label:'高(CM)',type:'number',value:'30',required:true}
+        'pda-inventory':{
+            title:'库内盘点',subtitle:'PDA 在库盘点扫码、核对数量',scanLabel:'货区/托盘号',
+            sections:[{title:'盘点信息',fields:[
+                {label:'盘点单号',value:'INV-20260614001',required:true},
+                {label:'盘点货区',type:'select',options:zones,required:true},
+                {label:'托盘号',type:'scan',value:'PLT-GZ-018'},
+                {label:'账面件数',type:'number',value:'8'},
+                {label:'实盘件数',type:'number',value:'8',required:true},
+                {label:'差异原因',type:'textarea',placeholder:'有差异时填写'}
             ]}],
-            photos:true,photoLimit:5,primary:'保存'
+            records:[
+                pdaListRecord('INV-20260614001','盘点中',['进度：A区 12/15','差异：0']),
+                pdaListRecord('INV-20260613002','已完成',['共盘点 48 票','差异：1 票'])
+            ],
+            primary:'保存盘点',secondary:['继续盘下一票']
         },
-        'pda-air-out-scan':{
-            title:'空运出库扫描',subtitle:'扫描袋号、填写备注并拍照出库',scanLabel:'袋号',
-            sections:[{title:'出库信息',fields:[
-                {label:'袋号',type:'scan',value:'BAG-ET605-001',required:true},
-                {label:'备注',type:'textarea',placeholder:'请输入出库备注内容'}
+        'pda-replenish':{
+            title:'补货',subtitle:'已订订单补货扫码确认',scanLabel:'补货单号/运单号',
+            sections:[{title:'补货信息',fields:[
+                {label:'补货单号',type:'scan',value:'RP-20260614001',required:true},
+                {label:'运单号',value:'WB-20260613011'},
+                {label:'补货件数',type:'number',value:'2',required:true},
+                {label:'目标货区',type:'select',options:zones,required:true},
+                {label:'目标托盘号',type:'scan',value:'PLT-GZ-018'},
+                {label:'补货原因',type:'textarea',value:'客户追加订单'}
             ]}],
-            photos:true,photoLimit:5,primary:'保存'
+            records:[pdaListRecord('RP-20260614001','待补货',['运单：WB-20260613011','补货：2 件'])],
+            primary:'确认补货'
+        },
+        'pda-drop':{
+            title:'落货',subtitle:'落货分拣到具体区位',scanLabel:'运单号/托盘号',
+            sections:[{title:'落货信息',fields:[
+                {label:'运单号',type:'scan',value:'WB-20260614001',required:true},
+                {label:'落货件数',type:'number',value:'4',required:true},
+                {label:'目标货区',type:'select',options:zones,required:true},
+                {label:'目标托盘号',type:'scan',value:'PLT-GZ-022'},
+                {label:'落货原因',type:'select',options:['客户要求调整航班','超期未提货','换包装'],required:true},
+                {label:'备注',type:'textarea'}
+            ]}],
+            records:[pdaListRecord('DR-20260614001','待落货',['运单：WB-20260614001','原因：客户要求调整航班'])],
+            primary:'确认落货'
+        },
+        /* 出库 4 项 */
+        'pda-ship-check':{
+            title:'出货复核',subtitle:'出库前扫码 + 尺寸/重量复核',scanLabel:'运单号/物流单号',
+            sections:[{title:'复核信息',fields:[
+                {label:'运单号',type:'scan',value:'WB-20260613001',required:true},
+                {label:'出库口',type:'select',options:['1号口','2号口','空运口','海运口'],required:true},
+                {label:'实测件数',type:'number',value:'8',required:true},
+                {label:'实测重量(KG)',type:'number',value:'96.2',required:true},
+                {label:'差异说明',type:'textarea',placeholder:'有差异时填写'}
+            ]}],
+            records:[
+                pdaListRecord('WB-20260613001','已复核',['账面：8件 96.0KG','实测：8件 96.2KG','差异：+0.2KG']),
+                pdaListRecord('WB-20260613008','待复核',['账面：3件 18.4KG'])
+            ],
+            primary:'确认出货',secondary:['标记差异']
+        },
+        'pda-express-bind':{
+            title:'快递绑定',subtitle:'快递单号扫码绑定运单',scanLabel:'运单号/快递单号',
+            sections:[{title:'绑定信息',fields:[
+                {label:'运单号',type:'scan',value:'WB-20260613001',required:true},
+                {label:'快递公司',type:'select',options:['顺丰速运','京东物流','跨越速运','德邦物流','客户自送'],required:true},
+                {label:'快递单号',type:'scan',value:'SF10086523',required:true},
+                {label:'件数',type:'number',value:'1',required:true}
+            ]}],
+            records:[
+                pdaListRecord('WB-20260613001','已绑定',['快递：顺丰 SF10086523']),
+                pdaListRecord('WB-20260613008','已绑定',['快递：京东 JD55620017'])
+            ],
+            primary:'确认绑定',secondary:['解绑']
+        },
+        'pda-load-scan':{
+            title:'装柜扫描',subtitle:'装柜过程逐件扫描',scanLabel:'运单号/箱号',
+            sections:[{title:'装柜信息',fields:[
+                {label:'柜号',type:'select',options:containers,required:true},
+                {label:'扫描单号',type:'scan',value:'WB-20260613001',required:true},
+                {label:'本次扫描件数',type:'number',value:'1',required:true},
+                {label:'装柜口',type:'select',options:['1号口','2号口','3号口'],required:true}
+            ]}],
+            records:[
+                pdaListRecord('CNTR-40HQ-002','装柜中',['已扫：18/35 件','下一票：WB-20260613011']),
+                pdaListRecord('CNTR-20GP-001','装柜中',['已扫：8/20 件'])
+            ],
+            primary:'确认装柜',secondary:['继续扫码']
+        },
+        'pda-load-finish':{
+            title:'装柜完成',subtitle:'关柜确认与封条扫码',scanLabel:'柜号/封条号',
+            sections:[{title:'关柜信息',fields:[
+                {label:'柜号',type:'select',options:containers,required:true},
+                {label:'封条号',type:'scan',value:'SEAL-20260614-001',required:true},
+                {label:'装柜总件数',type:'number',value:'35'},
+                {label:'装柜总重量(KG)',type:'number',value:'380.5'},
+                {label:'装柜总体积(CBM)',type:'number',value:'52.40'},
+                {label:'关柜照片说明',type:'textarea',placeholder:'装柜情况说明'}
+            ]}],
+            photos:true,photoLimit:5,
+            records:[pdaListRecord('CNTR-40HQ-002','待关柜',['已装：35/35 件','封条：未扫'])],
+            primary:'完成关柜',secondary:['打印关柜单']
+        },
+        /* 调拨 2 项 */
+        'pda-transfer-out':{
+            title:'调拨出库',subtitle:'跨仓发出调拨扫码确认',scanLabel:'调拨单号/运单号',
+            sections:[{title:'调拨信息',fields:[
+                {label:'调拨单号',type:'scan',value:'TR-20260613001',required:true},
+                {label:'源仓库',type:'select',options:wh,required:true},
+                {label:'目标仓库',type:'select',options:wh,required:true},
+                {label:'承运车辆',value:'粤B12345',required:true},
+                {label:'本次扫描件数',type:'number',value:'1'}
+            ]}],
+            records:[
+                pdaListRecord('TR-20260613001','扫码中',['进度：8/42 件','目标：广州南沙仓']),
+                pdaListRecord('TR-20260612005','已发车',['总件数：26','车辆：粤A98765'])
+            ],
+            primary:'确认出库',secondary:['继续扫码','结束装车']
+        },
+        'pda-transfer-in':{
+            title:'调拨入库',subtitle:'跨仓接收调拨扫码入库',scanLabel:'调拨单号/运单号',
+            sections:[{title:'入库信息',fields:[
+                {label:'调拨单号',type:'scan',value:'TR-20260613001',required:true},
+                {label:'到货仓库',type:'select',options:wh,required:true},
+                {label:'到货货区',type:'select',options:zones,required:true},
+                {label:'实际到货件数',type:'number',value:'42',required:true},
+                {label:'差异说明',type:'textarea',placeholder:'数量差异说明'}
+            ]}],
+            records:[
+                pdaListRecord('TR-20260613001','入库中',['账面：42 件','已扫：38 件']),
+                pdaListRecord('TR-20260612003','已完成',['总件数：26 / 26','无差异'])
+            ],
+            primary:'确认入库',secondary:['标记差异']
+        },
+        /* 查验·查询 2 项 */
+        'pda-customs-check':{
+            title:'操作查验',subtitle:'海关查验配合操作、拍照存证',scanLabel:'运单号/报关单号',
+            sections:[{title:'查验信息',fields:[
+                {label:'运单号',type:'scan',value:'WB-20260613001',required:true},
+                {label:'报关单号',value:'DEC-20260613-001',required:true},
+                {label:'查验类型',type:'select',options:['开箱查验','X光机查验','抽样查验'],required:true},
+                {label:'查验关员',value:'刘关员'},
+                {label:'查验件数',type:'number',value:'2',required:true},
+                {label:'查验结果',type:'select',options:['正常放行','需补单','扣货'],required:true},
+                {label:'问题描述',type:'textarea',placeholder:'扣货或异常时填写'}
+            ]}],
+            photos:true,photoLimit:8,
+            records:[
+                pdaListRecord('CC-20260613001','已查验',['类型：开箱查验','结果：正常放行','照片：6张']),
+                pdaListRecord('CC-20260612003','已查验',['类型：X光机查验','结果：补单后放行'])
+            ],
+            primary:'保存查验',secondary:['上报异常']
+        },
+        'pda-waybill-query':{
+            title:'运单查询',subtitle:'扫单号查运单详情、位置、状态',
+            records:[
+                pdaListRecord('WB-20260613001','已入仓',['物流单号：SF10086523','客户代码：CUS-001','销售产品：西非海运普货','件数：8 / 96.2 KG']),
+                pdaListRecord('WB-20260613002','待出库',['物流单号：YT98876543','客户代码：CUS-002','销售产品：空运敏感货','件数：3 / 12.5 KG']),
+                pdaListRecord('WB-20260613011','装柜中',['物流单号：JD30088991','所在：CNTR-40HQ-002','货区：A区-01'])
+            ],
+            primary:'查看详情',secondary:['继续查询']
         }
     };
 }
-
 function warehousePdaOperationConfig(taskId){
     const configs=warehousePdaOperationConfigs();
     const tasks=warehousePdaTaskItems();
@@ -9552,19 +9670,13 @@ function pdaBottomActions(config){
 }
 
 function pdaGroupedTasks(tasks){
-    const groups=[
-        {title:'查询',ids:['pda-waybill-query']},
-        {title:'收货',ids:['wh-in-one','wh-in-multi','wh-headless']},
-        {title:'在库管理',ids:['wh-cargo-search']},
-        {title:'出库',ids:['wh-out-scan','wh-air-bag']},
-        {title:'调拨',ids:['wh-transfer-out','wh-transfer-in','wh-replenish-drop']},
-        {title:'空运',ids:['pda-air-checkin','pda-air-bag-sort','pda-air-out-scan']},
-        {title:'工单',ids:['pda-work-order','pda-work-order-register']}
-    ];
-    return groups.map(function(group){
-        const items=group.ids.map(function(id){return tasks.find(function(item){return item[0]===id;});}).filter(Boolean);
-        return Object.assign({},group,{items:items});
-    }).filter(function(group){return group.items.length;});
+    /* 按 category 分组 - 用 task[3] 字段 */
+    return PDA_CATEGORIES.map(function(cat){
+        return {key:cat.key,title:cat.label,accent:cat.accent,items:tasks.filter(function(t){return t[3]===cat.key;})};
+    }).filter(function(g){return g.items.length;});
+}
+function pdaTasksInCurrentCategory(tasks){
+    return tasks.filter(function(t){return t[3]===_warehousePdaCategory;});
 }
 
 function pdaAppHeader(title){
@@ -9572,25 +9684,32 @@ function pdaAppHeader(title){
 }
 
 function pdaBottomNav(active){
-    const nav=[['workbench','工作台','▦'],['overview','今日总览','▱'],['profile','个人中心','◎']];
-    let h='<div class="grid grid-cols-3 border-t border-surface-200 bg-white text-xs">';
+    /* 扁平 PDA 风格底部 nav，只保留工作台/我的 2 项 */
+    const nav=[['workbench','工作台','▦'],['profile','我的','◎']];
+    let h='<div class="grid grid-cols-2 border-t-2 border-slate-700 bg-slate-800 text-xs">';
     nav.forEach(function(item){
         const on=item[0]===active;
-        h+='<button type="button" onclick="openWarehousePdaView(\''+item[0]+'\')" class="h-14 flex flex-col items-center justify-center gap-1 '+(on?'text-primary-600 font-semibold':'text-text-muted')+'"><span class="text-2xl leading-none">'+item[2]+'</span><span>'+tr(item[1])+'</span></button>';
+        h+='<button type="button" onclick="openWarehousePdaView(\''+item[0]+'\')" class="h-14 flex flex-col items-center justify-center gap-0.5 '+(on?'text-amber-400':'text-slate-300')+'"><span class="text-2xl leading-none">'+item[2]+'</span><span class="font-medium">'+tr(item[1])+'</span></button>';
     });
     h+='</div>';
     return h;
 }
 
 function generateWarehousePdaWorkbench(tasks){
-    let h=pdaAppHeader('首页');
-    h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-100">';
-    pdaGroupedTasks(tasks).forEach(function(group){
-        h+='<section class="bg-white rounded-2xl border border-surface-200 shadow-sm p-4 mb-3">';
-        h+='<div class="text-base font-semibold text-text-primary mb-4">'+tr(group.title)+'</div>';
-        h+='<div class="grid grid-cols-3 gap-3">'+group.items.map(pdaTaskCard).join('')+'</div>';
-        h+='</section>';
+    /* 顶部分类 tab 横滑 + 当前类卡片网格 */
+    let h=pdaAppHeader('工作台');
+    h+='<div class="bg-white border-b border-surface-200 px-2 py-2 flex gap-1 overflow-x-auto">';
+    PDA_CATEGORIES.forEach(function(cat){
+        const on=cat.key===_warehousePdaCategory;
+        const count=tasks.filter(function(t){return t[3]===cat.key;}).length;
+        h+='<button type="button" onclick="selectPdaCategory(\''+cat.key+'\')" class="flex-shrink-0 px-3 h-9 rounded-md text-xs font-bold '+(on?'bg-slate-800 text-white':'bg-surface-100 text-text-secondary')+'">'+tr(cat.label)+'<span class="ml-1 text-[10px] opacity-70">'+count+'</span></button>';
     });
+    h+='</div>';
+    const currentTasks=pdaTasksInCurrentCategory(tasks);
+    const currentCat=PDA_CATEGORIES.find(function(c){return c.key===_warehousePdaCategory;});
+    h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-100">';
+    h+='<div class="flex items-center gap-2 mb-3"><span class="inline-block w-1.5 h-4 rounded '+(currentCat?currentCat.accent:'bg-slate-500')+'"></span><span class="text-sm font-bold text-text-primary">'+tr(currentCat?currentCat.label:'')+'</span><span class="text-xs text-text-muted">'+currentTasks.length+' '+tr('项')+'</span></div>';
+    h+='<div class="grid grid-cols-2 gap-2">'+currentTasks.map(pdaTaskCard).join('')+'</div>';
     h+='</div>';
     h+=pdaBottomNav('workbench');
     return h;
@@ -9648,8 +9767,8 @@ function generateWarehousePdaProfile(){
 
 function generateWarehousePdaHome(tasks){
     if(!_warehousePdaLoggedIn||_warehousePdaView==='login')return generateWarehousePdaLoginScreen();
-    if(_warehousePdaView==='overview')return generateWarehousePdaOverview();
     if(_warehousePdaView==='profile')return generateWarehousePdaProfile();
+    /* overview 已合并入 workbench */
     return generateWarehousePdaWorkbench(tasks);
 }
 
@@ -10204,8 +10323,14 @@ function generateWarehousePdaPhone(tasks){
 
 function pdaTaskIcon(itemId){
     const map={
-        'pda-waybill-query':'⌕','wh-in-one':'▤','wh-in-multi':'▥','wh-headless':'◇','wh-no-pre-in':'▣',
-        'wh-transfer-in':'▣','wh-transfer-out':'▱','wh-scan-out':'⌁','wh-out-scan':'⌁','wh-pallet-mgmt':'▦',
+        'pda-in-no-order':'◈','pda-in-manual':'▤','pda-receive-check':'⊠','pda-open-check':'◇',
+        'pda-pallet-on':'▦','pda-pallet-adjust':'⇄',
+        'pda-find-scan':'⌕','pda-inventory':'☰','pda-replenish':'↺','pda-drop':'⤓',
+        'pda-ship-check':'⊞','pda-express-bind':'⌥','pda-load-scan':'⌁','pda-load-finish':'✓',
+        'pda-transfer-out':'⇲','pda-transfer-in':'⇱',
+        'pda-customs-check':'⚐','pda-waybill-query':'⌕',
+        'wh-in-one':'▤','wh-in-multi':'▥','wh-headless':'◇','wh-no-pre-in':'▣',
+        'wh-transfer-in':'⇱','wh-transfer-out':'⇲','wh-scan-out':'⌁','wh-out-scan':'⌁','wh-pallet-mgmt':'▦',
         'wh-pack-rule':'☰','wh-cargo-search':'⌕','wh-preload':'▧','wh-replenish-drop':'↔',
         'wh-issue':'!','wh-air-sort':'⇆','wh-air-bag':'▰','wh-air-pack':'▤','pda-work-order':'✓',
         'pda-air-checkin':'✈','pda-air-bag-sort':'▰','pda-air-out-scan':'⇲','pda-work-order-register':'✎'

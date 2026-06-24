@@ -1965,6 +1965,7 @@ const menuData=[
 {id:'cfg-product-name',label:'品名库管理',langKey:'cfg_product_name',page:'biz-cfg',tab:'cfg-product-name'},
 {id:'cfg-risk',label:'风控规则',langKey:'cfg_risk',page:'biz-cfg',tab:'cfg-risk'},
 {id:'cfg-i18n',label:'多语言配置',langKey:'cfg_i18n',page:'biz-cfg',tab:'cfg-i18n'},
+{id:'cfg-coding-rule',label:'编码规则管理',page:'biz-cfg',tab:'cfg-coding-rule'},
 {id:'fcl-provider-api',label:'服务商API配置',page:'biz-cfg',tab:'fcl-provider-api'}
 ]}
 ]},
@@ -3005,6 +3006,40 @@ addPrototypeTable('wh-sort-bag','分拣装袋管理','袋号|件数|尺寸|重�
     {label:'目的仓库',type:'select',field:'warehouse',options:['拉各斯仓','达喀尔仓','阿比让仓','洛美仓','杜阿拉仓']},
     {label:'装袋操作人',type:'text',field:'operator'},
     {label:'状态',type:'select',field:'status',options:['进行中','已完成','已打印']}
+]);
+
+addPrototypeTable('cfg-coding-rule','编码规则管理','规则编号|存储值|注释|前缀类型|前缀参数|后缀类型|后缀参数|生成规则|规则长度|忽略数字|操作',[],[
+    ['CK_NO','56','出库计划单号生成规则,使用默认生成类','fixed','CK','','','%p%n','5',''],
+    ['KDD_NO','61','快递单号生成规则,使用默认生成类','fixed','KDD','','','%p%n','5',''],
+    ['A_P_NO','52','海外仓配舱全包价编码生成规则,使用默认生成类','fixed','H','','','%p%n','5',''],
+    ['TEST_NO','1','测试编码生成规则,使用默认生成类','fixed','D','','','%p%n','5',''],
+    ['OPP_NO','3','比重优惠编号生成规则,使用默认生成类','fixed','PH','','','%p%n','4',''],
+    ['OW_NO','3','重量段编号生成规则,使用默认生成类','fixed','WT','','','%p%n','4',''],
+    ['OPA_NO','3','分区方案编号生成规则,使用默认生成类','fixed','PA','','','%p%n','4',''],
+    ['SUP_NO','1','杂费包编号生成规则,使用默认生成类','fixed','ZF','','','%p%n','4',''],
+    ['SP_NO','1','审批单号生成规则,使用默认生成类','fixed','SP','date','yyMM','%p%s%n','5',''],
+    ['GD_SP_NO','1','改单申请单号生成规则,使用默认生成类','fixed','A','date','yyMM','%p%s%n','5',''],
+    ['YW_OP_NO','1','业务员成本报价编码生成规则,使用默认生成类','fixed','A','','','%p%n','5',''],
+    ['XS_OP_NO','1','销售报价编码生成规则,使用默认生成类','fixed','B','','','%p%n','5',''],
+    ['GB_OP_NO','1','公布报价编码生成规则,使用默认生成类','fixed','C','','','%p%n','5',''],
+    ['VH_RG_NO','1','车辆登记号生成规则,使用默认生成类','date','MMdd','','','%p-%n','5',''],
+    ['PZ_OP_NO','1','凭证编号单号生成规则,使用默认生成类','','','date','yyMM','%s%n','6',''],
+    ['OPAA_NO','1','分区编号生成规则,使用默认生成类','fixed','PAA','','','%p%n','4',''],
+    ['TD_NO','1','海外卡派总单号生成规则,使用默认生成类','fixed','KP','date','yyMM','%p%s%n','5',''],
+    ['CU_NO','1','客户代码生成规则,使用默认生成类','fixed','TX','','','%p%n','5',''],
+    ['MW_NO','1','移仓单管理生成规则,使用默认生成类','fixed','YC','date','yyMM','%p%s%n','5',''],
+    ['ZD_SP_NO','1','制单申请单号生成规则,使用默认生成类','fixed','ZD','date','yyMM','%p%s%n','5',''],
+    ['YD_SP_NO','1','运单申请号生成规则,使用默认生成类','fixed','YD','date','yyMM','%p%s%n','5',''],
+    ['DL_OP_NO','2','代理报价编码生成规则,使用默认生成类','fixed','D','','','%p%n','5','']
+],[
+    {label:'规则编号',type:'text',field:'ruleNo'},
+    {label:'注释',type:'text',field:'remark'},
+    {label:'前缀类型',type:'select',field:'prefixType',options:['fixed','date']},
+    {label:'前缀参数',type:'text',field:'prefixParam'},
+    {label:'后缀类型',type:'select',field:'suffixType',options:['fixed','date']},
+    {label:'后缀参数',type:'text',field:'suffixParam'},
+    {label:'生成规则',type:'text',field:'genRule'},
+    {label:'规则长度',type:'text',field:'ruleLength'}
 ]);
 
 const FCL_QUERY_STATUS=['草稿','待审核','已审核','已订仓','已放仓','已装柜','已开船','已完成','异常'];
@@ -8236,6 +8271,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='outboundAdjust')click='openOutboundAdjustModal(\''+id+'\')';
     else if(action.key==='businessConfirm')click='openWaybillBusinessConfirmModal(\''+id+'\')';
     else if(action.key==='newSortScan')click='openSortBagRuleModal(\''+id+'\')';
+    else if(action.key==='editCodingRule')click='openCodingRuleEditModal(\''+id+'\')';
     else if(action.key==='genBill'&&id==='fcl-bill-entry')click='showToast(\''+esc(tr('账单生成成功'))+'\')';
     else click='openActionModal(\''+action.key+'\',\''+id+'\',-1)';
     const widthStyle=action.fixedWidth?'width:'+(action.width||'104px'):'min-width:'+(action.width||'96px');
@@ -8525,6 +8561,12 @@ function getToolbarActions(id){
             {key:'newSortScan',label:'新增分拣扫描',variant:'primary'},
             {key:'labelPrint',label:'打印袋标签'},
             {key:'export',label:'导出数据'}
+        ];
+    }
+    if(id==='cfg-coding-rule'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'editCodingRule',label:'编辑数据',variant:'primary'}
         ];
     }
     if(id==='wh-air-arrival-scan'){
@@ -13580,6 +13622,78 @@ function finishSortBag(){
     showToast(r.printLabel?(tr('已完成装袋并打印袋标签')+'：'+st.bagNo):(tr('已完成装袋')+'：'+st.bagNo));
     _sortBagState={id:st.id,rule:r,bagNo:nextSortBagNo(),items:[],scanInput:''};
     renderSortBagScanScreen();
+}
+
+/* ========== 编码规则管理 ========== */
+function openCodingRuleEditModal(id,rowIdx){
+    let idx=rowIdx;
+    if(idx===undefined||idx===null){
+        const sel=getSelectedRowIndices();
+        if(sel.length===0){showToast(tr('请先勾选一条编码规则'));return;}
+        if(sel.length>1){showToast(tr('请仅勾选一条编码规则'));return;}
+        idx=sel[0];
+    }
+    const row=(TC[id]&&TC[id].d[idx])||[];
+    const headers=(TC[id]&&TC[id].h)||[];
+    const get=function(name){const i=headers.indexOf(name);return i>=0?(row[i]||''):'';};
+    const ruleNo=get('规则编号');
+    const prefixType=get('前缀类型');
+    const prefixParam=get('前缀参数');
+    const suffixType=get('后缀类型');
+    const suffixParam=get('后缀参数');
+    const genRule=get('生成规则');
+    const ruleLength=get('规则长度');
+    const ignoreNum=get('忽略数字');
+    const typeOpts=[{v:'',l:'(空)'},{v:'fixed',l:'固定值（fixed）'},{v:'date',l:'日期（date）'}];
+    const resetOpts=[{v:'',l:'请选择重置标识'},{v:'day',l:'每天重置'},{v:'month',l:'每月重置'},{v:'year',l:'每年重置'},{v:'never',l:'不重置'}];
+    function selHtml(eid,opts,val){
+        let s='<select id="'+eid+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white">';
+        opts.forEach(function(o){s+='<option value="'+esc(o.v)+'"'+(val===o.v?' selected':'')+'>'+esc(tr(o.l))+'</option>';});
+        s+='</select>';
+        return s;
+    }
+    function inputHtml(eid,val,placeholder){
+        return '<input id="'+eid+'" type="text" value="'+esc(val||'')+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+esc(tr(placeholder||''))+'">';
+    }
+    function fieldHtml(label,inner){
+        return '<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr(label)+'</label>'+inner+'</div>';
+    }
+    let h='<div class="space-y-4">';
+    h+='<div class="flex items-center gap-2"><div class="w-1 h-4 bg-primary-600 rounded-sm"></div><div class="text-sm font-semibold text-primary-600">'+tr('基本信息')+'</div></div>';
+    h+='<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
+    h+=fieldHtml('前缀类型',selHtml('cr-prefix-type',typeOpts,prefixType));
+    h+=fieldHtml('前缀参数',inputHtml('cr-prefix-param',prefixParam,'请输入前缀参数'));
+    h+=fieldHtml('后缀类型',selHtml('cr-suffix-type',typeOpts,suffixType));
+    h+=fieldHtml('后缀参数',inputHtml('cr-suffix-param',suffixParam,'请输入后缀参数'));
+    h+=fieldHtml('生成规则',inputHtml('cr-gen-rule',genRule,'如 %p%n / %p%s%n / %p-%n'));
+    h+=fieldHtml('规则长度',inputHtml('cr-rule-length',ruleLength,''));
+    h+=fieldHtml('忽略数字',inputHtml('cr-ignore-num',ignoreNum,'请输入忽略数字'));
+    h+=fieldHtml('重置标识',selHtml('cr-reset-flag',resetOpts,''));
+    h+='</div>';
+    h+='</div>';
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='72%';
+    document.getElementById('crud-modal-title').textContent=tr('编辑数据')+(ruleNo?' - '+esc(ruleNo):'');
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="saveCodingRuleEdit(\''+id+'\','+idx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button><button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function saveCodingRuleEdit(id,idx){
+    const headers=(TC[id]&&TC[id].h)||[];
+    const row=TC[id]&&TC[id].d?TC[id].d[idx]:null;
+    if(!row){closeCrudModal();return;}
+    const setVal=function(name,val){const i=headers.indexOf(name);if(i>=0)row[i]=val;};
+    setVal('前缀类型',(document.getElementById('cr-prefix-type')||{}).value||'');
+    setVal('前缀参数',(document.getElementById('cr-prefix-param')||{}).value||'');
+    setVal('后缀类型',(document.getElementById('cr-suffix-type')||{}).value||'');
+    setVal('后缀参数',(document.getElementById('cr-suffix-param')||{}).value||'');
+    setVal('生成规则',(document.getElementById('cr-gen-rule')||{}).value||'');
+    setVal('规则长度',(document.getElementById('cr-rule-length')||{}).value||'');
+    setVal('忽略数字',(document.getElementById('cr-ignore-num')||{}).value||'');
+    closeCrudModal();
+    showToast(tr('已保存编码规则')+'：'+(row[headers.indexOf('规则编号')]||''));
+    try{if(typeof navigateToTab==='function')navigateToTab('biz-cfg','cfg-coding-rule');}catch(e){}
 }
 
 function billFeeDetailRows(rowData){

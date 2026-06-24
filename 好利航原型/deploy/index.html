@@ -8053,6 +8053,45 @@ function shipmentCustomerDatalistHtml(){
     }).join('')+'</datalist>';
 }
 
+function getShipmentSenderRecords(){
+    const c=TC['base-sender']||{};
+    const headers=c.h||[];
+    const companyIdx=headers.indexOf('联系公司');
+    const contactIdx=headers.indexOf('联系人');
+    const phoneIdx=headers.indexOf('联系电话');
+    const addrIdx=headers.indexOf('地址');
+    return (c.d||[]).map(function(row){
+        return {
+            contact:contactIdx>=0?(row[contactIdx]||''):'',
+            company:companyIdx>=0?(row[companyIdx]||''):'',
+            phone:phoneIdx>=0?(row[phoneIdx]||''):'',
+            address:addrIdx>=0?(row[addrIdx]||''):''
+        };
+    }).filter(function(item){return item.contact;});
+}
+
+function shipmentSenderDatalistHtml(){
+    return '<datalist id="shipment-sender-options">'+getShipmentSenderRecords().map(function(item){
+        const hint=[item.company,item.phone].filter(Boolean).join(' · ');
+        return '<option value="'+esc(item.contact)+'">'+esc(hint)+'</option>';
+    }).join('')+'</datalist>';
+}
+
+function fillShipmentSenderInfo(inputEl){
+    const v=String((inputEl&&inputEl.value)||'').trim();
+    if(!v)return;
+    const records=getShipmentSenderRecords();
+    const found=records.find(function(r){return r.contact===v;});
+    if(!found)return;
+    const cInp=document.getElementById('shipment-sender-company');
+    const pInp=document.getElementById('shipment-sender-phone');
+    const aInp=document.getElementById('shipment-sender-address');
+    if(cInp){cInp.value=found.company;}
+    if(pInp){pInp.value=found.phone;}
+    if(aInp){aInp.value=found.address;}
+    if(typeof showToast==='function')showToast(tr('已带出发件人信息')+'：'+found.contact);
+}
+
 function handleCargoNameInput(input){
     refreshProductNameDatalist(input.value);
     const value=String(input.value||'').trim().toLowerCase();
@@ -8786,9 +8825,9 @@ function generateShipmentEntryPage(id,options){
     const defaultCustomer=isAdmin?defaultShipmentCustomer():null;
     const basic=[
         {label:'物流单号',value:''},
-        {label:'运输方式',type:'select',options:['海运','空运','铁路','快递']},
+        {label:'运输方式',type:'select',required:true,options:['海运','空运','铁路','快递']},
         ...(isAdmin?[
-            {label:'客户代码',value:defaultCustomer.code,placeholder:'请输入客户代码',list:'shipment-customer-code-options'}
+            {label:'客户代码',required:true,value:defaultCustomer.code,placeholder:'请输入客户代码',list:'shipment-customer-code-options'}
         ]:[]),
         {label:'国内仓库',type:'select',required:true,options:['深圳盐田仓','广州南沙仓','上海浦东仓','义乌仓']},
         {label:'目的港',required:true,type:'select',options:['达喀尔','拉各斯','阿比让','杜阿拉','洛美','特马','蒙罗维亚','科纳克里','班珠尔'],value:'达喀尔'},
@@ -8796,8 +8835,11 @@ function generateShipmentEntryPage(id,options){
         {label:'总体积(CBM)',type:'number',value:''},
         {label:'总重量(KG)',type:'number',value:''},
         {label:'品名',value:''},
-        {label:'物流公司',type:'select',required:true,options:['顺丰速运','跨越速运','德邦物流','京东物流','客户自送']},
-        {label:'发货人电话',type:'tel',value:'13800138000'},
+        {label:'物流公司',type:'select',options:['顺丰速运','跨越速运','德邦物流','京东物流','客户自送']},
+        {label:'发件人',value:'',placeholder:'输入联系人模糊匹配，选中自动带出',list:'shipment-sender-options',oninput:'fillShipmentSenderInfo(this)',onchange:'fillShipmentSenderInfo(this)'},
+        {label:'发件人公司',value:'',id:'shipment-sender-company',placeholder:'选中发件人后自动填充'},
+        {label:'发件人电话',type:'tel',value:'',id:'shipment-sender-phone',placeholder:'选中发件人后自动填充'},
+        {label:'发件人地址',value:'',id:'shipment-sender-address',placeholder:'选中发件人后自动填充'},
         {label:'预计送货时间',type:'datetime-local'}
     ];
     const other=[{label:'附加服务',type:'checkboxGroup',span:'md:col-span-4',options:['报关','合并报关','拆分报关','带电','带磁','贴箱唛'],markerTooltip:true}];
@@ -8806,6 +8848,7 @@ function generateShipmentEntryPage(id,options){
     h+='<form id="shipment-entry-form" class="space-y-5">';
     h+=productNameDatalistHtml();
     if(isAdmin)h+=shipmentCustomerDatalistHtml();
+    h+=shipmentSenderDatalistHtml();
     h+=shipmentEntryTabs(id,_shipmentEntryTab);
     h+='<div class="bg-white rounded-xl border border-surface-200 p-5">';
     h+='<div class="flex items-center justify-between gap-4 mb-5"><div><h2 class="text-lg font-semibold text-text-primary">'+tr(options.title||'专线下单录入')+'</h2></div><span class="badge bg-amber-100 text-amber-700">'+tr('待提交')+'</span></div>';

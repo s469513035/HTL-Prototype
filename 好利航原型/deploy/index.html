@@ -8836,11 +8836,13 @@ function generateShipmentEntryPage(id,options){
         {label:'总重量(KG)',type:'number',value:''},
         {label:'品名',value:''},
         {label:'物流公司',type:'select',options:['顺丰速运','跨越速运','德邦物流','京东物流','客户自送']},
+        {label:'预计送货时间',type:'datetime-local'}
+    ];
+    const sender=[
         {label:'发件人',value:'',placeholder:'输入联系人模糊匹配，选中自动带出',list:'shipment-sender-options',oninput:'fillShipmentSenderInfo(this)',onchange:'fillShipmentSenderInfo(this)'},
         {label:'发件人公司',value:'',id:'shipment-sender-company',placeholder:'选中发件人后自动填充'},
         {label:'发件人电话',type:'tel',value:'',id:'shipment-sender-phone',placeholder:'选中发件人后自动填充'},
-        {label:'发件人地址',value:'',id:'shipment-sender-address',placeholder:'选中发件人后自动填充'},
-        {label:'预计送货时间',type:'datetime-local'}
+        {label:'发件人地址',value:'',id:'shipment-sender-address',placeholder:'选中发件人后自动填充'}
     ];
     const other=[{label:'附加服务',type:'checkboxGroup',span:'md:col-span-4',options:['报关','合并报关','拆分报关','带电','带磁','贴箱唛'],markerTooltip:true}];
     let h='';
@@ -8854,6 +8856,7 @@ function generateShipmentEntryPage(id,options){
     h+='<div class="flex items-center justify-between gap-4 mb-5"><div><h2 class="text-lg font-semibold text-text-primary">'+tr(options.title||'专线下单录入')+'</h2></div><span class="badge bg-amber-100 text-amber-700">'+tr('待提交')+'</span></div>';
     h+='<div class="space-y-6">';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
+    h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('发件人信息')+'</div>'+renderFields(sender,4)+'</section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('产品渠道说明')+'</div><div class="rounded-lg border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-700" id="shipment-channel-desc">'+tr('适合普货和常规敏感货，默认走深圳/广州仓集货，报价按散货海运产品规则带出。')+'</div></section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+renderFields(other,4)+'</section>';
     h+='</div></div>';

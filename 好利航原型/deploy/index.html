@@ -2550,7 +2550,7 @@ q:[{label:'服务商编码',type:'text'},{label:'服务商名称',type:'text'},{
 ['BKP-20260519','增量备份','150MB','2026-05-19 02:00','系统','已完成'],
 ['BKP-20260518','全量备份','2.4GB','2026-05-18 02:00','系统','已完成'],
 ['BKP-20260517','增量备份','200MB','2026-05-17 02:00','系统','已失败']]}};
-TC['crm-cust']={t:'客户管理',h:'客户代码|客户简称|客户全称|业务类型|海外提货偏好仓库|启用状态|客户等级|联系人|客户邮箱|客户类型|所属业务员|所属结算员|所属客服|法人身份证|公司营业执照|法人电话|注册资金|注册年限|营业范围|发货地址|备注|创建人|创建时间|创建网点|修改人|修改时间|修改网点|操作'.split('|'),s:['启用','禁用'],d:[
+TC['crm-cust']={t:'客户管理',h:'客户代码|客户简称|客户全称|业务类型|海外提货偏好仓库|启用状态|客户等级|联系人|客户邮箱|客户类型|所属业务员|所属操作|所属客服|法人身份证|公司营业执照|法人电话|注册资金|注册年限|营业范围|发货地址|备注|创建人|创建时间|创建网点|修改人|修改时间|修改网点|操作'.split('|'),s:['启用','禁用'],d:[
 ['C10001','华运达国际货运','深圳市华运达国际货运代理有限公司','散货','深圳盐田仓','启用','A类','张经理','zhang@huayunda.com','直客','张三','陈七','陈七','440301199001011234','91440300MA5EXAMPLE','13800138001','500万','10年','国际货运代理、仓储服务','深圳市盐田区盐田路1号','优质客户','admin','2026-01-15','深圳分公司','admin','2026-05-20','深圳分公司'],
 ['C10002','远洋进出口贸易','广州远洋进出口贸易有限公司','散货','广州南沙仓','启用','B类','李经理','li@yuanyang.com','同行','李四','周八','周八','440105198805052345','91440100MA5EXAMPLE2','13900139002','300万','8年','进出口贸易、物流配送','广州市南沙区龙穴岛','需关注账期','admin','2026-02-10','广州分公司','admin','2026-05-18','广州分公司'],
 ['C10003','恒通货运代理','佛山恒通货运代理有限公司','整柜','深圳盐田仓','启用','A类','王经理','wang@hengtong.com','直客','王五','吴九','吴九','440604199203033456','91440600MA5EXAMPLE3','13700137003','800万','15年','国际货运代理、报关报检','佛山市禅城区季华路','整柜大客户','admin','2026-03-05','深圳分公司','admin','2026-05-22','深圳分公司'],
@@ -2561,7 +2561,7 @@ TC['crm-visit']={t:'拜访管理',h:['拜访编号','客户名称','拜访类型
 TC['wb-special']={t:'专线下单',h:['运单号','客户名称','起运港','目的港','渠道','件数','重量(KG)','体积(CBM)','状态','操作'],s:['待确认','已确认','已取消'],d:[['WB20250001','鑫达贸易','深圳','达喀尔','专线A','10','250.5','1.8','待确认'],['WB20250002','远洋物流','广州','拉各斯','专线B','5','120.0','0.9','已确认']]};
 TC['wb-fcl']={t:'整柜下单',h:['运单号','客户名称','起运港','目的港','柜型','柜量','船公司','开船日期','状态','操作'],s:['待确认','已确认','已取消'],d:[['FC20250001','鑫达贸易','深圳','达喀尔','20GP','2','MAERSK','2025-06-01','待确认'],['FC20250002','远洋物流','广州','拉各斯','40HQ','1','MSC','2025-06-05','已确认']]};
 TC['wb-import']={t:'批量导入',h:['批次号','导入时间','导入人','总条数','成功数','失败数','状态','操作'],s:['导入中','已完成','导入失败'],d:[['IMP20250001','2025-05-10 14:30','李华','100','98','2','已完成'],['IMP20250002','2025-05-11 09:15','张伟','50','50','0','已完成']]};
-TC['wb-manage']={t:'运单管理（管理端）',h:'运单号|物流单号|客户名称|客户代码|所属产品|海外提货仓|所属业务员|所属客服|所属结算员|起运港|目的港|运输方式|件数|重量(KG)|体积(CBM)|运费|运单状态|仓库异常备注|操作'.split('|'),s:['已预报','已到货','已确认','已配舱','已出库','已签收','已退件','已取消'],d:[['WB-20260522001','SF10086523','深圳市华运达国际货运','C10004','西非海运专线','深圳盐田仓','李华','王海波','赵雅琴','深圳盐田','达喀尔','海运','10','250.00','1.350','CNY 8,580','已预报',''],['WB-20260522002','YT98876543','广州远洋进出口贸易','C10002','西非海运专线','广州南沙仓','刘晓东','陈志远','赵雅琴','广州南沙','拉各斯','海运','6','120.00','0.720','CNY 5,360','已到货','外包装破损'],['WB-20260522003','ZT20037654','佛山恒通货运代理','C10003','西非海运专线','深圳盐田仓','王明辉','王海波','赵雅琴','深圳盐田','阿比让','海运','4','180.00','0.960','CNY 6,920','已确认',''],['WB-20260522004','','东莞市鑫海物流','CUS-004','西非海运专线','广州南沙仓','王明辉','陈志远','赵雅琴','广州南沙','杜阿拉','海运','8','96.00','0.540','CNY 3,280','已退件','货物信息不符'],['WB-20260522005','JD30012345','上海锦程国际贸易','C10005','西非海运专线','上海浦东仓','赵雅琴','王海波','赵雅琴','上海浦东','洛美','海运','12','360.00','2.160','CNY 12,800','已配舱','']]};
+TC['wb-manage']={t:'运单管理（管理端）',h:'运单号|物流单号|客户名称|客户代码|所属产品|海外提货仓|所属业务员|所属客服|所属结算员|起运港|目的港|运输方式|件数|重量(KG)|体积(CBM)|运费|运单状态|仓库异常备注|问题件状态|操作'.split('|'),s:['已预报','已到货','已确认','已配舱','已出库','已签收','已退件','已取消'],d:[['WB-20260522001','SF10086523','深圳市华运达国际货运','C10004','西非海运专线','深圳盐田仓','李华','王海波','赵雅琴','深圳盐田','达喀尔','海运','10','250.00','1.350','CNY 8,580','已预报','','正常'],['WB-20260522002','YT98876543','广州远洋进出口贸易','C10002','西非海运专线','广州南沙仓','刘晓东','陈志远','赵雅琴','广州南沙','拉各斯','海运','6','120.00','0.720','CNY 5,360','已到货','外包装破损','处理中'],['WB-20260522003','ZT20037654','佛山恒通货运代理','C10003','西非海运专线','深圳盐田仓','王明辉','王海波','赵雅琴','深圳盐田','阿比让','海运','4','180.00','0.960','CNY 6,920','已确认','','正常'],['WB-20260522004','','东莞市鑫海物流','CUS-004','西非海运专线','广州南沙仓','王明辉','陈志远','赵雅琴','广州南沙','杜阿拉','海运','8','96.00','0.540','CNY 3,280','已退件','货物信息不符','已关闭'],['WB-20260522005','JD30012345','上海锦程国际贸易','C10005','西非海运专线','上海浦东仓','赵雅琴','王海波','赵雅琴','上海浦东','洛美','海运','12','360.00','2.160','CNY 12,800','已配舱','','正常']]};
 TC['wb-work-order']={t:'工单管理',forceLocalHeader:true,h:['工单编号','标题','类型','优先级','工单状态','当前处理人','客户','单号','创建人','创建时间','创建公司','操作'],s:['待处理','处理中','已完成','已关闭'],d:[
 ['WO202606001','报关资料补充','资料补充','高','待处理','王海波','深圳市华运达国际货运','WB-20260522001','李华','2026-06-02 10:40','深圳分公司'],
 ['WO202606002','费用差异核对','费用争议','中','处理中','赵雅琴','广州远洋进出口贸易','WB-20260522002','刘晓东','2026-06-02 11:18','广州分公司'],
@@ -2623,7 +2623,7 @@ TC['crm-visit'].q=[{label:'客户名称',type:'text',field:'custName'},{label:'�
 TC['wb-special'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'客户名称',type:'text',field:'custName'},{label:'起运港',type:'text',field:'fromPort'},{label:'目的港',type:'text',field:'toPort'},{label:'状态',type:'select',field:'status'}];
 TC['wb-fcl'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'客户名称',type:'text',field:'custName'},{label:'柜型',type:'select',field:'cntrType',options:['20GP','40GP','40HQ']},{label:'船公司',type:'text',field:'carrier'},{label:'状态',type:'select',field:'status'}];
 TC['wb-import'].q=[{label:'批次号',type:'text',field:'batchNo'},{label:'导入人',type:'text',field:'operator'},{label:'状态',type:'select',field:'status'}];
-TC['wb-manage'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'物流单号',type:'text',field:'logisticsNo'},{label:'客户名称',type:'select',field:'custName',options:['深圳市华运达国际货运','广州远洋进出口贸易','佛山恒通货运代理','东莞市鑫海物流','上海锦程国际贸易']},{label:'客户代码',type:'select',field:'custCode',options:['C10001','C10002','C10003','C10004','C10005']},{label:'所属产品',type:'select',field:'product',options:['西非海运专线','西非空运专线']},{label:'海外提货仓',type:'select',field:'pickupWarehouse',options:['深圳盐田仓','广州南沙仓','上海浦东仓']},{label:'起运港',type:'text',field:'fromPort'},{label:'目的港',type:'text',field:'toPort'},{label:'运输方式',type:'select',field:'transport',options:['海运','空运']},{label:'运单状态',type:'select',field:'status',options:['已预报','已到货','已确认','已配舱','已出库','已签收','已退件','已取消']}];
+TC['wb-manage'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'物流单号',type:'text',field:'logisticsNo'},{label:'客户名称',type:'select',field:'custName',options:['深圳市华运达国际货运','广州远洋进出口贸易','佛山恒通货运代理','东莞市鑫海物流','上海锦程国际贸易']},{label:'客户代码',type:'select',field:'custCode',options:['C10001','C10002','C10003','C10004','C10005']},{label:'所属产品',type:'select',field:'product',options:['西非海运专线','西非空运专线']},{label:'海外提货仓',type:'select',field:'pickupWarehouse',options:['深圳盐田仓','广州南沙仓','上海浦东仓']},{label:'起运港',type:'text',field:'fromPort'},{label:'目的港',type:'text',field:'toPort'},{label:'运输方式',type:'select',field:'transport',options:['海运','空运']},{label:'运单状态',type:'select',field:'status',options:['已预报','已到货','已确认','已配舱','已出库','已签收','已退件','已取消']},{label:'问题件状态',type:'select',field:'issueStatus',options:['正常','待处理','处理中','已关闭']}];
 TC['wb-work-order'].q=[{label:'工单编号',type:'text',field:'code'},{label:'标题',type:'text',field:'title'},{label:'类型',type:'select',field:'type',options:['费用争议','资料补充','异常处理','客户咨询']},{label:'优先级',type:'select',field:'priority',options:['高','中','低']},{label:'工单状态',type:'select',field:'status'}];
 TC['wb-client-list'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'物流单号',type:'text',field:'logisticsNo'},{label:'客户名称',type:'text',field:'custName'},{label:'起运港',type:'text',field:'fromPort'},{label:'目的港',type:'text',field:'toPort'},{label:'运输方式',type:'select',field:'transport',options:['海运','空运']},{label:'运单状态',type:'select',field:'status',options:['草稿','已预报','已到货','已确认','已配舱','已出库','已签收','已取消']}];
 TC['wb-client-special'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'客户名称',type:'text',field:'custName'},{label:'起运港',type:'text',field:'fromPort'},{label:'目的港',type:'text',field:'toPort'},{label:'状态',type:'select',field:'status'}];
@@ -6486,7 +6486,7 @@ var standardCustomerRows=[['1','CUS-2025-001','上海某某贸易有限公司','
     applyStandardSheetTable(id,id==='fin-cust-info'?'客户资料':'客户管理',standardCustomerHeaders,standardCustomerRows,
         [{label:'客户代码',type:'text',field:'code'},{label:'客户全称',type:'text',field:'name'},{label:'客户类型',type:'select',field:'type',options:['直客','同行','平台','代理']},{label:'客户等级',type:'select',field:'level',options:['VIP','A','B','C']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}]);
 });
-TC['crm-cust'].h='客户代码|客户简称|客户全称|业务类型|所属国家|海外提货偏好仓库|启用状态|客户等级|联系人|客户邮箱|客户类型|所属业务员|所属结算员|所属客服|法人身份证|公司营业执照|法人电话|注册资金|注册年限|营业范围|发货地址|备注|创建人|创建时间|创建网点|修改人|修改时间|修改网点|操作'.split('|');
+TC['crm-cust'].h='客户代码|客户简称|客户全称|业务类型|所属国家|海外提货偏好仓库|启用状态|客户等级|联系人|客户邮箱|客户类型|所属业务员|所属操作|所属客服|法人身份证|公司营业执照|法人电话|注册资金|注册年限|营业范围|发货地址|备注|创建人|创建时间|创建网点|修改人|修改时间|修改网点|操作'.split('|');
 TC['crm-cust'].s=['启用','禁用'];
 TC['crm-cust'].d=[
     ['C10001','华运达国际货运','深圳市华运达国际货运代理有限公司','散货','CN 中国','深圳盐田仓','启用','A类','张经理','zhang@huayunda.com','直客','张三','陈七','陈七','440301199001011234','91440300MA5EXAMPLE','13800138001','500万','10年','国际货运代理、仓储服务','深圳市盐田区盐田路1号','优质客户','admin','2026-01-15','深圳分公司','admin','2026-05-20','深圳分公司'],
@@ -8217,6 +8217,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='copyWaybill')click='openActionModal(\'copyWaybill\',\''+id+'\',-1)';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
     else if(action.key==='outboundAdjust')click='openOutboundAdjustModal(\''+id+'\')';
+    else if(action.key==='businessConfirm')click='openWaybillBusinessConfirmModal(\''+id+'\')';
     else if(action.key==='genBill'&&id==='fcl-bill-entry')click='showToast(\''+esc(tr('账单生成成功'))+'\')';
     else click='openActionModal(\''+action.key+'\',\''+id+'\',-1)';
     const widthStyle=action.fixedWidth?'width:'+(action.width||'104px'):'min-width:'+(action.width||'96px');
@@ -8511,6 +8512,14 @@ function getToolbarActions(id){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
             {type:'add',label:'新增数据',variant:'primary'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
+    if(id==='wb-manage'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {type:'add',label:'新增数据',variant:'primary'},
+            {key:'businessConfirm',label:'业务确认',variant:'primary'},
             {key:'export',label:'导出数据'}
         ];
     }
@@ -11930,7 +11939,7 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     const regYears=getTableValueByHeader(c,rowData,'注册年限','');
     const bizScope=getTableValueByHeader(c,rowData,'营业范围','');
     const salesPerson=getTableValueByHeader(c,rowData,'所属业务员','');
-    const settlementPerson=getTableValueByHeader(c,rowData,'所属结算员','');
+    const settlementPerson=getTableValueByHeader(c,rowData,'所属操作','');
     const csrPerson=getTableValueByHeader(c,rowData,'所属客服','');
     const senderAddr=getTableValueByHeader(c,rowData,'发货地址','');
     const remark=getTableValueByHeader(c,rowData,'备注','');
@@ -11948,7 +11957,7 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     html+=crmInputFieldHtml('客户邮箱',getTableValueByHeader(c,rowData,'客户邮箱',''),'email',readonly);
     html+=crmSelectFieldHtml('客户类型',['直客','同行','平台','代理'],getTableValueByHeader(c,rowData,'客户类型',''),readonly);
     html+=crmSelectFieldHtml('所属业务员',getEmployeeNameOptions(),salesPerson,readonly);
-    html+=crmSelectFieldHtml('所属结算员',getEmployeeNameOptions(),settlementPerson,readonly);
+    html+=crmSelectFieldHtml('所属操作',getEmployeeNameOptions(),settlementPerson,readonly);
     html+=crmSelectFieldHtml('所属客服',getEmployeeNameOptions(),csrPerson,readonly);
     html+='</div></div>';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('企业资质信息')+'</div><div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
@@ -13032,10 +13041,11 @@ function openFclFileRecognizeModal(id){
 
 function outboundPlanRows(){
     const seed=[
-        ['WB-20260613001','KH00012','深圳市华运达国际货运','张三','深圳分公司'],
-        ['WB-20260613002','KH00018','广州远洋进出口贸易','李四','广州分公司'],
-        ['WB-20260613003','KH00026','东莞市鑫海物流','王明辉','广州分公司'],
-        ['WB-20260613004','KH00031','上海锦程国际贸易','刘晓东','上海分公司']
+        ['WB-20260613001','KH00012','深圳市华运达国际货运','张三','深圳分公司',8,96.5,0.36,'拉各斯仓','尼日利亚','电子产品'],
+        ['WB-20260613002','KH00018','广州远洋进出口贸易','李四','广州分公司',3,42.0,0.18,'达喀尔仓','塞内加尔','服装鞋帽'],
+        ['WB-20260613003','KH00026','东莞市鑫海物流','王明辉','广州分公司',5,60.4,0.24,'阿比让仓','科特迪瓦','五金工具'],
+        ['WB-20260613004','KH00031','上海锦程国际贸易','刘晓东','上海分公司',12,180.2,0.84,'洛美仓','多哥','家居用品'],
+        ['WB-20260613005','KH00045','深圳市华运达国际货运','张三','深圳分公司',6,72.0,0.30,'杜阿拉仓','喀麦隆','食品']
     ];
     const rows=[];
     for(let i=1;i<=60;i++){
@@ -13047,57 +13057,157 @@ function outboundPlanRows(){
     return rows;
 }
 
-var _outboundPlanState={id:'',rows:[],query:''};
+var _outboundPlanState={id:'',rows:[],query:{wb:'',warehouse:'',country:'',category:''},selected:{}};
+
+function outboundPlanSelectHtml(eid,val,options){
+    let h='<select id="'+eid+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"><option value="">'+esc(tr('全部'))+'</option>';
+    options.forEach(function(opt){h+='<option value="'+esc(opt)+'"'+(val===opt?' selected':'')+'>'+esc(tr(opt))+'</option>';});
+    h+='</select>';
+    return h;
+}
 
 function renderOutboundPlanBody(){
     const all=_outboundPlanState.rows||[];
-    const q=(_outboundPlanState.query||'').trim();
-    const filtered=q?all.filter(function(r){return r[0].indexOf(q)>=0||r[1].indexOf(q)>=0;}):all;
+    const q=_outboundPlanState.query||{};
+    const filtered=all.filter(function(r){
+        if(q.wb&&r[0].indexOf(q.wb)<0&&r[1].indexOf(q.wb)<0)return false;
+        if(q.warehouse&&r[8]!==q.warehouse)return false;
+        if(q.country&&r[9]!==q.country)return false;
+        if(q.category&&r[10]!==q.category)return false;
+        return true;
+    });
     const pageRows=filtered.slice(0,100);
-    let html='<div class="mb-3 rounded-xl border border-primary-100 bg-primary-50/60 p-3 flex flex-wrap items-end gap-3">';
-    html+='<div class="w-full md:w-80"><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('单号')+'</label><input id="outbound-plan-query" type="text" value="'+esc(_outboundPlanState.query||'')+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+esc(tr('请输入运单号/客户单号'))+'" onkeydown="if(event.key===\'Enter\')applyOutboundPlanQuery()"></div>';
+    let html='<div class="mb-3 rounded-xl border border-primary-100 bg-primary-50/60 p-3">';
+    html+='<div class="grid grid-cols-1 md:grid-cols-4 gap-3">';
+    html+='<div><label class="block text-xs font-medium text-text-secondary mb-1">'+tr('单号')+'</label><input id="op-q-wb" type="text" value="'+esc(q.wb||'')+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+esc(tr('运单号/客户单号'))+'"></div>';
+    html+='<div><label class="block text-xs font-medium text-text-secondary mb-1">'+tr('收件仓库')+'</label>'+outboundPlanSelectHtml('op-q-warehouse',q.warehouse,['拉各斯仓','达喀尔仓','阿比让仓','洛美仓','杜阿拉仓'])+'</div>';
+    html+='<div><label class="block text-xs font-medium text-text-secondary mb-1">'+tr('国家')+'</label>'+outboundPlanSelectHtml('op-q-country',q.country,['尼日利亚','塞内加尔','科特迪瓦','多哥','喀麦隆'])+'</div>';
+    html+='<div><label class="block text-xs font-medium text-text-secondary mb-1">'+tr('品名大类')+'</label>'+outboundPlanSelectHtml('op-q-category',q.category,['电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他'])+'</div>';
+    html+='</div>';
+    html+='<div class="mt-3 flex gap-2">';
     html+='<button type="button" onclick="applyOutboundPlanQuery()" class="h-9 px-4 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';
     html+='<button type="button" onclick="resetOutboundPlanQuery()" class="h-9 px-4 rounded-lg border border-surface-200 bg-white text-text-secondary text-sm font-medium hover:bg-surface-50 cursor-pointer">'+tr('重置')+'</button>';
+    html+='</div></div>';
+    html+='<div class="grid grid-cols-1 md:grid-cols-2 gap-3">';
+    html+='<div id="outbound-plan-left">'+renderOutboundPlanLeft(pageRows,filtered.length)+'</div>';
+    html+='<div id="outbound-plan-right">'+renderOutboundPlanRight()+'</div>';
     html+='</div>';
-    html+='<div class="rounded-lg border border-surface-200 overflow-hidden bg-white"><div class="overflow-auto" style="height:clamp(420px,calc(100vh - 320px),640px)"><table class="w-full text-sm"><thead class="sticky top-0 z-10"><tr class="bg-surface-50 text-text-secondary">';
-    html+='<th class="px-2 py-2 text-left"><input type="checkbox" onclick="toggleAllOutboundPlan(this)" class="rounded border-surface-300 text-primary-600"></th>';
-    ['序号','运单号','客户单号','客户','业务员','所在网点'].forEach(function(h){html+='<th class="px-2 py-2 text-left whitespace-nowrap">'+tr(h)+'</th>';});
-    html+='</tr></thead><tbody>';
-    if(!pageRows.length){
-        html+='<tr><td colspan="7" class="px-2 py-6 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
-    }
-    pageRows.forEach(function(row,idx){
-        html+='<tr class="border-t border-surface-100 hover:bg-primary-50/40"><td class="px-2 py-2"><input type="checkbox" class="outbound-plan-check rounded border-surface-300 text-primary-600"></td>';
-        html+='<td class="px-2 py-2 text-text-secondary">'+(idx+1)+'</td>';
-        row.forEach(function(cell,cellIdx){html+='<td class="px-2 py-2 whitespace-nowrap '+(cellIdx===0?'font-medium text-primary-700':'text-text-secondary')+'">'+esc(tr(cell))+'</td>';});
-        html+='</tr>';
-    });
-    html+='</tbody></table></div></div>';
-    html+='<div class="mt-3 text-xs text-text-muted">'+tr('共')+' '+filtered.length+' '+tr('条记录')+'，'+tr('当前显示')+' '+pageRows.length+' '+tr('条')+'</div>';
     return html;
 }
 
+function renderOutboundPlanLeft(pageRows,totalCount){
+    let h='<div class="rounded-lg border border-surface-200 overflow-hidden bg-white">';
+    h+='<div class="px-3 py-2 bg-surface-50 text-xs font-semibold text-text-secondary flex items-center justify-between"><span>'+tr('可选订单')+'</span><span class="text-text-muted">'+tr('共')+' '+totalCount+' '+tr('条')+'</span></div>';
+    h+='<div class="overflow-auto" style="height:clamp(380px,calc(100vh - 400px),560px)"><table class="w-full text-xs"><thead class="sticky top-0 z-10 bg-surface-50"><tr class="text-text-secondary">';
+    h+='<th class="px-2 py-2 w-8 text-left"><input type="checkbox" onclick="toggleAllOutboundPlan(this)" class="rounded border-surface-300 text-primary-600"></th>';
+    ['运单号','客户单号','客户','件数','重量(KG)','体积(CBM)','收件仓库','国家','品名大类'].forEach(function(hd){h+='<th class="px-2 py-2 text-left whitespace-nowrap">'+tr(hd)+'</th>';});
+    h+='</tr></thead><tbody>';
+    if(!pageRows.length){
+        h+='<tr><td colspan="10" class="px-2 py-6 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    }else{
+        pageRows.forEach(function(row){
+            const key=row[0];
+            const checked=_outboundPlanState.selected[key]?' checked':'';
+            h+='<tr class="border-t border-surface-100 hover:bg-primary-50/40">';
+            h+='<td class="px-2 py-2"><input type="checkbox" class="outbound-plan-check rounded border-surface-300 text-primary-600" data-key="'+esc(key)+'"'+checked+' onchange="toggleOutboundPlanSelect(this)"></td>';
+            h+='<td class="px-2 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(row[0])+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary whitespace-nowrap">'+esc(row[1])+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary whitespace-nowrap">'+esc(row[2])+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary text-right">'+esc(String(row[5]))+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary text-right">'+esc(String(row[6]))+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary text-right">'+esc(String(row[7]))+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary whitespace-nowrap">'+esc(row[8])+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary whitespace-nowrap">'+esc(row[9])+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary whitespace-nowrap">'+esc(row[10])+'</td>';
+            h+='</tr>';
+        });
+    }
+    h+='</tbody></table></div></div>';
+    return h;
+}
+
+function renderOutboundPlanRight(){
+    const sel=_outboundPlanState.selected||{};
+    const all=_outboundPlanState.rows||[];
+    const selectedRows=all.filter(function(r){return sel[r[0]];});
+    let totalQty=0,totalWeight=0,totalVol=0;
+    selectedRows.forEach(function(r){
+        totalQty+=parseFloat(r[5])||0;
+        totalWeight+=parseFloat(r[6])||0;
+        totalVol+=parseFloat(r[7])||0;
+    });
+    let h='<div class="rounded-lg border border-primary-200 overflow-hidden bg-white">';
+    h+='<div class="px-3 py-2 bg-primary-50 text-xs font-semibold text-primary-700 flex items-center justify-between"><span>'+tr('已选订单')+'</span><span>'+selectedRows.length+' '+tr('票')+'</span></div>';
+    h+='<div class="overflow-auto" style="height:clamp(300px,calc(100vh - 480px),460px)"><table class="w-full text-xs"><thead class="sticky top-0 z-10 bg-surface-50"><tr class="text-text-secondary">';
+    ['运单号','客户单号','件数','重量(KG)','体积(CBM)','收件仓库'].forEach(function(hd){h+='<th class="px-2 py-2 text-left whitespace-nowrap">'+tr(hd)+'</th>';});
+    h+='</tr></thead><tbody>';
+    if(!selectedRows.length){
+        h+='<tr><td colspan="6" class="px-2 py-6 text-center text-text-muted">'+tr('请在左侧勾选订单')+'</td></tr>';
+    }else{
+        selectedRows.forEach(function(row){
+            h+='<tr class="border-t border-surface-100">';
+            h+='<td class="px-2 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(row[0])+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary whitespace-nowrap">'+esc(row[1])+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary text-right">'+esc(String(row[5]))+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary text-right">'+esc(String(row[6]))+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary text-right">'+esc(String(row[7]))+'</td>';
+            h+='<td class="px-2 py-2 text-text-secondary whitespace-nowrap">'+esc(row[8])+'</td>';
+            h+='</tr>';
+        });
+    }
+    h+='</tbody></table></div>';
+    h+='<div class="px-3 py-2 bg-primary-50/60 border-t border-primary-100 text-xs text-primary-700 grid grid-cols-3 gap-2">';
+    h+='<div><span class="text-text-muted">'+tr('合计件数')+'：</span><span class="font-semibold">'+totalQty+'</span></div>';
+    h+='<div><span class="text-text-muted">'+tr('合计重量(KG)')+'：</span><span class="font-semibold">'+totalWeight.toFixed(2)+'</span></div>';
+    h+='<div><span class="text-text-muted">'+tr('合计体积(CBM)')+'：</span><span class="font-semibold">'+totalVol.toFixed(3)+'</span></div>';
+    h+='</div></div>';
+    return h;
+}
+
 function applyOutboundPlanQuery(){
-    const input=document.getElementById('outbound-plan-query');
-    _outboundPlanState.query=input?input.value:'';
+    _outboundPlanState.query={
+        wb:((document.getElementById('op-q-wb')||{}).value||'').trim(),
+        warehouse:(document.getElementById('op-q-warehouse')||{}).value||'',
+        country:(document.getElementById('op-q-country')||{}).value||'',
+        category:(document.getElementById('op-q-category')||{}).value||''
+    };
     const body=document.getElementById('outbound-plan-body');
     if(body)body.innerHTML=renderOutboundPlanBody();
 }
 
 function resetOutboundPlanQuery(){
-    _outboundPlanState.query='';
+    _outboundPlanState.query={wb:'',warehouse:'',country:'',category:''};
     const body=document.getElementById('outbound-plan-body');
     if(body)body.innerHTML=renderOutboundPlanBody();
 }
 
 function toggleAllOutboundPlan(master){
-    document.querySelectorAll('.outbound-plan-check').forEach(function(cb){cb.checked=master.checked;});
+    const checks=document.querySelectorAll('.outbound-plan-check');
+    checks.forEach(function(cb){
+        cb.checked=master.checked;
+        const k=cb.getAttribute('data-key');
+        if(k){
+            if(master.checked)_outboundPlanState.selected[k]=true;
+            else delete _outboundPlanState.selected[k];
+        }
+    });
+    const right=document.getElementById('outbound-plan-right');
+    if(right)right.innerHTML=renderOutboundPlanRight();
+}
+
+function toggleOutboundPlanSelect(cb){
+    const k=cb.getAttribute('data-key');
+    if(!k)return;
+    if(cb.checked)_outboundPlanState.selected[k]=true;
+    else delete _outboundPlanState.selected[k];
+    const right=document.getElementById('outbound-plan-right');
+    if(right)right.innerHTML=renderOutboundPlanRight();
 }
 
 function openOutboundPlanModal(id){
-    _outboundPlanState={id:id,rows:outboundPlanRows(),query:''};
+    _outboundPlanState={id:id,rows:outboundPlanRows(),query:{wb:'',warehouse:'',country:'',category:''},selected:{}};
     const panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='82%';
+    if(panel)panel.style.width='92%';
     document.getElementById('crud-modal-title').textContent=tr('新增出库计划')+' - '+tr((TC[id]&&TC[id].t)||'出库单');
     document.getElementById('crud-modal-body').innerHTML='<div id="outbound-plan-body">'+renderOutboundPlanBody()+'</div>';
     document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button><button onclick="closeCrudModal();showToast(\''+tr('出库计划新增成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button>';
@@ -13166,6 +13276,51 @@ function openOutboundAdjustModal(id){
     document.getElementById('crud-modal-title').textContent=tr('出库单调整')+' - '+tr((TC[id]&&TC[id].t)||'出库单');
     document.getElementById('crud-modal-body').innerHTML='<div id="outbound-adjust-body">'+renderOutboundAdjustBody()+'</div>';
     document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button><button onclick="closeCrudModal();showToast(\''+tr('出库单调整已保存')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function openWaybillBusinessConfirmModal(id){
+    const indices=getSelectedRowIndices();
+    if(!indices.length){showToast(tr('请先勾选运单'));return;}
+    const rows=getRowsByIndices(id,indices);
+    const headers=(TC[id]&&TC[id].h)||[];
+    const idxWb=headers.indexOf('运单号');
+    const idxCust=headers.indexOf('客户名称');
+    const idxQty=headers.indexOf('件数');
+    const idxWeight=headers.indexOf('重量(KG)');
+    const idxVol=headers.indexOf('体积(CBM)');
+    let totalQty=0,totalWeight=0,totalVol=0;
+    const tbody=rows.map(function(row){
+        const qty=parseFloat(row[idxQty])||0;
+        const w=parseFloat(row[idxWeight])||0;
+        const v=parseFloat(row[idxVol])||0;
+        totalQty+=qty;totalWeight+=w;totalVol+=v;
+        return '<tr class="border-t border-surface-100">'+
+            '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(row[idxWb]||'')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(row[idxCust]||'')+'</td>'+
+            '<td class="px-3 py-2 text-right text-text-secondary">'+esc(String(row[idxQty]||''))+'</td>'+
+            '<td class="px-3 py-2 text-right text-text-secondary">'+esc(String(row[idxWeight]||''))+'</td>'+
+            '<td class="px-3 py-2 text-right text-text-secondary">'+esc(String(row[idxVol]||''))+'</td>'+
+        '</tr>';
+    }).join('');
+    let h='<div class="text-xs text-text-muted mb-3">'+tr('请核对以下运单的件数、重量、体积是否准确，确认后将进入下一环节。')+'</div>';
+    h+='<div class="rounded-lg border border-surface-200 overflow-hidden bg-white"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>';
+    ['运单号','客户名称','件数','重量(KG)','体积(CBM)'].forEach(function(hd){
+        const align=['件数','重量(KG)','体积(CBM)'].indexOf(hd)>=0?'text-right':'text-left';
+        h+='<th class="px-3 py-2 '+align+' whitespace-nowrap text-xs font-semibold">'+tr(hd)+'</th>';
+    });
+    h+='</tr></thead><tbody>'+tbody+'</tbody>';
+    h+='<tfoot class="bg-primary-50/60 text-primary-700"><tr>';
+    h+='<td class="px-3 py-2 font-semibold" colspan="2">'+tr('合计')+'（'+rows.length+' '+tr('票')+'）</td>';
+    h+='<td class="px-3 py-2 text-right font-semibold">'+totalQty+'</td>';
+    h+='<td class="px-3 py-2 text-right font-semibold">'+totalWeight.toFixed(2)+'</td>';
+    h+='<td class="px-3 py-2 text-right font-semibold">'+totalVol.toFixed(3)+'</td>';
+    h+='</tr></tfoot></table></div>';
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=tr('业务确认')+' - '+tr((TC[id]&&TC[id].t)||'运单管理');
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="closeCrudModal();showToast(\''+tr('已确认')+' '+rows.length+' '+tr('条运单')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认无误')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
 }
 

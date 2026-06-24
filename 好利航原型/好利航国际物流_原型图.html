@@ -392,7 +392,7 @@
 // ========== 角色权限系统 ==========
 // 定义角色：每个角色有对应的菜单ID列表（允许访问的菜单）
 var ROLE_MENUS={
-    'role-admin':['workspace','customer-waybill','fcl','warehouse','finance','biz-config','perm'],
+    'role-admin':['workspace','customer-waybill','fcl','warehouse','cs','finance','biz-config','perm'],
     'role-sales':['workspace','customer-waybill','fcl','biz-config'],
     'role-quote':['workspace','biz-config'],
     'role-finance':['workspace','fcl','finance']
@@ -1928,12 +1928,24 @@ const menuData=[
 {id:'wh-loading-list',label:'配载单',page:'wh-domestic',tab:'wh-loading-list'},
 {id:'wh-parcel-out',label:'小包出库单',page:'wh-domestic',tab:'wh-parcel-out'},
 {id:'wh-replenish-drop',label:'补货落货管理',page:'wh-domestic',tab:'wh-replenish-drop'},
-{id:'wh-issue',label:'问题件管理',page:'wh-domestic',tab:'wh-issue'},
 {id:'wh-air-checkout-scan',label:'空运·签出扫描',page:'wh-domestic',tab:'wh-air-checkout-scan'}
 ]},
 {id:'warehouse-pda',label:'仓库PDA',children:[
 {id:'pda-app',label:'仓库PDA',page:'warehouse-pda',tab:'pda-app'}
 ]}
+]},
+
+{id:'cs',label:'客服',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"/></svg>',children:[
+{id:'cs-issue-track',label:'问题件跟踪',page:'cs',tab:'cs-issue-track'},
+{id:'cs-issue-overseas',label:'海外问题件',page:'cs',tab:'cs-issue-overseas'},
+{id:'cs-remote-type',label:'偏远地址类型',page:'cs',tab:'cs-remote-type'},
+{id:'cs-remote-query',label:'偏远数据查询',page:'cs',tab:'cs-remote-query'},
+{id:'cs-fee-calc',label:'费用试算',page:'cs',tab:'cs-fee-calc'},
+{id:'cs-track-query',label:'轨迹查询',page:'cs',tab:'cs-track-query'},
+{id:'cs-track-maint',label:'轨迹维护',page:'cs',tab:'cs-track-maint'},
+{id:'cs-fuel-query',label:'燃油查询',page:'cs',tab:'cs-fuel-query'},
+{id:'cs-config',label:'客服配置',page:'cs',tab:'cs-config'},
+{id:'cs-fuel-fee',label:'燃油费管理',page:'cs',tab:'cs-fuel-fee'}
 ]},
 
 {id:'finance',label:'财务结算',langKey:'finance',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',children:[
@@ -3004,6 +3016,101 @@ addPrototypeTable('wh-sort-bag','分拣装袋管理','袋号|件数|尺寸|重�
     {label:'装袋操作人',type:'text',field:'operator'},
     {label:'状态',type:'select',field:'status',options:['进行中','已完成','已打印']}
 ]);
+
+/* ============= 客服 (cs) L1 ============= */
+(function(){
+    const CS_ISSUE_TYPES=['运单拦截','问题件-超大','问题件-超长','问题件-超围长','问题件-超重','退件/少件扣件','查验扣件','签收地址错','未提取','客户要求暂扣'];
+    const CS_PRODUCTS=['u22专线','美森FBA卡派特价','美森正班FBA卡派特价','美国UPS私-卡派-导弹专用','美国UPS卡派-导弹专用','美国UPS快递-导弹专用','尾程美国UPS私-卡派-导弹专用'];
+    const rows=[
+        ['运单拦截','2026-06-24 12:37:26','处理中','12121212121','','ICBU00000600587','','TX00134','坂田东华','u22专线',''],
+        ['问题件-超大','2025-10-07 17:56:57','处理中','测试撤销退件','','ICBU00000600522','','TX00134','坂田东华','美森FBA卡派特价',''],
+        ['退件/少件扣件','2025-09-25 14:29:53','已退件','test','','ICBU00000600457','','TX00136','shuy','美森正班FBA卡派特价','签入产生'],
+        ['问题件-超长','2025-09-25 14:29:53','已放行','运单已产生退件,未完结问题件...','','ICBU00000600457','','TX00136','shuy','美森正班FBA卡派特价',''],
+        ['查验扣件','2025-09-25 14:29:53','已放行','运单已产生退件,未完结问题件...','','ICBU00000600457','','TX00136','shuy','美森正班FBA卡派特价',''],
+        ['签收地址错','2025-09-25 14:29:53','已放行','运单已产生退件,未完结问题件...','','ICBU00000600457','','TX00136','shuy','美森正班FBA卡派特价',''],
+        ['运单拦截','2025-09-12 14:04:03','未处理','运单拦截,生成拦截问题件','','ICBU00000600441','','TX00136','shuy','美森正班FBA卡派特价',''],
+        ['未提取','2025-09-10 15:58:00','未处理','请注意：产生 未提取 类型的海...','','ICBU00000600424','','TX00131','北京未来科技有限公司','尾程美国UPS私-卡派-导弹专用',''],
+        ['客户要求暂扣','2025-09-09 16:13:27','已放行','ceshi','','ICBU00000600388','','TX00005','爱国者导弹公司','美国UPS快递-导弹专用',''],
+        ['客户要求暂扣','2025-09-03 10:35:19','未处理','客户要求暂扣,生成暂扣问题件','','ICBU00000600393','','TX00132','','美国UPS卡派-导弹专用',''],
+        ['客户要求暂扣','2025-09-02 18:00:17','未处理','客户要求暂扣,生成暂扣问题件','','ICBU00000600393','','TX00132','','美国UPS卡派-导弹专用',''],
+        ['问题件-超大','','未处理','','','ICBU00000600406','','TX00132','','美国UPS卡派-导弹专用','签入产生'],
+        ['问题件-超大','','未处理','','','ICBU00000600405','','TX00132','','美国UPS卡派-导弹专用','签入产生'],
+        ['问题件-超大','','未处理','','','ICBU00000600404','','TX00132','','美国UPS卡派-导弹专用','签入产生'],
+        ['客户要求暂扣','2025-08-23 15:02:37','未处理','客户要求暂扣,生成暂扣问题件','','ICBU00000600388','','TX00005','爱国者导弹公司','美国UPS快递-导弹专用',''],
+        ['问题件-超大','2025-08-22 17:51:24','已放行','运单问题放行','','ICBU00000600395','','TX00124','马克贸易有限公司','美国UPS卡派-导弹专用','签入产生'],
+        ['问题件-超大','2025-08-22 17:48:07','已放行','运单问题放行','','ICBU00000600394','','TX00124','马克贸易有限公司','美国UPS卡派-导弹专用','签入产生'],
+        ['问题件-超大','2025-08-22 17:41:17','已放行','运单问题放行','','ICBU00000600393','','TX00132','','美国UPS卡派-导弹专用','签入产生'],
+        ['问题件-超围长','2025-09-05 15:09:35','已放行','运单已产生退件,未完结问题件...','','ICBU00000600392','','TX00132','','美国UPS卡派-导弹专用','签入产生'],
+        ['问题件-超重','2025-09-05 15:09:35','已放行','运单已产生退件,未完结问题件...','','ICBU00000600392','','TX00132','','美国UPS卡派-导弹专用','签入产生']
+    ];
+    const d=rows.map(function(r,i){return [String(i+1)].concat(r).concat(['']);});
+    addPrototypeTable('cs-issue-track','问题件跟踪',
+        '序号|问题类型名称|最新响应时间|问题状态|最新响应内容|运单状态|运单号|客户单号|客户代码|客户名称|销售产品|问题备注|操作',
+        ['未处理','处理中','已放行','已退件'],d,
+        [
+            {label:'运单号',type:'text',field:'wbNo'},
+            {label:'问题件类型',type:'select',field:'issueType',options:CS_ISSUE_TYPES},
+            {label:'客户名称',type:'text',field:'custName'},
+            {label:'销售产品',type:'select',field:'salesProduct',options:CS_PRODUCTS}
+        ]
+    );
+})();
+/* 时间轴记录：key=运单号；图中 ICBU00000600587 详细复刻，其余按问题类型生成 1 条简记录 */
+var _CS_ISSUE_RECORDS={
+    'ICBU00000600587':[
+        {time:'2026-06-24 12:37:26',type:'客服反馈',content:'12121212121'},
+        {time:'2025-10-17 14:40:34',type:'代客户反馈',content:'周一早'},
+        {time:'2025-10-17 14:39:18',type:'放行',content:'哈哈哈'},
+        {time:'2025-10-15 15:35:16',type:'代客户反馈',content:'代客户反馈'},
+        {time:'2025-10-15 15:33:04',type:'客服反馈',content:'客服反馈'},
+        {time:'2025-09-22 19:18:06',type:'客服回复',content:'123123'},
+        {time:'2025-09-22 11:40:20',type:'客服反馈',content:'运单拦截,生成拦截问题件'}
+    ]
+};
+function csIssueRecordsOf(wbNo,fallbackType,fallbackTime,fallbackContent){
+    if(_CS_ISSUE_RECORDS[wbNo])return _CS_ISSUE_RECORDS[wbNo];
+    const list=[];
+    if(fallbackTime){list.push({time:fallbackTime,type:fallbackType||'客服反馈',content:fallbackContent||'问题件创建'});}
+    return list;
+}
+
+/* 9 个 placeholder（菜单占位） */
+addPrototypeTable('cs-issue-overseas','海外问题件','序号|海外单号|目的国家|问题类型|创建时间|状态|操作',['未处理','处理中','已关闭'],[
+    ['1','OV-20260613001','尼日利亚','清关延误','2026-06-13 10:00','处理中',''],
+    ['2','OV-20260612002','塞内加尔','收件人无法联系','2026-06-12 14:30','未处理','']
+],[{label:'海外单号',type:'text'},{label:'目的国家',type:'select',options:['尼日利亚','塞内加尔','科特迪瓦','多哥']}]);
+addPrototypeTable('cs-remote-type','偏远地址类型','序号|区域名称|类型|国家|开始日期|结束日期|状态|操作',['启用','停用'],[
+    ['1','美国阿拉斯加','偏远','美国','2026-01-01','2026-12-31','启用',''],
+    ['2','加拿大育空','偏远','加拿大','2026-01-01','2026-12-31','启用','']
+],[{label:'区域名称',type:'text'},{label:'国家',type:'select',options:['美国','加拿大','澳大利亚']}]);
+addPrototypeTable('cs-remote-query','偏远数据查询','序号|查询编号|邮编|国家|是否偏远|查询时间|操作',[],[
+    ['1','RQ-20260613001','99501','美国','是','2026-06-13 09:30',''],
+    ['2','RQ-20260613002','12345','美国','否','2026-06-13 09:45','']
+],[{label:'邮编',type:'text'},{label:'国家',type:'select',options:['美国','加拿大','澳大利亚']}]);
+addPrototypeTable('cs-fee-calc','费用试算','序号|试算编号|运单号|目的国家|件数|重量(KG)|体积(CBM)|预估费用|试算时间|操作',[],[
+    ['1','FC-20260613001','WB-20260613001','美国','3','25.5','0.12','USD 156.00','2026-06-13 10:00',''],
+    ['2','FC-20260612002','WB-20260612002','英国','5','18.0','0.08','USD 98.50','2026-06-12 16:00','']
+],[{label:'试算编号',type:'text'},{label:'运单号',type:'text'}]);
+addPrototypeTable('cs-track-query','轨迹查询','序号|运单号|物流单号|当前状态|最新轨迹|更新时间|操作',[],[
+    ['1','WB-20260613001','1Z999AA10123456784','派送中','已到达派送站','2026-06-13 14:30',''],
+    ['2','WB-20260612002','SF1234567890123','已签收','客户已签收','2026-06-12 18:00','']
+],[{label:'运单号',type:'text'},{label:'物流单号',type:'text'}]);
+addPrototypeTable('cs-track-maint','轨迹维护','序号|运单号|轨迹节点|节点时间|节点描述|操作人|操作',['正常','已修正'],[
+    ['1','WB-20260613001','派送中','2026-06-13 14:30','已到达派送站','王客服','正常',''],
+    ['2','WB-20260612002','已签收','2026-06-12 18:00','客户已签收','王客服','正常','']
+],[{label:'运单号',type:'text'}]);
+addPrototypeTable('cs-fuel-query','燃油查询','序号|燃油费编号|生效月份|燃油费率(%)|更新时间|操作',[],[
+    ['1','FUEL-202606','2026-06','18.5','2026-05-25 10:00',''],
+    ['2','FUEL-202605','2026-05','17.8','2026-04-25 10:00','']
+],[{label:'燃油费编号',type:'text'}]);
+addPrototypeTable('cs-config','客服配置','序号|配置项|配置值|说明|更新时间|操作',[],[
+    ['1','响应时效(分钟)','30','客服首次响应超时阈值','2026-06-01 10:00',''],
+    ['2','放行自动通知','是','放行后自动短信通知客户','2026-06-01 10:00','']
+],[{label:'配置项',type:'text'}]);
+addPrototypeTable('cs-fuel-fee','燃油费管理','序号|账单月份|总燃油费(USD)|生效运单数|计费状态|创建时间|操作',['草稿','已确认','已结算'],[
+    ['1','2026-06','12,580.00','385','已确认','2026-06-30 18:00',''],
+    ['2','2026-05','11,240.00','356','已结算','2026-05-30 18:00','']
+],[{label:'账单月份',type:'text'}]);
 
 addPrototypeTable('cfg-coding-rule','编码规则管理','规则编号|存储值|注释|前缀类型|前缀参数|后缀类型|后缀参数|生成规则|规则长度|忽略数字|操作',[],[
     ['CK_NO','56','出库计划单号生成规则,使用默认生成类','fixed','CK','','','%p%n','5',''],
@@ -8285,7 +8392,7 @@ function openSelectedCrud(mode,id){
 }
 
 function renderToolbarAction(action,id){
-    const isDanger=action.key==='enable'||action.key==='delete'||action.key==='cancel';
+    const isDanger=action.key==='enable'||action.key==='delete'||action.key==='cancel'||action.key==='csRevokeRelease'||action.variant==='danger';
     const color=isDanger
         ?'text-white bg-red-500 hover:bg-red-600'
         :'text-white bg-blue-600 hover:bg-blue-700';
@@ -8306,6 +8413,13 @@ function renderToolbarAction(action,id){
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
     else if(action.key==='outboundAdjust')click='openOutboundAdjustModal(\''+id+'\')';
     else if(action.key==='businessConfirm')click='openWaybillBusinessConfirmModal(\''+id+'\')';
+    else if(action.key==='csAdd')click='openCsIssueAddModal(\''+id+'\')';
+    else if(action.key==='csFeedback')click='openCsIssueFeedbackModal(\''+id+'\',\'cs-reply\')';
+    else if(action.key==='csReplyForCust')click='openCsIssueFeedbackModal(\''+id+'\',\'cust-on-behalf\')';
+    else if(action.key==='csCustReply')click='openCsIssueFeedbackModal(\''+id+'\',\'cust-reply\')';
+    else if(action.key==='csRelease')click='openCsIssueFeedbackModal(\''+id+'\',\'release\')';
+    else if(action.key==='csReturn')click='openCsIssueReturnModal(\''+id+'\')';
+    else if(action.key==='csRevokeRelease')click='openCsIssueRevokeReleaseConfirm(\''+id+'\')';
     else if(action.key==='newSortScan')click='openSortBagRuleModal(\''+id+'\')';
     else if(action.key==='editCodingRule')click='openCodingRuleEditModal(\''+id+'\')';
     else if(action.key==='genBill'&&id==='fcl-bill-entry')click='showToast(\''+esc(tr('账单生成成功'))+'\')';
@@ -8514,6 +8628,19 @@ function getToolbarActions(id){
             {type:'edit',label:'编辑数据'},
             {type:'view',label:'查看详情'},
             {key:'export',label:'导出数据'}
+        ];
+    }
+    if(id==='cs-issue-track'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'csAdd',label:'新增数据',variant:'primary'},
+            {key:'csFeedback',label:'客服反馈'},
+            {key:'csReplyForCust',label:'代客户反馈'},
+            {key:'csCustReply',label:'客户反馈'},
+            {key:'csRelease',label:'放行'},
+            {key:'csReturn',label:'退件'},
+            {key:'export',label:'导出数据'},
+            {key:'csRevokeRelease',label:'撤销放行',variant:'danger'}
         ];
     }
     if(['wh-air-sort','wh-air-bag','wh-air-pack'].includes(id)){
@@ -10945,7 +11072,7 @@ function generateListPage(id,page,statusFilter){
         h+='</div>';
         h+='</div>';
     }
-    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-order')){
+    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-order'||id==='cs-issue-track')){
         const statusCounts={};
         statusCounts['']=allData.length;
         c.s.forEach(s=>{statusCounts[s]=allData.filter(row=>{const si2=dataHeaders(c).findIndex(hd=>hd.includes('状态')||hd.includes(L.status)||hd==='Status');return si2>=0&&row[si2]===s;}).length;});
@@ -13437,6 +13564,216 @@ function openWaybillBusinessConfirmModal(id){
     document.getElementById('crud-modal-title').textContent=tr('业务确认')+' - '+tr((TC[id]&&TC[id].t)||'运单管理');
     document.getElementById('crud-modal-body').innerHTML=h;
     document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="closeCrudModal();showToast(\''+tr('已确认')+' '+rows.length+' '+tr('条运单')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认无误')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+/* ============= 客服 · 问题件跟踪 Modal ============= */
+
+/* 时间轴组件 */
+function csIssueTimelineHtml(records,headerInfo){
+    let h='<div class="rounded-xl border border-surface-200 bg-surface-50/40 p-4">';
+    if(headerInfo){
+        h+='<div class="grid grid-cols-4 gap-3 pb-3 mb-3 border-b border-surface-200 text-xs">';
+        headerInfo.forEach(function(p){h+='<div><span class="text-text-muted">'+esc(p[0])+'</span><div class="mt-0.5 font-semibold text-text-primary">'+esc(p[1]||'-')+'</div></div>';});
+        h+='</div>';
+    }
+    if(!records||!records.length){
+        h+='<div class="text-center text-text-muted text-xs py-6">'+tr('暂无问题记录')+'</div>';
+    }else{
+        h+='<div class="relative pl-5">';
+        h+='<div class="absolute left-[7px] top-1 bottom-1 w-px bg-surface-300"></div>';
+        records.forEach(function(rec,idx){
+            const active=idx===0;
+            const dot=active?'bg-primary-600 ring-4 ring-primary-100':'bg-surface-400';
+            h+='<div class="relative pb-4 last:pb-0">';
+            h+='<div class="absolute -left-5 top-1 w-3.5 h-3.5 rounded-full '+dot+'"></div>';
+            h+='<div class="text-xs text-text-primary font-medium">'+esc(rec.time||'')+'<span class="ml-3 text-primary-700">'+esc(rec.type||'')+'</span></div>';
+            if(rec.content)h+='<div class="text-xs text-text-secondary mt-1">'+esc(rec.content)+'</div>';
+            h+='</div>';
+        });
+        h+='</div>';
+    }
+    h+='</div>';
+    return h;
+}
+
+/* 多文件拖拽上传组件 */
+function csMultiFileUploaderHtml(){
+    const inputId='cs-return-files-'+Math.floor(Math.random()*1e6);
+    let h='<div class="rounded-xl border-2 border-dashed border-surface-300 bg-surface-50/60 p-6 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/20 transition-colors" onclick="document.getElementById(\''+inputId+'\').click()">';
+    h+='<svg class="w-10 h-10 mx-auto text-text-muted mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>';
+    h+='<div class="text-sm text-text-secondary">'+tr('将文件拖到此处，或')+' <span class="text-primary-600">'+tr('点击上传')+'</span></div>';
+    h+='<input id="'+inputId+'" type="file" multiple class="hidden" onchange="document.getElementById(\''+inputId+'-list\').textContent=Array.from(this.files).map(f=>f.name).join(\', \')">';
+    h+='<div id="'+inputId+'-list" class="mt-2 text-xs text-text-secondary"></div>';
+    h+='</div>';
+    h+='<div class="mt-2 text-xs text-text-muted">'+tr('请上传 大小不超过')+' <span class="text-red-500 font-medium">5MB</span> '+tr('格式为')+' <span class="text-red-500 font-medium">frx/FRX/doc/DOC/docx/DOCX/xls/XLS/xlsx/XLSX/ppt/PPT/pptx/PPTX/txt/TXT/pdf/PDF/zip/ZIP/rar/RAR/jpg/JPG/jpeg/JPEG/png/PNG/gif/GIF/bmp/BMP</span> '+tr('的文件 最多上传')+' <span class="text-red-500 font-medium">5</span> '+tr('个附件')+'</div>';
+    return h;
+}
+
+/* 必填校验失焦 hint */
+function csValidateRequired(fieldId,msg){
+    const el=document.getElementById(fieldId);
+    const errEl=document.getElementById('err-'+fieldId);
+    if(!el||!errEl)return true;
+    const empty=!el.value||!el.value.trim();
+    if(empty){
+        el.classList.add('border-red-400');el.classList.remove('border-surface-200');
+        errEl.textContent=msg||tr('该项不能为空');
+        errEl.classList.remove('hidden');
+        return false;
+    }
+    el.classList.remove('border-red-400');el.classList.add('border-surface-200');
+    errEl.classList.add('hidden');
+    return true;
+}
+
+/* 单行获取 */
+function _csRowOf(id,index){
+    const row=(TC[id]&&TC[id].d[index])||[];
+    const headers=(TC[id]&&TC[id].h)||[];
+    const get=function(name){const i=headers.indexOf(name);return i>=0?(row[i]||''):'';};
+    return {row:row,get:get};
+}
+
+/* 新增数据 Modal */
+function openCsIssueAddModal(id){
+    const wbOptions=['WB-20260613001','WB-20260613002','WB-20260613003','WB-20260612001','WB-20260612002','ICBU00000600587','ICBU00000600522','ICBU00000600457'];
+    const typeOptions=['运单拦截','问题件-超大','问题件-超长','问题件-超围长','问题件-超重','退件/少件扣件','查验扣件','签收地址错','未提取','客户要求暂扣'];
+    let h='<div class="space-y-5">';
+    h+='<div><div class="text-sm font-semibold text-text-primary mb-3 pl-2 border-l-3 border-primary-500">'+tr('基本信息')+'</div>';
+    h+='<div class="grid grid-cols-1 gap-4">';
+    h+='<div><label class="block text-xs text-text-secondary mb-1"><span class="text-red-500">*</span>'+tr('运单号')+'</label>';
+    h+='<select id="cs-add-wb" class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"><option value="">'+tr('请选择运单号')+'</option>';
+    wbOptions.forEach(function(o){h+='<option>'+esc(o)+'</option>';});
+    h+='</select></div>';
+    h+='<div><label class="block text-xs text-text-secondary mb-1"><span class="text-red-500">*</span>'+tr('问题处理类型')+'</label>';
+    h+='<select id="cs-add-type" class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"><option value="">'+tr('请选择问题处理类型')+'</option>';
+    typeOptions.forEach(function(o){h+='<option>'+esc(o)+'</option>';});
+    h+='</select></div>';
+    h+='<div><label class="block text-xs text-text-secondary mb-1"><span class="text-red-500">*</span>'+tr('问题备注')+'</label>';
+    h+='<textarea id="cs-add-remark" rows="4" class="w-full p-2 text-sm border border-surface-200 rounded bg-white"></textarea></div>';
+    h+='</div></div></div>';
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='50%';
+    document.getElementById('crud-modal-title').textContent=tr('新增数据');
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>'+
+        '<button onclick="closeCrudModal();showToast(\''+tr('已新增问题件')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+/* 反馈/放行 Modal （4 种模式合一） */
+function openCsIssueFeedbackModal(id,mode){
+    const indices=getSelectedRowIndices();
+    if(!indices.length){showToast(tr('请先勾选问题件'));return;}
+    const i0=indices[0];
+    const info=_csRowOf(id,i0);
+    const wbNo=info.get('运单号');
+    const headerInfo=[[tr('运单号'),wbNo],[tr('问题类型'),info.get('问题类型名称')],[tr('客户名称'),info.get('客户名称')],[tr('销售产品'),info.get('销售产品')]];
+    const records=csIssueRecordsOf(wbNo,info.get('问题类型名称'),info.get('最新响应时间'),info.get('最新响应内容'));
+    const titleMap={'cs-reply':'问题件客服反馈','cust-on-behalf':'问题件代客户反馈','cust-reply':'问题件客户反馈','release':'问题件放行'};
+    const title=titleMap[mode]||'问题件反馈';
+    let h='<div class="space-y-5">';
+    h+='<div><div class="text-sm font-semibold text-text-primary mb-3 pl-2 border-l-3 border-primary-500">'+tr('问题记录')+'</div>';
+    h+=csIssueTimelineHtml(records,headerInfo);
+    h+='</div>';
+    h+='<div><div class="text-sm font-semibold text-text-primary mb-3 pl-2 border-l-3 border-primary-500">'+tr('基本信息')+'</div>';
+    h+='<div><label class="block text-xs text-text-secondary mb-1"><span class="text-red-500">*</span>'+tr('回复内容')+'</label>';
+    h+='<textarea id="cs-feedback-reply" rows="4" class="w-full p-2 text-sm border border-surface-200 rounded bg-white"></textarea>';
+    h+='<div id="err-cs-feedback-reply" class="hidden text-xs text-red-500 mt-1">'+tr('该项不能为空')+'</div></div>';
+    h+='</div></div>';
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=tr(title);
+    document.getElementById('crud-modal-body').innerHTML=h;
+    const okToast=(mode==='release')?tr('已放行所选问题件'):tr('反馈已提交');
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>'+
+        '<button onclick="if(csValidateRequired(\'cs-feedback-reply\')){closeCrudModal();showToast(\''+okToast+'\');}" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+/* 退件 Modal */
+var _csReturnRows=[];
+function csReturnFeeRowHtml(rowIdx,row){
+    const curOpts=['CNY','USD','EUR','GBP'];
+    const feeTypeOpts=['退件费','补偿费','清关罚款','滞港费','其他'];
+    let h='<tr class="border-t border-surface-100">';
+    h+='<td class="px-2 py-2"><select onchange="_csReturnRows['+rowIdx+'].cur=this.value" class="w-full h-8 px-2 text-xs border border-surface-200 rounded bg-white">';
+    curOpts.forEach(function(o){h+='<option '+(row.cur===o?'selected':'')+'>'+o+'</option>';});h+='</select></td>';
+    h+='<td class="px-2 py-2"><input value="'+esc(row.rate||'')+'" onchange="_csReturnRows['+rowIdx+'].rate=this.value" class="w-full h-8 px-2 text-xs border border-surface-200 rounded"></td>';
+    h+='<td class="px-2 py-2"><input value="'+esc(row.amount||'')+'" onchange="_csReturnRows['+rowIdx+'].amount=this.value" class="w-full h-8 px-2 text-xs border border-surface-200 rounded text-right"></td>';
+    h+='<td class="px-2 py-2"><select onchange="_csReturnRows['+rowIdx+'].feeType=this.value" class="w-full h-8 px-2 text-xs border border-surface-200 rounded bg-white">';
+    feeTypeOpts.forEach(function(o){h+='<option '+(row.feeType===o?'selected':'')+'>'+o+'</option>';});h+='</select></td>';
+    h+='<td class="px-2 py-2"><input value="'+esc(row.reason||'')+'" onchange="_csReturnRows['+rowIdx+'].reason=this.value" class="w-full h-8 px-2 text-xs border border-surface-200 rounded"></td>';
+    h+='<td class="px-2 py-2 text-center"><button type="button" onclick="csReturnDelRow('+rowIdx+')" class="text-red-500 hover:text-red-600 text-xs cursor-pointer">'+tr('删除')+'</button></td>';
+    h+='</tr>';
+    return h;
+}
+function csReturnAddRow(){
+    _csReturnRows.push({cur:'CNY',rate:'1.0000',amount:'',feeType:'退件费',reason:''});
+    csReturnRefreshRows();
+}
+function csReturnDelRow(i){
+    _csReturnRows.splice(i,1);
+    csReturnRefreshRows();
+}
+function csReturnRefreshRows(){
+    const tbody=document.getElementById('cs-return-fee-tbody');
+    if(!tbody)return;
+    tbody.innerHTML=_csReturnRows.length?_csReturnRows.map(csReturnFeeRowHtml).join(''):'<tr><td colspan="6" class="px-3 py-6 text-center text-text-muted text-xs">'+tr('暂无数据')+'</td></tr>';
+}
+function openCsIssueReturnModal(id){
+    const indices=getSelectedRowIndices();
+    if(!indices.length){showToast(tr('请先勾选问题件'));return;}
+    _csReturnRows=[];
+    const methodOpts=['直接退件','销毁','转寄'];
+    let h='<div class="space-y-5">';
+    h+='<div><div class="text-sm font-semibold text-text-primary mb-3 pl-2 border-l-3 border-primary-500">'+tr('基本信息')+'</div>';
+    h+='<div class="grid grid-cols-1 gap-4">';
+    h+='<div><label class="block text-xs text-text-secondary mb-1"><span class="text-red-500">*</span>'+tr('处理方式')+'</label>';
+    h+='<select id="cs-return-method" class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"><option value="">'+tr('请选择处理方式')+'</option>';
+    methodOpts.forEach(function(o){h+='<option>'+esc(o)+'</option>';});h+='</select>';
+    h+='<div id="err-cs-return-method" class="hidden text-xs text-red-500 mt-1">'+tr('该项不能为空')+'</div></div>';
+    h+='<div><label class="block text-xs text-text-secondary mb-1"><span class="text-red-500">*</span>'+tr('退件原因')+'</label>';
+    h+='<textarea id="cs-return-reason" rows="3" class="w-full p-2 text-sm border border-red-400 rounded bg-white"></textarea>';
+    h+='<div id="err-cs-return-reason" class="text-xs text-red-500 mt-1">'+tr('该项不能为空')+'</div></div>';
+    h+='</div></div>';
+    /* 费用列表（只读） */
+    h+='<div><div class="rounded-lg border border-surface-200 overflow-hidden bg-white"><div class="overflow-auto"><table class="w-full text-xs"><thead class="bg-surface-50 text-text-secondary"><tr>';
+    ['序号','费用名称','金额','币别','汇率','人民币金额','费用时间','核销状态'].forEach(function(hd){h+='<th class="px-3 py-2 text-left whitespace-nowrap font-semibold">'+tr(hd)+'</th>';});
+    h+='</tr></thead><tbody><tr><td colspan="8" class="px-3 py-10 text-center text-text-muted">'+tr('暂无数据')+'</td></tr></tbody></table></div></div></div>';
+    /* 赔偿费用录入（可加行） */
+    h+='<div><div class="rounded-lg border border-surface-200 overflow-hidden bg-white"><div class="overflow-auto"><table class="w-full text-xs"><thead class="bg-surface-50 text-text-secondary"><tr>';
+    h+='<th class="px-2 py-2 text-left w-12"><button type="button" onclick="csReturnAddRow()" class="w-7 h-7 rounded bg-primary-600 text-white text-base hover:bg-primary-700 cursor-pointer">+</button></th>';
+    ['币别','汇率','金额','费用类型','赔偿原因','操作'].forEach(function(hd){h+='<th class="px-2 py-2 text-left whitespace-nowrap font-semibold">'+tr(hd)+'</th>';});
+    h+='</tr></thead><tbody id="cs-return-fee-tbody"><tr><td colspan="7" class="px-3 py-10 text-center text-text-muted">'+tr('暂无数据')+'</td></tr></tbody></table></div></div></div>';
+    /* 附件资料 */
+    h+='<div><div class="text-sm font-semibold text-text-primary mb-3 pl-2 border-l-3 border-primary-500">'+tr('附件资料')+'</div>';
+    h+=csMultiFileUploaderHtml();
+    h+='</div></div>';
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='72%';
+    document.getElementById('crud-modal-title').textContent=tr('退单');
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>'+
+        '<button onclick="var ok1=csValidateRequired(\'cs-return-method\');var ok2=csValidateRequired(\'cs-return-reason\');if(ok1&&ok2){closeCrudModal();showToast(\''+tr('已提交退件')+'\');}" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+/* 撤销放行 confirm */
+function openCsIssueRevokeReleaseConfirm(id){
+    const indices=getSelectedRowIndices();
+    if(!indices.length){showToast(tr('请先勾选问题件'));return;}
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='42%';
+    document.getElementById('crud-modal-title').textContent=tr('撤销放行');
+    document.getElementById('crud-modal-body').innerHTML='<div class="py-4 text-sm text-text-primary">'+tr('确定撤销放行已选')+' <span class="font-semibold text-primary-700">'+indices.length+'</span> '+tr('条问题件？')+'</div>';
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="closeCrudModal();showToast(\''+tr('已撤销放行')+' '+indices.length+' '+tr('条')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('确定撤销')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
 }
 

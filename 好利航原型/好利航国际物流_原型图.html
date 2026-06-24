@@ -8284,6 +8284,7 @@ function getToolbarActions(id){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
             {key:'addWaybill',label:'新增数据',variant:'primary'},
+            {key:'businessConfirm',label:'业务确认',variant:'primary'},
             {key:'mergeDeclare',label:'合并报关'},
             {key:'splitDeclare',label:'拆分报关'},
             {key:'singleDeclare',label:'单独报关'},
@@ -8512,14 +8513,6 @@ function getToolbarActions(id){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
             {type:'add',label:'新增数据',variant:'primary'},
-            {key:'export',label:'导出数据'}
-        ];
-    }
-    if(id==='wb-manage'){
-        return [
-            {key:'search',label:'查询数据',variant:'primary'},
-            {type:'add',label:'新增数据',variant:'primary'},
-            {key:'businessConfirm',label:'业务确认',variant:'primary'},
             {key:'export',label:'导出数据'}
         ];
     }

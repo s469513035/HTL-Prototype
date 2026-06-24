@@ -9555,48 +9555,51 @@ function pdaAction(label){
 }
 
 function pdaServicePanel(open){
+    /* 扁平 PDA 风格附加服务面板 */
     const services=['是否报关','拆分报关','带磁','合并报关','带电','贴箱唛'];
-    let h='<details class="rounded-xl border border-surface-200 bg-white p-3 mb-3"'+(open===false?'':' open')+'>';
-    h+='<summary class="text-[13px] font-semibold text-text-primary cursor-pointer">'+tr('附加服务')+'</summary>';
-    h+='<div class="grid grid-cols-2 gap-2 mt-3">';
+    let h='<details class="bg-white border border-slate-200 rounded-md mb-3"'+(open===false?'':' open')+'>';
+    h+='<summary class="px-3 py-2 bg-slate-50 border-b border-slate-200 text-[13px] font-bold text-slate-800 cursor-pointer">'+tr('附加服务')+'</summary>';
+    h+='<div class="grid grid-cols-2 gap-2 p-3">';
     services.forEach(function(name){
-        h+='<label class="h-8 px-2 rounded-lg border border-surface-200 bg-surface-50 flex items-center gap-1.5 text-[11px] text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600"><span class="flex-1 truncate">'+tr(name)+'</span><button type="button" onclick="event.preventDefault();showServiceChargeInfo(\''+esc(name)+'\')" class="shrink-0 inline-flex w-4 h-4 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">!</button></label>';
+        h+='<label class="h-10 px-2 rounded border border-slate-300 bg-white flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer"><input type="checkbox" class="w-4 h-4"><span class="flex-1 truncate">'+tr(name)+'</span><button type="button" onclick="event.preventDefault();showServiceChargeInfo(\''+esc(name)+'\')" class="shrink-0 inline-flex w-4 h-4 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">!</button></label>';
     });
     h+='</div></details>';
     return h;
 }
 
 function pdaField(f){
+    /* 扁平 PDA 字段 - 大字号大触摸区 */
     const label=tr(f.label);
     const required=f.required?'<span class="text-red-500 ml-1">*</span>':'';
     const placeholder=f.placeholder?tr(f.placeholder):(tr('请输入')+label);
     const value=f.value===undefined?'':f.value;
-    const base='w-full h-10 px-3 text-xs rounded-lg border border-surface-200 bg-white focus:border-primary-400';
+    const base='w-full h-11 px-3 text-sm rounded-md border border-slate-300 bg-white focus:border-sky-500 focus:outline-none';
     let control='';
     if(f.type==='select'){
         control='<select class="'+base+'"><option value="">'+tr('请选择')+'</option>';
         (f.options||[]).forEach(function(o){control+='<option value="'+esc(o)+'"'+(value===o?' selected':'')+'>'+esc(tr(o))+'</option>';});
         control+='</select>';
     }else if(f.type==='textarea'){
-        control='<textarea rows="3" class="w-full px-3 py-2 text-xs rounded-lg border border-surface-200 bg-white resize-none" placeholder="'+esc(placeholder)+'">'+esc(value)+'</textarea>';
+        control='<textarea rows="3" class="w-full px-3 py-2 text-sm rounded-md border border-slate-300 bg-white resize-none focus:border-sky-500 focus:outline-none" placeholder="'+esc(placeholder)+'">'+esc(value)+'</textarea>';
     }else if(f.type==='checkbox'){
-        control='<label class="h-10 px-3 rounded-lg border border-surface-200 bg-white flex items-center gap-2 text-xs text-text-secondary"><input type="checkbox" class="rounded border-surface-300 text-primary-600"'+(f.checked?' checked':'')+'><span>'+tr(f.label)+'</span></label>';
+        control='<label class="h-11 px-3 rounded-md border border-slate-300 bg-white flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" class="w-4 h-4"'+(f.checked?' checked':'')+'><span>'+tr(f.label)+'</span></label>';
         return '<div class="min-w-0">'+control+'</div>';
     }else if(f.type==='scan'){
-        control='<div class="flex gap-2"><input type="text" class="'+base+'" placeholder="'+esc(placeholder)+'" value="'+esc(value)+'"><button type="button" onclick="openPdaScanModal(\'\',\''+esc(value||'WB-20260613001')+'\',\'\')" class="shrink-0 h-10 px-3 rounded-lg bg-primary-600 text-white text-xs font-medium">'+tr('扫码')+'</button></div>';
+        control='<div class="flex gap-2"><input type="text" class="'+base+'" placeholder="'+esc(placeholder)+'" value="'+esc(value)+'"><button type="button" onclick="openPdaScanModal(\'\',\''+esc(value||'WB-20260613001')+'\',\'\')" class="shrink-0 h-11 px-4 rounded-md bg-sky-600 text-white text-sm font-bold">'+tr('扫码')+'</button></div>';
     }else{
         control='<input type="'+(f.type||'text')+'" class="'+base+'" placeholder="'+esc(placeholder)+'" value="'+esc(value)+'">';
     }
-    return '<div class="min-w-0 flex flex-col gap-1.5"><label class="text-[11px] font-medium text-text-secondary break-all">'+esc(label)+required+'</label>'+control+'</div>';
+    return '<div class="min-w-0 flex flex-col gap-1"><label class="text-xs font-bold text-slate-700 break-all">'+esc(label)+required+'</label>'+control+'</div>';
 }
 
 function pdaPhotoUploader(limit){
+    /* 扁平 PDA 图片上传区 */
     const total=limit||3;
-    let h='<div class="rounded-xl border border-dashed border-primary-200 bg-primary-50/50 p-3">';
-    h+='<div class="flex items-center justify-between mb-2"><span class="text-xs font-medium text-primary-700">'+tr('图片上传')+'</span><button type="button" onclick="openPdaUploadChoice()" class="text-xs text-primary-600 font-medium">'+tr('附件上传')+'</button></div>';
+    let h='<div class="bg-white border-2 border-dashed border-sky-300 rounded-md p-3 mb-3">';
+    h+='<div class="flex items-center justify-between mb-2"><span class="text-xs font-bold text-slate-700">📷 '+tr('图片上传')+'</span><button type="button" onclick="openPdaUploadChoice()" class="text-xs text-sky-600 font-bold">'+tr('附件上传')+'</button></div>';
     h+='<div class="grid grid-cols-5 gap-2">';
     for(let i=0;i<total;i++){
-        h+='<button type="button" onclick="openPdaUploadChoice()" class="aspect-square rounded-lg border border-primary-100 bg-white text-primary-500 text-lg flex items-center justify-center">'+(i===0?'+':'')+'</button>';
+        h+='<button type="button" onclick="openPdaUploadChoice()" class="aspect-square rounded border-2 border-slate-200 bg-slate-50 text-slate-400 text-2xl flex items-center justify-center hover:border-sky-400">'+(i===0?'+':'')+'</button>';
     }
     h+='</div></div>';
     return h;
@@ -9630,41 +9633,45 @@ function openPdaUploadChoice(){
 }
 
 function pdaSection(section){
-    let h='<div class="rounded-xl border border-surface-200 bg-white p-3 mb-3">';
-    h+='<div class="text-sm font-semibold text-text-primary mb-3">'+tr(section.title)+'</div>';
-    h+='<div class="space-y-3">'+(section.fields||[]).map(pdaField).join('')+'</div>';
+    /* 扁平 PDA 节段（带标题栏） */
+    let h='<div class="bg-white border border-slate-200 rounded-md mb-3">';
+    h+='<div class="px-3 py-2 bg-slate-50 border-b border-slate-200 text-[13px] font-bold text-slate-800 flex items-center gap-2"><span class="w-1 h-3.5 bg-sky-600 rounded-sm"></span>'+tr(section.title)+'</div>';
+    h+='<div class="p-3 space-y-3">'+(section.fields||[]).map(pdaField).join('')+'</div>';
     h+='</div>';
     return h;
 }
 
 function pdaRecordCard(record){
-    let h='<div class="rounded-xl border border-surface-200 bg-white p-3 mb-2">';
-    h+='<div class="flex items-start justify-between gap-2"><div class="text-[12px] font-semibold text-text-primary break-all">'+esc(record.no)+'</div><span class="shrink-0 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary-700">'+tr(record.status)+'</span></div>';
-    (record.lines||[]).forEach(function(line){h+='<div class="mt-1 text-[11px] text-text-muted leading-4 break-all">'+esc(tr(line))+'</div>';});
+    /* 扁平 PDA 记录卡（无圆角阴影，左 accent 条） */
+    let h='<div class="relative bg-white border border-slate-200 rounded-md pl-3 pr-3 py-2.5 mb-2">';
+    h+='<div class="absolute left-0 top-2 bottom-2 w-1 rounded-r bg-sky-500"></div>';
+    h+='<div class="flex items-start justify-between gap-2 pl-2"><div class="text-sm font-bold text-slate-800 break-all">'+esc(record.no)+'</div><span class="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">'+tr(record.status)+'</span></div>';
+    (record.lines||[]).forEach(function(line){h+='<div class="pl-2 mt-1 text-[11px] text-slate-500 leading-tight break-all">'+esc(tr(line))+'</div>';});
     h+='</div>';
     return h;
 }
 
 function pdaBottomActions(config){
+    /* 扁平 PDA 底部操作（大型主按钮 56px + 次按钮 44px） */
     const secondary=config.secondary||[];
     if(config.sameRowActions){
         const labels=secondary.concat([config.primary||'保存']);
-        let h='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><div class="grid grid-cols-'+Math.min(labels.length,2)+' gap-2">';
+        let h='<div class="sticky bottom-0 bg-slate-50 border-t-2 border-slate-200 p-3"><div class="grid grid-cols-'+Math.min(labels.length,2)+' gap-2">';
         labels.forEach(function(label){
-            h+='<button type="button" onclick="'+pdaAction(label)+'" class="h-10 rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr(label)+'</button>';
+            h+='<button type="button" onclick="'+pdaAction(label)+'" class="h-12 rounded-md bg-sky-600 text-white text-sm font-bold active:bg-sky-700">'+tr(label)+'</button>';
         });
         h+='</div></div>';
         return h;
     }
-    let h='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3 space-y-2">';
+    let h='<div class="sticky bottom-0 bg-slate-50 border-t-2 border-slate-200 p-3 space-y-2">';
     if(secondary.length){
         h+='<div class="grid grid-cols-'+(secondary.length>1?'2':'1')+' gap-2">';
         secondary.forEach(function(label){
-            h+='<button type="button" onclick="'+pdaAction(label)+'" class="h-9 rounded-lg border border-primary-200 text-primary-700 text-xs font-medium bg-white">'+tr(label)+'</button>';
+            h+='<button type="button" onclick="'+pdaAction(label)+'" class="h-11 rounded-md border-2 border-slate-300 bg-white text-slate-700 text-sm font-bold active:bg-slate-100">'+tr(label)+'</button>';
         });
         h+='</div>';
     }
-    h+='<button type="button" onclick="'+pdaAction(config.primary||'保存')+'" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr(config.primary||'保存')+'</button>';
+    h+='<button type="button" onclick="'+pdaAction(config.primary||'保存')+'" class="h-14 w-full rounded-md bg-sky-600 text-white text-base font-bold shadow-md active:bg-sky-700">'+tr(config.primary||'保存')+'</button>';
     h+='</div>';
     return h;
 }
@@ -9679,8 +9686,18 @@ function pdaTasksInCurrentCategory(tasks){
     return tasks.filter(function(t){return t[3]===_warehousePdaCategory;});
 }
 
-function pdaAppHeader(title){
-    return '<div class="bg-primary-600 text-white px-5 pt-5 pb-5"><div class="flex items-center justify-between text-xs opacity-90"><span>17:36</span><span>5G 81%</span></div><div class="mt-6 text-center text-lg font-semibold tracking-wide">'+tr(title)+'</div></div>';
+function pdaAppHeader(title,opts){
+    /* 扁平 PDA 顶栏：黑色状态栏 + 深蓝标题栏，可选返回按钮 */
+    opts=opts||{};
+    let h='<div>';
+    h+='<div class="bg-slate-900 text-white flex items-center justify-between px-4 py-1 text-[10px] font-mono opacity-90"><span>17:36</span><span class="flex items-center gap-1"><span class="text-emerald-400">●</span><span>5G</span><span>81%</span></span></div>';
+    h+='<div class="bg-sky-700 text-white px-3 py-2.5 flex items-center gap-2">';
+    if(opts.back){h+='<button type="button" onclick="'+opts.back+'" class="w-9 h-9 rounded-md bg-sky-800/70 text-white flex items-center justify-center text-lg active:bg-sky-900">←</button>';}
+    h+='<div class="flex-1 min-w-0"><div class="text-base font-bold truncate">'+tr(title)+'</div>';
+    if(opts.subtitle){h+='<div class="text-[11px] opacity-80 truncate">'+tr(opts.subtitle)+'</div>';}
+    h+='</div></div>';
+    h+='</div>';
+    return h;
 }
 
 function pdaBottomNav(active){
@@ -9696,19 +9713,19 @@ function pdaBottomNav(active){
 }
 
 function generateWarehousePdaWorkbench(tasks){
-    /* 顶部分类 tab 横滑 + 当前类卡片网格 */
+    /* 顶部分类 tab 横滑 + 当前类卡片网格 - 扁平风格 */
     let h=pdaAppHeader('工作台');
-    h+='<div class="bg-white border-b border-surface-200 px-2 py-2 flex gap-1 overflow-x-auto">';
+    h+='<div class="bg-white border-b-2 border-slate-200 px-2 py-2 flex gap-1.5 overflow-x-auto">';
     PDA_CATEGORIES.forEach(function(cat){
         const on=cat.key===_warehousePdaCategory;
         const count=tasks.filter(function(t){return t[3]===cat.key;}).length;
-        h+='<button type="button" onclick="selectPdaCategory(\''+cat.key+'\')" class="flex-shrink-0 px-3 h-9 rounded-md text-xs font-bold '+(on?'bg-slate-800 text-white':'bg-surface-100 text-text-secondary')+'">'+tr(cat.label)+'<span class="ml-1 text-[10px] opacity-70">'+count+'</span></button>';
+        h+='<button type="button" onclick="selectPdaCategory(\''+cat.key+'\')" class="flex-shrink-0 px-3 h-10 rounded-md text-xs font-bold border-2 '+(on?'bg-slate-800 text-white border-slate-800':'bg-white text-slate-600 border-slate-200')+'">'+tr(cat.label)+'<span class="ml-1 text-[10px] '+(on?'text-amber-300':'text-slate-400')+'">'+count+'</span></button>';
     });
     h+='</div>';
     const currentTasks=pdaTasksInCurrentCategory(tasks);
     const currentCat=PDA_CATEGORIES.find(function(c){return c.key===_warehousePdaCategory;});
-    h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-100">';
-    h+='<div class="flex items-center gap-2 mb-3"><span class="inline-block w-1.5 h-4 rounded '+(currentCat?currentCat.accent:'bg-slate-500')+'"></span><span class="text-sm font-bold text-text-primary">'+tr(currentCat?currentCat.label:'')+'</span><span class="text-xs text-text-muted">'+currentTasks.length+' '+tr('项')+'</span></div>';
+    h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-slate-100">';
+    h+='<div class="flex items-center gap-2 mb-3 px-1"><span class="inline-block w-1 h-5 rounded '+(currentCat?currentCat.accent:'bg-slate-500')+'"></span><span class="text-sm font-bold text-slate-800">'+tr(currentCat?currentCat.label:'')+'</span><span class="text-xs text-slate-500">· '+currentTasks.length+' '+tr('项功能')+'</span></div>';
     h+='<div class="grid grid-cols-2 gap-2">'+currentTasks.map(pdaTaskCard).join('')+'</div>';
     h+='</div>';
     h+=pdaBottomNav('workbench');
@@ -9745,22 +9762,27 @@ function openPdaOverviewDetail(title){
 }
 
 function generateWarehousePdaProfile(){
-    let h='<div class="bg-primary-600 text-white px-5 pt-5 pb-20">';
-    h+='<div class="flex items-center justify-between text-xs opacity-90"><span>17:37</span><span>5G 81%</span></div>';
-    h+='<div class="mt-8 flex flex-col items-center"><div class="w-24 h-24 rounded-full bg-white text-primary-600 flex items-center justify-center text-4xl font-bold shadow">仓</div><div class="mt-5 text-2xl font-semibold">IT开发测试专用</div><div class="text-sm opacity-90 mt-1">YY0001</div></div>';
+    /* 扁平 PDA 风格 我的页 */
+    let h='<div class="bg-slate-900 text-white flex items-center justify-between px-4 py-1 text-[10px] font-mono opacity-90"><span>17:37</span><span class="flex items-center gap-1"><span class="text-emerald-400">●</span><span>5G</span><span>81%</span></span></div>';
+    h+='<div class="flex-1 min-h-0 overflow-y-auto bg-slate-100">';
+    h+='<div class="bg-sky-700 px-4 pt-5 pb-8">';
+    h+='<div class="flex items-center gap-3"><div class="w-16 h-16 rounded-md bg-sky-900 text-amber-400 flex items-center justify-center text-2xl font-bold border-2 border-sky-500">仓</div><div><div class="text-lg font-bold text-white">IT开发测试专用</div><div class="text-xs text-sky-200 font-mono mt-0.5">工号 YY0001 · 深圳盐田仓</div></div></div>';
     h+='</div>';
-    h+='<div class="px-4 -mt-12 flex-1 min-h-0 overflow-y-auto bg-surface-100">';
-    h+='<section class="rounded-2xl bg-white border border-surface-200 shadow-sm overflow-hidden mb-3">';
-    h+='<div class="px-4 py-3 border-b border-surface-100"><div class="text-sm font-semibold text-text-primary mb-2">'+tr('语言切换')+'</div><div class="grid grid-cols-2 gap-2">';
+    h+='<div class="px-3 -mt-4">';
+    h+='<section class="bg-white border border-slate-200 rounded-md p-3 mb-3">';
+    h+='<div class="text-xs font-bold text-slate-700 mb-3">'+tr('语言切换')+'</div><div class="grid grid-cols-2 gap-2">';
     [['zh','中文'],['en','English'],['fr','Français'],['pt','Português']].forEach(function(lang){
-        h+='<button type="button" onclick="selectLanguageOption(\''+lang[0]+'\');refreshWarehousePdaPrototype()" class="h-9 rounded-lg border text-xs font-medium '+(_currentLang===lang[0]?'border-primary-500 bg-primary-50 text-primary-700':'border-surface-200 text-text-secondary')+'">'+lang[1]+'</button>';
+        h+='<button type="button" onclick="selectLanguageOption(\''+lang[0]+'\');refreshWarehousePdaPrototype()" class="h-10 rounded-md border-2 text-xs font-bold '+(_currentLang===lang[0]?'border-sky-500 bg-sky-50 text-sky-700':'border-slate-200 text-slate-600 bg-white')+'">'+lang[1]+'</button>';
     });
+    h+='</div></section>';
+    h+='<section class="bg-white border border-slate-200 rounded-md overflow-hidden mb-3">';
+    [['日志上传','▤',''],['清理缓存','◇','0K'],['检查更新','↺','2.2.8.test'],['分享App给好友','✓',''],['退出登录','⏻','']].forEach(function(row){
+        const isLogout=row[0]==='退出登录';
+        const click=isLogout?'logoutWarehousePda()':"showToast('"+tr(row[0])+"')";
+        h+='<button type="button" onclick="'+click+'" class="w-full h-14 px-4 flex items-center gap-3 border-t border-slate-100 first:border-t-0 text-left '+(isLogout?'text-red-600':'text-slate-700')+'"><span class="w-7 h-7 rounded bg-slate-100 flex items-center justify-center text-base">'+row[1]+'</span><span class="flex-1 text-sm font-medium">'+tr(row[0])+'</span><span class="text-xs text-slate-400">'+esc(row[2])+' ›</span></button>';
+    });
+    h+='</section>';
     h+='</div></div>';
-    [['日志上传',''],['清理缓存','0K'],['检查更新','2.2.8.test'],['分享App给好友',''],['退出登录','']].forEach(function(row,idx){
-        const click=row[0]==='退出登录'?'logoutWarehousePda()':"showToast('"+tr(row[0])+"')";
-        h+='<button type="button" onclick="'+click+'" class="w-full h-14 px-4 flex items-center justify-between border-t border-surface-100 first:border-t-0 text-left"><span class="text-sm font-medium text-text-primary">'+tr(row[0])+'</span><span class="text-sm text-text-secondary">'+esc(row[1])+' ›</span></button>';
-    });
-    h+='</section></div>';
     h+=pdaBottomNav('profile');
     return h;
 }
@@ -9773,26 +9795,40 @@ function generateWarehousePdaHome(tasks){
 }
 
 function generateWarehousePdaLoginScreen(){
-    let h=pdaAppHeader('PDA登录');
-    h+='<div class="p-5 flex-1 min-h-0 overflow-y-auto bg-surface-100">';
-    h+='<section class="rounded-2xl bg-white border border-surface-200 shadow-sm p-4">';
+    /* 扁平 PDA 风格登录页 */
+    let h='<div class="bg-slate-900 text-white flex items-center justify-between px-4 py-1 text-[10px] font-mono opacity-90"><span>17:36</span><span class="flex items-center gap-1"><span class="text-emerald-400">●</span><span>5G</span><span>81%</span></span></div>';
+    h+='<div class="flex-1 min-h-0 overflow-y-auto bg-slate-100">';
+    /* Hero */
+    h+='<div class="bg-sky-700 px-5 pt-10 pb-12 text-center">';
+    h+='<div class="w-20 h-20 mx-auto rounded-md bg-sky-900 text-amber-400 flex items-center justify-center text-3xl font-bold border-2 border-sky-500">PDA</div>';
+    h+='<div class="mt-4 text-xl font-bold text-white tracking-wide">仓库 PDA 终端</div>';
+    h+='<div class="mt-1 text-[11px] text-sky-200 font-mono">HLH-WMS / Industrial Terminal</div>';
+    h+='</div>';
+    /* 表单 */
+    h+='<div class="-mt-6 px-4">';
+    h+='<section class="bg-white rounded-md border border-slate-200 p-4 shadow-sm">';
     h+='<div class="space-y-3">';
     h+=pdaField({label:'账号',value:'warehouse01',required:true});
     h+=pdaField({label:'密码',type:'password',value:'123456',required:true});
     h+=pdaField({label:'所属仓库',type:'select',options:getWarehouseNameOptions(),value:currentAccountWarehouse(),required:true});
     h+='</div>';
-    h+='<button type="button" onclick="loginWarehousePda()" class="mt-5 h-11 w-full rounded-lg bg-primary-600 text-white text-sm font-semibold">'+tr('登录')+'</button>';
+    h+='<button type="button" onclick="loginWarehousePda()" class="mt-5 h-14 w-full rounded-md bg-sky-600 text-white text-base font-bold shadow-md active:bg-sky-700">'+tr('登录')+'</button>';
     h+='</section>';
-    h+='<section class="mt-3 rounded-2xl bg-white border border-surface-200 shadow-sm p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('语言切换')+'</div><div class="grid grid-cols-2 gap-2">';
+    /* 语言 */
+    h+='<section class="mt-3 bg-white rounded-md border border-slate-200 p-4 shadow-sm">';
+    h+='<div class="text-xs font-bold text-slate-700 mb-3">'+tr('语言切换')+'</div><div class="grid grid-cols-2 gap-2">';
     [['zh','中文'],['en','English'],['fr','Français'],['pt','Português']].forEach(function(lang){
-        h+='<button type="button" onclick="selectLanguageOption(\''+lang[0]+'\');refreshWarehousePdaPrototype()" class="h-9 rounded-lg border text-xs font-medium '+(_currentLang===lang[0]?'border-primary-500 bg-primary-50 text-primary-700':'border-surface-200 text-text-secondary')+'">'+lang[1]+'</button>';
+        h+='<button type="button" onclick="selectLanguageOption(\''+lang[0]+'\');refreshWarehousePdaPrototype()" class="h-10 rounded-md border-2 text-xs font-bold '+(_currentLang===lang[0]?'border-sky-500 bg-sky-50 text-sky-700':'border-slate-200 text-slate-600 bg-white')+'">'+lang[1]+'</button>';
     });
-    h+='</div></section></div>';
+    h+='</div></section>';
+    h+='<div class="mt-3 mb-6 text-center text-[10px] text-slate-400 font-mono">v2.2.8 · YY-Terminal · '+tr('扁平工业风')+'</div>';
+    h+='</div></div>';
     return h;
 }
 
 function pdaScanInput(inputId,placeholder,callbackName,scanValue){
-    return '<div class="relative mb-3 w-full"><input id="'+esc(inputId)+'" type="text" data-clear-enhanced="1" class="w-full h-11 pl-3 pr-24 text-xs rounded-xl border border-surface-200 bg-white focus:border-primary-400" placeholder="'+esc(tr(placeholder))+'" oninput="togglePdaScanClear(\''+esc(inputId)+'\')" onkeydown="if(event.key===\'Enter\')'+callbackName+'()"><button type="button" data-pda-clear-for="'+esc(inputId)+'" onclick="clearPdaScanInput(\''+esc(inputId)+'\')" style="display:none" class="absolute right-11 top-2 w-7 h-7 rounded-full bg-surface-100 text-text-muted text-base leading-none items-center justify-center">×</button><button type="button" onclick="openPdaScanModal(\''+esc(inputId)+'\',\''+esc(scanValue||'WB-20260613001')+'\',\''+callbackName+'\')" class="absolute right-1 top-1 w-9 h-9 rounded-lg bg-primary-600 text-white flex items-center justify-center text-lg">⌕</button></div>';
+    /* 扁平 PDA 扫码输入：大触摸 + 大扫码键 */
+    return '<div class="relative w-full"><input id="'+esc(inputId)+'" type="text" data-clear-enhanced="1" class="w-full h-12 pl-3 pr-28 text-sm rounded-md border-2 border-slate-300 bg-white focus:border-sky-500 focus:outline-none" placeholder="'+esc(tr(placeholder))+'" oninput="togglePdaScanClear(\''+esc(inputId)+'\')" onkeydown="if(event.key===\'Enter\')'+callbackName+'()"><button type="button" data-pda-clear-for="'+esc(inputId)+'" onclick="clearPdaScanInput(\''+esc(inputId)+'\')" style="display:none" class="absolute right-12 top-2 w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-base leading-none items-center justify-center">×</button><button type="button" onclick="openPdaScanModal(\''+esc(inputId)+'\',\''+esc(scanValue||'WB-20260613001')+'\',\''+callbackName+'\')" class="absolute right-1 top-1 w-10 h-10 rounded-md bg-sky-600 text-white flex items-center justify-center text-xl active:bg-sky-700">⌕</button></div>';
 }
 
 function togglePdaScanClear(inputId){
@@ -10286,26 +10322,29 @@ function generatePdaAirOutScanScreen(){
 }
 
 function generateWarehousePdaOperationScreen(taskId){
+    /* 扁平 PDA 业务功能页 - 统一通用渲染（去掉所有专门页 dispatch） */
     const config=warehousePdaOperationConfig(taskId);
     let h='';
-    h+='<div class="bg-primary-600 text-white px-4 pt-4 pb-3">';
-    h+='<div class="flex items-center gap-3"><button type="button" onclick="closeWarehousePdaTask()" class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-lg">←</button><div class="min-w-0 flex-1"><div class="text-base font-semibold truncate">'+tr(config.title)+'</div><div class="text-xs opacity-80 truncate">'+tr(config.subtitle)+'</div></div></div>';
-    h+='</div>';
-    if(taskId==='pda-waybill-query')return h+generatePdaWaybillQueryScreen();
-    if(taskId==='wh-cargo-search')return h+generatePdaCargoSearchScreen();
-    if(taskId==='wh-out-scan')return h+generatePdaOutScanScreen();
-    if(taskId==='wh-transfer-in')return h+generatePdaTransferInScreen();
-    if(taskId==='wh-transfer-out')return h+generatePdaTransferOutScreen();
-    if(taskId==='wh-in-multi')return h+generatePdaMultiInboundScreen(config);
-    if(taskId==='wh-replenish-drop')return h+generatePdaReplenishDropScreen();
-    if(taskId==='pda-air-out-scan')return h+generatePdaAirOutScanScreen();
-    if(taskId==='pda-work-order')return h+generatePdaWorkOrderScreen();
-    h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
+    h+=pdaAppHeader(config.title,{back:'closeWarehousePdaTask()',subtitle:config.subtitle});
+    h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-slate-100">';
+    /* 顶部扫码区（如果配置了 scanLabel） */
+    if(config.scanLabel){
+        const firstField=(config.sections&&config.sections[0]&&config.sections[0].fields&&config.sections[0].fields[0])||{};
+        const scanValue=firstField.value||'WB-20260613001';
+        h+='<div class="bg-sky-50 border-2 border-sky-300 rounded-md p-3 mb-3">';
+        h+='<div class="flex items-center gap-2 mb-2"><span class="w-7 h-7 rounded bg-sky-600 text-white flex items-center justify-center text-base font-bold">⌕</span><span class="text-xs font-bold text-slate-700">'+tr('扫码/输入')+'：'+tr(config.scanLabel)+'</span></div>';
+        h+=pdaScanInput('pda-op-scan-'+taskId,'扫码或输入'+config.scanLabel,'showToast(\''+tr('已识别')+'\')',scanValue);
+        h+='</div>';
+    }
+    /* 节段 */
     (config.sections||[]).forEach(function(section){h+=pdaSection(section);});
-    if(config.servicePanel)h+=pdaServicePanel(taskId==='wh-in-one'?false:true);
+    /* 附加服务 */
+    if(config.servicePanel)h+=pdaServicePanel(false);
+    /* 图片上传 */
     if(config.photos)h+=pdaPhotoUploader(config.photoLimit||3);
+    /* 历史记录 */
     if(config.records&&config.records.length){
-        h+='<div class="mt-3 mb-2 text-sm font-semibold text-text-primary">'+tr(config.recordsTitle||'最近记录')+'</div>';
+        h+='<div class="mt-3 mb-2 flex items-center gap-2 px-1"><span class="w-1 h-4 bg-sky-600 rounded"></span><span class="text-xs font-bold text-slate-700">'+tr(config.recordsTitle||'最近记录')+'</span><span class="text-[10px] text-slate-500">· '+config.records.length+' '+tr('条')+'</span></div>';
         config.records.forEach(function(record){h+=pdaRecordCard(record);});
     }
     h+='</div>';
@@ -10314,7 +10353,8 @@ function generateWarehousePdaOperationScreen(taskId){
 }
 
 function generateWarehousePdaPhone(tasks){
-    let h='<div class="relative rounded-[22px] bg-surface-50 overflow-hidden h-[760px] max-h-[calc(100vh-96px)] min-h-[640px] flex flex-col">';
+    /* PDA 屏幕内容容器（占满父外壳） */
+    let h='<div class="relative overflow-hidden h-full flex flex-col bg-slate-100">';
     h+=_warehousePdaTaskId?generateWarehousePdaOperationScreen(_warehousePdaTaskId):generateWarehousePdaHome(tasks);
     h+='<div id="pda-app-overlay" class="hidden"></div>';
     h+='</div>';
@@ -10339,21 +10379,47 @@ function pdaTaskIcon(itemId){
 }
 
 function pdaTaskCard(item){
-    return '<button type="button" onclick="openWarehousePdaTask(\''+esc(item[0])+'\')" class="rounded-xl bg-surface-100 hover:bg-primary-50 border border-surface-100 p-3 h-[96px] flex flex-col items-center justify-center gap-2 cursor-pointer">'+
-        '<span class="w-10 h-10 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center text-lg font-bold shadow-sm">'+pdaTaskIcon(item[0])+'</span>'+
-        '<span class="text-[12px] font-semibold text-text-primary leading-4 text-center">'+tr(item[1])+'</span>'+
+    /* 扁平 PDA 任务卡片：左侧分类色 accent 条 + 图标 + 标题 + 描述 */
+    const cat=(PDA_CATEGORIES.find(function(c){return c.key===item[3];})||{accent:'bg-slate-500'});
+    return '<button type="button" onclick="openWarehousePdaTask(\''+esc(item[0])+'\')" '+
+        'class="relative bg-white border-2 border-slate-200 active:border-sky-500 active:bg-sky-50 hover:border-sky-400 p-3 min-h-[92px] flex flex-col items-start justify-start text-left rounded-md transition-colors cursor-pointer">'+
+        '<div class="absolute left-0 top-2 bottom-2 w-1 rounded-r '+cat.accent+'"></div>'+
+        '<div class="flex items-center gap-2 pl-2 mb-1.5">'+
+        '<span class="w-8 h-8 rounded-md bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center text-base font-bold">'+pdaTaskIcon(item[0])+'</span>'+
+        '<span class="text-[13px] font-bold text-slate-800 leading-tight">'+tr(item[1])+'</span>'+
+        '</div>'+
+        '<div class="pl-2 text-[10px] text-slate-500 leading-tight">'+tr(item[2]||'')+'</div>'+
         '</button>';
 }
 
 function generateWarehousePdaPage(id){
+    /* PDA 设备外壳：工业风深灰边框 + 顶部说话筒 + 底部物理键暗示 */
     const tasks=warehousePdaTaskItems();
     let h='';
-    h+='<div class="h-full overflow-auto bg-surface-50 p-5 flex justify-center">';
-    h+='<section class="w-full max-w-[470px] bg-white rounded-xl border border-surface-200 p-5">';
-    h+='<div class="mx-auto w-full max-w-[420px] rounded-[32px] border-[10px] border-slate-900 bg-slate-900 shadow-2xl">';
+    h+='<div class="h-full overflow-auto bg-slate-100 p-5 flex flex-col items-center gap-3">';
+    /* 顶部说明 */
+    h+='<div class="w-full max-w-[500px] bg-white rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-600 flex items-center gap-2">';
+    h+='<span class="text-sky-600 font-bold">PDA</span><span class="text-slate-400">|</span>';
+    h+='<span>'+tr('仓库现场作业终端模拟')+'</span>';
+    h+='<span class="text-slate-400">|</span><span class="font-mono text-[10px]">18 '+tr('项功能')+' · '+tr('扁平工业风')+'</span>';
+    h+='</div>';
+    /* PDA 设备外壳 */
+    h+='<div class="w-full max-w-[420px] bg-slate-800 rounded-2xl p-2.5 shadow-2xl border-2 border-slate-900">';
+    /* 顶部听筒/感应器条 */
+    h+='<div class="h-5 flex items-center justify-center gap-2 mb-1"><span class="w-12 h-1 rounded bg-slate-600"></span><span class="w-1.5 h-1.5 rounded-full bg-slate-700"></span></div>';
+    /* 屏幕 */
+    h+='<div class="bg-white overflow-hidden rounded-md h-[680px] max-h-[calc(100vh-200px)] min-h-[600px] flex flex-col">';
     h+=generateWarehousePdaPhone(tasks);
     h+='</div>';
-    h+='</section>';
+    /* 底部物理按键暗示 */
+    h+='<div class="h-12 flex items-center justify-around gap-2 px-3 mt-1">';
+    h+='<div class="w-12 h-1.5 rounded bg-slate-600"></div>';
+    h+='<button class="w-10 h-10 rounded-full bg-slate-700 hover:bg-slate-600 text-slate-400 text-xl active:bg-slate-900" title="Home">⌂</button>';
+    h+='<div class="w-12 h-1.5 rounded bg-slate-600"></div>';
+    h+='</div>';
+    h+='</div>';
+    /* 底部说明 */
+    h+='<div class="w-full max-w-[500px] text-center text-[10px] text-slate-400 font-mono">HLH-PDA-Terminal · '+tr('好利航国际物流')+'</div>';
     h+='</div>';
     setTimeout(function(){applyRuntimeEnhancements(document.getElementById('main-content'));},0);
     return h;

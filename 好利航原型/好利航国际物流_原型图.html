@@ -9182,8 +9182,20 @@ function generateWarehouseHeadlessInboundPage(id){
     return h;
 }
 
+function findMenuNodeById(list,targetId){
+    var arr=list||[];
+    for(var i=0;i<arr.length;i++){
+        if(arr[i].id===targetId)return arr[i];
+        if(arr[i].children){
+            var r=findMenuNodeById(arr[i].children,targetId);
+            if(r)return r;
+        }
+    }
+    return null;
+}
+
 function warehousePdaTaskItems(){
-    const domesticMenu=menuData.find(function(item){return item.id==='wh-domestic';});
+    const domesticMenu=findMenuNodeById(menuData,'wh-domestic');
     const descriptions={
         'wh-in-one':'扫码收货、称重、长宽高录入',
         'wh-in-multi':'多件尺寸维护、子单收货、托盘绑定',
@@ -9556,7 +9568,7 @@ function pdaGroupedTasks(tasks){
         {title:'查询',ids:['pda-waybill-query']},
         {title:'收货',ids:['wh-in-one','wh-in-multi','wh-headless']},
         {title:'在库管理',ids:['wh-cargo-search']},
-        {title:'出库',ids:['wh-out-scan','wh-air-bag']},
+        {title:'出库',ids:['wh-out-scan','wh-sort-bag','wh-air-bag']},
         {title:'调拨',ids:['wh-transfer-out','wh-transfer-in','wh-replenish-drop']},
         {title:'空运',ids:['pda-air-checkin','pda-air-bag-sort','pda-air-out-scan']},
         {title:'工单',ids:['pda-work-order','pda-work-order-register']}

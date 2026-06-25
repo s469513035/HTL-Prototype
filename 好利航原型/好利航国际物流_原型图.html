@@ -1955,7 +1955,8 @@ const menuData=[
 {id:'product',label:'产品配置',langKey:'product',children:[
 {id:'prod-manage',label:'产品管理',langKey:'prod_manage',page:'product',tab:'prod-manage'},
 {id:'prod-price-lcl',label:'销售报价(散货)',langKey:'prod_price_lcl',page:'product',tab:'prod-price-lcl'},
-{id:'prod-surcharge',label:'附加杂费配置',langKey:'prod_surcharge',page:'product',tab:'prod-surcharge'}
+{id:'prod-surcharge',label:'附加杂费配置',langKey:'prod_surcharge',page:'product',tab:'prod-surcharge'},
+{id:'cfg-label-template',label:'标签模板',page:'product',tab:'cfg-label-template'}
 ]},
 {id:'biz-cfg',label:'业务设置',langKey:'biz_cfg',children:[
 {id:'cfg-dict',label:'数据字典',langKey:'cfg_dict',page:'biz-cfg',tab:'cfg-dict'},
@@ -3076,6 +3077,19 @@ addPrototypeTable('cs-track-maint','轨迹维护','序号|运单号|轨迹节点
     ['1','WB-20260613001','派送中','2026-06-13 14:30','已到达派送站','王客服','正常',''],
     ['2','WB-20260612002','已签收','2026-06-12 18:00','客户已签收','王客服','正常','']
 ],[{label:'运单号',type:'text'}]);
+
+addPrototypeTable('cfg-label-template','标签模板','标签模板编号|标签模板名称|标签模板类型|文件类型|下载地址|所属总部编号|启用状态|备注|创建时间|创建人|更新时间|操作',['启用','禁用'],[
+    ['W2606001','通用标签','无单入库标签','标签模板','https://hyd-tms.oss-cn-shenzhen.aliyuncs.com/label/W2606001.jrxml','业务中台','启用','','2026-06-04 15:55:33','HYD-开发者','',''],
+    ['A2606001','华洋达客户提单','客户提单','标签模板','https://hyd-tms.oss-cn-shenzhen.aliyuncs.com/label/A2606001.jrxml','业务中台','启用','','2026-06-02 09:35:30','HYD-开发者','2026-06-05 10:20:00',''],
+    ['12','12','运单标签','标签模板','https://hyd-tms.oss-cn-shenzhen.aliyuncs.com/label/12.jrxml','业务中台','启用','','2026-05-12 15:10:47','HYD-开发者','2026-05-15 09:00:00',''],
+    ['S2602006','标签模版001','运单标签','标签模板','https://hyd-tms.oss-cn-shenzhen.aliyuncs.com/label/S2602006.jrxml','业务中台','启用','','2026-04-01 10:29:27','HYD-开发者','2026-04-10 14:30:00',''],
+    ['S2602005','S2602005','运单标签','标签模板','https://hyd-tms.oss-cn-shenzhen.aliyuncs.com/label/S2602005.jrxml','业务中台','启用','','2026-04-01 10:14:30','HYD-开发者','2026-04-09 17:37:34',''],
+    ['S2602004','标签模版003','运单标签','标签模板','https://hyd-tms.oss-cn-shenzhen.aliyuncs.com/label/S2602004.jrxml','业务中台','启用','','2026-04-01 10:10:03','HYD-开发者','','']
+],[
+    {label:'模板名称',type:'text'},
+    {label:'模板类型',type:'select',options:['无单入库标签','客户提单','运单标签']},
+    {label:'启用状态',type:'select',options:['启用','禁用']}
+]);
 
 addPrototypeTable('cfg-coding-rule','编码规则管理','规则编号|存储值|注释|前缀类型|前缀参数|后缀类型|后缀参数|生成规则|规则长度|忽略数字|操作',[],[
     ['CK_NO','56','出库计划单号生成规则,使用默认生成类','fixed','CK','','','%p%n','5',''],
@@ -8357,7 +8371,7 @@ function openSelectedCrud(mode,id){
 }
 
 function renderToolbarAction(action,id){
-    const isDanger=action.key==='enable'||action.key==='delete'||action.key==='cancel'||action.key==='csRevokeRelease'||action.variant==='danger';
+    const isDanger=action.key==='enable'||action.key==='delete'||action.key==='cancel'||action.key==='csRevokeRelease'||action.key==='setDisable'||action.key==='batchDelete'||action.variant==='danger';
     const color=isDanger
         ?'text-white bg-red-500 hover:bg-red-600'
         :'text-white bg-blue-600 hover:bg-blue-700';
@@ -8385,6 +8399,12 @@ function renderToolbarAction(action,id){
     else if(action.key==='csRelease')click='openCsIssueFeedbackModal(\''+id+'\',\'release\')';
     else if(action.key==='csReturn')click='openCsIssueReturnModal(\''+id+'\')';
     else if(action.key==='csRevokeRelease')click='openCsIssueRevokeReleaseConfirm(\''+id+'\')';
+    else if(action.key==='labelAdd')click='openLabelTemplateModal(\'add\',\''+id+'\',-1)';
+    else if(action.key==='labelEdit')click='openSelectedLabelTemplateEdit(\''+id+'\')';
+    else if(action.key==='setEnable')click='setRowsStatus(\''+id+'\',\'启用\')';
+    else if(action.key==='setDisable')click='setRowsStatus(\''+id+'\',\'禁用\')';
+    else if(action.key==='batchDelete')click='deleteSelectedRows(\''+id+'\')';
+    else if(action.key==='labelFieldDoc')click='openLabelFieldDocModal()';
     else if(action.key==='newSortScan')click='openSortBagRuleModal(\''+id+'\')';
     else if(action.key==='editCodingRule')click='openCodingRuleEditModal(\''+id+'\')';
     else if(action.key==='genBill'&&id==='fcl-bill-entry')click='showToast(\''+esc(tr('账单生成成功'))+'\')';
@@ -8606,6 +8626,17 @@ function getToolbarActions(id){
             {key:'csReturn',label:'退件'},
             {key:'export',label:'导出数据'},
             {key:'csRevokeRelease',label:'撤销放行',variant:'danger'}
+        ];
+    }
+    if(id==='cfg-label-template'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'labelAdd',label:'新增数据',variant:'primary'},
+            {key:'labelEdit',label:'修改数据'},
+            {key:'setEnable',label:'启用'},
+            {key:'setDisable',label:'禁用',variant:'danger'},
+            {key:'batchDelete',label:'批量删除',variant:'danger'},
+            {key:'labelFieldDoc',label:'标签字段说明'}
         ];
     }
     if(['wh-air-sort','wh-air-bag','wh-air-pack'].includes(id)){
@@ -11096,9 +11127,15 @@ function generateListPage(id,page,statusFilter){
             const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt'].concat(airScanIds).includes(id);
             const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue'].concat(airScanIds).includes(id);
             const viewClick=(id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')')));
-            let actionHtml='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+viewClick+'">'+L.view+'</a>';
-            if(!hideEdit)actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':'openCrudModal(\'edit\',\''+id+'\','+gi+')')+'">'+L.edit+'</a>';
-            if(!hideDelete)actionHtml+='<a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="openActionModal(\''+deleteAction+'\',\''+id+'\','+gi+')">'+deleteLabel+'</a>';
+            let actionHtml='';
+            if(id==='cfg-label-template'){
+                actionHtml='<a class="text-orange-500 hover:text-orange-600 cursor-pointer mr-3" onclick="openLabelTemplateModal(\'edit\',\''+id+'\','+gi+')">'+tr('修改')+'</a>'+
+                    '<a class="text-orange-500 hover:text-orange-600 cursor-pointer" onclick="downloadLabelTemplateRow(\''+id+'\','+gi+')">'+tr('下载')+'</a>';
+            } else {
+                actionHtml='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+viewClick+'">'+L.view+'</a>';
+                if(!hideEdit)actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':'openCrudModal(\'edit\',\''+id+'\','+gi+')')+'">'+L.edit+'</a>';
+                if(!hideDelete)actionHtml+='<a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="openActionModal(\''+deleteAction+'\',\''+id+'\','+gi+')">'+deleteLabel+'</a>';
+            }
             h+='<td class="px-4 py-3 text-sm whitespace-nowrap" style="position:sticky;right:0;z-index:10;background:'+rowBg+';box-shadow:-4px 0 8px -4px rgba(0,0,0,0.1)">'+actionHtml+'</td>';
         }
         h+='</tr>';
@@ -13740,6 +13777,234 @@ function openCsIssueRevokeReleaseConfirm(id){
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
         '<button onclick="closeCrudModal();showToast(\''+tr('已撤销放行')+' '+indices.length+' '+tr('条')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('确定撤销')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
+}
+
+/* ========== 标签模板管理 ========== */
+
+var _LABEL_TEMPLATE_FILES={
+    'A2606001':[{name:'HYD-customer-shipment.jrxml',type:'标签模板',size:8,uploader:'HYD-开发者',time:'2026-06-02 09:35:30'}],
+    'S2602006':[{name:'HYD.jrxml',type:'标签模板',size:6,uploader:'HYD-开发者',time:'2026-04-01 10:29:27'}],
+    'S2602005':[{name:'HYD.jrxml',type:'标签模板',size:6,uploader:'HYD-开发者',time:'2026-04-09 17:37:34'}],
+    'S2602004':[{name:'HYD.jrxml',type:'标签模板',size:6,uploader:'HYD-开发者',time:'2026-04-01 10:10:03'}]
+};
+
+function labelTemplateUploaderHtml(){
+    const iid='lbl-tpl-file-'+Math.floor(Math.random()*1e6);
+    let h='<div class="rounded-xl border-2 border-dashed border-surface-300 bg-surface-50/60 p-8 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/20 transition-colors" onclick="document.getElementById(\''+iid+'\').click()">';
+    h+='<svg class="w-12 h-12 mx-auto text-text-muted mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>';
+    h+='<div class="text-sm text-text-secondary">'+tr('点击或者拖动文件到该区域来上传')+'</div>';
+    h+='<input id="'+iid+'" type="file" accept=".jrxml" class="hidden" onchange="document.getElementById(\''+iid+'-tip\').textContent=this.files[0]?this.files[0].name:\'\'">';
+    h+='<div id="'+iid+'-tip" class="mt-2 text-xs text-primary-600"></div>';
+    h+='</div>';
+    h+='<div class="mt-2 text-xs text-text-muted text-center">'+tr('请上传 大小不超过')+' <span class="text-red-500 font-medium">30MB</span> '+tr('格式为')+' <span class="text-red-500 font-medium">jrxml</span> '+tr('的文件 最多上传')+' <span class="text-red-500 font-medium">1</span> '+tr('个附件')+'</div>';
+    return h;
+}
+
+function labelTemplateFileTableHtml(files,editable){
+    let h='<div class="mt-6"><div class="overflow-x-auto rounded-lg border border-surface-200"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>';
+    ['序号','文件名称','文件类型','缩略图','文件大小(kb)','上传人','上传时间','操作'].forEach(function(c){
+        h+='<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(c)+'</th>';
+    });
+    h+='</tr></thead><tbody>';
+    if(!files||!files.length){
+        h+='<tr><td colspan="8" class="py-12 text-center text-text-muted"><svg class="w-12 h-12 mx-auto mb-2 text-surface-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg><div>'+tr('无数据')+'</div></td></tr>';
+    } else {
+        files.forEach(function(f,i){
+            h+='<tr class="border-t border-surface-100"><td class="px-3 py-2">'+(i+1)+'</td>';
+            h+='<td class="px-3 py-2">'+esc(f.name)+'</td>';
+            h+='<td class="px-3 py-2">'+esc(f.type||'标签模板')+'</td>';
+            h+='<td class="px-3 py-2"><span class="inline-block px-2 py-0.5 text-xs text-text-muted bg-surface-100 rounded">'+tr('暂无图片')+'</span></td>';
+            h+='<td class="px-3 py-2">'+esc(String(f.size||''))+'</td>';
+            h+='<td class="px-3 py-2">'+esc(f.uploader||'')+'</td>';
+            h+='<td class="px-3 py-2 whitespace-nowrap">'+esc(f.time||'')+'</td>';
+            h+='<td class="px-3 py-2 whitespace-nowrap">';
+            h+='<button onclick="showToast(\''+tr('开始下载')+' '+esc(f.name)+'\')" class="px-3 py-1 text-xs font-medium text-white bg-orange-400 hover:bg-orange-500 rounded">'+tr('下载')+'</button>';
+            if(editable)h+=' <button onclick="removeLabelTemplateFile(this,'+i+')" class="px-3 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded">'+tr('删除')+'</button>';
+            h+='</td></tr>';
+        });
+    }
+    h+='</tbody></table></div></div>';
+    return h;
+}
+
+function removeLabelTemplateFile(btn,idx){
+    const row=btn.closest('tr');
+    if(row&&row.parentNode)row.parentNode.removeChild(row);
+    showToast(tr('已删除'));
+}
+
+function _labelHeaderIdx(name){
+    const c=TC['cfg-label-template'];
+    return (c.h||[]).indexOf(name);
+}
+
+function openLabelTemplateModal(mode,id,index){
+    const c=TC[id];if(!c)return;
+    const isEdit=mode==='edit'&&index>=0;
+    const row=isEdit?(_listData[id]||c.d)[index]:[];
+    const get=function(name){
+        const i=_labelHeaderIdx(name);
+        return (i>=0&&row[i]!==undefined)?row[i]:'';
+    };
+    const tplNo=get('标签模板编号');
+    const files=isEdit?(_LABEL_TEMPLATE_FILES[tplNo]||[]):[];
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='50%';
+    document.getElementById('crud-modal-title').textContent=isEdit?tr('修改'):tr('新增');
+    let h='<div class="space-y-5">';
+    h+='<div><label class="block text-sm text-text-secondary mb-1"><span class="text-red-500">*</span> '+tr('模板编号')+'</label>';
+    h+='<input id="lbl-no" type="text" value="'+esc(tplNo)+'"'+(isEdit?' readonly':'')+' class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">';
+    h+='<div id="err-lbl-no" class="hidden text-xs text-red-500 mt-1"></div></div>';
+    h+='<div><label class="block text-sm text-text-secondary mb-1"><span class="text-red-500">*</span> '+tr('模板名称')+'</label>';
+    h+='<input id="lbl-name" type="text" value="'+esc(get('标签模板名称'))+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">';
+    h+='<div id="err-lbl-name" class="hidden text-xs text-red-500 mt-1"></div></div>';
+    h+='<div><label class="block text-sm text-text-secondary mb-1"><span class="text-red-500">*</span> '+tr('标签模版类型')+'</label>';
+    h+='<select id="lbl-type" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['','无单入库标签','客户提单','运单标签'],get('标签模板类型'))+'</select>';
+    h+='<div id="err-lbl-type" class="hidden text-xs text-red-500 mt-1"></div></div>';
+    h+='<div><label class="block text-sm text-text-secondary mb-1"><span class="text-red-500">*</span> '+tr('启用状态')+'</label>';
+    h+='<select id="lbl-status" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['启用','禁用'],get('启用状态')||'启用')+'</select></div>';
+    h+='<div><label class="block text-sm text-text-secondary mb-1">'+tr('备注')+'</label>';
+    h+='<textarea id="lbl-remark" rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50">'+esc(get('备注'))+'</textarea></div>';
+    h+='<div><label class="block text-sm text-text-secondary mb-2">'+tr('标签模板')+'</label>'+labelTemplateUploaderHtml()+'</div>';
+    h+=labelTemplateFileTableHtml(files,isEdit);
+    h+='</div>';
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="confirmLabelTemplate(\''+mode+'\',\''+id+'\','+index+')" class="px-4 py-2 text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg cursor-pointer">'+tr('确认')+'</button>'+
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function confirmLabelTemplate(mode,id,index){
+    const ok1=csValidateRequired('lbl-no',tr('该项不能为空'));
+    const ok2=csValidateRequired('lbl-name',tr('该项不能为空'));
+    const ok3=csValidateRequired('lbl-type',tr('该项不能为空'));
+    if(!ok1||!ok2||!ok3)return;
+    const c=TC[id];if(!c)return;
+    const no=document.getElementById('lbl-no').value.trim();
+    const name=document.getElementById('lbl-name').value.trim();
+    const type=document.getElementById('lbl-type').value;
+    const status=document.getElementById('lbl-status').value;
+    const remark=document.getElementById('lbl-remark').value;
+    const setCol=function(arr,key,val){const i=_labelHeaderIdx(key);if(i>=0)arr[i]=val;};
+    if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
+    if(mode==='add'){
+        const row=new Array(c.h.length).fill('');
+        setCol(row,'标签模板编号',no);
+        setCol(row,'标签模板名称',name);
+        setCol(row,'标签模板类型',type);
+        setCol(row,'文件类型','标签模板');
+        setCol(row,'下载地址','https://hyd-tms.oss-cn-shenzhen.aliyuncs.com/label/'+no+'.jrxml');
+        setCol(row,'所属总部编号','业务中台');
+        setCol(row,'启用状态',status);
+        setCol(row,'备注',remark);
+        setCol(row,'创建时间',(new Date()).toISOString().slice(0,10)+' 10:00:00');
+        setCol(row,'创建人','HYD-开发者');
+        _listData[id].unshift(row);
+        showToast(tr('已新增'));
+    } else {
+        const row=_listData[id][index];if(!row)return;
+        setCol(row,'标签模板名称',name);
+        setCol(row,'标签模板类型',type);
+        setCol(row,'启用状态',status);
+        setCol(row,'备注',remark);
+        setCol(row,'更新时间',(new Date()).toISOString().slice(0,10)+' 10:00:00');
+        showToast(tr('已保存'));
+    }
+    closeCrudModal();
+    document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal);
+}
+
+function openSelectedLabelTemplateEdit(id){
+    const indices=getSelectedRowIndices();
+    if(indices.length===0){showToast(tr('请先勾选数据'));return;}
+    if(indices.length>1){showToast(tr('请仅勾选一行'));return;}
+    openLabelTemplateModal('edit',id,indices[0]);
+}
+
+function setRowsStatus(id,status){
+    const indices=getSelectedRowIndices();
+    if(indices.length===0){showToast(tr('请先勾选数据'));return;}
+    const c=TC[id];if(!c)return;
+    const si=(c.h||[]).findIndex(function(hd){return hd.includes('状态')||hd.includes('启用');});
+    if(si<0){showToast(tr('未找到状态列'));return;}
+    if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
+    indices.forEach(function(i){if(_listData[id][i])_listData[id][i][si]=status;});
+    document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal);
+    showToast(tr('已')+status);
+}
+
+function deleteSelectedRows(id){
+    const indices=getSelectedRowIndices();
+    if(indices.length===0){showToast(tr('请先勾选数据'));return;}
+    const c=TC[id];if(!c)return;
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='42%';
+    document.getElementById('crud-modal-title').textContent=tr('批量删除');
+    document.getElementById('crud-modal-body').innerHTML='<div class="py-4 text-sm text-text-primary">'+tr('确定删除已选')+' <span class="font-semibold text-primary-700">'+indices.length+'</span> '+tr('条数据？此操作不可恢复。')+'</div>';
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="confirmDeleteSelectedRows(\''+id+'\')" class="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('确定删除')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function confirmDeleteSelectedRows(id){
+    const indices=getSelectedRowIndices().slice().sort(function(a,b){return b-a;});
+    const c=TC[id];if(!c)return;
+    if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
+    indices.forEach(function(i){_listData[id].splice(i,1);});
+    closeCrudModal();
+    document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal);
+    showToast(tr('已删除')+' '+indices.length+' '+tr('条'));
+}
+
+function openLabelFieldDocModal(){
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=tr('标签字段说明');
+    const fields=[
+        ['waybillNo','运单号','运单主键编号，长度 ≤ 20'],
+        ['logisticsNo','物流单号','客户实际物流单号'],
+        ['custCode','客户代码','客户唯一编码'],
+        ['custName','客户名称','客户全称或简称'],
+        ['salesProduct','销售产品','所属销售产品名称'],
+        ['country','目的国家','三字代码或中文名'],
+        ['city','目的城市','到货城市'],
+        ['pcs','件数','整数 ≥ 1'],
+        ['weight','重量(KG)','保留 2 位小数'],
+        ['volume','体积(CBM)','保留 4 位小数'],
+        ['size','尺寸','长×宽×高，CM'],
+        ['warehouseName','所属仓库','入仓仓库名称'],
+        ['createTime','创建时间','yyyy-MM-dd HH:mm:ss'],
+        ['barcode','条形码','基于运单号生成 Code128'],
+        ['qrcode','二维码','基于运单号生成 QR'],
+        ['remark','备注','自定义备注内容']
+    ];
+    let h='<div class="space-y-4">';
+    h+='<div class="text-sm text-text-secondary">'+tr('标签模板编辑时可使用以下字段变量，请在 jrxml 中以')+' <code class="px-1 bg-surface-100 text-primary-700 rounded">$F{字段名}</code> '+tr('引用：')+'</div>';
+    h+='<div class="overflow-x-auto rounded-lg border border-surface-200"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>';
+    ['字段名','中文名称','说明'].forEach(function(c){h+='<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr(c)+'</th>';});
+    h+='</tr></thead><tbody>';
+    fields.forEach(function(f){
+        h+='<tr class="border-t border-surface-100">';
+        h+='<td class="px-3 py-2"><code class="text-primary-700">'+esc(f[0])+'</code></td>';
+        h+='<td class="px-3 py-2">'+esc(f[1])+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary">'+esc(f[2])+'</td>';
+        h+='</tr>';
+    });
+    h+='</tbody></table></div></div>';
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg cursor-pointer">'+tr('我知道了')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function downloadLabelTemplateRow(id,index){
+    const c=TC[id];if(!c)return;
+    const row=(_listData[id]||c.d||[])[index];if(!row)return;
+    const noIdx=_labelHeaderIdx('标签模板编号');
+    const no=noIdx>=0?row[noIdx]:'';
+    showToast(tr('开始下载')+' '+no+'.jrxml');
 }
 
 /* ========== 分拣装袋管理 ========== */

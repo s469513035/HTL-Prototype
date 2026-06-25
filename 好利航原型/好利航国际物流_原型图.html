@@ -359,6 +359,25 @@
     </div>
 </div>
 
+<div id="confirm-tip" class="modal-overlay fixed inset-0 bg-black/40 z-[60] flex items-center justify-center">
+    <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
+        <div class="px-6 pt-5 pb-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-100">
+                    <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v3.5M12 16h.01M12 4a8 8 0 100 16 8 8 0 000-16z"/></svg>
+                </span>
+                <span class="text-base font-medium text-text-primary">提示</span>
+            </div>
+            <button onclick="closeConfirmTip()" class="p-1 rounded-lg hover:bg-surface-50 cursor-pointer"><svg class="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </div>
+        <div id="confirm-tip-body" class="px-6 pb-5 text-sm text-text-primary"></div>
+        <div class="px-6 pb-5 flex justify-end gap-3">
+            <button onclick="closeConfirmTip()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">关闭</button>
+            <button id="confirm-tip-ok" class="px-4 py-2 text-sm font-medium text-white bg-orange-400 hover:bg-orange-500 rounded-lg cursor-pointer">确定</button>
+        </div>
+    </div>
+</div>
+
 <div id="expression-modal" class="modal-overlay fixed inset-0 bg-black/40 z-[80] flex items-center justify-center">
     <div class="modal-content bg-white rounded-xl w-[920px] max-w-[calc(100vw-32px)] max-h-[calc(100vh-64px)] shadow-xl flex flex-col">
         <div class="p-5 border-b border-surface-200 flex items-center justify-between flex-shrink-0">
@@ -13779,6 +13798,28 @@ function openCsIssueRevokeReleaseConfirm(id){
     document.getElementById('crud-modal').classList.add('show');
 }
 
+/* ========== 通用居中提示弹窗 ========== */
+
+var _confirmTipPending=null;
+function openConfirmTip(message,onConfirm){
+    const body=document.getElementById('confirm-tip-body');
+    const ok=document.getElementById('confirm-tip-ok');
+    if(!body||!ok)return;
+    body.textContent=message||'';
+    _confirmTipPending=typeof onConfirm==='function'?onConfirm:null;
+    ok.onclick=function(){
+        const fn=_confirmTipPending;
+        closeConfirmTip();
+        if(fn)fn();
+    };
+    document.getElementById('confirm-tip').classList.add('show');
+}
+function closeConfirmTip(){
+    _confirmTipPending=null;
+    const el=document.getElementById('confirm-tip');
+    if(el)el.classList.remove('show');
+}
+
 /* ========== 标签模板管理 ========== */
 
 var _LABEL_TEMPLATE_FILES={
@@ -13928,34 +13969,25 @@ function setRowsStatus(id,status){
     const c=TC[id];if(!c)return;
     const si=(c.h||[]).findIndex(function(hd){return hd.includes('状态')||hd.includes('启用');});
     if(si<0){showToast(tr('未找到状态列'));return;}
-    if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
-    indices.forEach(function(i){if(_listData[id][i])_listData[id][i][si]=status;});
-    document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal);
-    showToast(tr('已')+status);
+    openConfirmTip(tr('确定')+status+tr('吗?'),function(){
+        if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
+        indices.forEach(function(i){if(_listData[id][i])_listData[id][i][si]=status;});
+        document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal);
+        showToast(tr('已')+status);
+    });
 }
 
 function deleteSelectedRows(id){
     const indices=getSelectedRowIndices();
     if(indices.length===0){showToast(tr('请先勾选数据'));return;}
     const c=TC[id];if(!c)return;
-    const panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='42%';
-    document.getElementById('crud-modal-title').textContent=tr('批量删除');
-    document.getElementById('crud-modal-body').innerHTML='<div class="py-4 text-sm text-text-primary">'+tr('确定删除已选')+' <span class="font-semibold text-primary-700">'+indices.length+'</span> '+tr('条数据？此操作不可恢复。')+'</div>';
-    document.getElementById('crud-modal-footer').innerHTML=
-        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
-        '<button onclick="confirmDeleteSelectedRows(\''+id+'\')" class="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('确定删除')+'</button>';
-    document.getElementById('crud-modal').classList.add('show');
-}
-
-function confirmDeleteSelectedRows(id){
-    const indices=getSelectedRowIndices().slice().sort(function(a,b){return b-a;});
-    const c=TC[id];if(!c)return;
-    if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
-    indices.forEach(function(i){_listData[id].splice(i,1);});
-    closeCrudModal();
-    document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal);
-    showToast(tr('已删除')+' '+indices.length+' '+tr('条'));
+    openConfirmTip(tr('确定批量删除吗?'),function(){
+        const sorted=indices.slice().sort(function(a,b){return b-a;});
+        if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
+        sorted.forEach(function(i){_listData[id].splice(i,1);});
+        document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal);
+        showToast(tr('已删除')+' '+indices.length+' '+tr('条'));
+    });
 }
 
 function openLabelFieldDocModal(){

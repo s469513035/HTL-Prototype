@@ -9868,24 +9868,6 @@ function finishPdaScan(inputId,value,callbackName){
 function showPdaWaybillResults(){
     const input=document.getElementById('pda-waybill-key');
     if(input&&!input.value)input.value='WB-20260613001';
-    const results=document.getElementById('pda-waybill-results');
-    const empty=document.getElementById('pda-waybill-empty');
-    if(results)results.classList.remove('hidden');
-    if(empty)empty.classList.add('hidden');
-}
-
-function showPdaWaybillDetail(){
-    const search=document.getElementById('pda-waybill-search-area');
-    const detail=document.getElementById('pda-waybill-detail');
-    if(search)search.classList.add('hidden');
-    if(detail)detail.classList.remove('hidden');
-}
-
-function hidePdaWaybillDetail(){
-    const search=document.getElementById('pda-waybill-search-area');
-    const detail=document.getElementById('pda-waybill-detail');
-    if(search)search.classList.remove('hidden');
-    if(detail)detail.classList.add('hidden');
 }
 
 function pdaMiniField(label,value){
@@ -9894,28 +9876,30 @@ function pdaMiniField(label,value){
 
 function generatePdaWaybillQueryScreen(){
     let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
-    h+='<div id="pda-waybill-search-area">';
     h+=pdaScanInput('pda-waybill-key','请输入运单号或物流单号','showPdaWaybillResults','WB-20260613001');
-    h+='<div id="pda-waybill-empty" class="rounded-xl border border-dashed border-surface-200 bg-white p-5 text-center text-sm text-text-muted">'+tr('输入或扫码后展示运单数据')+'</div>';
-    h+='<div id="pda-waybill-results" class="hidden space-y-3">';
-    const rows=[
-        {no:'WB-20260613001',logistics:'SF10086523',status:'已入仓',zip:'100001',weight:'12.5KG',transport:'海运',name:'服装配件',type:'普货',dest:'拉各斯',pcs:'8'},
-        {no:'WB-20260613002',logistics:'YT98876543',status:'待出库',zip:'200120',weight:'18.4KG',transport:'空运',name:'手机配件',type:'带电',dest:'阿比让',pcs:'3'}
-    ];
-    rows.forEach(function(row){
-        h+='<button type="button" onclick="showPdaWaybillDetail()" class="w-full rounded-xl border border-surface-200 bg-white p-3 text-left shadow-sm">';
-        h+='<div class="flex items-start justify-between gap-2"><div class="text-[12px] font-semibold text-primary-700 truncate">'+row.no+'</div><span class="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] text-primary-700">'+tr(row.status)+'</span></div>';
-        h+='<div class="grid grid-cols-2 gap-x-2 gap-y-1 mt-2 text-[11px] text-text-muted"><div class="break-all">'+tr('物流单号')+'：'+row.logistics+'</div><div class="break-all">'+tr('目的港')+'：'+tr(row.dest)+'</div><div class="break-all">'+tr('件数')+'：'+row.pcs+'</div><div class="break-all">'+tr('重量')+'：'+row.weight+'</div><div class="break-all">'+tr('运输方式')+'：'+tr(row.transport)+'</div><div class="break-all">'+tr('品名')+'：'+tr(row.name)+'</div><div class="break-all">'+tr('货物类型')+'：'+tr(row.type)+'</div></div>';
-        h+='</button>';
-    });
-    h+='<div class="flex items-center justify-between text-xs text-text-muted pt-1"><span>'+tr('每页')+' 20 '+tr('条数据')+'</span><div class="flex gap-1"><button class="w-7 h-7 rounded border border-surface-200 bg-white">‹</button><button class="w-7 h-7 rounded border border-primary-500 bg-primary-50 text-primary-700">1</button><button class="w-7 h-7 rounded border border-surface-200 bg-white">›</button></div></div>';
-    h+='</div></div>';
-    h+='<div id="pda-waybill-detail" class="hidden">';
-    h+='<button type="button" onclick="hidePdaWaybillDetail()" class="mb-3 w-8 h-8 rounded-full bg-primary-600 text-white text-lg">←</button>';
-    h+='<div class="rounded-xl border border-primary-100 bg-primary-50 p-3 mb-3"><div class="text-sm font-semibold text-primary-700">WB-20260613001</div><div class="text-[11px] text-primary-700 mt-1">SF10086523 · '+tr('已入仓')+'</div></div>';
+    h+='<section class="rounded-xl border border-primary-100 bg-primary-50 p-3 mb-3">';
+    h+='<div class="flex items-start justify-between gap-2 mb-3"><div class="min-w-0"><div class="text-sm font-semibold text-primary-700 break-all">WB-20260613001</div><div class="text-[11px] text-primary-700 mt-0.5">SF10086523</div></div><span class="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] text-primary-700 border border-primary-200">'+tr('已入仓')+'</span></div>';
+    h+='<div class="text-xs font-semibold text-primary-700 mb-2 pt-2 border-t border-primary-100">'+tr('运单主信息')+'</div>';
     h+='<div class="grid grid-cols-2 gap-2">';
     [['客户代码','CUS-001'],['客户名称','深圳市华运达国际货运'],['所属网点','深圳盐田仓'],['所属业务员','王明辉'],['所属客服','赵雅琴'],['所属操作','张财务'],['运输方式','海运'],['目的港','拉各斯'],['到达海外仓','拉各斯海外仓'],['品名信息','服装配件'],['件数','8'],['重量','12.5KG'],['体积','0.36CBM'],['货物类型','普货']].forEach(function(item){h+=pdaMiniField(item[0],item[1]);});
-    h+='</div></div>';
+    h+='</div>';
+    h+='</section>';
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3">';
+    h+='<div class="flex items-center justify-between mb-2"><div class="text-sm font-semibold text-text-primary">'+tr('绑定托盘')+'</div><span class="text-[10px] text-text-muted">'+tr('共')+' 3 '+tr('个')+'</span></div>';
+    const pallets=[
+        {no:'PLT-GZ-018',wh:'广州南沙仓',zone:'A区-01',pcs:'3',weight:'4.5KG',status:'在库'},
+        {no:'PLT-GZ-022',wh:'广州南沙仓',zone:'A区-02',pcs:'3',weight:'4.5KG',status:'在库'},
+        {no:'PLT-SZ-007',wh:'深圳盐田仓',zone:'B区-重货',pcs:'2',weight:'3.5KG',status:'已出库'}
+    ];
+    h+='<div class="space-y-2">';
+    pallets.forEach(function(p){
+        h+='<div class="rounded-lg border border-surface-100 bg-surface-50 p-2.5">';
+        h+='<div class="flex items-start justify-between gap-2 mb-1.5"><div class="text-[12px] font-semibold text-primary-700 break-all">'+p.no+'</div><span class="shrink-0 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] text-primary-700">'+tr(p.status)+'</span></div>';
+        h+='<div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-text-muted"><div class="break-all">'+tr('仓库')+'：'+tr(p.wh)+'</div><div class="break-all">'+tr('货区')+'：'+p.zone+'</div><div class="break-all">'+tr('件数')+'：'+p.pcs+'</div><div class="break-all">'+tr('重量')+'：'+p.weight+'</div></div>';
+        h+='</div>';
+    });
+    h+='</div>';
+    h+='</section>';
     h+='</div>';
     return h;
 }

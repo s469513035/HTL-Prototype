@@ -9434,10 +9434,11 @@ function warehousePdaOperationConfigs(){
         'wh-in-one':{
             title:'入仓操作（一票一件）',subtitle:'单票单件移动收货，支持扫码、称重和尺寸录入',scanLabel:'运单号/物流单号',
             sections:[
-                {title:'收货信息',fields:[{label:'运单号',type:'scan',value:'WB-20260613001',required:true},{label:'到货仓库',type:'select',options:wh,required:true},{label:'到货货区',type:'select',options:zones,required:true},{label:'到货时间',type:'datetime-local',value:'2026-06-13T14:30',required:true},{label:'运输方式',type:'select',options:transport,required:true},{label:'托盘号',value:'TP-YT-001',required:true}]},
-                {title:'货物信息',fields:[{label:'品名',value:'服装配件',required:true,placeholder:'输入品名信息带出大类'},{label:'品名大类',value:'普货'},{label:'长(CM)',type:'number',value:'48',required:true},{label:'宽(CM)',type:'number',value:'36',required:true},{label:'高(CM)',type:'number',value:'30',required:true},{label:'重量(KG)',type:'number',value:'12.5',required:true}]}
+                {title:'收货信息',fields:[{label:'运单号',type:'scan',value:'WB-20260613001',required:true},{label:'到货货区',type:'select',options:zones,required:true},{label:'运输方式',type:'select',options:transport,required:true},{label:'托盘号',value:'TP-YT-001',required:true}]},
+                {title:'货物信息',fields:[{label:'品名',value:'服装配件',required:true,placeholder:'输入品名信息带出大类'},{label:'品名大类',value:'普货'}]},
+                {title:'尺寸明细',type:'sizeTable',rows:[{qty:'1',l:'48',w:'36',h:'30',weight:'12.5'}]}
             ],
-            servicePanel:true,primary:'保存入仓',secondary:['打印入仓单'],sameRowActions:true
+            servicePanel:true,primary:'保存入仓',sameRowActions:true
         },
         'wh-in-multi':{
             title:'入仓操作（一票多件）',subtitle:'多件货物逐件收货，支持同步生成运单和货物明细复核',scanLabel:'运单号/物流单号',
@@ -9667,10 +9668,54 @@ function openPdaUploadChoice(){
 
 function pdaSection(section){
     let h='<div class="rounded-xl border border-surface-200 bg-white p-3 mb-3">';
-    h+='<div class="text-sm font-semibold text-text-primary mb-3">'+tr(section.title)+'</div>';
-    h+='<div class="space-y-3">'+(section.fields||[]).map(pdaField).join('')+'</div>';
+    if(section.type==='sizeTable'){
+        h+='<div class="flex items-center justify-between mb-3"><div class="text-sm font-semibold text-text-primary">'+tr(section.title)+'</div>';
+        h+='<button type="button" onclick="pdaAddSizeRow()" class="h-7 px-2 rounded-lg bg-primary-50 text-primary-700 text-[11px] font-medium">+ '+tr('增加')+'</button></div>';
+        h+=pdaSizeTable(section.rows||[{qty:'1'}]);
+    }else{
+        h+='<div class="text-sm font-semibold text-text-primary mb-3">'+tr(section.title)+'</div>';
+        h+='<div class="space-y-3">'+(section.fields||[]).map(pdaField).join('')+'</div>';
+    }
     h+='</div>';
     return h;
+}
+
+function pdaSizeTable(rows){
+    let h='<div class="overflow-x-auto -mx-3 px-3"><table class="min-w-full text-[11px] border-separate border-spacing-0">';
+    h+='<thead><tr class="text-text-muted bg-surface-50">';
+    ['件数','长(CM)','宽(CM)','高(CM)','重量(KG)','操作'].forEach(function(c,i){
+        h+='<th class="py-1.5 px-1 font-normal'+(i===5?' text-center w-10':' text-left')+'">'+tr(c)+'</th>';
+    });
+    h+='</tr></thead><tbody id="pda-size-tbody">';
+    rows.forEach(function(r){h+=pdaSizeRow(r);});
+    h+='</tbody></table></div>';
+    return h;
+}
+
+function pdaSizeRow(r){
+    r=r||{};
+    const cell=function(v){return '<td class="py-1 px-0.5"><input class="w-full h-8 min-w-[44px] px-1.5 text-[11px] rounded border border-surface-200 focus:border-primary-400" value="'+esc(v==null?'':String(v))+'"></td>';};
+    return '<tr class="border-t border-surface-100">'+
+        cell(r.qty||'1')+cell(r.l)+cell(r.w)+cell(r.h)+cell(r.weight)+
+        '<td class="py-1 px-0.5 text-center"><button type="button" onclick="pdaRemoveSizeRow(this)" class="w-6 h-6 rounded-full text-red-500 hover:bg-red-50 text-base leading-none">×</button></td>'+
+        '</tr>';
+}
+
+function pdaAddSizeRow(){
+    const tbody=document.getElementById('pda-size-tbody');
+    if(!tbody)return;
+    const tr=document.createElement('tr');
+    tr.className='border-t border-surface-100';
+    tr.innerHTML=pdaSizeRow({qty:'1'}).replace(/^<tr[^>]*>|<\/tr>$/g,'');
+    tbody.appendChild(tr);
+}
+
+function pdaRemoveSizeRow(btn){
+    const tbody=document.getElementById('pda-size-tbody');
+    if(!tbody)return;
+    if(tbody.children.length<=1){showToast(tr('至少保留一行'));return;}
+    const tr=btn.closest('tr');
+    if(tr)tr.remove();
 }
 
 function pdaRecordCard(record){
@@ -10323,7 +10368,7 @@ function generateWarehousePdaOperationScreen(taskId){
     if(taskId==='pda-work-order')return h+generatePdaWorkOrderScreen();
     h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
     (config.sections||[]).forEach(function(section){h+=pdaSection(section);});
-    if(config.servicePanel)h+=pdaServicePanel(taskId==='wh-in-one'?false:true);
+    if(config.servicePanel)h+=pdaServicePanel(true);
     if(config.photos)h+=pdaPhotoUploader(config.photoLimit||3);
     if(config.records&&config.records.length){
         h+='<div class="mt-3 mb-2 text-sm font-semibold text-text-primary">'+tr(config.recordsTitle||'最近记录')+'</div>';

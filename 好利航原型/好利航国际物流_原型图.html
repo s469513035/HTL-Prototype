@@ -1933,8 +1933,7 @@ const menuData=[
 
 {id:'warehouse',label:'仓储作业',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',children:[
 {id:'wh-domestic',label:'仓库操作管理-国内',langKey:'wh_domestic',children:[
-{id:'wh-in-one',label:'入仓操作（一票一件）',page:'wh-domestic',tab:'wh-in-one'},
-{id:'wh-in-multi',label:'入仓操作（一票多件）',page:'wh-domestic',tab:'wh-in-multi'},
+{id:'wh-in-one',label:'手动入仓',page:'wh-domestic',tab:'wh-in-one'},
 {id:'wh-headless',label:'无头件',langKey:'wh_headless',page:'wh-domestic',tab:'wh-headless'},
 {id:'wh-no-pre-in',label:'无头件认领',langKey:'wh_no_pre_in',page:'wh-domestic',tab:'wh-no-pre-in'},
 {id:'wh-transfer-in',label:'调拨入库',page:'wh-domestic',tab:'wh-transfer-in'},
@@ -2826,7 +2825,7 @@ const customerManageRows=[
 TC['wb-special'].pageMode='shipmentEntryAdmin';
 TC['wb-client-special'].pageMode='shipmentEntryClient';
 TC['wh-in'].pageMode='warehouseInbound';
-TC['wh-in-one']=Object.assign({},TC['wh-in'],{t:'入仓操作（一票一件）',receiveModeDefault:'one'});
+TC['wh-in-one']=Object.assign({},TC['wh-in'],{t:'手动入仓',receiveModeDefault:'one'});
 TC['wh-in-one'].h=TC['wh-in'].h.slice();
 TC['wh-in-one'].d=TC['wh-in'].d.map(function(row){return row.slice();});
 TC['wh-in-one'].q=TC['wh-in'].q.map(function(q){return Object.assign({},q);});
@@ -9432,9 +9431,9 @@ function warehousePdaOperationConfigs(){
             primary:'查看详情',secondary:['查询数据']
         },
         'wh-in-one':{
-            title:'入仓操作（一票一件）',subtitle:'单票单件移动收货，支持扫码、称重和尺寸录入',scanLabel:'运单号/物流单号',
+            title:'手动入仓',subtitle:'单票单件移动收货，支持扫码、称重和尺寸录入',scanLabel:'运单号/物流单号',
             sections:[
-                {title:'收货信息',fields:[{label:'运单号',type:'scan',value:'WB-20260613001',required:true},{label:'到货货区',type:'select',options:zones,required:true},{label:'运输方式',type:'select',options:transport,required:true},{label:'托盘号',value:'TP-YT-001',required:true}]},
+                {title:'收货信息',fields:[{label:'运单号',type:'scan',value:'WB-20260613001',required:true},{label:'运输方式',type:'select',options:transport,required:true},{label:'到货货区',type:'select',options:zones,required:true},{label:'托盘号',value:'TP-YT-001',required:true}]},
                 {title:'货物信息',fields:[{label:'品名',value:'服装配件',required:true,placeholder:'输入品名信息带出大类'},{label:'品名大类',value:'普货'}]},
                 {title:'尺寸明细',type:'sizeTable',rows:[{qty:'1',l:'48',w:'36',h:'30',weight:'12.5'}]}
             ],
@@ -9597,7 +9596,7 @@ function pdaServicePanel(open){
     h+='<summary class="text-[13px] font-semibold text-text-primary cursor-pointer">'+tr('附加服务')+'</summary>';
     h+='<div class="grid grid-cols-2 gap-2 mt-3">';
     services.forEach(function(name){
-        h+='<label class="h-8 px-2 rounded-lg border border-surface-200 bg-surface-50 flex items-center gap-1.5 text-[11px] text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600"><span class="flex-1 truncate">'+tr(name)+'</span><button type="button" onclick="event.preventDefault();showServiceChargeInfo(\''+esc(name)+'\')" class="shrink-0 inline-flex w-4 h-4 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">!</button></label>';
+        h+='<label class="h-8 px-2 rounded-lg border border-surface-200 bg-surface-50 flex items-center gap-1.5 text-[11px] text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600"><span class="flex-1 truncate">'+tr(name)+'</span></label>';
     });
     h+='</div></details>';
     return h;
@@ -10653,7 +10652,7 @@ function generateWarehouseInboundPage(id){
     const mode=(_warehouseReceiveModeTabId===id?_warehouseReceiveMode:'')||defaultMode||_warehouseReceiveMode||'fast';
     if(mode==='noPre')return generateWarehouseHeadlessInboundPage(id);
     if(id==='wh-in-multi'||mode==='second')return generateWarehouseMultiInboundPage(id);
-    const titleMap={fast:'入仓操作（一票一件）',second:'入仓操作（一票多件）',noPre:'无预报收货'};
+    const titleMap={fast:'手动入仓',second:'入仓操作（一票多件）',noPre:'无预报收货'};
     const title=cfg.receiveModeDefault?cfg.t:(titleMap[mode]||'极速收货');
     const status=mode==='noPre'?'待补录':'待入仓';
     const warehouseOptions=getWarehouseNameOptions();

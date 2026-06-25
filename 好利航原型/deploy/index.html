@@ -12302,7 +12302,6 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     const salesPerson=getTableValueByHeader(c,rowData,'所属业务员','');
     const settlementPerson=getTableValueByHeader(c,rowData,'所属操作','');
     const csrPerson=getTableValueByHeader(c,rowData,'所属客服','');
-    const senderAddr=getTableValueByHeader(c,rowData,'发货地址','');
     const remark=getTableValueByHeader(c,rowData,'备注','');
     const senderContact=getTableValueByHeader(c,rowData,'发件人','');
     const senderCompany=getTableValueByHeader(c,rowData,'发件人公司','');
@@ -12355,12 +12354,6 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     if(readonly){html+='<div class="px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 min-h-[60px]">'+esc(remark)+'</div>';}
     else{html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+tr('请输入备注')+'">'+esc(remark)+'</textarea>';}
     html+='</div>';
-    html+='</div>';
-    html+='</div></div>';
-    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('发货地址')+'</div><div class="grid grid-cols-1 gap-x-5 gap-y-4">';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发货地址')+'</label>';
-    if(readonly){html+='<div class="px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 min-h-[40px]">'+esc(senderAddr)+'</div>';}
-    else{html+='<textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+tr('请输入发货地址')+'">'+esc(senderAddr)+'</textarea>';}
     html+='</div>';
     html+='</div></div>';
     html+='</div>';

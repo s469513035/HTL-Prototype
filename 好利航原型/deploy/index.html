@@ -9418,7 +9418,8 @@ function warehousePdaTaskItems(){
         'pda-waybill-query':'移动端运单查询和详情查看',
         'pda-work-order':'蓝鲸风格工单处理、SLA和流转跟进'
     };
-    const hiddenForPda={'wh-no-pre-in':true,'wh-issue':true,'wh-transfer-fee':true,'wh-pack-rule':true,'wh-scan-out':true,'wh-pallet-mgmt':true,'wh-preload':true,'wh-air-sort':true,'wh-air-pack':true,'wh-air-arrival-scan':true,'wh-air-sort-scan':true,'wh-air-checkin-sort-scan':true,'wh-air-checkout-scan':true,'wh-loading-list':true,'wh-parcel-out':true};
+    const hiddenForPda={'wh-no-pre-in':true,'wh-issue':true,'wh-transfer-fee':true,'wh-pack-rule':true,'wh-scan-out':true,'wh-pallet-mgmt':true,'wh-preload':true,'wh-air-sort':true,'wh-air-pack':true,'wh-air-arrival-scan':true,'wh-air-sort-scan':true,'wh-air-checkin-sort-scan':true,'wh-air-checkout-scan':true,'wh-loading-list':true,'wh-parcel-out':true,'wh-in-multi':true};
+    const labelOverrides={'wh-headless':'无头件登记'};
     const items=[];
     function collect(children){
         (children||[]).forEach(function(child){
@@ -9427,7 +9428,7 @@ function warehousePdaTaskItems(){
                 return;
             }
             if(child.page==='wh-domestic'&&child.tab&&!hiddenForPda[child.tab]){
-                items.push([child.tab,child.label,descriptions[child.tab]||'国内仓库现场作业入口']);
+                items.push([child.tab,labelOverrides[child.tab]||child.label,descriptions[child.tab]||'国内仓库现场作业入口']);
             }
         });
     }
@@ -9519,8 +9520,8 @@ function warehousePdaOperationConfigs(){
             primary:'确认收货'
         },
         'wh-headless':{
-            title:'无头件',subtitle:'现场登记无法识别订单的到货，保留图片和仓库位置',scanLabel:'物流单号',
-            sections:[{title:'登记信息',fields:[{label:'物流单号',type:'scan',value:'JD30088991'},{label:'到货仓库',type:'select',options:wh,required:true},{label:'货区',type:'select',options:zones,required:true},{label:'入仓件数',type:'number',value:'3',required:true},{label:'备注说明',type:'textarea',value:'外箱无客户唛头，等待客户认领'}]}],
+            title:'无头件登记',subtitle:'现场登记无法识别订单的到货，保留图片和仓库位置',scanLabel:'物流单号',
+            sections:[{title:'登记信息',fields:[{label:'物流单号',type:'scan',value:'JD30088991'},{label:'货区',type:'select',options:zones,required:true},{label:'入仓件数',type:'number',value:'3',required:true},{label:'备注说明',type:'textarea',value:'外箱无客户唛头，等待客户认领'}]}],
             photos:true,photoLimit:5,primary:'保存'
         },
         'wh-no-pre-in':{
@@ -9819,8 +9820,7 @@ function pdaBottomActions(config){
 
 function pdaGroupedTasks(tasks){
     const groups=[
-        {title:'查询',ids:['pda-waybill-query']},
-        {title:'收货',ids:['wh-in-one','wh-in-multi','wh-headless']},
+        {title:'收货',ids:['pda-waybill-query','wh-in-one','wh-headless']},
         {title:'在库管理',ids:['wh-cargo-search']},
         {title:'出库',ids:['wh-out-scan','wh-sort-bag','wh-air-bag']},
         {title:'调拨',ids:['wh-transfer-out','wh-transfer-in','wh-replenish-drop']},

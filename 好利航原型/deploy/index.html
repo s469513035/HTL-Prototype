@@ -3066,7 +3066,7 @@ addPrototypeTable('wh-parcel-out','小包出库单','出库单号|出库计划|�
     {label:'状态',type:'select',options:['待出仓','已找货','可出仓','已出仓','待配柜','已配柜']}
 ]);
 
-addPrototypeTable('wh-final-alloc','配舱计划','配舱单号|标签编号|提单号|柜号|配柜状态|终配舱状态|票数|运输方式|件数|收货实重|收货方数|操作',['待出仓','已找货','可出仓','已出仓','待配柜','已配柜'],[
+addPrototypeTable('wh-final-alloc','配舱计划','配舱单号|标签编号|提单号|柜号|配柜状态|配舱状态|票数|运输方式|件数|收货实重|收货方数|操作',['待出仓','已找货','可出仓','已出仓','待配柜','已配柜'],[
     ['ZPCD-20260625-002','260625-2','TD-20260625-002','','已配柜','可出仓','2','海运','4','4','0.000004'],
     ['ZPCD-20260625-001','260625-1','TD-20260625-001','','已配柜','已找货','1','海运','1','1','0.000001'],
     ['20260624-终配001','260624-1','TD-20260624-001','GH-20260624-001','已配柜','已出仓','1','海运','2','2','0.000002'],
@@ -3083,10 +3083,10 @@ addPrototypeTable('wh-final-alloc','配舱计划','配舱单号|标签编号|提
     if(!c)return;
     c.statusMatch=function(row,tab,headers){
         var i1=headers.indexOf('配柜状态');
-        var i2=headers.indexOf('终配舱状态');
+        var i2=headers.indexOf('配舱状态');
         return (i1>=0&&row[i1]===tab)||(i2>=0&&row[i2]===tab);
     };
-    c.statusBadgeCols=['配柜状态','终配舱状态'];
+    c.statusBadgeCols=['配柜状态','配舱状态'];
     c.summaryFooter=['票数','件数','收货实重','收货方数'];
 })();
 addPrototypeTable('wh-sort-bag','分拣装袋管理','袋号|件数|尺寸|重量(KG)|体积(CBM)|目的国家|运输方式|品名大类|目的仓库|最大限重(KG)|装袋时间|装袋操作人|状态|操作',['进行中','已完成','已打印'],[
@@ -8604,7 +8604,6 @@ function getToolbarActions(id){
             {type:'add',label:'新增',variant:'primary'},
             {key:'finalAllocAdjust',label:'调整',variant:'primary'},
             {key:'finalAllocLinkBL',label:'关联提单'},
-            {key:'finalAllocRename',label:'修改配舱单号'},
             {key:'finalAllocAutoReplenish',label:'自动补货'},
             {key:'export',label:'导出'}
         ];
@@ -11905,7 +11904,7 @@ function _finalAllocPanelTable(side){
         const expanded=!!_finalAllocState.expanded[expKey];
         const arrow=expanded?'▾':'▸';
         h+='<tr class="hover:bg-primary-50/30 border-b border-surface-100"><td class="px-2 py-2 text-text-muted">'+(i+1)+'</td>';
-        h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-check" data-side="'+side+'" data-idx="'+i+'"></td>';
+        h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-check final-alloc-check-parent" data-side="'+side+'" data-idx="'+i+'" onchange="finalAllocSyncSub(this)"></td>';
         h+='<td class="px-2 py-2 font-medium text-primary-700 whitespace-nowrap"><span class="cursor-pointer mr-1 text-text-muted" onclick="finalAllocToggleRow(\''+side+'\','+i+')">'+arrow+'</span>'+esc(r.no)+'</td>';
         h+='<td class="px-2 py-2 text-right">'+r.pcs+'</td>';
         h+='<td class="px-2 py-2 text-right">'+r.canPcs+'</td>';
@@ -11916,7 +11915,7 @@ function _finalAllocPanelTable(side){
         if(expanded&&r.sub){
             r.sub.forEach(function(s,si){
                 h+='<tr class="bg-surface-50/60 border-b border-surface-100"><td class="px-2 py-2 text-text-muted">'+(i+1)+'.'+(si+1)+'</td>';
-                h+='<td class="px-2 py-2"></td>';
+                h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-sub-check" data-side="'+side+'" data-pidx="'+i+'" data-sidx="'+si+'" onchange="finalAllocSyncParent(this)"></td>';
                 h+='<td class="px-2 py-2 pl-6 text-text-secondary whitespace-nowrap">'+esc(s.no)+'</td>';
                 h+='<td class="px-2 py-2 text-right">'+s.pcs+'</td>';
                 h+='<td class="px-2 py-2 text-right">'+s.canPcs+'</td>';
@@ -11949,6 +11948,7 @@ function _finalAllocLeftPanel(showAdvanced){
     h+='<div class="text-sm font-semibold text-orange-600 mb-2">'+tr('未选数据')+'</div>';
     /* 查询行 */
     h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3">';
+    h+='<div class="mb-3 pb-3 border-b border-surface-100"><div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('全部')+'</option><option>'+tr('海运')+'</option><option>'+tr('空运')+'</option><option>'+tr('卡航')+'</option><option>'+tr('快递')+'</option></select></div></div>';
     h+='<div class="grid grid-cols-3 gap-3">';
     const _faQueryFields=[
         {label:'仓库归属',type:'select',options:['广州南沙仓','深圳坂田仓','上海洋山仓','东莞虎门仓']},
@@ -11975,12 +11975,6 @@ function _finalAllocLeftPanel(showAdvanced){
     h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'查询完成\'))">'+tr('查询')+'</button>';
     h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(true)">'+tr('全部展开')+'</button>';
     h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(false)">'+tr('全部收起')+'</button>';
-    if(showAdvanced){
-        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'已修改预配仓单号\'))">'+tr('修改预配仓单号')+'</button>';
-        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'扫描已就绪\'))">'+tr('扫描信息')+'</button>';
-        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'已人工结单\'))">'+tr('人工结单')+'</button>';
-        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg cursor-pointer" onclick="showToast(tr(\'已取消人工结单\'))">'+tr('取消人工结单')+'</button>';
-    }
     h+='</div>';
     h+=_finalAllocPanelTable('unselected');
     h+='</div>';
@@ -11993,7 +11987,6 @@ function _finalAllocRightPanel(showActions,showHeader){
     if(showActions){
         h+='<div class="flex flex-wrap gap-2 mb-3">';
         h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'配舱方案已创建\'))">+'+tr('创建配舱方案')+'</button>';
-        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'调拨出库已新增\'))">+'+tr('新增调拨出库')+'</button>';
         h+='</div>';
     }
     if(showHeader){
@@ -12036,8 +12029,25 @@ function finalAllocExpandAll(open){
 }
 
 function finalAllocToggleAll(side,checked){
-    const sel=document.querySelectorAll('.final-alloc-check[data-side="'+side+'"]');
-    sel.forEach(function(cb){cb.checked=checked;});
+    document.querySelectorAll('.final-alloc-check[data-side="'+side+'"]').forEach(function(cb){cb.checked=checked;});
+    document.querySelectorAll('.final-alloc-sub-check[data-side="'+side+'"]').forEach(function(cb){cb.checked=checked;});
+}
+
+function finalAllocSyncSub(parentCb){
+    const side=parentCb.dataset.side;
+    const idx=parentCb.dataset.idx;
+    document.querySelectorAll('.final-alloc-sub-check[data-side="'+side+'"][data-pidx="'+idx+'"]').forEach(function(cb){cb.checked=parentCb.checked;});
+}
+
+function finalAllocSyncParent(subCb){
+    const side=subCb.dataset.side;
+    const pidx=subCb.dataset.pidx;
+    const parent=document.querySelector('.final-alloc-check-parent[data-side="'+side+'"][data-idx="'+pidx+'"]');
+    if(!parent)return;
+    const subs=document.querySelectorAll('.final-alloc-sub-check[data-side="'+side+'"][data-pidx="'+pidx+'"]');
+    let anyChecked=false;
+    subs.forEach(function(cb){if(cb.checked)anyChecked=true;});
+    parent.checked=anyChecked;
 }
 
 function finalAllocMove(dir){

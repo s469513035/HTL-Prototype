@@ -1970,6 +1970,7 @@ const menuData=[
 {id:'wh-transfer-out',label:'调拨出库',page:'wh-domestic',tab:'wh-transfer-out'},
 {id:'wh-transfer-fee',label:'调拨费用查询',page:'wh-domestic',tab:'wh-transfer-fee'},
 {id:'wh-pack-rule',label:'配舱规则',page:'wh-domestic',tab:'wh-pack-rule'},
+{id:'wh-final-alloc',label:'配舱计划',page:'wh-domestic',tab:'wh-final-alloc'},
 {id:'wh-cargo-search',label:'查货管理',page:'wh-domestic',tab:'wh-cargo-search'},
 {id:'wh-out-scan',label:'出库扫描',page:'wh-domestic',tab:'wh-out-scan'},
 {id:'wh-sort-bag',label:'分拣装袋管理',page:'wh-domestic',tab:'wh-sort-bag'},
@@ -3065,6 +3066,29 @@ addPrototypeTable('wh-parcel-out','小包出库单','出库单号|出库计划|�
     {label:'状态',type:'select',options:['待出仓','已找货','可出仓','已出仓','待配柜','已配柜']}
 ]);
 
+addPrototypeTable('wh-final-alloc','配舱计划','终配舱单号|标签编号|提单号|柜号|配柜状态|终配舱状态|票数|运输方式|件数|收货实重|收货方数|操作',['待出仓','已找货','可出仓','已出仓','待配柜','已配柜'],[
+    ['ZPCD-20260625-002','260625-2','TD-20260625-002','','已配柜','可出仓','2','海运','4','4','0.000004'],
+    ['ZPCD-20260625-001','260625-1','TD-20260625-001','','已配柜','已找货','1','海运','1','1','0.000001'],
+    ['20260624-终配001','260624-1','TD-20260624-001','GH-20260624-001','已配柜','已出仓','1','海运','2','2','0.000002'],
+    ['ZPCD-20260622-001','260622-2','TD-20260622-001','GH-20260622-001','已配柜','已出仓','2','海运','4','4','0.000004'],
+    ['ZPCD-20260620-001','260620-1','TD-20260620-001','','待配柜','待出仓','1','海运','3','3','0.000003']
+],[
+    {label:'终配舱单号',type:'text'},
+    {label:'提单号',type:'text'},
+    {label:'运输类型',type:'select',options:['海运','空运','卡航','快递']},
+    {label:'所属仓库',type:'select',options:['广州南沙仓','深圳坂田仓','上海洋山仓','东莞虎门仓']}
+]);
+(function(){
+    var c=TC['wh-final-alloc'];
+    if(!c)return;
+    c.statusMatch=function(row,tab,headers){
+        var i1=headers.indexOf('配柜状态');
+        var i2=headers.indexOf('终配舱状态');
+        return (i1>=0&&row[i1]===tab)||(i2>=0&&row[i2]===tab);
+    };
+    c.statusBadgeCols=['配柜状态','终配舱状态'];
+    c.summaryFooter=['票数','件数','收货实重','收货方数'];
+})();
 addPrototypeTable('wh-sort-bag','分拣装袋管理','袋号|件数|尺寸|重量(KG)|体积(CBM)|目的国家|运输方式|品名大类|目的仓库|最大限重(KG)|装袋时间|装袋操作人|状态|操作',['进行中','已完成','已打印'],[
     ['BAG-20260613001','12','45×35×30','62.50','0.567','尼日利亚','海运','电子产品','拉各斯仓','80','2026-06-13 14:20','张志伟','已打印'],
     ['BAG-20260613002','8','40×30×25','48.00','0.240','塞内加尔','海运','服装鞋帽','达喀尔仓','60','2026-06-13 15:05','李慧敏','已完成'],
@@ -8491,6 +8515,10 @@ function renderToolbarAction(action,id){
     else if(action.key==='copy')click='openSelectedCrud(\'copy\',\''+id+'\')';
     else if(action.key==='copyWaybill')click='openActionModal(\'copyWaybill\',\''+id+'\',-1)';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
+    else if(action.key==='finalAllocAdjust')click='openFinalAllocAdjustModal(\''+id+'\')';
+    else if(action.key==='finalAllocLinkBL')click='openFinalAllocLinkBLModal(\''+id+'\')';
+    else if(action.key==='finalAllocRename')click='openFinalAllocRenameModal(\''+id+'\')';
+    else if(action.key==='finalAllocAutoReplenish')click='runFinalAllocAutoReplenish(\''+id+'\')';
     else if(action.key==='outboundAdjust')click='openOutboundAdjustModal(\''+id+'\')';
     else if(action.key==='businessConfirm')click='openWaybillBusinessConfirmModal(\''+id+'\')';
     else if(action.key==='csAdd')click='openCsIssueAddModal(\''+id+'\')';
@@ -8568,6 +8596,17 @@ function getToolbarActions(id){
             {key:'enable',label:'启用/禁用'},
             {key:'resetPwd',label:'重置密码'},
             {key:'export',label:'导出数据'}
+        ];
+    }
+    if(id==='wh-final-alloc'){
+        return [
+            {key:'search',label:'查询',variant:'primary'},
+            {type:'add',label:'新增',variant:'primary'},
+            {key:'finalAllocAdjust',label:'调整',variant:'primary'},
+            {key:'finalAllocLinkBL',label:'关联提单'},
+            {key:'finalAllocRename',label:'修改终配舱单号'},
+            {key:'finalAllocAutoReplenish',label:'自动补货'},
+            {key:'export',label:'导出'}
         ];
     }
     if(id==='wb-manage'){
@@ -11305,7 +11344,11 @@ function generateListPage(id,page,statusFilter){
     if(!statusFilter)statusFilter='';
     _statusFilterVal=statusFilter;
     const queriedData=hideQueryPanel?allData:filterRowsByQuery(id,allData);
-    const data=statusFilter?queriedData.filter(row=>{const si2=dataHeaders(c).findIndex(h=>h.includes('状态')||h.includes(L.status)||h==='Status');return si2>=0&&row[si2]===statusFilter;}):queriedData;
+    const data=statusFilter?queriedData.filter(row=>{
+        if(c.statusMatch)return c.statusMatch(row,statusFilter,dataHeaders(c));
+        const si2=dataHeaders(c).findIndex(h=>h.includes('状态')||h.includes(L.status)||h==='Status');
+        return si2>=0&&row[si2]===statusFilter;
+    }):queriedData;
     _listData[id]=data;
     if(!page)page=1;
     _listPage[id]=page;
@@ -11427,10 +11470,14 @@ function generateListPage(id,page,statusFilter){
         h+='</div>';
         h+='</div>';
     }
-    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-order'||id==='cs-issue-track')){
+    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-order'||id==='cs-issue-track'||id==='wh-final-alloc')){
         const statusCounts={};
         statusCounts['']=allData.length;
-        c.s.forEach(s=>{statusCounts[s]=allData.filter(row=>{const si2=dataHeaders(c).findIndex(hd=>hd.includes('状态')||hd.includes(L.status)||hd==='Status');return si2>=0&&row[si2]===s;}).length;});
+        c.s.forEach(s=>{statusCounts[s]=allData.filter(row=>{
+            if(c.statusMatch)return c.statusMatch(row,s,dataHeaders(c));
+            const si2=dataHeaders(c).findIndex(hd=>hd.includes('状态')||hd.includes(L.status)||hd==='Status');
+            return si2>=0&&row[si2]===s;
+        }).length;});
         h+='<div class="flex items-center gap-2 mt-4 flex-wrap">';
         h+='<button class="status-tab'+(statusFilter===''?' active':'')+'" onclick="document.getElementById(\'main-content\').innerHTML=generateListPage(\''+id+'\',1,\'\')">'+L.tabAll+'<span class="tab-count">'+statusCounts['']+'</span></button>';
         c.s.forEach(s=>{
@@ -11466,7 +11513,7 @@ function generateListPage(id,page,statusFilter){
             if(id==='prod-manage'&&th==='重货取敏感货标识'){
                 h+='<td class="px-4 py-3 text-sm whitespace-nowrap '+(rawCell==='是'?'text-red-500':'text-green-600')+' font-medium" title="'+titleCell+'">'+esc(displayCell)+'</td>';
             }
-            else if(ci===si){h+='<td class="px-4 py-3 text-sm whitespace-nowrap">'+statusBadge(rawCell)+'</td>';}
+            else if(ci===si||(c.statusBadgeCols&&c.statusBadgeCols.indexOf(th)>=0)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap">'+statusBadge(rawCell)+'</td>';}
             else if((id==='wb-manage'||id==='wb-client-manage')&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold" onclick="openWaybillDetail(\''+id+'\','+gi+')">'+esc(displayCell)+'</button></td>';}
             else if(id==='fin-fee-mgmt'&&th==='运单号'){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold" ondblclick="openFeeMgmtDetail(\''+id+'\','+gi+')" title="'+esc(tr('双击进入详情'))+'">'+esc(displayCell)+'</button></td>';}
             else if(id==='fcl-bill'&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold" ondblclick="openBillDetailModal(\''+id+'\','+gi+')" title="'+esc(tr('双击进入详情'))+'">'+esc(displayCell)+'</button></td>';}
@@ -11603,6 +11650,14 @@ function openCrudModal(mode,id,rowIdx){
     if(!c)return;
     if(['wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkin-sort-scan'].includes(id)&&(mode==='add'||mode==='edit'||mode==='view')){
         openAirScanModal(mode,id,rowIdx);
+        return;
+    }
+    if(id==='wh-final-alloc'&&mode==='add'){
+        openFinalAllocAddModal(id);
+        return;
+    }
+    if(id==='wh-final-alloc'&&(mode==='edit'||mode==='view')){
+        openFinalAllocAdjustModal(id,rowIdx);
         return;
     }
     const modalExcludedFields={};
@@ -11810,6 +11865,288 @@ function closeCrudModal(){
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='';
     closeExpressionModal();
+}
+
+/* ===== 配舱计划 wh-final-alloc 弹窗集合 ===== */
+var _finalAllocUnselectedSeed=[
+    {no:'XJWCS2',pcs:6,canPcs:6,canWt:6,canVol:'0.000006',outWt:6,outVol:'0.000006',sub:[{no:'H-XJWCS2-001',pcs:6,canPcs:6,canWt:6,canVol:'0.000006',outWt:6,outVol:'0.000006'}]},
+    {no:'XJWCS3',pcs:2,canPcs:2,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002',sub:[{no:'H-XJWCS3-001',pcs:2,canPcs:2,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002'}]},
+    {no:'YP20260626',pcs:6,canPcs:6,canWt:6,canVol:'0.000006',outWt:6,outVol:'0.000006',sub:[{no:'H-YP20260626-001',pcs:6,canPcs:6,canWt:6,canVol:'0.000006',outWt:6,outVol:'0.000006'}]},
+    {no:'YPC-20260626003',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004',sub:[{no:'H-YPC-20260626003-001',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004'}]},
+    {no:'YPC-TY',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014',sub:[{no:'H-YPC-TY-001',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014'}]}
+];
+var _finalAllocState={mode:'add',unselected:[],selected:[],expanded:{},header:{no:'',transport:'海运',bl:''}};
+
+function _finalAllocClone(arr){return JSON.parse(JSON.stringify(arr));}
+
+function _finalAllocResetState(mode,headerInit,selectedInit){
+    _finalAllocState.mode=mode;
+    _finalAllocState.unselected=_finalAllocClone(_finalAllocUnselectedSeed);
+    _finalAllocState.selected=selectedInit?_finalAllocClone(selectedInit):[];
+    _finalAllocState.expanded={};
+    _finalAllocState.header=headerInit||{no:'',transport:'海运',bl:''};
+}
+
+function _finalAllocPanelTable(side){
+    const isLeft=side==='unselected';
+    const rows=isLeft?_finalAllocState.unselected:_finalAllocState.selected;
+    const cols=['预配仓单号/运单号','件数','可配件数','可配实重','可配体积','出货实重','出货体积'];
+    let h='<div class="border border-surface-200 rounded-lg overflow-hidden bg-white"><div class="overflow-auto" style="max-height:520px"><table class="w-full text-xs" style="border-collapse:separate;border-spacing:0">';
+    h+='<thead class="bg-[#EFF6FF] sticky top-0 z-10"><tr>';
+    h+='<th class="px-2 py-2 text-left font-semibold text-text-secondary" style="width:36px">#</th>';
+    h+='<th class="px-2 py-2 text-left font-semibold text-text-secondary" style="width:32px"><input type="checkbox" onchange="finalAllocToggleAll(\''+side+'\',this.checked)"></th>';
+    cols.forEach(function(c){h+='<th class="px-2 py-2 text-left font-semibold text-text-secondary whitespace-nowrap">'+c+'</th>';});
+    h+='</tr></thead><tbody>';
+    if(!rows.length){
+        h+='<tr><td colspan="9" class="px-3 py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    }
+    rows.forEach(function(r,i){
+        const expKey=side+'-'+i;
+        const expanded=!!_finalAllocState.expanded[expKey];
+        const arrow=expanded?'▾':'▸';
+        h+='<tr class="hover:bg-primary-50/30 border-b border-surface-100"><td class="px-2 py-2 text-text-muted">'+(i+1)+'</td>';
+        h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-check" data-side="'+side+'" data-idx="'+i+'"></td>';
+        h+='<td class="px-2 py-2 font-medium text-primary-700 whitespace-nowrap"><span class="cursor-pointer mr-1 text-text-muted" onclick="finalAllocToggleRow(\''+side+'\','+i+')">'+arrow+'</span>'+esc(r.no)+'</td>';
+        h+='<td class="px-2 py-2 text-right">'+r.pcs+'</td>';
+        h+='<td class="px-2 py-2 text-right">'+r.canPcs+'</td>';
+        h+='<td class="px-2 py-2 text-right">'+r.canWt+'</td>';
+        h+='<td class="px-2 py-2 text-right">'+r.canVol+'</td>';
+        h+='<td class="px-2 py-2 text-right">'+r.outWt+'</td>';
+        h+='<td class="px-2 py-2 text-right">'+r.outVol+'</td></tr>';
+        if(expanded&&r.sub){
+            r.sub.forEach(function(s,si){
+                h+='<tr class="bg-surface-50/60 border-b border-surface-100"><td class="px-2 py-2 text-text-muted">'+(i+1)+'.'+(si+1)+'</td>';
+                h+='<td class="px-2 py-2"></td>';
+                h+='<td class="px-2 py-2 pl-6 text-text-secondary whitespace-nowrap">'+esc(s.no)+'</td>';
+                h+='<td class="px-2 py-2 text-right">'+s.pcs+'</td>';
+                h+='<td class="px-2 py-2 text-right">'+s.canPcs+'</td>';
+                h+='<td class="px-2 py-2 text-right">'+s.canWt+'</td>';
+                h+='<td class="px-2 py-2 text-right">'+s.canVol+'</td>';
+                h+='<td class="px-2 py-2 text-right">'+s.outWt+'</td>';
+                h+='<td class="px-2 py-2 text-right">'+s.outVol+'</td></tr>';
+            });
+        }
+    });
+    h+='</tbody></table></div>';
+    /* 合计行 */
+    const totalPcs=rows.reduce(function(a,b){return a+(+b.pcs||0);},0);
+    const totalCan=rows.reduce(function(a,b){return a+(+b.canPcs||0);},0);
+    const totalOutWt=rows.reduce(function(a,b){return a+(+b.outWt||0);},0);
+    const totalOutVol=rows.reduce(function(a,b){return a+(parseFloat(b.outVol)||0);},0);
+    h+='<div class="flex items-center gap-4 px-3 py-2 border-t border-surface-200 bg-surface-50/40 text-xs text-text-secondary">';
+    h+='<span class="font-medium text-text-primary">'+tr('总合计')+'：</span>';
+    h+='<span>'+tr('总票数')+': '+totalPcs+'</span>';
+    h+='<span>'+tr('可配件数')+': '+totalCan+'</span>';
+    h+='<span>'+tr('出货实重')+': '+totalOutWt+'</span>';
+    h+='<span>'+tr('出货方数')+': '+totalOutVol.toFixed(6)+'</span>';
+    h+='<span>'+tr('出货计费重')+': '+(totalOutWt*6)+'</span>';
+    h+='</div></div>';
+    return h;
+}
+
+function _finalAllocLeftPanel(showAdvanced){
+    let h='<div class="flex-1 min-w-0">';
+    h+='<div class="text-sm font-semibold text-orange-600 mb-2">'+tr('未选数据')+'</div>';
+    /* 查询行 */
+    h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3">';
+    h+='<div class="grid grid-cols-3 gap-3">';
+    ['仓库归属','运单号','收件国家','指定路线','FBA仓库编码','派送方式','客户类型'].forEach(function(lb){
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+lb+'</label>';
+        if(['仓库归属','收件国家','指定路线','FBA仓库编码','派送方式','客户类型'].indexOf(lb)>=0){
+            h+='<select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('请选择')+lb+'</option></select>';
+        }else{
+            h+='<input type="text" placeholder="'+tr('请输入')+lb+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50">';
+        }
+        h+='</div>';
+    });
+    h+='</div></div>';
+    /* 操作按钮行 */
+    h+='<div class="flex flex-wrap gap-2 mb-2">';
+    h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'查询完成\'))">'+tr('查询')+'</button>';
+    h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(true)">'+tr('全部展开')+'</button>';
+    h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(false)">'+tr('全部收起')+'</button>';
+    if(showAdvanced){
+        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'已修改预配仓单号\'))">'+tr('修改预配仓单号')+'</button>';
+        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'扫描已就绪\'))">'+tr('扫描信息')+'</button>';
+        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'已人工结单\'))">'+tr('人工结单')+'</button>';
+        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg cursor-pointer" onclick="showToast(tr(\'已取消人工结单\'))">'+tr('取消人工结单')+'</button>';
+    }
+    h+='</div>';
+    h+=_finalAllocPanelTable('unselected');
+    h+='</div>';
+    return h;
+}
+
+function _finalAllocRightPanel(showActions,showHeader){
+    let h='<div class="flex-1 min-w-0">';
+    h+='<div class="text-sm font-semibold text-orange-600 mb-2">'+tr('已选数据')+'</div>';
+    if(showActions){
+        h+='<div class="flex flex-wrap gap-2 mb-3">';
+        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'配舱方案已创建\'))">+'+tr('创建配舱方案')+'</button>';
+        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'调拨出库已新增\'))">+'+tr('新增调拨出库')+'</button>';
+        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'打单测算完成\'))">'+tr('打单测算')+'</button>';
+        h+='</div>';
+    }
+    if(showHeader){
+        const hd=_finalAllocState.header;
+        h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3"><div class="grid grid-cols-3 gap-3">';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary"><span class="text-red-500">*</span> '+tr('终配舱单号')+'</label><input type="text" value="'+esc(hd.no)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-no"></div>';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-transport">';
+        ['海运','空运','卡航','快递'].forEach(function(o){h+='<option'+(o===hd.transport?' selected':'')+'>'+o+'</option>';});
+        h+='</select></div>';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('关联提单')+'</label><input type="text" value="'+esc(hd.bl)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-bl"></div>';
+        h+='</div></div>';
+    }
+    h+=_finalAllocPanelTable('selected');
+    h+='</div>';
+    return h;
+}
+
+function _finalAllocBodyHtml(mode){
+    let h='<div class="flex gap-4 items-stretch">';
+    h+=_finalAllocLeftPanel(mode==='add');
+    h+='<div class="flex flex-col justify-center gap-3 px-1"><button class="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-base cursor-pointer" onclick="finalAllocMove(\'right\')" title="'+tr('选入')+'">›</button><button class="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-base cursor-pointer" onclick="finalAllocMove(\'left\')" title="'+tr('移除')+'">‹</button></div>';
+    h+=_finalAllocRightPanel(mode==='add',mode==='edit');
+    h+='</div>';
+    return h;
+}
+
+function finalAllocToggleRow(side,i){
+    const k=side+'-'+i;
+    _finalAllocState.expanded[k]=!_finalAllocState.expanded[k];
+    finalAllocRerender();
+}
+
+function finalAllocExpandAll(open){
+    _finalAllocState.expanded={};
+    if(open){
+        _finalAllocState.unselected.forEach(function(_,i){_finalAllocState.expanded['unselected-'+i]=true;});
+        _finalAllocState.selected.forEach(function(_,i){_finalAllocState.expanded['selected-'+i]=true;});
+    }
+    finalAllocRerender();
+}
+
+function finalAllocToggleAll(side,checked){
+    const sel=document.querySelectorAll('.final-alloc-check[data-side="'+side+'"]');
+    sel.forEach(function(cb){cb.checked=checked;});
+}
+
+function finalAllocMove(dir){
+    const fromKey=dir==='right'?'unselected':'selected';
+    const toKey=dir==='right'?'selected':'unselected';
+    const checks=document.querySelectorAll('.final-alloc-check[data-side="'+fromKey+'"]:checked');
+    if(!checks.length){showToast(tr(dir==='right'?'请勾选要选入的数据':'请勾选要移除的数据'));return;}
+    const indices=Array.prototype.map.call(checks,function(cb){return parseInt(cb.dataset.idx,10);}).sort(function(a,b){return b-a;});
+    indices.forEach(function(idx){
+        const row=_finalAllocState[fromKey].splice(idx,1)[0];
+        _finalAllocState[toKey].push(row);
+    });
+    _finalAllocState.expanded={};
+    finalAllocRerender();
+}
+
+function finalAllocRerender(){
+    const body=document.getElementById('crud-modal-body');
+    if(body)body.innerHTML=_finalAllocBodyHtml(_finalAllocState.mode);
+}
+
+function openFinalAllocAddModal(id){
+    _finalAllocResetState('add',{no:'',transport:'海运',bl:''},null);
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='92%';
+    titleEl.textContent=tr('新增');
+    bodyEl.innerHTML=_finalAllocBodyHtml('add');
+    footerEl.innerHTML='<button class="px-4 h-9 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg cursor-pointer mr-2" onclick="finalAllocSubmit(\'add\',\''+id+'\')">'+tr('终配舱登记')+'</button>'+
+        '<button class="px-4 h-9 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" onclick="closeCrudModal()">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function openFinalAllocAdjustModal(id,rowIdx){
+    const idx=(rowIdx===undefined||rowIdx<0)?getSelectedRowIndex():rowIdx;
+    if(idx<0){openActionModal('selectRequired',id,-1);return;}
+    const row=(_listData[id]||TC[id].d)[idx]||[];
+    const presetNo=row[0]||'';
+    const presetBL=row[2]||'';
+    const presetTransport=row[7]||'海运';
+    const presetSelected=[{no:presetNo.replace(/-终配/,'-预配').replace(/^ZPCD-/,'YPC-'),pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002',sub:[{no:'H82606240002',pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002'}]}];
+    _finalAllocResetState('edit',{no:presetNo,transport:presetTransport,bl:presetBL},presetSelected);
+    _finalAllocState.expanded['selected-0']=true;
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='92%';
+    titleEl.textContent=tr('调整');
+    bodyEl.innerHTML=_finalAllocBodyHtml('edit');
+    footerEl.innerHTML='<button class="px-4 h-9 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg cursor-pointer mr-2" onclick="finalAllocSubmit(\'edit\',\''+id+'\')">'+tr('确认')+'</button>'+
+        '<button class="px-4 h-9 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" onclick="closeCrudModal()">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function finalAllocSubmit(mode,id){
+    if(!_finalAllocState.selected.length){showToast(tr('请先选入数据再提交'));return;}
+    const noEl=document.getElementById('final-alloc-no');
+    const blEl=document.getElementById('final-alloc-bl');
+    const trEl=document.getElementById('final-alloc-transport');
+    if(noEl)_finalAllocState.header.no=noEl.value;
+    if(blEl)_finalAllocState.header.bl=blEl.value;
+    if(trEl)_finalAllocState.header.transport=trEl.value;
+    if(mode==='edit'&&!_finalAllocState.header.no){showToast(tr('终配舱单号必填'));return;}
+    closeCrudModal();
+    showToast(tr(mode==='add'?'终配舱登记成功':'终配舱调整成功'));
+}
+
+function openFinalAllocLinkBLModal(id){
+    const idx=getSelectedRowIndex();
+    const row=idx>=0?((_listData[id]||TC[id].d)[idx]||[]):[];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='52%';
+    titleEl.textContent=tr('关联提单');
+    let h='<div class="space-y-4">';
+    h+='<div class="bg-primary-50 border border-primary-100 rounded-lg p-3 text-xs text-primary-700">'+tr('为选中的终配舱单关联提单号；若未选中则按输入新增关联。')+'</div>';
+    h+='<div class="grid grid-cols-2 gap-4">';
+    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('终配舱单号')+'</label><input type="text" value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
+    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary"><span class="text-red-500">*</span> '+tr('提单号')+'</label><input type="text" value="'+esc(row[2]||'TD-20260626-001')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
+    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('柜号')+'</label><input type="text" value="'+esc(row[3]||'GH-20260626-001')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
+    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('运输方式')+'</label><select class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"><option>海运</option><option>空运</option><option>卡航</option></select></div>';
+    h+='</div></div>';
+    bodyEl.innerHTML=h;
+    footerEl.innerHTML='<button class="px-4 h-9 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg cursor-pointer mr-2" onclick="closeCrudModal();showToast(tr(\'已关联提单\'))">'+tr('确认')+'</button>'+
+        '<button class="px-4 h-9 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" onclick="closeCrudModal()">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function openFinalAllocRenameModal(id){
+    const idx=getSelectedRowIndex();
+    if(idx<0){openActionModal('selectRequired',id,-1);return;}
+    const row=(_listData[id]||TC[id].d)[idx]||[];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='48%';
+    titleEl.textContent=tr('修改终配舱单号');
+    let h='<div class="space-y-4">';
+    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('原终配舱单号')+'</label><input type="text" readonly value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-muted"></div>';
+    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary"><span class="text-red-500">*</span> '+tr('新终配舱单号')+'</label><input type="text" id="final-alloc-new-no" value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div>';
+    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('备注')+'</label><textarea class="h-20 px-3 py-2 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+tr('请输入修改原因')+'"></textarea></div>';
+    h+='</div>';
+    bodyEl.innerHTML=h;
+    footerEl.innerHTML='<button class="px-4 h-9 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg cursor-pointer mr-2" onclick="closeCrudModal();showToast(tr(\'终配舱单号已修改\'))">'+tr('确认')+'</button>'+
+        '<button class="px-4 h-9 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" onclick="closeCrudModal()">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function runFinalAllocAutoReplenish(id){
+    const checked=document.querySelectorAll('.row-check:checked');
+    const cnt=checked.length||(_listData[id]||TC[id].d||[]).length;
+    showToast(tr('自动补货已派单')+'，'+tr('共')+' '+cnt+' '+tr('票'));
 }
 
 function openRiskRuleModal(mode,id,rowIdx,rowData){

@@ -9435,6 +9435,7 @@ function warehousePdaTaskItems(){
     collect(domesticMenu&&domesticMenu.children);
     items.unshift(['pda-waybill-query','运单查询',descriptions['pda-waybill-query']]);
     items.push(['pda-pallet-bind','仓库上托','运单子单号扫码绑定托盘和库位库区']);
+    items.push(['pda-pallet-adjust','调整托盘','换托/下托（整票/单个），扫码与库位库区维护']);
     items.push(['pda-air-checkin','空运签入','空运扫码签入、尺寸录入和拍照']);
     items.push(['pda-air-bag-sort','空运签入分拣装袋管理','空运袋号/单号扫码、尺寸录入和拍照装袋']);
     items.push(['pda-air-out-scan','空运出库扫描','空运袋号扫码出库、备注和拍照']);
@@ -9527,6 +9528,9 @@ function warehousePdaOperationConfigs(){
         },
         'pda-pallet-bind':{
             title:'仓库上托',subtitle:'运单子单号扫码绑定托盘和库位库区',primary:'确认上托'
+        },
+        'pda-pallet-adjust':{
+            title:'调整托盘',subtitle:'换托或下托（整票/单个），扫码后维护库位库区',primary:'确认调整'
         },
         'wh-no-pre-in':{
             title:'无头件认领',subtitle:'查看无头件图片并认领客户，生成预录单',scanLabel:'无头单号/物流单号',
@@ -9825,7 +9829,7 @@ function pdaBottomActions(config){
 function pdaGroupedTasks(tasks){
     const groups=[
         {title:'收货',ids:['pda-waybill-query','wh-in-one','wh-headless']},
-        {title:'在库管理',ids:['wh-cargo-search','pda-pallet-bind']},
+        {title:'在库管理',ids:['wh-cargo-search','pda-pallet-bind','pda-pallet-adjust']},
         {title:'出库',ids:['wh-out-scan','wh-sort-bag','wh-air-bag']},
         {title:'调拨',ids:['wh-transfer-out','wh-transfer-in','wh-replenish-drop']},
         {title:'空运',ids:['pda-air-checkin','pda-air-bag-sort','pda-air-out-scan']},
@@ -10521,6 +10525,123 @@ function confirmPdaPalletBind(){
     showToast(tr('上托提交成功'));
 }
 
+var _pdaPalletAdjustOp='swap';
+var _pdaPalletAdjustDownType='ticket';
+
+function pdaPalletAdjRadio(group,value,label,checked,onclick){
+    return '<label data-adj-'+group+'="'+value+'" class="flex items-center gap-1.5 cursor-pointer text-xs text-text-primary">'
+        +'<input type="radio" name="pda-pallet-adj-'+group+'" '+(checked?'checked':'')+' onclick="'+onclick+'" class="text-primary-600">'
+        +'<span>'+tr(label)+'</span></label>';
+}
+
+function pdaPalletAdjScanRow(rowId,labelText,inputId,placeholder,scanValue,callback){
+    let h='<div id="'+rowId+'" class="flex items-center gap-3">';
+    h+='<span id="'+rowId+'-label" class="shrink-0 w-16 text-xs text-text-secondary">'+tr(labelText)+'</span>';
+    h+='<div class="relative flex-1">';
+    h+='<input id="'+inputId+'" type="text" data-clear-enhanced="1" class="w-full h-10 pl-3 pr-20 text-xs rounded-xl border border-surface-200 bg-white focus:border-primary-400" placeholder="'+esc(tr(placeholder))+'" oninput="togglePdaScanClear(\''+inputId+'\')" onkeydown="if(event.key===\'Enter\')'+callback+'(\''+inputId+'\')">';
+    h+='<button type="button" data-pda-clear-for="'+inputId+'" onclick="clearPdaScanInput(\''+inputId+'\')" style="display:none" class="absolute right-10 top-1.5 w-7 h-7 rounded-full bg-surface-100 text-text-muted text-base leading-none items-center justify-center">×</button>';
+    h+='<button type="button" onclick="openPdaScanModal(\''+inputId+'\',\''+esc(scanValue)+'\',\''+callback+'\')" class="absolute right-1 top-1 w-8 h-8 rounded-lg bg-primary-600 text-white flex items-center justify-center">⌕</button>';
+    h+='</div></div>';
+    return h;
+}
+
+function pdaPalletAdjTextRow(rowId,labelText,inputId,placeholder){
+    let h='<div id="'+rowId+'" class="flex items-center gap-3">';
+    h+='<span class="shrink-0 w-16 text-xs text-text-secondary">'+tr(labelText)+'</span>';
+    h+='<div class="relative flex-1">';
+    h+='<input id="'+inputId+'" type="text" data-clear-enhanced="1" class="w-full h-10 pl-3 pr-10 text-xs rounded-xl border border-surface-200 bg-white focus:border-primary-400" placeholder="'+esc(tr(placeholder))+'" oninput="togglePdaScanClear(\''+inputId+'\')">';
+    h+='<button type="button" data-pda-clear-for="'+inputId+'" onclick="clearPdaScanInput(\''+inputId+'\')" style="display:none" class="absolute right-3 top-1.5 w-7 h-7 rounded-full bg-surface-100 text-text-muted text-base leading-none items-center justify-center">×</button>';
+    h+='</div></div>';
+    return h;
+}
+
+function generatePdaPalletAdjustScreen(){
+    const showOld=_pdaPalletAdjustOp==='swap';
+    const showNew=_pdaPalletAdjustOp==='swap'||(_pdaPalletAdjustOp==='down'&&_pdaPalletAdjustDownType==='single');
+    const showZone=_pdaPalletAdjustOp==='swap';
+    const newLabel=(_pdaPalletAdjustOp==='down'&&_pdaPalletAdjustDownType==='single')?'托盘号':'新托盘号';
+    const newPh=(_pdaPalletAdjustOp==='down'&&_pdaPalletAdjustDownType==='single')?'请扫描托盘号':'请扫描新托盘号';
+
+    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+='<div class="rounded-xl bg-white border border-surface-200 px-3 py-2.5 space-y-2">';
+    h+='<div class="flex items-center gap-6">';
+    h+='<span class="text-xs text-text-secondary w-16 shrink-0">'+tr('操作方式')+'</span>';
+    h+=pdaPalletAdjRadio('op','swap','换托',_pdaPalletAdjustOp==='swap','switchPdaPalletAdjustOp(\'swap\')');
+    h+=pdaPalletAdjRadio('op','down','下托',_pdaPalletAdjustOp==='down','switchPdaPalletAdjustOp(\'down\')');
+    h+='</div>';
+    h+='<div id="pda-pallet-adj-down-type" class="'+(_pdaPalletAdjustOp==='down'?'':'hidden')+' flex items-center gap-6 pt-2 border-t border-surface-100">';
+    h+='<span class="text-xs text-text-secondary w-16 shrink-0">'+tr('下托方式')+'</span>';
+    h+=pdaPalletAdjRadio('dt','ticket','整票下托',_pdaPalletAdjustDownType==='ticket','switchPdaPalletAdjustDownType(\'ticket\')');
+    h+=pdaPalletAdjRadio('dt','single','单个下托',_pdaPalletAdjustDownType==='single','switchPdaPalletAdjustDownType(\'single\')');
+    h+='</div>';
+    h+='</div>';
+
+    h+=pdaPalletAdjScanRow('pda-pallet-adj-row-waybill','运单子单号','pda-pallet-adj-waybill','请扫描运单子单号','H82512230001','focusPdaPalletAdjNext');
+    h+='<div id="pda-pallet-adj-row-old" class="'+(showOld?'':'hidden')+'">'+pdaPalletAdjScanRow('pda-pallet-adj-row-old-inner','旧托盘号','pda-pallet-adj-old','请扫描旧托盘号','TP20260404003','focusPdaPalletAdjNext')+'</div>';
+    h+='<div id="pda-pallet-adj-row-new" class="'+(showNew?'':'hidden')+'">'+pdaPalletAdjScanRow('pda-pallet-adj-row-new-inner',newLabel,'pda-pallet-adj-new',newPh,'TP20260404010','focusPdaPalletAdjNext')+'</div>';
+    h+='<div id="pda-pallet-adj-row-zone" class="'+(showZone?'':'hidden')+'">'+pdaPalletAdjTextRow('pda-pallet-adj-row-zone-inner','库位库区','pda-pallet-adj-zone','请录入库位库区')+'</div>';
+
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：请您查阅"逻辑需求描述-调整托盘"，了解详细逻辑。')+'</div>';
+    h+='</div>';
+    h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><button type="button" onclick="confirmPdaPalletAdjust()" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('确认调整')+'</button></div>';
+    return h;
+}
+
+function switchPdaPalletAdjustOp(op){
+    _pdaPalletAdjustOp=op;
+    applyPdaPalletAdjustVisibility();
+}
+
+function switchPdaPalletAdjustDownType(t){
+    _pdaPalletAdjustDownType=t;
+    applyPdaPalletAdjustVisibility();
+}
+
+function applyPdaPalletAdjustVisibility(){
+    function setHidden(id,hide){var el=document.getElementById(id);if(!el)return;if(hide)el.classList.add('hidden');else el.classList.remove('hidden');}
+    const showOld=_pdaPalletAdjustOp==='swap';
+    const showNew=_pdaPalletAdjustOp==='swap'||(_pdaPalletAdjustOp==='down'&&_pdaPalletAdjustDownType==='single');
+    const showZone=_pdaPalletAdjustOp==='swap';
+    setHidden('pda-pallet-adj-down-type',_pdaPalletAdjustOp!=='down');
+    setHidden('pda-pallet-adj-row-old',!showOld);
+    setHidden('pda-pallet-adj-row-new',!showNew);
+    setHidden('pda-pallet-adj-row-zone',!showZone);
+    const lbl=document.getElementById('pda-pallet-adj-row-new-inner-label');
+    const inp=document.getElementById('pda-pallet-adj-new');
+    if(_pdaPalletAdjustOp==='down'&&_pdaPalletAdjustDownType==='single'){
+        if(lbl)lbl.textContent=tr('托盘号');
+        if(inp)inp.placeholder=tr('请扫描托盘号');
+    }else{
+        if(lbl)lbl.textContent=tr('新托盘号');
+        if(inp)inp.placeholder=tr('请扫描新托盘号');
+    }
+}
+
+function focusPdaPalletAdjNext(currentId){
+    const seq=_pdaPalletAdjustOp==='swap'
+        ?['pda-pallet-adj-waybill','pda-pallet-adj-old','pda-pallet-adj-new','pda-pallet-adj-zone']
+        :(_pdaPalletAdjustDownType==='single'
+            ?['pda-pallet-adj-waybill','pda-pallet-adj-new']
+            :['pda-pallet-adj-waybill']);
+    const idx=seq.indexOf(currentId);
+    if(idx>=0&&idx<seq.length-1){
+        const next=document.getElementById(seq[idx+1]);
+        if(next)next.focus();
+    }
+}
+
+function confirmPdaPalletAdjust(){
+    ['pda-pallet-adj-waybill','pda-pallet-adj-old','pda-pallet-adj-new','pda-pallet-adj-zone'].forEach(function(id){
+        const el=document.getElementById(id);
+        if(el){el.value='';el.dispatchEvent(new Event('input',{bubbles:true}));}
+    });
+    const wb=document.getElementById('pda-pallet-adj-waybill');
+    if(wb)wb.focus();
+    const msg=_pdaPalletAdjustOp==='swap'?'换托提交成功'
+        :(_pdaPalletAdjustDownType==='single'?'单个下托提交成功':'整票下托提交成功');
+    showToast(tr(msg));
+}
+
 function generateWarehousePdaOperationScreen(taskId){
     const config=warehousePdaOperationConfig(taskId);
     let h='';
@@ -10535,6 +10656,7 @@ function generateWarehousePdaOperationScreen(taskId){
     if(taskId==='wh-in-multi')return h+generatePdaMultiInboundScreen(config);
     if(taskId==='wh-replenish-drop')return h+generatePdaReplenishDropScreen();
     if(taskId==='pda-pallet-bind')return h+generatePdaPalletBindScreen();
+    if(taskId==='pda-pallet-adjust')return h+generatePdaPalletAdjustScreen();
     if(taskId==='pda-air-out-scan')return h+generatePdaAirOutScanScreen();
     if(taskId==='pda-work-order')return h+generatePdaWorkOrderScreen();
     h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
@@ -10565,7 +10687,7 @@ function pdaTaskIcon(itemId){
         'wh-pack-rule':'☰','wh-cargo-search':'⌕','wh-preload':'▧','wh-replenish-drop':'↔',
         'wh-issue':'!','wh-air-sort':'⇆','wh-air-bag':'▰','wh-air-pack':'▤','pda-work-order':'✓',
         'pda-air-checkin':'✈','pda-air-bag-sort':'▰','pda-air-out-scan':'⇲','pda-work-order-register':'✎',
-        'pda-pallet-bind':'▦'
+        'pda-pallet-bind':'▦','pda-pallet-adjust':'⇄'
     };
     return map[itemId]||'▦';
 }

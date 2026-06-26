@@ -3066,14 +3066,14 @@ addPrototypeTable('wh-parcel-out','小包出库单','出库单号|出库计划|�
     {label:'状态',type:'select',options:['待出仓','已找货','可出仓','已出仓','待配柜','已配柜']}
 ]);
 
-addPrototypeTable('wh-final-alloc','配舱计划','终配舱单号|标签编号|提单号|柜号|配柜状态|终配舱状态|票数|运输方式|件数|收货实重|收货方数|操作',['待出仓','已找货','可出仓','已出仓','待配柜','已配柜'],[
+addPrototypeTable('wh-final-alloc','配舱计划','配舱单号|标签编号|提单号|柜号|配柜状态|终配舱状态|票数|运输方式|件数|收货实重|收货方数|操作',['待出仓','已找货','可出仓','已出仓','待配柜','已配柜'],[
     ['ZPCD-20260625-002','260625-2','TD-20260625-002','','已配柜','可出仓','2','海运','4','4','0.000004'],
     ['ZPCD-20260625-001','260625-1','TD-20260625-001','','已配柜','已找货','1','海运','1','1','0.000001'],
     ['20260624-终配001','260624-1','TD-20260624-001','GH-20260624-001','已配柜','已出仓','1','海运','2','2','0.000002'],
     ['ZPCD-20260622-001','260622-2','TD-20260622-001','GH-20260622-001','已配柜','已出仓','2','海运','4','4','0.000004'],
     ['ZPCD-20260620-001','260620-1','TD-20260620-001','','待配柜','待出仓','1','海运','3','3','0.000003']
 ],[
-    {label:'终配舱单号',type:'text'},
+    {label:'配舱单号',type:'text'},
     {label:'提单号',type:'text'},
     {label:'运输类型',type:'select',options:['海运','空运','卡航','快递']},
     {label:'所属仓库',type:'select',options:['广州南沙仓','深圳坂田仓','上海洋山仓','东莞虎门仓']}
@@ -8604,7 +8604,7 @@ function getToolbarActions(id){
             {type:'add',label:'新增',variant:'primary'},
             {key:'finalAllocAdjust',label:'调整',variant:'primary'},
             {key:'finalAllocLinkBL',label:'关联提单'},
-            {key:'finalAllocRename',label:'修改终配舱单号'},
+            {key:'finalAllocRename',label:'修改配舱单号'},
             {key:'finalAllocAutoReplenish',label:'自动补货'},
             {key:'export',label:'导出'}
         ];
@@ -11890,7 +11890,7 @@ function _finalAllocResetState(mode,headerInit,selectedInit){
 function _finalAllocPanelTable(side){
     const isLeft=side==='unselected';
     const rows=isLeft?_finalAllocState.unselected:_finalAllocState.selected;
-    const cols=['预配仓单号/运单号','件数','可配件数','可配实重','可配体积','出货实重','出货体积'];
+    const cols=['运单号','件数','可配件数','可配实重','可配体积','出货实重','出货体积'];
     let h='<div class="border border-surface-200 rounded-lg overflow-hidden bg-white"><div class="overflow-auto" style="max-height:520px"><table class="w-full text-xs" style="border-collapse:separate;border-spacing:0">';
     h+='<thead class="bg-[#EFF6FF] sticky top-0 z-10"><tr>';
     h+='<th class="px-2 py-2 text-left font-semibold text-text-secondary" style="width:36px">#</th>';
@@ -11950,12 +11950,22 @@ function _finalAllocLeftPanel(showAdvanced){
     /* 查询行 */
     h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3">';
     h+='<div class="grid grid-cols-3 gap-3">';
-    ['仓库归属','运单号','收件国家','指定路线','FBA仓库编码','派送方式','客户类型'].forEach(function(lb){
-        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+lb+'</label>';
-        if(['仓库归属','收件国家','指定路线','FBA仓库编码','派送方式','客户类型'].indexOf(lb)>=0){
-            h+='<select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('请选择')+lb+'</option></select>';
+    const _faQueryFields=[
+        {label:'仓库归属',type:'select',options:['广州南沙仓','深圳坂田仓','上海洋山仓','东莞虎门仓']},
+        {label:'运单号',type:'text'},
+        {label:'收件国家',type:'select',options:['美国','尼日利亚','塞内加尔','科特迪瓦','多哥','喀麦隆']},
+        {label:'收件仓库',type:'select',options:['拉各斯仓','达喀尔仓','阿比让仓','洛美仓','杜阿拉仓','LAX-Amazon FBA']},
+        {label:'品名大类',type:'select',options:['普货','电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他']},
+        {label:'客户类型',type:'select',options:['直客','货代','合作客户']}
+    ];
+    _faQueryFields.forEach(function(q){
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+q.label+'</label>';
+        if(q.type==='select'){
+            h+='<select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('请选择')+q.label+'</option>';
+            q.options.forEach(function(o){h+='<option>'+esc(o)+'</option>';});
+            h+='</select>';
         }else{
-            h+='<input type="text" placeholder="'+tr('请输入')+lb+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50">';
+            h+='<input type="text" placeholder="'+tr('请输入')+q.label+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50">';
         }
         h+='</div>';
     });
@@ -11984,13 +11994,12 @@ function _finalAllocRightPanel(showActions,showHeader){
         h+='<div class="flex flex-wrap gap-2 mb-3">';
         h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'配舱方案已创建\'))">+'+tr('创建配舱方案')+'</button>';
         h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'调拨出库已新增\'))">+'+tr('新增调拨出库')+'</button>';
-        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'打单测算完成\'))">'+tr('打单测算')+'</button>';
         h+='</div>';
     }
     if(showHeader){
         const hd=_finalAllocState.header;
         h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3"><div class="grid grid-cols-3 gap-3">';
-        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary"><span class="text-red-500">*</span> '+tr('终配舱单号')+'</label><input type="text" value="'+esc(hd.no)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-no"></div>';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary"><span class="text-red-500">*</span> '+tr('配舱单号')+'</label><input type="text" value="'+esc(hd.no)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-no"></div>';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-transport">';
         ['海运','空运','卡航','快递'].forEach(function(o){h+='<option'+(o===hd.transport?' selected':'')+'>'+o+'</option>';});
         h+='</select></div>';
@@ -12094,7 +12103,7 @@ function finalAllocSubmit(mode,id){
     if(noEl)_finalAllocState.header.no=noEl.value;
     if(blEl)_finalAllocState.header.bl=blEl.value;
     if(trEl)_finalAllocState.header.transport=trEl.value;
-    if(mode==='edit'&&!_finalAllocState.header.no){showToast(tr('终配舱单号必填'));return;}
+    if(mode==='edit'&&!_finalAllocState.header.no){showToast(tr('配舱单号必填'));return;}
     closeCrudModal();
     showToast(tr(mode==='add'?'终配舱登记成功':'终配舱调整成功'));
 }
@@ -12111,7 +12120,7 @@ function openFinalAllocLinkBLModal(id){
     let h='<div class="space-y-4">';
     h+='<div class="bg-primary-50 border border-primary-100 rounded-lg p-3 text-xs text-primary-700">'+tr('为选中的终配舱单关联提单号；若未选中则按输入新增关联。')+'</div>';
     h+='<div class="grid grid-cols-2 gap-4">';
-    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('终配舱单号')+'</label><input type="text" value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
+    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('配舱单号')+'</label><input type="text" value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
     h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary"><span class="text-red-500">*</span> '+tr('提单号')+'</label><input type="text" value="'+esc(row[2]||'TD-20260626-001')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
     h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('柜号')+'</label><input type="text" value="'+esc(row[3]||'GH-20260626-001')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
     h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('运输方式')+'</label><select class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"><option>海运</option><option>空运</option><option>卡航</option></select></div>';
@@ -12131,14 +12140,14 @@ function openFinalAllocRenameModal(id){
     const footerEl=document.getElementById('crud-modal-footer');
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='48%';
-    titleEl.textContent=tr('修改终配舱单号');
+    titleEl.textContent=tr('修改配舱单号');
     let h='<div class="space-y-4">';
-    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('原终配舱单号')+'</label><input type="text" readonly value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-muted"></div>';
-    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary"><span class="text-red-500">*</span> '+tr('新终配舱单号')+'</label><input type="text" id="final-alloc-new-no" value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div>';
+    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('原配舱单号')+'</label><input type="text" readonly value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-muted"></div>';
+    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary"><span class="text-red-500">*</span> '+tr('新配舱单号')+'</label><input type="text" id="final-alloc-new-no" value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div>';
     h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('备注')+'</label><textarea class="h-20 px-3 py-2 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+tr('请输入修改原因')+'"></textarea></div>';
     h+='</div>';
     bodyEl.innerHTML=h;
-    footerEl.innerHTML='<button class="px-4 h-9 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg cursor-pointer mr-2" onclick="closeCrudModal();showToast(tr(\'终配舱单号已修改\'))">'+tr('确认')+'</button>'+
+    footerEl.innerHTML='<button class="px-4 h-9 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg cursor-pointer mr-2" onclick="closeCrudModal();showToast(tr(\'配舱单号已修改\'))">'+tr('确认')+'</button>'+
         '<button class="px-4 h-9 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" onclick="closeCrudModal()">'+tr('关闭')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
 }

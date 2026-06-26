@@ -9434,6 +9434,7 @@ function warehousePdaTaskItems(){
     }
     collect(domesticMenu&&domesticMenu.children);
     items.unshift(['pda-waybill-query','运单查询',descriptions['pda-waybill-query']]);
+    items.push(['pda-pallet-bind','仓库上托','运单子单号扫码绑定托盘和库位库区']);
     items.push(['pda-air-checkin','空运签入','空运扫码签入、尺寸录入和拍照']);
     items.push(['pda-air-bag-sort','空运签入分拣装袋管理','空运袋号/单号扫码、尺寸录入和拍照装袋']);
     items.push(['pda-air-out-scan','空运出库扫描','空运袋号扫码出库、备注和拍照']);
@@ -9523,6 +9524,9 @@ function warehousePdaOperationConfigs(){
             title:'无头件登记',subtitle:'现场登记无法识别订单的到货，保留图片和仓库位置',scanLabel:'物流单号',
             sections:[{title:'登记信息',fields:[{label:'物流单号',type:'scan',value:'JD30088991'},{label:'货区',type:'select',options:zones,required:true},{label:'入仓件数',type:'number',value:'3',required:true},{label:'备注说明',type:'textarea',value:'外箱无客户唛头，等待客户认领'}]}],
             photos:true,photoLimit:5,primary:'保存'
+        },
+        'pda-pallet-bind':{
+            title:'仓库上托',subtitle:'运单子单号扫码绑定托盘和库位库区',primary:'确认上托'
         },
         'wh-no-pre-in':{
             title:'无头件认领',subtitle:'查看无头件图片并认领客户，生成预录单',scanLabel:'无头单号/物流单号',
@@ -9821,7 +9825,7 @@ function pdaBottomActions(config){
 function pdaGroupedTasks(tasks){
     const groups=[
         {title:'收货',ids:['pda-waybill-query','wh-in-one','wh-headless']},
-        {title:'在库管理',ids:['wh-cargo-search']},
+        {title:'在库管理',ids:['wh-cargo-search','pda-pallet-bind']},
         {title:'出库',ids:['wh-out-scan','wh-sort-bag','wh-air-bag']},
         {title:'调拨',ids:['wh-transfer-out','wh-transfer-in','wh-replenish-drop']},
         {title:'空运',ids:['pda-air-checkin','pda-air-bag-sort','pda-air-out-scan']},
@@ -10418,6 +10422,105 @@ function generatePdaAirOutScanScreen(){
     return h;
 }
 
+var _pdaPalletBindRows=[
+    {pallet:'TP20260404003',zone:'A1',editable:false},
+    {pallet:'TP20260404004',zone:'',editable:true}
+];
+var _pdaPalletBindLoaded=false;
+
+function renderPdaPalletBindTable(){
+    let h='<table class="w-full text-xs"><thead><tr class="bg-surface-100 text-text-secondary"><th class="py-2 font-medium">'+tr('托盘号')+'</th><th class="py-2 font-medium text-emerald-600">'+tr('库位库区')+'</th><th class="py-2 font-medium">'+tr('其他票')+'</th><th class="py-2 font-medium">'+tr('操作')+'</th></tr></thead><tbody>';
+    if(!_pdaPalletBindRows.length){
+        h+='<tr><td colspan="4" class="py-4 text-center text-text-muted">'+tr('暂无记录，请扫描托盘号')+'</td></tr>';
+    }
+    _pdaPalletBindRows.forEach(function(row,idx){
+        h+='<tr class="border-t border-surface-100 text-center align-middle">';
+        h+='<td class="py-2 text-primary-700 break-all">'+esc(row.pallet)+'</td>';
+        h+='<td class="py-2"><input type="text" value="'+esc(row.zone||'')+'" oninput="updatePdaPalletBindZone('+idx+',this.value)" class="w-16 h-7 px-2 text-xs text-center rounded border border-emerald-300 bg-emerald-50 text-emerald-700"></td>';
+        h+='<td class="py-2"><button type="button" onclick="viewPdaPalletBindOther(\''+esc(row.pallet)+'\')" class="text-primary-600 underline">'+tr('查询')+'</button></td>';
+        h+='<td class="py-2"><button type="button" onclick="removePdaPalletBindRow('+idx+')" class="text-red-500 underline">'+tr('删除')+'</button></td>';
+        h+='</tr>';
+    });
+    h+='</tbody></table>';
+    return h;
+}
+
+function generatePdaPalletBindScreen(){
+    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+=pdaScanInput('pda-pallet-waybill','请扫描运单子单号','applyPdaPalletBindWaybill','H82512230001');
+    h+='<div id="pda-pallet-waybill-info" class="'+(_pdaPalletBindLoaded?'':'hidden')+' rounded-xl border border-surface-200 bg-white p-3 text-xs space-y-1">';
+    h+='<div class="flex items-center gap-2"><span class="font-semibold text-primary-700">H82512230001</span><span class="text-text-secondary">(A1，A2)</span></div>';
+    h+='<div class="flex items-center justify-between text-text-secondary"><span>'+tr('当前票已绑定托盘')+'</span><div class="flex gap-3 text-primary-600"><button type="button" onclick="togglePdaPalletBindBound(true)">'+tr('展开')+'</button><button type="button" onclick="togglePdaPalletBindBound(false)">'+tr('收起')+'</button></div></div>';
+    h+='<div id="pda-pallet-bound-detail" class="hidden mt-2 pt-2 border-t border-surface-100 text-text-secondary"><div>'+tr('已绑定托盘')+'：TP20260403001 / TP20260403002</div></div>';
+    h+='</div>';
+    h+=pdaScanInput('pda-pallet-no','请扫描托盘号','applyPdaPalletBindPallet','TP20260404005');
+    h+='<div class="text-sm font-semibold text-text-primary">'+tr('当前记录的托盘')+'</div>';
+    h+='<div id="pda-pallet-table" class="rounded-xl border border-surface-200 bg-white overflow-hidden">'+renderPdaPalletBindTable()+'</div>';
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：请您查阅"逻辑需求描述-仓库上托"，了解详细逻辑。')+'</div>';
+    h+='</div>';
+    h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><button type="button" onclick="confirmPdaPalletBind()" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('确认上托')+'</button></div>';
+    return h;
+}
+
+function applyPdaPalletBindWaybill(){
+    _pdaPalletBindLoaded=true;
+    const info=document.getElementById('pda-pallet-waybill-info');
+    if(info)info.classList.remove('hidden');
+    const palletInput=document.getElementById('pda-pallet-no');
+    if(palletInput)palletInput.focus();
+}
+
+function togglePdaPalletBindBound(open){
+    const el=document.getElementById('pda-pallet-bound-detail');
+    if(!el)return;
+    if(open)el.classList.remove('hidden');else el.classList.add('hidden');
+}
+
+function applyPdaPalletBindPallet(){
+    const input=document.getElementById('pda-pallet-no');
+    if(!input)return;
+    const val=(input.value||'').trim();
+    if(!val)return;
+    _pdaPalletBindRows.push({pallet:val,zone:'',editable:true});
+    const tbl=document.getElementById('pda-pallet-table');
+    if(tbl)tbl.innerHTML=renderPdaPalletBindTable();
+    input.value='';
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.focus();
+}
+
+function updatePdaPalletBindZone(idx,val){
+    if(_pdaPalletBindRows[idx])_pdaPalletBindRows[idx].zone=val;
+}
+
+function removePdaPalletBindRow(idx){
+    _pdaPalletBindRows.splice(idx,1);
+    const tbl=document.getElementById('pda-pallet-table');
+    if(tbl)tbl.innerHTML=renderPdaPalletBindTable();
+}
+
+function viewPdaPalletBindOther(pallet){
+    showToast(tr('托盘 ')+pallet+tr(' 已关联运单：H82512230001 / H82512230012'));
+}
+
+function confirmPdaPalletBind(){
+    const hasEmpty=_pdaPalletBindRows.some(function(r){return !r.zone||!String(r.zone).trim();});
+    if(hasEmpty){
+        showToast(tr('托盘号存在「库位库区」为空，请维护后操作！'));
+        return;
+    }
+    _pdaPalletBindRows=[];
+    _pdaPalletBindLoaded=false;
+    const wbInput=document.getElementById('pda-pallet-waybill');
+    if(wbInput){wbInput.value='';wbInput.dispatchEvent(new Event('input',{bubbles:true}));}
+    const info=document.getElementById('pda-pallet-waybill-info');
+    if(info)info.classList.add('hidden');
+    const tbl=document.getElementById('pda-pallet-table');
+    if(tbl)tbl.innerHTML=renderPdaPalletBindTable();
+    if(wbInput)wbInput.focus();
+    showToast(tr('上托提交成功'));
+}
+
 function generateWarehousePdaOperationScreen(taskId){
     const config=warehousePdaOperationConfig(taskId);
     let h='';
@@ -10431,6 +10534,7 @@ function generateWarehousePdaOperationScreen(taskId){
     if(taskId==='wh-transfer-out')return h+generatePdaTransferOutScreen();
     if(taskId==='wh-in-multi')return h+generatePdaMultiInboundScreen(config);
     if(taskId==='wh-replenish-drop')return h+generatePdaReplenishDropScreen();
+    if(taskId==='pda-pallet-bind')return h+generatePdaPalletBindScreen();
     if(taskId==='pda-air-out-scan')return h+generatePdaAirOutScanScreen();
     if(taskId==='pda-work-order')return h+generatePdaWorkOrderScreen();
     h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
@@ -10460,7 +10564,8 @@ function pdaTaskIcon(itemId){
         'wh-transfer-in':'▣','wh-transfer-out':'▱','wh-scan-out':'⌁','wh-out-scan':'⌁','wh-pallet-mgmt':'▦',
         'wh-pack-rule':'☰','wh-cargo-search':'⌕','wh-preload':'▧','wh-replenish-drop':'↔',
         'wh-issue':'!','wh-air-sort':'⇆','wh-air-bag':'▰','wh-air-pack':'▤','pda-work-order':'✓',
-        'pda-air-checkin':'✈','pda-air-bag-sort':'▰','pda-air-out-scan':'⇲','pda-work-order-register':'✎'
+        'pda-air-checkin':'✈','pda-air-bag-sort':'▰','pda-air-out-scan':'⇲','pda-work-order-register':'✎',
+        'pda-pallet-bind':'▦'
     };
     return map[itemId]||'▦';
 }

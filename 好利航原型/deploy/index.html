@@ -9511,6 +9511,12 @@ function closeWarehousePdaTask(){
         refreshWarehousePdaPrototype();
         return;
     }
+    if(_warehousePdaTaskId==='wh-transfer-out'&&_pdaTransferOutView==='operate'){
+        _pdaTransferOutView='list';
+        _pdaTransferOutCurrent=null;
+        refreshWarehousePdaPrototype();
+        return;
+    }
     _warehousePdaTaskId='';
     _warehousePdaView='workbench';
     refreshWarehousePdaPrototype();
@@ -10353,71 +10359,153 @@ function generatePdaTransferInScreen(){
     return h;
 }
 
-// 调拨出库待出库运单（运单号、件数、重量）
-function pdaTransferOutWaybills(){
-    return [['WB-20260613001','8','96.5'],['WB-20260613002','3','42.0'],['WB-20260613008','5','54.5']];
-}
-function pdaScanMoveCard(prefix,row,scanned){
-    return '<div data-'+prefix+'-wb="'+esc(row[0])+'" class="rounded-lg border '+(scanned?'border-primary-200 bg-primary-50':'border-surface-100 bg-surface-50')+' px-3 py-2 text-xs"><div class="font-semibold text-primary-700 break-all">'+tr('运单号')+'：'+esc(row[0])+'</div><div class="mt-1 grid grid-cols-2 gap-2 text-text-muted"><span class="break-all">'+tr('件数')+'：'+esc(row[1])+'</span><span class="break-all">'+tr('重量(KG)')+'：'+esc(row[2])+'</span></div></div>';
-}
+/* ===== 调拨出库 wh-transfer-out（按图重写：list / operate 两屏 state machine） ===== */
+var _pdaTransferOutView='list';
+var _pdaTransferOutCurrent=null;
+var _pdaTransferOutScannedSet={};
+var _pdaTransferOutActiveTab='pending';
 
-function addPdaTransferOutWaybill(){
-    const input=document.getElementById('pda-tro-key');
-    const pending=document.getElementById('pda-tro-pending');
-    const done=document.getElementById('pda-tro-done');
-    if(!pending||!done)return;
-    const val=(input&&input.value)?input.value.trim():'';
-    let card=val?pending.querySelector('[data-tro-wb="'+val+'"]'):pending.querySelector('[data-tro-wb]');
-    if(!card)card=pending.querySelector('[data-tro-wb]');
-    if(!card){showToast(tr('待出库运单已全部扫描'));}
-    else{done.appendChild(card);card.className='rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-xs';}
-    if(input){input.value='';togglePdaScanClear('pda-tro-key');}
-    updatePdaTransferOutSummary();
-}
-
-function updatePdaTransferOutSummary(){
-    const pendingCount=document.querySelectorAll('#pda-tro-pending [data-tro-wb]').length;
-    const doneCount=document.querySelectorAll('#pda-tro-done [data-tro-wb]').length;
-    const c=document.getElementById('pda-tro-count');if(c)c.textContent=doneCount;
-    const pc=document.getElementById('pda-tro-pending-count');if(pc)pc.textContent=pendingCount;
-    const dc=document.getElementById('pda-tro-done-count');if(dc)dc.textContent=doneCount;
-    const pe=document.getElementById('pda-tro-pending-empty');if(pe)pe.classList.toggle('hidden',pendingCount>0);
-    const de=document.getElementById('pda-tro-done-empty');if(de)de.classList.toggle('hidden',doneCount>0);
-}
-
-function showPdaTransferOutWork(){
-    const input=document.getElementById('pda-tro-order-key');
-    if(input&&!input.value)input.value='TR-20260613001';
-    const work=document.getElementById('pda-tro-work');
-    const empty=document.getElementById('pda-tro-order-empty');
-    const confirm=document.getElementById('pda-tro-confirm-bar');
-    if(work)work.classList.remove('hidden');
-    if(empty)empty.classList.add('hidden');
-    if(confirm)confirm.classList.remove('hidden');
-    updatePdaTransferOutSummary();
-}
+var _pdaTransferOutList=[
+    {no:'DB260304001',pcs:10,carrier:'测试装车服务商',plate:'粤B66666',remark:'测试调拨出库备注',toWh:'佛山仓',
+        waybills:[
+            {wb:'WB-20260403001',pcs:5,pallet:'TP20260404001',zone:'A1'},
+            {wb:'WB-20260403002',pcs:5,pallet:'TP20260404002',zone:'A2'}
+        ]
+    },
+    {no:'DB260304002',pcs:10,carrier:'测试装车服务商',plate:'粤B66666',remark:'测试调拨出库备注',toWh:'佛山仓',
+        waybills:[
+            {wb:'WB-20260403003',pcs:4,pallet:'TP20260404005',zone:'B1'},
+            {wb:'WB-20260403004',pcs:6,pallet:'TP20260404006',zone:'B2'}
+        ]
+    },
+    {no:'DB260304003',pcs:10,carrier:'测试装车服务商',plate:'粤B66666',remark:'测试调拨出库备注',toWh:'佛山仓',
+        waybills:[
+            {wb:'WB-20260403005',pcs:5,pallet:'TP20260404008',zone:'C1'},
+            {wb:'WB-20260403006',pcs:5,pallet:'TP20260404009',zone:'C2'}
+        ]
+    }
+];
 
 function generatePdaTransferOutScreen(){
-    const waybills=pdaTransferOutWaybills();
-    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
-    h+=pdaScanInput('pda-tro-order-key','请扫描或输入调拨单号','showPdaTransferOutWork','TR-20260613001');
-    h+='<div id="pda-tro-order-empty" class="rounded-xl border border-dashed border-surface-200 bg-white p-5 text-center text-sm text-text-muted">'+tr('输入或扫码调拨单号后展示出库汇总和出库信息')+'</div>';
-    h+='<div id="pda-tro-work" class="hidden">';
-    h+='<section class="rounded-xl border border-primary-100 bg-primary-50 p-3 mb-3"><div class="text-sm font-semibold text-primary-700 mb-2">'+tr('出库汇总')+'</div><div class="grid grid-cols-2 gap-2 text-xs text-primary-700"><div class="break-all">'+tr('调拨单号')+'：TR-20260613001</div><div class="break-all">'+tr('总件数')+'：16</div><div class="break-all">'+tr('总重量(KG)')+'：193.0</div><div class="break-all">'+tr('运单票数')+'：'+waybills.length+'</div><div class="break-all">'+tr('已扫描票数')+'：<span id="pda-tro-count">0</span></div></div></section>';
-    h+=pdaScanInput('pda-tro-key','请扫描运单号','addPdaTransferOutWaybill','WB-20260613001');
-    h+='<section class="rounded-xl border border-surface-200 bg-white p-3 mb-3"><div class="flex items-center justify-between mb-2"><div class="text-sm font-semibold text-text-primary">'+tr('待出库运单')+'</div><span class="text-xs text-text-muted">'+tr('共')+' <span id="pda-tro-pending-count">0</span> '+tr('票')+'</span></div><div id="pda-tro-pending" class="space-y-2">';
-    waybills.forEach(function(row){h+=pdaScanMoveCard('tro',row,false);});
-    h+='</div><div id="pda-tro-pending-empty" class="hidden text-center text-xs text-text-muted py-3">'+tr('待出库运单已全部扫描')+'</div></section>';
-    h+='<section class="rounded-xl border border-primary-100 bg-primary-50/40 p-3 mb-3"><div class="flex items-center justify-between mb-2"><div class="text-sm font-semibold text-primary-700">'+tr('已扫描出库运单')+'</div><span class="text-xs text-primary-600">'+tr('共')+' <span id="pda-tro-done-count">0</span> '+tr('票')+'</span></div><div id="pda-tro-done" class="space-y-2"></div><div id="pda-tro-done-empty" class="text-center text-xs text-text-muted py-3">'+tr('扫描运单后移动到此处')+'</div></section>';
-    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('出库信息')+'</div><div class="space-y-3">';
-    h+=pdaField({label:'车牌号',value:'粤B·88888',required:true});
-    h+=pdaField({label:'费用',type:'number',value:'268',required:true});
-    h+=pdaField({label:'司机联系方式',value:'138-0000-0000',required:true});
-    h+='</div></section>';
+    if(_pdaTransferOutView==='operate'&&_pdaTransferOutCurrent!==null&&_pdaTransferOutList[_pdaTransferOutCurrent]){
+        return generatePdaTransferOutOperate();
+    }
+    return generatePdaTransferOutList();
+}
+
+function generatePdaTransferOutList(){
+    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+=pdaScanInput('pda-tro-order','请扫描出库单号','applyPdaTransferOutOrder','DB260304001');
+    _pdaTransferOutList.forEach(function(item,i){
+        h+='<button type="button" onclick="pickPdaTransferOutCard('+i+')" class="block w-full text-left rounded-xl border border-surface-200 bg-white p-3 shadow-sm">';
+        h+='<div class="grid grid-cols-2 gap-y-2 text-xs">';
+        h+='<div><div class="text-text-secondary">'+tr('调拨出库单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.no)+'</div></div>';
+        h+='<div><div class="text-text-secondary">'+tr('调拨件数')+'</div><div class="font-medium text-text-primary mt-0.5">'+item.pcs+'</div></div>';
+        h+='<div><div class="text-text-secondary">'+tr('装车服务商')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.carrier)+'</div></div>';
+        h+='<div><div class="text-text-secondary">'+tr('车牌号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.plate)+'</div></div>';
+        h+='<div><div class="text-text-secondary">'+tr('调拨出库备注')+'</div><div class="text-rose-500 mt-0.5 break-all">'+esc(item.remark)+'</div></div>';
+        h+='<div><div class="text-text-secondary">'+tr('收货仓')+'</div><div class="text-emerald-600 font-medium mt-0.5 break-all">'+esc(item.toWh)+'</div></div>';
+        h+='</div></button>';
+    });
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：请您查阅"逻辑需求描述-调拨出库"，了解详细逻辑。')+'</div>';
     h+='</div>';
-    h+='</div>';
-    h+='<div id="pda-tro-confirm-bar" class="hidden sticky bottom-0 bg-white border-t border-surface-200 p-3"><button type="button" onclick="showToast(\''+tr('调拨出库成功')+'\')" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('确认出库')+'</button></div>';
+    setTimeout(function(){var el=document.getElementById('pda-tro-order');if(el)el.focus();},50);
     return h;
+}
+
+function applyPdaTransferOutOrder(){
+    const input=document.getElementById('pda-tro-order');
+    if(!input)return;
+    const val=(input.value||'').trim();
+    let idx=-1;
+    if(val)idx=_pdaTransferOutList.findIndex(function(it){return it.no===val;});
+    if(idx<0)idx=0;
+    pickPdaTransferOutCard(idx);
+}
+
+function pickPdaTransferOutCard(i){
+    const item=_pdaTransferOutList[i];
+    if(!item)return;
+    _pdaTransferOutCurrent=i;
+    _pdaTransferOutScannedSet={};
+    _pdaTransferOutActiveTab='pending';
+    _pdaTransferOutView='operate';
+    refreshWarehousePdaPrototype();
+}
+
+function backPdaTransferOutList(){
+    _pdaTransferOutView='list';
+    _pdaTransferOutCurrent=null;
+    refreshWarehousePdaPrototype();
+}
+
+function switchPdaTransferOutTab(t){
+    _pdaTransferOutActiveTab=t;
+    refreshWarehousePdaPrototype();
+}
+
+function generatePdaTransferOutOperate(){
+    const item=_pdaTransferOutList[_pdaTransferOutCurrent];
+    const pending=item.waybills.filter(function(w){return !_pdaTransferOutScannedSet[w.wb];});
+    const scanned=item.waybills.filter(function(w){return _pdaTransferOutScannedSet[w.wb];});
+    const active=_pdaTransferOutActiveTab==='scanned'?scanned:pending;
+    const tabBtn=function(key,label,n){
+        const on=_pdaTransferOutActiveTab===key;
+        return '<button type="button" onclick="switchPdaTransferOutTab(\''+key+'\')" class="h-10 rounded-lg text-sm font-medium '+(on?'bg-primary-600 text-white':'bg-white text-text-secondary border border-surface-200')+'">'+tr(label)+'（'+n+'）</button>';
+    };
+    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+='<div class="flex items-center gap-2 text-xs"><span class="text-text-secondary w-16 flex-shrink-0">'+tr('出库单号')+'</span><input type="text" readonly value="'+esc(item.no)+'" class="flex-1 min-w-0 h-10 px-3 rounded-xl border border-surface-200 bg-white text-text-primary"></div>';
+    h+=pdaScanInput('pda-tro-waybill','请扫描运单号','applyPdaTransferOutWaybill',pending[0]?pending[0].wb:'');
+    h+='<div class="grid grid-cols-2 gap-2">'+tabBtn('pending','待扫描',pending.length)+tabBtn('scanned','已扫描',scanned.length)+'</div>';
+    if(active.length===0){
+        h+='<div class="rounded-xl border border-surface-200 bg-white py-8 text-center text-xs text-text-muted">'+tr(_pdaTransferOutActiveTab==='scanned'?'暂无已扫描运单':'已全部扫描完毕')+'</div>';
+    }else{
+        active.forEach(function(w){
+            h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="grid grid-cols-2 gap-y-1 text-xs">';
+            h+='<div><div class="text-text-secondary">'+tr('运单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(w.wb)+'</div></div>';
+            h+='<div><div class="text-text-secondary">'+tr('件数')+'</div><div class="font-medium text-text-primary mt-0.5">'+(w.pcs||0)+'</div></div>';
+            h+='<div><div class="text-text-secondary">'+tr('托盘号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(w.pallet||'')+'</div></div>';
+            h+='<div><div class="text-text-secondary">'+tr('库位库区')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(w.zone||'')+'</div></div>';
+            h+='</div></div>';
+        });
+    }
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：请您查阅"逻辑需求描述-调拨出库"，了解详细逻辑。')+'</div>';
+    h+='</div>';
+    h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><button type="button" onclick="finishPdaTransferOut()" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('一键出库完成')+'</button></div>';
+    setTimeout(function(){var el=document.getElementById('pda-tro-waybill');if(el)el.focus();},50);
+    return h;
+}
+
+function applyPdaTransferOutWaybill(){
+    const input=document.getElementById('pda-tro-waybill');
+    if(!input)return;
+    const val=(input.value||'').trim();
+    if(!val)return;
+    const item=_pdaTransferOutList[_pdaTransferOutCurrent];
+    const target=item.waybills.find(function(w){return w.wb===val;});
+    if(!target){
+        showToast(tr('该运单号不在待出库列表内'));
+        input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();
+        return;
+    }
+    if(_pdaTransferOutScannedSet[val]){
+        showToast(tr('该运单已扫描'));
+        input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();
+        return;
+    }
+    _pdaTransferOutScannedSet[val]=true;
+    const remaining=item.waybills.filter(function(w){return !_pdaTransferOutScannedSet[w.wb];});
+    if(remaining.length===0)showToast(tr('已全部扫描完毕，可点击一键出库完成'));
+    _pdaTransferOutActiveTab='scanned';
+    refreshWarehousePdaPrototype();
+}
+
+function finishPdaTransferOut(){
+    const item=_pdaTransferOutList[_pdaTransferOutCurrent];
+    if(!item)return;
+    item.waybills.forEach(function(w){_pdaTransferOutScannedSet[w.wb]=true;});
+    showToast(tr('一键出库完成，调拨单已提交出库'));
+    refreshWarehousePdaPrototype();
 }
 
 // 空运出库扫描：先扫出库单，再以袋号扫描出库

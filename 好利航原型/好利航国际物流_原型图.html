@@ -9509,6 +9509,12 @@ function openWarehousePdaTask(taskId){
 }
 
 function closeWarehousePdaTask(){
+    if(_warehousePdaTaskId==='pda-find-scan'&&_pdaFindScanView==='operate'){
+        _pdaFindScanView='list';
+        _pdaFindScanCurrent=null;
+        refreshWarehousePdaPrototype();
+        return;
+    }
     _warehousePdaTaskId='';
     _warehousePdaView='workbench';
     refreshWarehousePdaPrototype();
@@ -10492,34 +10498,58 @@ var _pdaFindScanView='list';
 var _pdaFindScanCurrent=null;
 var _pdaFindScanScannedSet={};
 var _pdaFindScanActiveTab='pending';
+var _pdaFindScanMode='pallet';
 
 var _pdaFindScanList=[
     {no:'ZPC0303-美森正班-A3',label:'ZPC202604040001',pcs:10,eta:'2026-03-04 12:00:00',remark:'测试排柜备注',
         pallets:[
-            {pallet:'TP20260404001',zone:'A1'},
-            {pallet:'TP20260404002',zone:'A2'},
-            {pallet:'TP20260404003',zone:'A3'},
-            {pallet:'TP20260404004',zone:'A4'}
+            {pallet:'TP20260404001',zone:'A1',pcs:3},
+            {pallet:'TP20260404002',zone:'A2',pcs:2},
+            {pallet:'TP20260404003',zone:'A3',pcs:3},
+            {pallet:'TP20260404004',zone:'A4',pcs:2}
         ],
         defaultScanned:['TP20260404003','TP20260404004'],
-        waybills:['WB-20260403001','WB-20260403002']
+        waybills:[
+            {wb:'WB-20260403001',pcs:5,pallet:'TP20260404001',zone:'A1'},
+            {wb:'WB-20260403002',pcs:5,pallet:'TP20260404003',zone:'A3'}
+        ],
+        pieces:[
+            {sub:'SUB-A3001',wb:'WB-20260403001',pallet:'TP20260404001',zone:'A1'},
+            {sub:'SUB-A3002',wb:'WB-20260403001',pallet:'TP20260404002',zone:'A2'},
+            {sub:'SUB-A3003',wb:'WB-20260403002',pallet:'TP20260404003',zone:'A3'},
+            {sub:'SUB-A3004',wb:'WB-20260403002',pallet:'TP20260404004',zone:'A4'}
+        ]
     },
     {no:'ZPC0303-美森正班-A4',label:'ZPC202604040002',pcs:10,eta:'2026-03-04 12:00:00',remark:'测试排柜备注',
         pallets:[
-            {pallet:'TP20260404005',zone:'B1'},
-            {pallet:'TP20260404006',zone:'B2'},
-            {pallet:'TP20260404007',zone:'B3'}
+            {pallet:'TP20260404005',zone:'B1',pcs:4},
+            {pallet:'TP20260404006',zone:'B2',pcs:3},
+            {pallet:'TP20260404007',zone:'B3',pcs:3}
         ],
         defaultScanned:[],
-        waybills:['WB-20260403003']
+        waybills:[
+            {wb:'WB-20260403003',pcs:10,pallet:'TP20260404005',zone:'B1'}
+        ],
+        pieces:[
+            {sub:'SUB-A4001',wb:'WB-20260403003',pallet:'TP20260404005',zone:'B1'},
+            {sub:'SUB-A4002',wb:'WB-20260403003',pallet:'TP20260404006',zone:'B2'},
+            {sub:'SUB-A4003',wb:'WB-20260403003',pallet:'TP20260404007',zone:'B3'}
+        ]
     },
     {no:'ZPC0303-美森正班-A5',label:'ZPC202604040003',pcs:10,eta:'2026-03-04 12:00:00',remark:'测试排柜备注',
         pallets:[
-            {pallet:'TP20260404008',zone:'C1'},
-            {pallet:'TP20260404009',zone:'C2'}
+            {pallet:'TP20260404008',zone:'C1',pcs:5},
+            {pallet:'TP20260404009',zone:'C2',pcs:5}
         ],
         defaultScanned:[],
-        waybills:['WB-20260403004','WB-20260403005']
+        waybills:[
+            {wb:'WB-20260403004',pcs:5,pallet:'TP20260404008',zone:'C1'},
+            {wb:'WB-20260403005',pcs:5,pallet:'TP20260404009',zone:'C2'}
+        ],
+        pieces:[
+            {sub:'SUB-A5001',wb:'WB-20260403004',pallet:'TP20260404008',zone:'C1'},
+            {sub:'SUB-A5002',wb:'WB-20260403005',pallet:'TP20260404009',zone:'C2'}
+        ]
     }
 ];
 
@@ -10568,6 +10598,7 @@ function pickPdaFindScanCard(i){
     _pdaFindScanScannedSet={};
     (item.defaultScanned||[]).forEach(function(p){_pdaFindScanScannedSet[p]=true;});
     _pdaFindScanActiveTab='pending';
+    _pdaFindScanMode='pallet';
     _pdaFindScanView='operate';
     refreshWarehousePdaPrototype();
 }
@@ -10583,26 +10614,62 @@ function switchPdaFindScanTab(t){
     refreshWarehousePdaPrototype();
 }
 
+function setPdaFindScanMode(m){
+    _pdaFindScanMode=m||'pallet';
+    _pdaFindScanActiveTab='pending';
+    refreshWarehousePdaPrototype();
+}
+
 function generatePdaFindScanOperate(){
     const item=_pdaFindScanList[_pdaFindScanCurrent];
-    const pending=item.pallets.filter(function(p){return !_pdaFindScanScannedSet[p.pallet];});
-    const scanned=item.pallets.filter(function(p){return _pdaFindScanScannedSet[p.pallet];});
+    const mode=_pdaFindScanMode||'pallet';
+    const isScanned=function(rec){return !!_pdaFindScanScannedSet[rec.pallet||''];};
+    let units;
+    if(mode==='waybill')units=item.waybills||[];
+    else if(mode==='piece')units=item.pieces||[];
+    else units=item.pallets||[];
+    const pending=units.filter(function(u){return !isScanned(u);});
+    const scanned=units.filter(function(u){return isScanned(u);});
     const active=_pdaFindScanActiveTab==='scanned'?scanned:pending;
     const tabBtn=function(key,label,n){
         const on=_pdaFindScanActiveTab===key;
         return '<button type="button" onclick="switchPdaFindScanTab(\''+key+'\')" class="h-10 rounded-lg text-sm font-medium '+(on?'bg-primary-600 text-white':'bg-white text-text-secondary border border-surface-200')+'">'+tr(label)+'（'+n+'）</button>';
     };
+    const modeBtn=function(key,label){
+        const on=mode===key;
+        return '<label class="flex items-center gap-1 text-xs cursor-pointer whitespace-nowrap"><input type="radio" name="pda-find-scan-mode" value="'+key+'"'+(on?' checked':'')+' onchange="setPdaFindScanMode(\''+key+'\')" class="accent-primary-600">'+tr(label)+'</label>';
+    };
+    let scanPh='请扫描托盘号';
+    let scanInit=pending[0]?(pending[0].pallet||''):'TP20260404001';
+    if(mode==='waybill'){scanPh='请扫描运单号';scanInit=pending[0]?(pending[0].wb||''):'';}
+    else if(mode==='piece'){scanPh='请扫描子单号';scanInit=pending[0]?(pending[0].sub||''):'';}
     let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
     h+='<div class="flex items-center gap-2 text-xs"><span class="text-text-secondary w-16 flex-shrink-0">'+tr('配舱号')+'</span><input type="text" readonly value="'+esc(item.no)+'" class="flex-1 min-w-0 h-10 px-3 rounded-xl border border-surface-200 bg-white text-text-primary"></div>';
-    h+=pdaScanInput('pda-find-scan-pallet','请扫描托盘号','applyPdaFindScanPallet',pending[0]?pending[0].pallet:'TP20260404001');
+    h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-xs text-text-secondary mb-2">'+tr('扫描模式')+'</div><div class="flex items-center justify-between gap-2">'+modeBtn('pallet','按托盘/袋')+modeBtn('waybill','按整票')+modeBtn('piece','按件/箱')+'</div></div>';
+    h+=pdaScanInput('pda-find-scan-pallet',scanPh,'applyPdaFindScanPallet',scanInit);
     h+='<div class="grid grid-cols-2 gap-2">'+tabBtn('pending','待扫描',pending.length)+tabBtn('scanned','已扫描',scanned.length)+'</div>';
     if(active.length===0){
-        h+='<div class="rounded-xl border border-surface-200 bg-white py-8 text-center text-xs text-text-muted">'+tr(_pdaFindScanActiveTab==='scanned'?'暂无已扫描托盘':'已全部扫描完毕')+'</div>';
+        h+='<div class="rounded-xl border border-surface-200 bg-white py-8 text-center text-xs text-text-muted">'+tr(_pdaFindScanActiveTab==='scanned'?'暂无已扫描':'已全部扫描完毕')+'</div>';
     }else{
-        active.forEach(function(p){
+        active.forEach(function(rec){
             h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="grid grid-cols-2 gap-y-1 text-xs">';
-            h+='<div><div class="text-text-secondary">'+tr('托盘号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(p.pallet)+'</div></div>';
-            h+='<div><div class="text-text-secondary">'+tr('库位库区')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(p.zone)+'</div></div>';
+            if(mode==='pallet'){
+                h+='<div><div class="text-text-secondary">'+tr('托盘号/袋号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(rec.pallet||'')+'</div></div>';
+                if(_pdaFindScanActiveTab==='scanned'){
+                    h+='<div><div class="text-text-secondary">'+tr('件数')+'</div><div class="font-medium text-text-primary mt-0.5">'+(rec.pcs||0)+'</div></div>';
+                }
+                h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('库位库区')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(rec.zone||'')+'</div></div>';
+            }else if(mode==='waybill'){
+                h+='<div><div class="text-text-secondary">'+tr('运单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(rec.wb||'')+'</div></div>';
+                h+='<div><div class="text-text-secondary">'+tr('件数')+'</div><div class="font-medium text-text-primary mt-0.5">'+(rec.pcs||0)+'</div></div>';
+                h+='<div><div class="text-text-secondary">'+tr('托盘号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(rec.pallet||'')+'</div></div>';
+                h+='<div><div class="text-text-secondary">'+tr('库位库区')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(rec.zone||'')+'</div></div>';
+            }else{
+                h+='<div><div class="text-text-secondary">'+tr('子单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(rec.sub||'')+'</div></div>';
+                h+='<div><div class="text-text-secondary">'+tr('运单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(rec.wb||'')+'</div></div>';
+                h+='<div><div class="text-text-secondary">'+tr('托盘号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(rec.pallet||'')+'</div></div>';
+                h+='<div><div class="text-text-secondary">'+tr('库位库区')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(rec.zone||'')+'</div></div>';
+            }
             h+='</div></div>';
         });
     }
@@ -10647,7 +10714,9 @@ function onePdaFindScanFinish(){
     const item=_pdaFindScanList[_pdaFindScanCurrent];
     const remaining=item.pallets.filter(function(p){return !_pdaFindScanScannedSet[p.pallet];});
     if(remaining.length>0&&item.waybills&&item.waybills.length){
-        showToast(tr('运单号*')+item.waybills[0]+tr('*运单未绑定托盘！'));
+        const first=item.waybills[0];
+        const wbNo=(typeof first==='string')?first:(first.wb||'');
+        showToast(tr('运单号*')+wbNo+tr('*运单未绑定托盘！'));
         return;
     }
     item.pallets.forEach(function(p){_pdaFindScanScannedSet[p.pallet]=true;});

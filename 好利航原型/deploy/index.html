@@ -10557,10 +10557,10 @@ function generatePdaTransferInScreen(){
         return '<button type="button" onclick="switchPdaTransferInMode(\''+key+'\')" class="h-8 rounded-lg text-xs font-medium '+(on?'bg-primary-600 text-white':'bg-white border border-surface-200 text-text-secondary')+'">'+tr(label)+'</button>';
     };
     let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
+    h+='<div class="mb-3">'+pdaScanInput('pda-tri-alloc','请扫描调拨单号','showToast','TR-20260613001')+'</div>';
     h+='<div class="grid grid-cols-2 gap-2 mb-3">'+modeBtn('order','按调拨单入库')+modeBtn('ticket','按票入库')+'</div>';
     if(mode==='order'){
-        h+=pdaScanInput('pda-tri-key','请扫描调拨单号','showToast','TR-20260613001');
-        h+='<section class="rounded-xl border border-surface-200 bg-white p-3 space-y-3 mt-3">';
+        h+='<section class="rounded-xl border border-surface-200 bg-white p-3 space-y-3">';
         h+='<div class="text-sm font-semibold text-text-primary">'+tr('调拨单信息')+'</div>';
         h+=pdaInfoList([['调拨单号','TR-20260613001'],['票数','3'],['件数','12'],['入库件数',String(_pdaTransferInQty||0)]]);
         h+='<button type="button" onclick="openPdaTransferInQtyModal()" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('核验入库件数')+'</button>';

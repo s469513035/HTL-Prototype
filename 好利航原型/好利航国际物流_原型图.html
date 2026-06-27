@@ -10388,9 +10388,55 @@ function applyPdaTransferInWaybill(){
         input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();
         return;
     }
-    _pdaTransferInScannedSet[val]=true;
+    openPdaTransferInBindModal(val);
+}
+
+function openPdaTransferInBindModal(wb){
+    const w=_pdaTransferInWaybills.find(function(x){return x.wb===wb;});
+    if(!w)return;
+    const old=document.getElementById('pda-tri-bind-modal');
+    if(old)old.remove();
+    const modal=document.createElement('div');
+    modal.id='pda-tri-bind-modal';
+    modal.dataset.wb=wb;
+    modal.className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6';
+    modal.innerHTML='<div class="w-full max-w-xs rounded-2xl bg-white p-4 shadow-xl">'
+        +'<div class="text-sm font-semibold text-text-primary mb-3">'+tr('绑定托盘号 / 库位库区')+'</div>'
+        +'<div class="text-xs text-text-secondary mb-1">'+tr('运单号')+'</div>'
+        +'<input type="text" readonly value="'+esc(wb)+'" class="w-full h-10 px-3 mb-3 rounded-lg border border-surface-200 bg-surface-50 text-sm text-text-primary">'
+        +'<div class="text-xs text-text-secondary mb-1">'+tr('托盘号')+'</div>'
+        +'<input id="pda-tri-bind-pallet" type="text" value="'+esc(w.pallet||'')+'" placeholder="'+tr('请扫描或输入托盘号')+'" class="w-full h-10 px-3 mb-3 rounded-lg border border-surface-200 text-sm text-text-primary">'
+        +'<div class="text-xs text-text-secondary mb-1">'+tr('库位库区')+'</div>'
+        +'<input id="pda-tri-bind-zone" type="text" value="'+esc(w.zone||'')+'" placeholder="'+tr('请输入库位库区')+'" class="w-full h-10 px-3 mb-3 rounded-lg border border-surface-200 text-sm text-text-primary">'
+        +'<div class="grid grid-cols-2 gap-2"><button type="button" onclick="closePdaTransferInBindModal()" class="h-10 rounded-lg bg-surface-100 text-text-secondary text-sm">'+tr('取消')+'</button><button type="button" onclick="confirmPdaTransferInBind()" class="h-10 rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('确认')+'</button></div>'
+        +'</div>';
+    document.body.appendChild(modal);
+    setTimeout(function(){var el=document.getElementById('pda-tri-bind-pallet');if(el){el.focus();el.select();}},50);
+}
+
+function closePdaTransferInBindModal(){
+    const m=document.getElementById('pda-tri-bind-modal');
+    if(m)m.remove();
+    setTimeout(function(){var el=document.getElementById('pda-tri-key');if(el){el.value='';el.dispatchEvent(new Event('input',{bubbles:true}));el.focus();}},30);
+}
+
+function confirmPdaTransferInBind(){
+    const modal=document.getElementById('pda-tri-bind-modal');
+    if(!modal)return;
+    const wb=modal.dataset.wb||'';
+    const palletEl=document.getElementById('pda-tri-bind-pallet');
+    const zoneEl=document.getElementById('pda-tri-bind-zone');
+    const pallet=palletEl?(palletEl.value||'').trim():'';
+    const zone=zoneEl?(zoneEl.value||'').trim():'';
+    if(!pallet){showToast(tr('请填写托盘号'));return;}
+    if(!zone){showToast(tr('请填写库位库区'));return;}
+    const w=_pdaTransferInWaybills.find(function(x){return x.wb===wb;});
+    if(w){w.pallet=pallet;w.zone=zone;}
+    _pdaTransferInScannedSet[wb]=true;
     _pdaTransferInActiveTab='scanned';
+    modal.remove();
     refreshWarehousePdaPrototype();
+    showToast(tr('已绑定，进入已扫描'));
 }
 
 function generatePdaTransferInScreen(){
@@ -10426,8 +10472,10 @@ function generatePdaTransferInScreen(){
                 h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="grid grid-cols-2 gap-y-1 text-xs">';
                 h+='<div><div class="text-text-secondary">'+tr('运单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(w.wb)+'</div></div>';
                 h+='<div><div class="text-text-secondary">'+tr('件数')+'</div><div class="font-medium text-text-primary mt-0.5">'+(w.pcs||0)+'</div></div>';
-                h+='<div><div class="text-text-secondary">'+tr('托盘号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(w.pallet||'')+'</div></div>';
-                h+='<div><div class="text-text-secondary">'+tr('库位库区')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(w.zone||'')+'</div></div>';
+                if(_pdaTransferInActiveTab==='scanned'){
+                    h+='<div><div class="text-text-secondary">'+tr('托盘号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(w.pallet||'')+'</div></div>';
+                    h+='<div><div class="text-text-secondary">'+tr('库位库区')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(w.zone||'')+'</div></div>';
+                }
                 h+='</div></div>';
             });
             h+='</div>';

@@ -9485,9 +9485,6 @@ function warehousePdaTaskItems(){
     items.push(['pda-load-scan','装柜扫描','按配舱号扫描托盘装柜核对']);
     items.push(['pda-load-finish','装柜完成','装柜完成后上传柜照片与提交']);
     items.push(['pda-sort-scan','分拣扫描','按装袋规则扫描运单装袋']);
-    items.push(['pda-air-checkin','空运签入','空运扫码签入、尺寸录入和拍照']);
-    items.push(['pda-air-bag-sort','空运签入分拣装袋管理','空运袋号/单号扫码、尺寸录入和拍照装袋']);
-    items.push(['pda-air-out-scan','空运出库扫描','空运袋号扫码出库、备注和拍照']);
     return items;
 }
 
@@ -9914,8 +9911,7 @@ function pdaGroupedTasks(tasks){
         {title:'收货',ids:['pda-waybill-query','wh-in-one','wh-headless','pda-pallet-bind']},
         {title:'在库管理',ids:['wh-cargo-search','pda-pallet-adjust','pda-find-scan','pda-sort-scan']},
         {title:'出库',ids:['wh-out-scan','wh-air-bag','wh-replenish-drop','pda-load-scan','pda-load-finish']},
-        {title:'调拨',ids:['wh-transfer-out','wh-transfer-in']},
-        {title:'空运',ids:['pda-air-checkin','pda-air-bag-sort','pda-air-out-scan']}
+        {title:'调拨',ids:['wh-transfer-out','wh-transfer-in']}
     ];
     return groups.map(function(group){
         const items=group.ids.map(function(id){return tasks.find(function(item){return item[0]===id;});}).filter(Boolean);

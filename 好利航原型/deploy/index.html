@@ -9483,6 +9483,7 @@ function warehousePdaTaskItems(){
     items.push(['pda-pallet-adjust','调整托盘','换托/下托（整票/单个），扫码与库位库区维护']);
     items.push(['pda-find-scan','找货扫描','按配舱号扫描托盘出仓核对']);
     items.push(['pda-load-scan','装柜扫描','按配舱号扫描托盘装柜核对']);
+    items.push(['pda-load-finish','装柜完成','装柜完成后上传柜照片与提交']);
     items.push(['pda-air-checkin','空运签入','空运扫码签入、尺寸录入和拍照']);
     items.push(['pda-air-bag-sort','空运签入分拣装袋管理','空运袋号/单号扫码、尺寸录入和拍照装袋']);
     items.push(['pda-air-out-scan','空运出库扫描','空运袋号扫码出库、备注和拍照']);
@@ -9600,6 +9601,9 @@ function warehousePdaOperationConfigs(){
         },
         'pda-load-scan':{
             title:'装柜扫描',subtitle:'按配舱号扫描托盘装柜核对',primary:'提交'
+        },
+        'pda-load-finish':{
+            title:'装柜完成',subtitle:'装柜完成提交柜照片和件数',primary:'装柜完成'
         },
         'wh-no-pre-in':{
             title:'无头件认领',subtitle:'查看无头件图片并认领客户，生成预录单',scanLabel:'无头单号/物流单号',
@@ -9899,7 +9903,7 @@ function pdaGroupedTasks(tasks){
     const groups=[
         {title:'收货',ids:['pda-waybill-query','wh-in-one','wh-headless','pda-pallet-bind']},
         {title:'在库管理',ids:['wh-cargo-search','pda-pallet-adjust','pda-find-scan']},
-        {title:'出库',ids:['wh-out-scan','wh-air-bag','wh-replenish-drop','pda-load-scan']},
+        {title:'出库',ids:['wh-out-scan','wh-air-bag','wh-replenish-drop','pda-load-scan','pda-load-finish']},
         {title:'调拨',ids:['wh-transfer-out','wh-transfer-in']},
         {title:'空运',ids:['pda-air-checkin','pda-air-bag-sort','pda-air-out-scan']}
     ];
@@ -11180,6 +11184,29 @@ function goPdaLoadScanPalletBind(){
     openWarehousePdaTask('pda-pallet-bind');
 }
 
+/* ===== 装柜完成 pda-load-finish ===== */
+function generatePdaLoadFinishScreen(){
+    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+=pdaScanInput('pda-load-finish-key','请扫描终配舱号/标签号','showToast','ZPC202604040001');
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="grid grid-cols-2 gap-y-3 text-xs">';
+    h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('配舱单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">ZPC202604040001</div></div>';
+    h+='<div><div class="text-text-secondary">'+tr('提单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">TD20260404001</div></div>';
+    h+='<div><div class="text-text-secondary">'+tr('柜号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">GH20260404001</div></div>';
+    h+='<div><div class="text-text-secondary">'+tr('补单件数')+'</div><div class="font-medium text-text-primary mt-0.5">0</div></div>';
+    h+='<div><div class="text-text-secondary">'+tr('落货件数')+'</div><div class="font-medium text-text-primary mt-0.5">0</div></div>';
+    h+='</div></section>';
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-xs text-rose-500 mb-2">'+tr('上传照片(最多上传20张，支持调用摄像头)')+'</div><div class="grid grid-cols-3 gap-2">';
+    ['满柜照','半门照','封门照'].forEach(function(label){
+        h+='<button type="button" onclick="showToast(\''+tr('打开相机')+'\')" class="aspect-square rounded-lg border border-dashed border-surface-300 bg-surface-50 flex flex-col items-center justify-center gap-1 text-text-muted"><span class="text-2xl leading-none">+</span><span class="text-[11px]">'+tr(label)+'</span></button>';
+    });
+    h+='</div><div class="text-right text-xs text-text-muted mt-2">0/20</div></section>';
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：请您查阅"逻辑需求描述-装柜完成"，了解详细逻辑。')+'</div>';
+    h+='</div>';
+    h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><button type="button" onclick="showToast(\''+tr('装柜完成提交成功')+'\')" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('装柜完成')+'</button></div>';
+    setTimeout(function(){var el=document.getElementById('pda-load-finish-key');if(el)el.focus();},50);
+    return h;
+}
+
 function setPdaPalletBindDirectLoad(v){_pdaPalletBindDirectLoad=v||'否';}
 
 function renderPdaPalletBindTable(){
@@ -11415,6 +11442,7 @@ function generateWarehousePdaOperationScreen(taskId){
     if(taskId==='pda-pallet-adjust')return h+generatePdaPalletAdjustScreen();
     if(taskId==='pda-find-scan')return h+generatePdaFindScanScreen();
     if(taskId==='pda-load-scan')return h+generatePdaLoadScanScreen();
+    if(taskId==='pda-load-finish')return h+generatePdaLoadFinishScreen();
     if(taskId==='pda-air-out-scan')return h+generatePdaAirOutScanScreen();
     if(taskId==='pda-work-order')return h+generatePdaWorkOrderScreen();
     h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
@@ -11445,7 +11473,7 @@ function pdaTaskIcon(itemId){
         'wh-pack-rule':'☰','wh-cargo-search':'⌕','wh-preload':'▧','wh-replenish-drop':'↔',
         'wh-issue':'!','wh-air-sort':'⇆','wh-air-bag':'▰','wh-air-pack':'▤','pda-work-order':'✓',
         'pda-air-checkin':'✈','pda-air-bag-sort':'▰','pda-air-out-scan':'⇲','pda-work-order-register':'✎',
-        'pda-pallet-bind':'▦','pda-pallet-adjust':'⇄','pda-find-scan':'⌕','pda-load-scan':'▣'
+        'pda-pallet-bind':'▦','pda-pallet-adjust':'⇄','pda-find-scan':'⌕','pda-load-scan':'▣','pda-load-finish':'✓'
     };
     return map[itemId]||'▦';
 }

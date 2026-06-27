@@ -9524,6 +9524,12 @@ function closeWarehousePdaTask(){
         refreshWarehousePdaPrototype();
         return;
     }
+    if(_warehousePdaTaskId==='wh-cargo-search'&&_pdaCargoSearchView==='detail'){
+        _pdaCargoSearchView='list';
+        _pdaCargoSearchCurrent=null;
+        refreshWarehousePdaPrototype();
+        return;
+    }
     _warehousePdaTaskId='';
     _warehousePdaView='workbench';
     refreshWarehousePdaPrototype();
@@ -10102,15 +10108,6 @@ function generatePdaWaybillQueryScreen(){
     return h;
 }
 
-function showPdaCargoSearchForm(){
-    const input=document.getElementById('pda-cargo-search-key');
-    if(input&&!input.value)input.value='WB-20260613001';
-    const results=document.getElementById('pda-cargo-search-results');
-    const empty=document.getElementById('pda-cargo-search-empty');
-    if(results)results.classList.remove('hidden');
-    if(empty)empty.classList.add('hidden');
-}
-
 function pdaInfoList(pairs){
     let h='<div class="rounded-lg border border-surface-200 bg-white divide-y divide-surface-100">';
     pairs.forEach(function(p){
@@ -10124,31 +10121,105 @@ function pdaCheckGroup(names){
     return '<div class="grid grid-cols-2 gap-2">'+names.map(function(name){return '<label class="min-h-9 px-2 py-1.5 rounded-lg border border-surface-200 bg-white flex items-center gap-2 text-xs text-text-secondary"><input type="checkbox" class="rounded border-surface-300 text-primary-600"><span class="break-all">'+tr(name)+'</span></label>';}).join('')+'</div>';
 }
 
+/* ===== 查货管理 wh-cargo-search（按图重写：list/detail 两屏 state machine） ===== */
+var _pdaCargoSearchView='list';
+var _pdaCargoSearchCurrent=null;
+var _pdaCargoSearchTagsByIdx={};
+var _pdaCargoSearchTagOptions=['敏感货','玩具','手机','危险品','易碎','带电','带磁','严禁品'];
+var _pdaCargoSearchList=[
+    {wb:'H82512230001',cmdType:'开箱验货',cmdContent:'测试指令内容测试指令内容测试指令内容',holdStatus:'正常件',declareName:'品1（子单对应品名）'},
+    {wb:'H82512230002',cmdType:'开箱验货',cmdContent:'测试指令内容测试指令内容测试指令内容',holdStatus:'正常件',declareName:'品1（子单对应品名）'},
+    {wb:'H82512230003',cmdType:'开箱验货',cmdContent:'测试指令内容测试指令内容测试指令内容',holdStatus:'正常件',declareName:'品1（子单对应品名）'}
+];
+
 function generatePdaCargoSearchScreen(){
-    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
-    h+='<div id="pda-cargo-search-list-area">';
-    h+=pdaScanInput('pda-cargo-search-key','请输入运单号/客户单号/子单号','showPdaCargoSearchForm','WB-20260613001');
-    h+='<div id="pda-cargo-search-empty" class="rounded-xl border border-dashed border-surface-200 bg-white p-5 text-center text-sm text-text-muted">'+tr('输入或扫码后展示查货数据')+'</div>';
-    h+='<div id="pda-cargo-search-results" class="hidden space-y-3">';
-    const rows=[
-        {no:'WB-20260613001',sub:'SUB-20260613001-01',status:'待查货',dest:'拉各斯',transport:'海运',pcs:'8',weight:'12.5KG',wh:'广州南沙仓',zone:'A区-01',name:'服装配件',cat:'普货'},
-        {no:'WB-20260613002',sub:'SUB-20260613002-01',status:'已扣件',dest:'阿比让',transport:'空运',pcs:'3',weight:'18.4KG',wh:'深圳盐田仓',zone:'B区-重货',name:'手机配件',cat:'带电'}
-    ];
-    rows.forEach(function(row,idx){
-        h+='<section class="rounded-xl border border-surface-200 bg-white p-3 space-y-3 shadow-sm">';
-        h+='<div class="flex items-start justify-between gap-2"><div class="text-[12px] font-semibold text-primary-700 break-all">'+row.no+'</div><span class="shrink-0 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] text-primary-700">'+tr(row.status)+'</span></div>';
-        h+=pdaInfoList([['子单号',row.sub],['运单目的港',row.dest],['运输方式',row.transport],['件数',row.pcs],['重量',row.weight],['仓库',row.wh],['货区',row.zone],['品名',row.name],['品名大类',row.cat]]);
-        h+='<div><div class="text-xs font-semibold text-text-primary mb-2">'+tr('查货标记')+'</div>'+pdaCheckGroup(['敏感货','玩具','手机','危险品','易碎','带电','带磁','严禁品'])+'</div>';
-        h+='<label class="h-10 px-3 rounded-xl border border-surface-200 bg-white flex items-center gap-2 text-sm text-text-secondary"><input type="checkbox" class="rounded border-surface-300 text-primary-600"><span>'+tr('是否扣货')+'</span></label>';
-        h+='<textarea rows="3" class="w-full px-3 py-2 rounded-xl border border-surface-200 bg-white text-sm resize-none" placeholder="'+esc(tr('请输入产品备注'))+'"></textarea>';
-        h+=pdaPhotoUploader(5);
-        h+='<button type="button" onclick="'+pdaAction('确认')+'" class="h-10 w-full rounded-xl bg-primary-600 text-white text-sm font-medium">'+tr('确认')+'</button>';
-        h+='</section>';
+    if(_pdaCargoSearchView==='detail'&&_pdaCargoSearchCurrent!==null&&_pdaCargoSearchList[_pdaCargoSearchCurrent]){
+        return generatePdaCargoSearchDetail();
+    }
+    return generatePdaCargoSearchList();
+}
+
+function generatePdaCargoSearchList(){
+    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+=pdaScanInput('pda-cargo-search-key','请扫描运单子单号','applyPdaCargoSearchKey','H82512230001');
+    _pdaCargoSearchList.forEach(function(item,i){
+        h+='<button type="button" onclick="pickPdaCargoSearchCard('+i+')" class="block w-full text-left rounded-xl border border-surface-200 bg-white p-3 shadow-sm">';
+        h+='<div class="grid grid-cols-2 gap-y-2 text-xs">';
+        h+='<div><div class="text-text-secondary">'+tr('运单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.wb)+'</div></div>';
+        h+='<div><div class="text-text-secondary">'+tr('指令类型')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(item.cmdType)+'</div></div>';
+        h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('指令内容')+'</div><div class="text-text-muted mt-0.5 break-all">'+esc(item.cmdContent)+'</div></div>';
+        h+='</div></button>';
     });
-    h+='<div class="flex items-center justify-between text-xs text-text-muted pt-1"><span>'+tr('每页')+' 20 '+tr('条数据')+'</span><div class="flex gap-1"><button class="w-7 h-7 rounded border border-surface-200 bg-white">‹</button><button class="w-7 h-7 rounded border border-primary-500 bg-primary-50 text-primary-700">1</button><button class="w-7 h-7 rounded border border-surface-200 bg-white">›</button></div></div>';
-    h+='</div></div>';
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：请您查阅"逻辑需求描述-开箱验货"，了解详细逻辑。')+'</div>';
     h+='</div>';
+    setTimeout(function(){var el=document.getElementById('pda-cargo-search-key');if(el)el.focus();},50);
     return h;
+}
+
+function applyPdaCargoSearchKey(){
+    const input=document.getElementById('pda-cargo-search-key');
+    if(!input)return;
+    const val=(input.value||'').trim();
+    let idx=-1;
+    if(val)idx=_pdaCargoSearchList.findIndex(function(it){return it.wb===val;});
+    if(idx<0)idx=0;
+    pickPdaCargoSearchCard(idx);
+}
+
+function pickPdaCargoSearchCard(i){
+    const item=_pdaCargoSearchList[i];
+    if(!item)return;
+    _pdaCargoSearchCurrent=i;
+    if(!_pdaCargoSearchTagsByIdx[i])_pdaCargoSearchTagsByIdx[i]=[];
+    _pdaCargoSearchView='detail';
+    refreshWarehousePdaPrototype();
+}
+
+function togglePdaCargoSearchTag(tag){
+    const i=_pdaCargoSearchCurrent;
+    if(i===null||i===undefined)return;
+    if(!_pdaCargoSearchTagsByIdx[i])_pdaCargoSearchTagsByIdx[i]=[];
+    const arr=_pdaCargoSearchTagsByIdx[i];
+    const pos=arr.indexOf(tag);
+    if(pos>=0)arr.splice(pos,1);
+    else arr.push(tag);
+    refreshWarehousePdaPrototype();
+}
+
+function generatePdaCargoSearchDetail(){
+    const item=_pdaCargoSearchList[_pdaCargoSearchCurrent];
+    const tags=_pdaCargoSearchTagsByIdx[_pdaCargoSearchCurrent]||[];
+    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+=pdaScanInput('pda-cargo-search-key','请扫描运单子单号','applyPdaCargoSearchKey','');
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3 space-y-3 text-xs">';
+    h+='<div class="flex items-center gap-2"><span class="text-text-secondary w-20 flex-shrink-0">'+tr('运单号')+'</span><span class="font-medium text-text-primary break-all">'+esc(item.wb)+'</span></div>';
+    h+='<div class="flex items-center gap-2"><span class="text-text-secondary w-20 flex-shrink-0">'+tr('扣件状态')+'</span><span class="font-medium text-text-primary">'+esc(item.holdStatus)+'</span></div>';
+    h+='<div class="flex items-center gap-2"><span class="text-text-secondary w-20 flex-shrink-0">'+tr('申报品名')+'</span><span class="font-medium text-text-primary break-all">'+esc(item.declareName)+'</span></div>';
+    h+='</section>';
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-xs font-semibold text-text-primary mb-2">'+tr('查货标记')+'</div><div class="flex flex-wrap gap-2">';
+    _pdaCargoSearchTagOptions.forEach(function(tag){
+        const on=tags.indexOf(tag)>=0;
+        h+='<button type="button" onclick="togglePdaCargoSearchTag(\''+esc(tag)+'\')" class="h-8 px-3 rounded-full border text-xs '+(on?'border-amber-500 text-amber-600 bg-amber-50':'border-surface-300 text-text-secondary bg-white')+'">'+tr(tag)+'</button>';
+    });
+    h+='</div></section>';
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="flex items-center gap-2"><span class="text-xs text-text-secondary w-20 flex-shrink-0">'+tr('查货备注')+'</span><input type="text" placeholder="'+tr('查货备注')+'" class="flex-1 h-9 px-3 text-xs border border-surface-200 rounded-lg"></div></section>';
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-xs text-rose-500 mb-2">'+tr('上传照片(最多上传20张，支持调用摄像头)')+'</div><div class="flex"><button type="button" onclick="showToast(\''+tr('打开相机')+'\')" class="w-20 h-20 rounded-lg border border-dashed border-surface-300 bg-surface-50 flex items-center justify-center text-2xl text-text-muted">+</button></div><div class="text-right text-xs text-text-muted mt-2">0/20</div></section>';
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：请您查阅"逻辑需求描述-开箱验货"，了解详细逻辑。')+'</div>';
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意："扣件保存"按钮操作后：保存并自动生成1条问题件')+'</div>';
+    h+='</div>';
+    h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><div class="grid grid-cols-2 gap-2">';
+    h+='<button type="button" onclick="savePdaCargoSearch(true)" class="h-10 rounded-lg bg-rose-500 text-white text-sm font-medium">'+tr('扣件保存')+'</button>';
+    h+='<button type="button" onclick="savePdaCargoSearch(false)" class="h-10 rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('保存')+'</button>';
+    h+='</div></div>';
+    return h;
+}
+
+function savePdaCargoSearch(hold){
+    if(hold)showToast(tr('扣件保存成功，已生成 1 条问题件'));
+    else showToast(tr('保存成功'));
+    _pdaCargoSearchView='list';
+    _pdaCargoSearchCurrent=null;
+    refreshWarehousePdaPrototype();
 }
 
 function showPdaOutScanWork(){

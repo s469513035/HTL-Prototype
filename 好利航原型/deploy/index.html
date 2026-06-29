@@ -9480,6 +9480,7 @@ function warehousePdaTaskItems(){
     collect(domesticMenu&&domesticMenu.children);
     items.unshift(['pda-waybill-query','运单查询',descriptions['pda-waybill-query']]);
     items.push(['pda-pallet-bind','仓库上托','运单子单号扫码绑定托盘和库位库区']);
+    items.push(['pda-receive-check','收货复核','按指令复核运单尺寸、重量并拍照存证']);
     items.push(['pda-pallet-adjust','调整托盘','换托/下托（整票/单个），扫码与库位库区维护']);
     items.push(['pda-bag-adjust','调整装袋','添加/移出运单，维护袋号与库位库区']);
     items.push(['pda-find-scan','找货扫描','按配舱号扫描托盘出仓核对']);
@@ -9525,6 +9526,12 @@ function closeWarehousePdaTask(){
     if(_warehousePdaTaskId==='wh-cargo-search'&&_pdaCargoSearchView==='detail'){
         _pdaCargoSearchView='list';
         _pdaCargoSearchCurrent=null;
+        refreshWarehousePdaPrototype();
+        return;
+    }
+    if(_warehousePdaTaskId==='pda-receive-check'&&_pdaReceiveCheckView==='operate'){
+        _pdaReceiveCheckView='list';
+        _pdaReceiveCheckCurrent=null;
         refreshWarehousePdaPrototype();
         return;
     }
@@ -9597,6 +9604,9 @@ function warehousePdaOperationConfigs(){
         },
         'pda-pallet-bind':{
             title:'仓库上托',subtitle:'运单子单号扫码绑定托盘和库位库区',primary:'确认上托'
+        },
+        'pda-receive-check':{
+            title:'收货复核',subtitle:'按指令扫描运单子单号复核尺寸、重量并拍照',primary:'收货复核完成'
         },
         'pda-pallet-adjust':{
             title:'调整托盘',subtitle:'换托或下托（整票/单个），扫码后维护库位库区',primary:'确认调整'
@@ -9912,7 +9922,7 @@ function pdaBottomActions(config){
 
 function pdaGroupedTasks(tasks){
     const groups=[
-        {title:'收货',ids:['pda-waybill-query','wh-in-one','wh-headless','pda-pallet-bind']},
+        {title:'收货',ids:['pda-waybill-query','wh-in-one','wh-headless','pda-pallet-bind','pda-receive-check']},
         {title:'在库管理',ids:['wh-cargo-search','pda-pallet-adjust','pda-bag-adjust','pda-find-scan','pda-sort-scan']},
         {title:'出库',ids:['wh-out-scan','wh-air-bag','wh-replenish-drop','pda-load-scan','pda-load-finish']},
         {title:'调拨',ids:['wh-transfer-out','wh-transfer-in']}
@@ -11732,6 +11742,213 @@ function confirmPdaBagAdjust(){
     showToast(tr(msg));
 }
 
+/* ===== 收货复核 pda-receive-check ===== */
+var _pdaReceiveCheckView='list';
+var _pdaReceiveCheckCurrent=null;
+var _pdaReceiveCheckExpanded=true;
+var _pdaReceiveCheckRangeFrom=1;
+var _pdaReceiveCheckRangeTo=1;
+var _pdaReceiveCheckSelectedRow=0;
+
+var _pdaReceiveCheckList=[
+    {wb:'H82512230001',cmdType:'收货复核',cmdContent:'测试指令内容测试指令内容测试指令内容',
+        subs:[
+            {sub:'H825122300010001',l:50,w:50,h:50,wt:150},
+            {sub:'H825122300010002',l:50,w:50,h:50,wt:150}
+        ]
+    },
+    {wb:'H82512230002',cmdType:'收货复核',cmdContent:'测试指令内容测试指令内容测试指令内容',
+        subs:[
+            {sub:'H825122300020001',l:60,w:40,h:35,wt:120},
+            {sub:'H825122300020002',l:60,w:40,h:35,wt:120},
+            {sub:'H825122300020003',l:60,w:40,h:35,wt:120}
+        ]
+    },
+    {wb:'H82512230003',cmdType:'收货复核',cmdContent:'测试指令内容测试指令内容测试指令内容',
+        subs:[
+            {sub:'H825122300030001',l:45,w:30,h:28,wt:90}
+        ]
+    }
+];
+
+function generatePdaReceiveCheckScreen(){
+    if(_pdaReceiveCheckView==='operate'&&_pdaReceiveCheckCurrent!==null&&_pdaReceiveCheckList[_pdaReceiveCheckCurrent]){
+        return generatePdaReceiveCheckOperate();
+    }
+    return generatePdaReceiveCheckList();
+}
+
+function generatePdaReceiveCheckList(){
+    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
+    h+=pdaScanInput('pda-receive-check-wb','请扫描运单子单号','applyPdaReceiveCheckScan','H82512230001');
+    h+='<div class="space-y-3 mt-1">';
+    _pdaReceiveCheckList.forEach(function(item,i){
+        h+='<button type="button" onclick="pickPdaReceiveCheckCard('+i+')" class="block w-full text-left rounded-xl border border-surface-200 bg-white p-3 shadow-sm">';
+        h+='<div class="grid grid-cols-2 gap-y-2 text-xs">';
+        h+='<div><div class="text-text-secondary">'+tr('运单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.wb)+'</div></div>';
+        h+='<div><div class="text-text-secondary">'+tr('指令类型')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(item.cmdType)+'</div></div>';
+        h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('指令内容')+'</div><div class="text-text-secondary mt-0.5 break-all">'+esc(item.cmdContent)+'</div></div>';
+        h+='</div></button>';
+    });
+    h+='</div>';
+    h+='<div class="rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 mt-3 text-xs text-rose-600">'+tr('注意：请您查阅"逻辑需求描述-收货复核"，了解详细逻辑。')+'</div>';
+    h+='</div>';
+    setTimeout(function(){var el=document.getElementById('pda-receive-check-wb');if(el)el.focus();},50);
+    return h;
+}
+
+function applyPdaReceiveCheckScan(){
+    const input=document.getElementById('pda-receive-check-wb');
+    if(!input)return;
+    const val=(input.value||'').trim();
+    let idx=-1;
+    if(val){idx=_pdaReceiveCheckList.findIndex(function(it){return it.wb===val;});}
+    if(idx<0)idx=0;
+    pickPdaReceiveCheckCard(idx);
+}
+
+function pickPdaReceiveCheckCard(i){
+    const item=_pdaReceiveCheckList[i];
+    if(!item)return;
+    _pdaReceiveCheckCurrent=i;
+    _pdaReceiveCheckExpanded=true;
+    _pdaReceiveCheckRangeFrom=1;
+    _pdaReceiveCheckRangeTo=item.subs.length||1;
+    _pdaReceiveCheckSelectedRow=0;
+    _pdaReceiveCheckView='operate';
+    refreshWarehousePdaPrototype();
+}
+
+function togglePdaReceiveCheckExpanded(){
+    _pdaReceiveCheckExpanded=!_pdaReceiveCheckExpanded;
+    refreshWarehousePdaPrototype();
+}
+
+function stepPdaReceiveCheckRange(which,delta){
+    const item=_pdaReceiveCheckList[_pdaReceiveCheckCurrent];
+    if(!item)return;
+    const max=item.subs.length||1;
+    if(which==='from'){
+        _pdaReceiveCheckRangeFrom=Math.min(max,Math.max(1,_pdaReceiveCheckRangeFrom+delta));
+        if(_pdaReceiveCheckRangeTo<_pdaReceiveCheckRangeFrom)_pdaReceiveCheckRangeTo=_pdaReceiveCheckRangeFrom;
+    }else{
+        _pdaReceiveCheckRangeTo=Math.min(max,Math.max(_pdaReceiveCheckRangeFrom,_pdaReceiveCheckRangeTo+delta));
+    }
+    refreshWarehousePdaPrototype();
+}
+
+function applyPdaReceiveCheckRangeFill(){
+    const item=_pdaReceiveCheckList[_pdaReceiveCheckCurrent];
+    if(!item)return;
+    const l=parseFloat((document.getElementById('pda-rc-l')||{}).value)||0;
+    const w=parseFloat((document.getElementById('pda-rc-w')||{}).value)||0;
+    const hv=parseFloat((document.getElementById('pda-rc-h')||{}).value)||0;
+    const wt=parseFloat((document.getElementById('pda-rc-wt')||{}).value)||0;
+    const from=Math.max(1,_pdaReceiveCheckRangeFrom)-1;
+    const to=Math.min(item.subs.length,_pdaReceiveCheckRangeTo)-1;
+    for(let i=from;i<=to;i++){
+        if(l>0)item.subs[i].l=l;
+        if(w>0)item.subs[i].w=w;
+        if(hv>0)item.subs[i].h=hv;
+        if(wt>0)item.subs[i].wt=wt;
+    }
+    showToast(tr('区间填充已应用'));
+    refreshWarehousePdaPrototype();
+}
+
+function selectPdaReceiveCheckRow(i){_pdaReceiveCheckSelectedRow=i;refreshWarehousePdaPrototype();}
+
+function submitPdaReceiveCheck(){
+    showToast(tr('收货复核完成提交成功'));
+    _pdaReceiveCheckView='list';
+    _pdaReceiveCheckCurrent=null;
+    refreshWarehousePdaPrototype();
+}
+
+function generatePdaReceiveCheckOperate(){
+    const item=_pdaReceiveCheckList[_pdaReceiveCheckCurrent];
+    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 pb-20">';
+    h+=pdaScanInput('pda-receive-check-wb-op','请扫描运单子单号','applyPdaReceiveCheckScanOp','H82512230001');
+    h+='<div class="rounded-xl bg-white border border-surface-200 p-3 mb-3">';
+    h+='<div class="flex items-center justify-between mb-2">';
+    h+='<div class="text-sm font-semibold text-text-primary">'+esc(item.wb)+' <span class="text-xs text-text-secondary font-normal">（'+tr('批量工具')+'）</span></div>';
+    h+='<button type="button" onclick="togglePdaReceiveCheckExpanded()" class="text-xs text-primary-600">'+tr(_pdaReceiveCheckExpanded?'收起':'展开')+'</button>';
+    h+='</div>';
+    if(_pdaReceiveCheckExpanded){
+        h+='<div class="space-y-2">';
+        h+=pdaRcField('pda-rc-l','长（CM）','请录入长（CM）');
+        h+=pdaRcField('pda-rc-w','宽（CM）','请录入宽（CM）');
+        h+=pdaRcField('pda-rc-h','高（CM）','请录入高（CM）');
+        h+=pdaRcField('pda-rc-wt','重量（KG）','请录入重量（KG）');
+        h+='</div>';
+        h+='<div class="flex items-center justify-center gap-2 mt-3">';
+        h+=pdaRcStepper('from',_pdaReceiveCheckRangeFrom);
+        h+='<span class="text-xs text-text-secondary">'+tr('至')+'</span>';
+        h+=pdaRcStepper('to',_pdaReceiveCheckRangeTo);
+        h+='<button type="button" onclick="applyPdaReceiveCheckRangeFill()" class="ml-2 h-8 px-3 rounded-md border border-amber-400 text-amber-600 text-xs">'+tr('区间填充')+'</button>';
+        h+='</div>';
+    }
+    h+='</div>';
+
+    h+='<div class="rounded-xl bg-white border border-surface-200 p-3 mb-3">';
+    h+='<div class="flex items-center justify-between mb-2">';
+    h+='<div class="text-sm font-semibold text-text-primary">'+tr('当前登记尺寸')+'</div>';
+    h+='<div class="text-[10px] text-amber-600">'+tr('单击选中/双击编辑单元格')+'</div>';
+    h+='</div>';
+    h+='<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-amber-600 border-b border-surface-100">';
+    h+='<th class="py-1.5 text-left font-medium">'+tr('运单子单号')+'</th>';
+    h+='<th class="py-1.5 text-center font-medium">'+tr('长')+'</th>';
+    h+='<th class="py-1.5 text-center font-medium">'+tr('宽')+'</th>';
+    h+='<th class="py-1.5 text-center font-medium">'+tr('高')+'</th>';
+    h+='<th class="py-1.5 text-center font-medium">'+tr('重量')+'</th>';
+    h+='</tr></thead><tbody>';
+    item.subs.forEach(function(row,i){
+        const sel=i===_pdaReceiveCheckSelectedRow;
+        h+='<tr onclick="selectPdaReceiveCheckRow('+i+')" class="border-b border-surface-50 cursor-pointer '+(sel?'bg-amber-50 text-rose-500':'text-text-primary')+'">';
+        h+='<td class="py-1.5">'+esc(row.sub)+'</td>';
+        h+='<td class="py-1.5 text-center">'+row.l+'</td>';
+        h+='<td class="py-1.5 text-center">'+row.w+'</td>';
+        h+='<td class="py-1.5 text-center">'+row.h+'</td>';
+        h+='<td class="py-1.5 text-center">'+row.wt+'</td>';
+        h+='</tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='</div>';
+
+    h+='<div class="rounded-xl bg-white border border-surface-200 p-3 mb-3">';
+    h+='<div class="text-sm font-semibold text-text-primary mb-1">'+tr('上传照片')+' <span class="text-xs text-text-secondary font-normal">'+tr('(最多上传20张，支持调用摄像头)')+'</span></div>';
+    h+=pdaPhotoUploader(20);
+    h+='</div>';
+
+    h+='</div>';
+    h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><button type="button" onclick="submitPdaReceiveCheck()" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('收货复核完成')+'</button></div>';
+    return h;
+}
+
+function pdaRcField(inputId,label,placeholder){
+    return '<div class="flex items-center gap-2"><span class="text-xs text-amber-600 w-16 shrink-0">'+tr(label)+'</span><div class="relative flex-1"><input id="'+inputId+'" type="number" inputmode="decimal" data-clear-enhanced="1" class="w-full h-9 pl-3 pr-9 text-xs rounded-lg border border-surface-200 bg-white focus:border-primary-400" placeholder="'+esc(tr(placeholder))+'" oninput="togglePdaScanClear(\''+inputId+'\')"><button type="button" data-pda-clear-for="'+inputId+'" onclick="clearPdaScanInput(\''+inputId+'\')" style="display:none" class="absolute right-2 top-1 w-7 h-7 rounded-full bg-surface-100 text-text-muted text-base leading-none items-center justify-center">×</button></div></div>';
+}
+
+function pdaRcStepper(which,value){
+    return '<div class="inline-flex items-center border border-surface-200 rounded-md overflow-hidden">'+
+        '<button type="button" onclick="stepPdaReceiveCheckRange(\''+which+'\',-1)" class="w-7 h-8 text-text-secondary">-</button>'+
+        '<span class="px-3 text-xs text-text-primary border-x border-surface-200">'+value+'</span>'+
+        '<button type="button" onclick="stepPdaReceiveCheckRange(\''+which+'\',1)" class="w-7 h-8 text-text-secondary">+</button>'+
+        '</div>';
+}
+
+function applyPdaReceiveCheckScanOp(){
+    const input=document.getElementById('pda-receive-check-wb-op');
+    if(!input)return;
+    const val=(input.value||'').trim();
+    if(!val){showToast(tr('请扫描运单子单号'));return;}
+    const item=_pdaReceiveCheckList[_pdaReceiveCheckCurrent];
+    if(!item)return;
+    const idx=item.subs.findIndex(function(s){return s.sub===val;});
+    if(idx>=0){_pdaReceiveCheckSelectedRow=idx;refreshWarehousePdaPrototype();return;}
+    showToast(tr('未找到该子单号'));
+}
+
 function generateWarehousePdaOperationScreen(taskId){
     const config=warehousePdaOperationConfig(taskId);
     let h='';
@@ -11748,6 +11965,7 @@ function generateWarehousePdaOperationScreen(taskId){
     if(taskId==='pda-pallet-bind')return h+generatePdaPalletBindScreen();
     if(taskId==='pda-pallet-adjust')return h+generatePdaPalletAdjustScreen();
     if(taskId==='pda-bag-adjust')return h+generatePdaBagAdjustScreen();
+    if(taskId==='pda-receive-check')return h+generatePdaReceiveCheckScreen();
     if(taskId==='pda-find-scan')return h+generatePdaFindScanScreen();
     if(taskId==='pda-load-scan')return h+generatePdaLoadScanScreen();
     if(taskId==='pda-load-finish')return h+generatePdaLoadFinishScreen();
@@ -11782,7 +12000,7 @@ function pdaTaskIcon(itemId){
         'wh-pack-rule':'☰','wh-cargo-search':'⌕','wh-preload':'▧','wh-replenish-drop':'↔',
         'wh-issue':'!','wh-air-sort':'⇆','wh-air-bag':'▰','wh-air-pack':'▤','pda-work-order':'✓',
         'pda-air-checkin':'✈','pda-air-bag-sort':'▰','pda-air-out-scan':'⇲','pda-work-order-register':'✎',
-        'pda-pallet-bind':'▦','pda-pallet-adjust':'⇄','pda-bag-adjust':'⇌','pda-find-scan':'⌕','pda-load-scan':'▣','pda-load-finish':'✓','pda-sort-scan':'☰'
+        'pda-pallet-bind':'▦','pda-pallet-adjust':'⇄','pda-bag-adjust':'⇌','pda-receive-check':'✓','pda-find-scan':'⌕','pda-load-scan':'▣','pda-load-finish':'✓','pda-sort-scan':'☰'
     };
     return map[itemId]||'▦';
 }

@@ -9481,6 +9481,7 @@ function warehousePdaTaskItems(){
     items.unshift(['pda-waybill-query','运单查询',descriptions['pda-waybill-query']]);
     items.push(['pda-pallet-bind','仓库上托','运单子单号扫码绑定托盘和库位库区']);
     items.push(['pda-pallet-adjust','调整托盘','换托/下托（整票/单个），扫码与库位库区维护']);
+    items.push(['pda-bag-adjust','调整装袋','添加/移出运单，维护袋号与库位库区']);
     items.push(['pda-find-scan','找货扫描','按配舱号扫描托盘出仓核对']);
     items.push(['pda-load-scan','装柜扫描','按配舱号扫描托盘装柜核对']);
     items.push(['pda-load-finish','装柜完成','装柜完成后上传柜照片与提交']);
@@ -9599,6 +9600,9 @@ function warehousePdaOperationConfigs(){
         },
         'pda-pallet-adjust':{
             title:'调整托盘',subtitle:'换托或下托（整票/单个），扫码后维护库位库区',primary:'确认调整'
+        },
+        'pda-bag-adjust':{
+            title:'调整装袋',subtitle:'添加或移出运单，扫码后维护袋号与库位库区',primary:'确认调整'
         },
         'pda-find-scan':{
             title:'找货扫描',subtitle:'按配舱号扫描托盘，最后一托扫完自动转可出仓',primary:'提交'
@@ -9909,7 +9913,7 @@ function pdaBottomActions(config){
 function pdaGroupedTasks(tasks){
     const groups=[
         {title:'收货',ids:['pda-waybill-query','wh-in-one','wh-headless','pda-pallet-bind']},
-        {title:'在库管理',ids:['wh-cargo-search','pda-pallet-adjust','pda-find-scan','pda-sort-scan']},
+        {title:'在库管理',ids:['wh-cargo-search','pda-pallet-adjust','pda-bag-adjust','pda-find-scan','pda-sort-scan']},
         {title:'出库',ids:['wh-out-scan','wh-air-bag','wh-replenish-drop','pda-load-scan','pda-load-finish']},
         {title:'调拨',ids:['wh-transfer-out','wh-transfer-in']}
     ];
@@ -11682,6 +11686,52 @@ function confirmPdaPalletAdjust(){
     showToast(tr(msg));
 }
 
+var _pdaBagAdjustOp='add';
+
+function generatePdaBagAdjustScreen(){
+    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+='<div class="rounded-xl bg-white border border-surface-200 px-3 py-2.5 space-y-2">';
+    h+='<div class="flex items-center gap-6">';
+    h+='<span class="text-xs text-text-secondary w-16 shrink-0">'+tr('操作方式')+'</span>';
+    h+=pdaPalletAdjRadio('bag-op','add','添加',_pdaBagAdjustOp==='add','switchPdaBagAdjustOp(\'add\')');
+    h+=pdaPalletAdjRadio('bag-op','remove','移出',_pdaBagAdjustOp==='remove','switchPdaBagAdjustOp(\'remove\')');
+    h+='</div>';
+    h+='</div>';
+
+    h+=pdaPalletAdjScanRow('pda-bag-adj-row-waybill','运单子单号','pda-bag-adj-waybill','请扫描运单子单号','H82512230001','focusPdaBagAdjNext');
+    h+=pdaPalletAdjScanRow('pda-bag-adj-row-bag','袋号','pda-bag-adj-bag','请扫描袋号','BAG-20260627-0102','focusPdaBagAdjNext');
+    h+=pdaPalletAdjTextRow('pda-bag-adj-row-zone','库位库区','pda-bag-adj-zone','请录入库位库区');
+
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：请您查阅"逻辑需求描述-调整装袋"，了解详细逻辑。')+'</div>';
+    h+='</div>';
+    h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><button type="button" onclick="confirmPdaBagAdjust()" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('确认调整')+'</button></div>';
+    return h;
+}
+
+function switchPdaBagAdjustOp(op){
+    _pdaBagAdjustOp=op;
+}
+
+function focusPdaBagAdjNext(currentId){
+    const seq=['pda-bag-adj-waybill','pda-bag-adj-bag','pda-bag-adj-zone'];
+    const idx=seq.indexOf(currentId);
+    if(idx>=0&&idx<seq.length-1){
+        const next=document.getElementById(seq[idx+1]);
+        if(next)next.focus();
+    }
+}
+
+function confirmPdaBagAdjust(){
+    ['pda-bag-adj-waybill','pda-bag-adj-bag','pda-bag-adj-zone'].forEach(function(id){
+        const el=document.getElementById(id);
+        if(el){el.value='';el.dispatchEvent(new Event('input',{bubbles:true}));}
+    });
+    const wb=document.getElementById('pda-bag-adj-waybill');
+    if(wb)wb.focus();
+    const msg=_pdaBagAdjustOp==='add'?'添加装袋提交成功':'移出装袋提交成功';
+    showToast(tr(msg));
+}
+
 function generateWarehousePdaOperationScreen(taskId){
     const config=warehousePdaOperationConfig(taskId);
     let h='';
@@ -11697,6 +11747,7 @@ function generateWarehousePdaOperationScreen(taskId){
     if(taskId==='wh-replenish-drop')return h+generatePdaReplenishDropScreen();
     if(taskId==='pda-pallet-bind')return h+generatePdaPalletBindScreen();
     if(taskId==='pda-pallet-adjust')return h+generatePdaPalletAdjustScreen();
+    if(taskId==='pda-bag-adjust')return h+generatePdaBagAdjustScreen();
     if(taskId==='pda-find-scan')return h+generatePdaFindScanScreen();
     if(taskId==='pda-load-scan')return h+generatePdaLoadScanScreen();
     if(taskId==='pda-load-finish')return h+generatePdaLoadFinishScreen();
@@ -11731,7 +11782,7 @@ function pdaTaskIcon(itemId){
         'wh-pack-rule':'☰','wh-cargo-search':'⌕','wh-preload':'▧','wh-replenish-drop':'↔',
         'wh-issue':'!','wh-air-sort':'⇆','wh-air-bag':'▰','wh-air-pack':'▤','pda-work-order':'✓',
         'pda-air-checkin':'✈','pda-air-bag-sort':'▰','pda-air-out-scan':'⇲','pda-work-order-register':'✎',
-        'pda-pallet-bind':'▦','pda-pallet-adjust':'⇄','pda-find-scan':'⌕','pda-load-scan':'▣','pda-load-finish':'✓','pda-sort-scan':'☰'
+        'pda-pallet-bind':'▦','pda-pallet-adjust':'⇄','pda-bag-adjust':'⇌','pda-find-scan':'⌕','pda-load-scan':'▣','pda-load-finish':'✓','pda-sort-scan':'☰'
     };
     return map[itemId]||'▦';
 }

@@ -9034,11 +9034,12 @@ function calcShipmentCargoSummary(){
     if(feeEl)feeEl.textContent='USD '+Math.max(180,Math.round(totalWeight*6.5+totalCbm*220)).toLocaleString();
 }
 
-function shipmentEntryCargoRowsHtml(count){
+function shipmentEntryCargoRowsHtml(count,startIdx){
+    startIdx=startIdx||0;
     let html='';
     for(let i=0;i<count;i++){
         html+='<tr class="shipment-entry-cargo-row">'+
-            '<td class="w-10 px-2 py-1.5 text-center text-xs text-text-muted bg-surface-50 border-b border-surface-200">'+(i+1)+'</td>'+
+            '<td class="w-10 px-2 py-1.5 text-center text-xs text-text-muted bg-surface-50 border-b border-surface-200"><span class="cargo-index">'+(startIdx+i+1)+'</span></td>'+
             '<td class="px-0 border-b border-l border-surface-200"><input type="text" class="w-full h-8 px-2 text-sm bg-white focus:bg-primary-50 outline-none"></td>'+
             '<td class="px-0 border-b border-l border-surface-200"><input type="number" min="0" class="shipment-entry-box w-full h-8 px-2 text-sm bg-white focus:bg-primary-50 outline-none text-center" oninput="updateShipmentEntryTotalBox()"></td>'+
             '<td class="px-0 border-b border-l border-surface-200"><input type="number" min="0" class="w-full h-8 px-2 text-sm bg-white focus:bg-primary-50 outline-none text-center"></td>'+
@@ -9046,9 +9047,38 @@ function shipmentEntryCargoRowsHtml(count){
             '<td class="px-0 border-b border-l border-surface-200"><input type="text" class="w-full h-8 px-2 text-sm bg-white focus:bg-primary-50 outline-none"></td>'+
             '<td class="px-0 border-b border-l border-surface-200"><input type="text" class="w-full h-8 px-2 text-sm bg-white focus:bg-primary-50 outline-none"></td>'+
             '<td class="px-0 border-b border-l border-surface-200"><input type="text" class="w-full h-8 px-2 text-sm bg-white focus:bg-primary-50 outline-none"></td>'+
+            '<td class="w-16 px-2 py-1.5 text-center border-b border-l border-surface-200"><button type="button" onclick="removeShipmentEntryCargoRow(this)" class="text-red-500 hover:text-red-600 text-xs cursor-pointer">'+tr('删除')+'</button></td>'+
             '</tr>';
     }
     return html;
+}
+
+function refreshShipmentEntryCargoIndexes(){
+    document.querySelectorAll('#shipment-entry-cargo-body .shipment-entry-cargo-row').forEach(function(row,i){
+        const idx=row.querySelector('.cargo-index');
+        if(idx)idx.textContent=i+1;
+    });
+}
+
+function addShipmentEntryCargoRow(){
+    const tbody=document.getElementById('shipment-entry-cargo-body');
+    if(!tbody)return;
+    const count=tbody.querySelectorAll('.shipment-entry-cargo-row').length;
+    tbody.insertAdjacentHTML('beforeend',shipmentEntryCargoRowsHtml(1,count));
+    refreshShipmentEntryCargoIndexes();
+}
+
+function removeShipmentEntryCargoRow(btn){
+    const tbody=document.getElementById('shipment-entry-cargo-body');
+    if(!tbody)return;
+    if(tbody.querySelectorAll('.shipment-entry-cargo-row').length<=1){
+        showToast(tr('至少保留一行'));
+        return;
+    }
+    const row=btn.closest('.shipment-entry-cargo-row');
+    if(row)row.remove();
+    refreshShipmentEntryCargoIndexes();
+    updateShipmentEntryTotalBox();
 }
 
 function updateShipmentEntryTotalBox(){
@@ -9130,7 +9160,6 @@ function generateShipmentEntryPage(id,options){
         {label:'发件人电话',type:'tel',value:'',id:'shipment-sender-phone',placeholder:'选中发件人后自动填充'},
         {label:'发件人地址',value:'',id:'shipment-sender-address',placeholder:'选中发件人后自动填充'}
     ];
-    const other=[{label:'附加服务',type:'checkboxGroup',span:'md:col-span-4',options:['报关','仿牌','木箱','带电','带磁','贴箱唛'],markerTooltip:true}];
     let h='';
     h+='<div class="h-full overflow-auto p-5">';
     h+='<form id="shipment-entry-form" class="space-y-5">';
@@ -9145,12 +9174,23 @@ function generateShipmentEntryPage(id,options){
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('发件人信息')+'</div>'+renderFields(sender,4)+'</section>';
     h+='<section>'+
+        '<div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
+        '<div class="grid grid-cols-3 md:grid-cols-6 gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3">'+
+            ['报关','仿牌','木箱','带电','带磁','贴箱唛'].map(function(o){
+                return '<label class="flex items-center gap-1.5 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-red-50 border border-red-200 text-[11px] font-bold leading-none text-red-600 cursor-help" title="'+esc(serviceChargeTooltip(o))+'">!</span></label>';
+            }).join('')+
+        '</div>'+
+    '</section>';
+    h+='<section>'+
         '<div class="flex items-end justify-between mb-3 flex-wrap gap-2">'+
             '<div>'+
                 '<div class="text-sm font-semibold text-text-primary">'+tr('货物明细')+'</div>'+
                 '<div class="text-xs text-red-500 mt-1">'+tr('操作方式：类似Excel表格，可粘贴可复制。红色字体为必填内容。')+'</div>'+
             '</div>'+
-            '<div class="text-base font-semibold text-red-500">'+tr('总箱数')+'：<span id="shipment-entry-total-box">0</span></div>'+
+            '<div class="flex items-center gap-3">'+
+                '<button type="button" onclick="addShipmentEntryCargoRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded hover:bg-primary-50 cursor-pointer">+ '+tr('新增行')+'</button>'+
+                '<div class="text-base font-semibold text-red-500">'+tr('总箱数')+'：<span id="shipment-entry-total-box">0</span></div>'+
+            '</div>'+
         '</div>'+
         '<div class="overflow-x-auto border border-surface-200 rounded-lg">'+
             '<table class="w-full text-sm border-collapse">'+
@@ -9164,9 +9204,10 @@ function generateShipmentEntryPage(id,options){
                         '<th class="px-3 py-2 text-center text-red-500 font-medium border-b border-l border-surface-200">'+tr('材质')+'</th>'+
                         '<th class="px-3 py-2 text-center text-red-500 font-medium border-b border-l border-surface-200">'+tr('规格型号')+'</th>'+
                         '<th class="px-3 py-2 text-center text-red-500 font-medium border-b border-l border-surface-200">'+tr('海关编码')+'</th>'+
+                        '<th class="w-16 px-2 py-2 text-center text-text-muted font-medium border-b border-l border-surface-200">'+tr('操作')+'</th>'+
                     '</tr>'+
                 '</thead>'+
-                '<tbody id="shipment-entry-cargo-body">'+shipmentEntryCargoRowsHtml(10)+'</tbody>'+
+                '<tbody id="shipment-entry-cargo-body">'+shipmentEntryCargoRowsHtml(5)+'</tbody>'+
             '</table>'+
         '</div>'+
     '</section>';
@@ -9195,7 +9236,6 @@ function generateShipmentEntryPage(id,options){
     h+='</div></div>';
     h+='<div class="lg:col-span-4 space-y-4">';
     h+='<div class="bg-white rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('产品渠道说明')+'</div><div class="rounded-lg border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-700" id="shipment-channel-desc">'+tr('适合普货和常规敏感货，默认走深圳/广州仓集货，报价按散货海运产品规则带出。')+'</div></div>';
-    h+='<div class="bg-white rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+renderFields(other,3)+'</div>';
     h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
     h+='<div class="bg-white rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用预估')+'</div><div class="space-y-2 text-sm text-text-secondary"><div class="flex justify-between gap-2"><span>'+tr('预计重量')+'</span><span class="font-medium text-text-primary text-right" id="shipment-est-weight">0 KG</span></div><div class="flex justify-between gap-2"><span>'+tr('预计体积')+'</span><span class="font-medium text-text-primary text-right" id="shipment-est-cbm">0 CBM</span></div><div class="flex justify-between gap-2"><span>'+tr('参考运费')+'</span><span class="font-medium text-primary-600 text-right" id="shipment-ref-fee">USD 0</span></div></div></div>';
     h+='<div class="bg-white rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('入仓要求')+'</div><div class="space-y-2 text-sm text-text-secondary leading-relaxed"><div>'+tr('报关资料：商业发票、装箱单')+'</div><div>'+tr('仓库时段：09:00-18:00')+'</div><div>'+tr('标签要求：外箱粘贴客户代号')+'</div></div></div>';

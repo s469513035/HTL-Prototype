@@ -13933,6 +13933,56 @@ function crmTextareaFieldHtml(label,value,readonly){
     return '<div class="flex flex-col gap-1.5'+half+'"><label class="text-sm font-medium text-text-secondary">'+tr(label)+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg '+(readonly?'bg-surface-100 cursor-not-allowed':'bg-surface-50')+' resize-none"'+(readonly?' readonly disabled':'')+'>'+esc(value||'')+'</textarea></div>';
 }
 
+function crmQualFieldHtml(key,label,value,type,readonly,requiredInit){
+    const attr=readonly?' readonly disabled':'';
+    const reqAttr=requiredInit&&!readonly?' required':'';
+    const markCls=requiredInit?'':' hidden';
+    return '<div class="flex flex-col gap-1.5" data-crm-qual-field="'+esc(key)+'"><label class="text-sm font-medium text-text-secondary">'+tr(label)+' <span class="crm-req-mark text-red-500'+markCls+'">*</span></label><input type="'+(type||'text')+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg '+(readonly?'bg-surface-100 cursor-not-allowed':'bg-surface-50')+'" value="'+esc(value||'')+'"'+attr+reqAttr+'></div>';
+}
+
+function crmBizTypeChanged(value){
+    const grid=document.getElementById('crm-qualification-grid');
+    if(!grid)return;
+    const isFcl=value==='整柜';
+    grid.querySelectorAll('[data-crm-qual-field]').forEach(function(div){
+        const key=div.dataset.crmQualField;
+        const mark=div.querySelector('.crm-req-mark');
+        const input=div.querySelector('input');
+        if(key==='组织机构代码'){
+            div.classList.toggle('hidden',!isFcl);
+            if(mark)mark.classList.toggle('hidden',!isFcl);
+            if(input){if(isFcl)input.setAttribute('required','required');else input.removeAttribute('required');}
+        }else{
+            if(mark)mark.classList.toggle('hidden',isFcl);
+            if(input){if(isFcl)input.removeAttribute('required');else input.setAttribute('required','required');}
+        }
+    });
+}
+
+function recognizeCrmLicense(input){
+    if(!input||!input.files||!input.files.length)return;
+    showToast(tr('营业执照识别中…'));
+    setTimeout(function(){
+        const licenseInput=document.querySelector('[data-crm-qual-field="公司营业执照"] input');
+        if(licenseInput)licenseInput.value='91440300MA5F'+Math.floor(Math.random()*900000+100000);
+        showToast(tr('识别成功，已自动填充'));
+    },500);
+    input.value='';
+}
+
+function handleCrmCustomerAttachmentUpload(input){
+    const list=document.getElementById('crm-customer-attachment-list');
+    if(!list||!input.files)return;
+    Array.from(input.files).forEach(function(file){
+        const sizeStr=file.size<1024?file.size+'B':file.size<1048576?(file.size/1024).toFixed(1)+'KB':(file.size/1048576).toFixed(1)+'MB';
+        const item=document.createElement('div');
+        item.className='attachment-item flex items-center justify-between p-2.5 bg-surface-50 rounded-lg border border-surface-200';
+        item.innerHTML='<div class="flex items-center gap-2 flex-1 min-w-0"><svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><div class="min-w-0"><div class="text-sm text-text-primary truncate">'+esc(file.name)+'</div><div class="text-xs text-text-muted">'+sizeStr+'</div></div></div><button type="button" onclick="this.closest(\'.attachment-item\').remove()" class="text-red-500 hover:text-red-600 cursor-pointer text-xs font-medium">'+tr('删除')+'</button>';
+        list.appendChild(item);
+    });
+    input.value='';
+}
+
 function crmCheckboxGroupHtml(options,value,readonly){
     const selected=String(value||'').split(/[、,，;；]/).map(function(v){return v.trim();}).filter(Boolean);
     let html='<div class="grid grid-cols-1 md:grid-cols-2 gap-2 rounded-lg border border-surface-200 bg-surface-50 p-3">';
@@ -14264,6 +14314,9 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     const legalPhone=getTableValueByHeader(c,rowData,'法人电话','');
     const regCapital=getTableValueByHeader(c,rowData,'注册资金','');
     const regYears=getTableValueByHeader(c,rowData,'注册年限','');
+    const orgCode=getTableValueByHeader(c,rowData,'组织机构代码','');
+    const contactPhone=getTableValueByHeader(c,rowData,'联系电话','');
+    const isFcl=bizType==='整柜';
     const bizScope=getTableValueByHeader(c,rowData,'营业范围','');
     const salesPerson=getTableValueByHeader(c,rowData,'所属业务员','');
     const settlementPerson=getTableValueByHeader(c,rowData,'所属操作','');
@@ -14278,12 +14331,13 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     html+=crmInputFieldHtml('客户代码',customerCode,'text',true);
     html+=crmInputFieldHtml('客户简称',shortName,'text',readonly);
     html+=crmInputFieldHtml('客户全称',fullName,'text',readonly);
-    html+=crmSelectFieldHtml('业务类型',['散货','整柜'],bizType,readonly);
+    html+=crmSelectFieldHtml('业务类型',['散货','整柜'],bizType,readonly,' onchange="crmBizTypeChanged(this.value)"');
     html+=crmSelectFieldHtml('所属国家',COUNTRY_CODE_NAME_OPTIONS,country,readonly);
     html+=readonly?crmWarehouseDisplayHtml('海外提货偏好仓库',warehouseOptions,pickupWarehouse):checkedDropdownFieldHtml('海外提货偏好仓库',warehouseOptions,pickupWarehouse);
     html+=crmSelectFieldHtml('启用状态',['启用','禁用'],getTableValueByHeader(c,rowData,'启用状态','启用'),readonly);
     html+=crmSelectFieldHtml('客户等级',['A类','B类','C类','D类'],getTableValueByHeader(c,rowData,'客户等级',''),readonly);
     html+=crmInputFieldHtml('联系人',getTableValueByHeader(c,rowData,'联系人',''),'text',readonly);
+    html+=crmInputFieldHtml('联系电话',contactPhone,'tel',readonly);
     html+=crmInputFieldHtml('客户邮箱',getTableValueByHeader(c,rowData,'客户邮箱',''),'email',readonly);
     html+=crmSelectFieldHtml('客户类型',['直客','同行','平台','代理'],getTableValueByHeader(c,rowData,'客户类型',''),readonly);
     html+=crmSelectFieldHtml('所属业务员',getEmployeeNameOptions(),salesPerson,readonly);
@@ -14304,13 +14358,40 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
         html+=shipmentSenderDatalistHtml();
     }
     html+='</div></div>';
-    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('企业资质信息')+'</div><div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
-    html+=crmInputFieldHtml('法人身份证',legalIdCard,'text',readonly,true);
-    html+=crmInputFieldHtml('公司营业执照',businessLicense,'text',readonly,true);
-    html+=crmInputFieldHtml('法人电话',legalPhone,'tel',readonly,true);
-    html+=crmInputFieldHtml('注册资金',regCapital,'text',readonly,true);
-    html+=crmInputFieldHtml('注册年限',regYears,'text',readonly,true);
-    html+='</div></div>';
+    html+='<div><div class="flex items-center justify-between mb-3 flex-wrap gap-2">'+
+        '<div class="text-sm font-semibold text-text-primary">'+tr('企业资质信息')+'</div>'+
+        (readonly?'':'<div class="flex items-center gap-2"><input type="file" id="crm-license-recognize-input" accept="image/*" class="hidden" onchange="recognizeCrmLicense(this)"><button type="button" onclick="document.getElementById(\'crm-license-recognize-input\').click()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer inline-flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>'+tr('快速识别营业执照照片')+'</button></div>')+
+    '</div>'+
+    '<div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4" id="crm-qualification-grid">';
+    html+=crmQualFieldHtml('组织机构代码','组织机构代码',orgCode,'text',readonly,isFcl);
+    html+=crmQualFieldHtml('法人身份证','法人身份证',legalIdCard,'text',readonly,!isFcl);
+    html+=crmQualFieldHtml('公司营业执照','公司营业执照',businessLicense,'text',readonly,!isFcl);
+    html+=crmQualFieldHtml('法人电话','法人电话',legalPhone,'tel',readonly,!isFcl);
+    html+=crmQualFieldHtml('注册资金','注册资金',regCapital,'text',readonly,!isFcl);
+    html+=crmQualFieldHtml('注册年限','注册年限',regYears,'text',readonly,!isFcl);
+    html+='</div>';
+    if(!isFcl){
+        html+='<div class="mt-2 text-xs text-text-muted">'+tr('业务类型为「整柜」时，仅需填写组织机构代码；其他资质字段可选填。')+'</div>';
+    }
+    html+='</div>';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附件信息')+'</div>'+
+        '<div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">'+
+            '<div>'+
+                '<label class="text-xs text-text-muted mb-1 block">'+tr('附件类型')+'</label>'+
+                '<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg '+(readonly?'bg-surface-100 cursor-not-allowed':'bg-surface-50')+'"'+(readonly?' disabled':'')+'>'+
+                    '<option>'+tr('营业执照')+'</option>'+
+                    '<option>'+tr('组织机构代码证')+'</option>'+
+                    '<option>'+tr('法人身份证')+'</option>'+
+                    '<option>'+tr('开户许可证')+'</option>'+
+                    '<option>'+tr('其他')+'</option>'+
+                '</select>'+
+            '</div>'+
+            '<div class="md:col-span-3">'+
+                (readonly?'<div class="border-2 border-dashed border-surface-200 rounded-xl p-6 text-center text-text-muted text-sm bg-surface-50">'+tr('查看模式不可上传附件')+'</div>':'<div onclick="document.getElementById(\'crm-customer-attachment-input\').click()" class="border-2 border-dashed border-surface-300 rounded-xl p-6 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/20 transition-colors"><svg class="w-10 h-10 text-text-muted mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg><p class="text-sm text-text-muted">'+tr('将文件拖到此处，或')+'<span class="text-primary-600">'+tr('点击上传')+'</span></p></div><input type="file" id="crm-customer-attachment-input" multiple class="hidden" onchange="handleCrmCustomerAttachmentUpload(this)">')+
+                '<div class="mt-3 grid grid-cols-3 gap-2" id="crm-customer-attachment-list"></div>'+
+            '</div>'+
+        '</div>'+
+    '</div>';
     html+='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('营业范围')+' <span class="text-red-500">*</span></label>';
     if(readonly){html+='<div class="px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 min-h-[60px]">'+esc(bizScope)+'</div>';}

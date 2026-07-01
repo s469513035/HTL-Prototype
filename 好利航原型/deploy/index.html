@@ -2647,7 +2647,7 @@ TC['wh-headless']={t:'无头件',pageMode:'warehouseHeadlessInbound',h:[],s:[],d
 TC['wh-sort']={t:'理货',h:['理货单号','入仓单号','品名','件数','重量(KG)','体积(CBM)','理货人','理货时间','状态','操作'],s:['待理货','理货中','已完成'],d:[['ST20250001','WH20250001','电子产品','10','250.5','1.8','陈工','2025-05-10','已完成'],['ST20250002','WH20250002','服装','5','120.0','0.9','王工','2025-05-11','待理货']]};
 TC['wh-pallet']={t:'上托',h:['上托单号','入仓单号','托盘号','件数','重量(KG)','体积(CBM)','操作人','操作时间','状态','操作'],s:['待上托','已上托'],d:[['PT20250001','WH20250001','TP001','10','250.5','1.8','陈工','2025-05-10','已上托'],['PT20250002','WH20250002','TP002','5','120.0','0.9','王工','2025-05-11','待上托']]};
 TC['wh-out']={t:'出库',h:['出库单号','入仓单号','客户代号','目的港','件数','重量(KG)','体积(CBM)','出库时间','状态','操作'],s:['待出库','已出库'],d:[['OT20250001','WH20250001','C10001','达喀尔','10','250.5','1.8','2025-05-12','已出库'],['OT20250002','WH20250002','C10002','拉各斯','5','120.0','0.9','2025-05-13','待出库']]};
-TC['prod-manage']={t:'产品管理',h:['产品编号','产品名称','品名大类','品名信息','运输方式','起运港','目的港','产品备注','计泡比规则','重货取敏感货标识','生效状态','操作'],s:['已生效','待生效','已失效'],d:[['P001','西非海运专线','电子产品','电子产品、服装配件、五金工具','海运','深圳','达喀尔','标准货物','1CBM=167KG','否','已生效'],['P002','西非空运专线','电子产品','带电小家电、手机配件、轻小件','空运','广州','拉各斯','敏感货注意','1CBM=167KG','是','已生效']]};
+TC['prod-manage']={t:'产品管理',h:['产品编号','产品名称','品名大类','品名信息','运输方式','目的国家','产品备注','计泡比规则','重货取敏感货标识','生效状态','操作'],s:['已生效','待生效','已失效'],d:[['P001','西非海运专线','电子产品','电子产品、服装配件、五金工具','海运','塞内加尔','标准货物','1CBM=167KG','否','已生效'],['P002','西非空运专线','电子产品','带电小家电、手机配件、轻小件','空运','尼日利亚','敏感货注意','1CBM=167KG','是','已生效']]};
 TC['prod-price-lcl']={t:'销售报价(散货)',h:['报价编号','报价名称','销售产品','报价开始时间','报价结束时间','发货仓库','使用客户','目的仓库','状态','操作'],s:['已生效','待生效','已失效'],d:[['QP001','西非散货标准报价','西非海运专线,西非空运专线','2026-01-01','2026-12-31','深圳盐田仓,广州南沙仓','全部客户','达喀尔海外仓,拉各斯海外仓','已生效'],['QP002','敏感货空运报价','西非空运专线','2026-03-01','2026-09-30','广州南沙仓','指定客户','拉各斯海外仓','待生效']]};
 TC['prod-cost-fcl']={t:'业务员成本(整柜)',h:['成本编号','产品名称','柜型','起运港','目的港','成本价格','币种','生效日期','状态','操作'],s:['已生效','待生效','已失效'],d:[['FC001','西非海运专线','20GP','深圳','达喀尔','USD 2800','USD','2025-01-01','已生效'],['FC002','西非海运专线','40HQ','深圳','达喀尔','USD 4200','USD','2025-01-01','已生效']]};
 TC['prod-surcharge']={t:'附加杂费配置',h:['附加费代码','附加费名称','品名大类','状态','开始时间','结束时间','备注','操作'],s:['启用','停用'],d:[['SC001','报关费','电子产品','启用','2025-01-01','2025-12-31','按国家与报关方式维护明细'],['SC002','仓储费','服装鞋帽','启用','2025-01-01','2025-12-31','按件数、重量或体积组合计费'],['SC003','文件费','其他','停用','2025-01-01','2025-06-30','固定文件处理费']]};
@@ -13728,12 +13728,11 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     const editCategory=rowData?rowData[2]:'电子产品';
     const editCargoInfo=rowData?rowData[3]:'';
     const editTransport=rowData?rowData[4]:'';
-    const editFrom=rowData?rowData[5]:'';
-    const editTo=rowData?rowData[6]:'';
-    const editRemark=rowData?rowData[7]:'';
-    const editBubbleRatio=rowData?rowData[8]:'';
-    const editStatus=rowData?rowData[10]:'已生效';
-    const sensitiveChecked=rowData&&rowData[9]==='是'?' checked':'';
+    const editCountry=rowData?rowData[5]:'';
+    const editRemark=rowData?rowData[6]:'';
+    const editBubbleRatio=rowData?rowData[7]:'';
+    const editStatus=rowData?rowData[9]:'已生效';
+    const sensitiveChecked=rowData&&rowData[8]==='是'?' checked':'';
     let html='<div class="space-y-5">';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('产品基本信息')+'</div>';
     html+='<div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
@@ -13754,10 +13753,8 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">';
     ['海运','空运'].forEach(function(t){html+='<option value="'+esc(t)+'"'+(editTransport===t?' selected':'')+'>'+esc(tr(t))+'</option>';});
     html+='</select></div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('起运港')+'</label>';
-    html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['深圳盐田','广州南沙','上海浦东','宁波','义乌','厦门','青岛','天津','大连','南宁'],editFrom)+'</select></div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('目的港')+'</label>';
-    html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['达喀尔','拉各斯','阿比让','杜阿拉','洛美','特马','蒙罗维亚','科纳克里','班珠尔','罗安达','马塔迪','黑角','利伯维尔','巴塔'],editTo)+'</select></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('目的国家')+'</label>';
+    html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['塞内加尔','尼日利亚','科特迪瓦','喀麦隆','多哥','加纳','利比里亚','几内亚','冈比亚','安哥拉','刚果金','刚果布','加蓬','赤道几内亚'],editCountry)+'</select></div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('产品备注')+'</label>';
     html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(editRemark)+'" placeholder="'+tr('请输入产品备注')+'"></div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('计泡比规则')+'</label>';
@@ -13770,8 +13767,6 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     html+='</div></div>';
     html+='<div class="border border-surface-200 rounded-xl overflow-hidden"><div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between"><div class="text-sm font-semibold text-text-primary">'+tr('取重规则配置')+'</div><button type="button" onclick="addWeightRule()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增规则')+'</button></div>';
     html+='<div class="p-4 overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded-lg"><thead><tr class="bg-surface-50">';
-    html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('计算方式')+'</th>';
-    html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('体积系数')+'</th>';
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('条件表达式')+'</th>';
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('取重表达式')+'</th>';
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('单件最小')+'</th>';
@@ -13780,7 +13775,7 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     html+='<th class="px-2 py-2 text-center text-xs font-semibold text-text-secondary">'+tr('操作')+'</th>';
     html+='</tr></thead><tbody id="weight-rule-tbody">';
     html+=weightRuleRowHtml();
-    html+=weightRuleRowHtml('长*宽*高/5000','5000','总重量>50','MAX(实重,材积重)','1','2','四舍五入');
+    html+=weightRuleRowHtml('总重量>50','MAX(实重,材积重)','1','2','四舍五入');
     html+='</tbody></table></div></div>';
     html+='</div>';
     bodyEl.innerHTML=html;
@@ -13788,17 +13783,13 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     document.getElementById('crud-modal').classList.add('show');
 }
 
-function weightRuleRowHtml(calcMode,volumeFactor,conditionExpr,weightExpr,pieceMin,ticketMin,roundType){
-    calcMode=calcMode||'长*宽*高/6000';
-    volumeFactor=volumeFactor||'6000';
+function weightRuleRowHtml(conditionExpr,weightExpr,pieceMin,ticketMin,roundType){
     conditionExpr=conditionExpr||'总重量>100';
     weightExpr=weightExpr||'MAX(实重,材积重)';
     pieceMin=pieceMin||'0.5';
     ticketMin=ticketMin||'1';
     roundType=roundType||'进一法';
     return '<tr class="hover:bg-surface-50">'+
-        '<td class="px-2 py-1 min-w-[170px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['长*宽*高/6000','长*宽*高/5000','长*宽*高/7000'],calcMode)+'</select></td>'+
-        '<td class="px-2 py-1 min-w-[100px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(volumeFactor)+'"></td>'+
         '<td class="px-2 py-1 min-w-[170px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(conditionExpr)+'"></td>'+
         '<td class="px-2 py-1 min-w-[180px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(weightExpr)+'"></td>'+
         '<td class="px-2 py-1 min-w-[110px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(pieceMin)+'"></td>'+

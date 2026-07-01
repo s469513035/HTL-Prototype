@@ -9140,11 +9140,11 @@ function generateShipmentEntryPage(id,options){
     const isAdmin=!!options.showCustomerCode;
     const defaultCustomer=isAdmin?defaultShipmentCustomer():null;
     const basic=[
+        ...(isAdmin?[
+            {label:'客户代码',required:true,value:defaultCustomer.code,placeholder:'请输入客户代码',list:'shipment-customer-code-options',span:'md:col-span-4'}
+        ]:[]),
         {label:'物流单号',value:''},
         {label:'运输方式',type:'select',required:true,options:['海运','空运','铁路','快递']},
-        ...(isAdmin?[
-            {label:'客户代码',required:true,value:defaultCustomer.code,placeholder:'请输入客户代码',list:'shipment-customer-code-options'}
-        ]:[]),
         {label:'国内仓库',type:'select',required:true,options:['深圳盐田仓','广州南沙仓','上海浦东仓','义乌仓']},
         {label:'目的港',required:true,type:'select',options:['达喀尔','拉各斯','阿比让','杜阿拉','洛美','特马','蒙罗维亚','科纳克里','班珠尔'],value:'达喀尔'},
         {label:'件数',type:'number',value:''},
@@ -9175,7 +9175,7 @@ function generateShipmentEntryPage(id,options){
         '<div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
         '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
             ['报关','仿牌','木箱','带电','带磁','贴箱唛'].map(function(o){
-                return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-red-50 border border-red-200 text-[11px] font-bold leading-none text-red-600 cursor-help" title="'+esc(serviceChargeTooltip(o))+'">!</span></label>';
+                return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
             }).join('')+
         '</div>'+
     '</section>';

@@ -9150,8 +9150,6 @@ function generateShipmentEntryPage(id,options){
         {label:'件数',type:'number',value:''},
         {label:'总体积(CBM)',type:'number',value:''},
         {label:'总重量(KG)',type:'number',value:''},
-        {label:'品名',value:''},
-        {label:'物流公司',type:'select',options:['顺丰速运','跨越速运','德邦物流','京东物流','客户自送']},
         {label:'预计送货时间',type:'datetime-local'}
     ];
     const sender=[
@@ -9175,9 +9173,9 @@ function generateShipmentEntryPage(id,options){
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('发件人信息')+'</div>'+renderFields(sender,4)+'</section>';
     h+='<section>'+
         '<div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
-        '<div class="grid grid-cols-3 md:grid-cols-6 gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3">'+
+        '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
             ['报关','仿牌','木箱','带电','带磁','贴箱唛'].map(function(o){
-                return '<label class="flex items-center gap-1.5 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-red-50 border border-red-200 text-[11px] font-bold leading-none text-red-600 cursor-help" title="'+esc(serviceChargeTooltip(o))+'">!</span></label>';
+                return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-red-50 border border-red-200 text-[11px] font-bold leading-none text-red-600 cursor-help" title="'+esc(serviceChargeTooltip(o))+'">!</span></label>';
             }).join('')+
         '</div>'+
     '</section>';
@@ -9199,11 +9197,11 @@ function generateShipmentEntryPage(id,options){
                         '<th class="w-10 px-2 py-2 text-center text-text-muted font-medium border-b border-surface-200"></th>'+
                         '<th class="px-3 py-2 text-center text-red-500 font-medium border-b border-l border-surface-200">'+tr('品名')+'</th>'+
                         '<th class="px-3 py-2 text-center text-red-500 font-medium border-b border-l border-surface-200">'+tr('箱数')+'</th>'+
-                        '<th class="px-3 py-2 text-center text-red-500 font-medium border-b border-l border-surface-200">'+tr('单箱数量')+'</th>'+
-                        '<th class="px-3 py-2 text-center text-red-500 font-medium border-b border-l border-surface-200">'+tr('品牌')+'</th>'+
-                        '<th class="px-3 py-2 text-center text-red-500 font-medium border-b border-l border-surface-200">'+tr('材质')+'</th>'+
-                        '<th class="px-3 py-2 text-center text-red-500 font-medium border-b border-l border-surface-200">'+tr('规格型号')+'</th>'+
-                        '<th class="px-3 py-2 text-center text-red-500 font-medium border-b border-l border-surface-200">'+tr('海关编码')+'</th>'+
+                        '<th class="px-3 py-2 text-center text-text-secondary font-medium border-b border-l border-surface-200">'+tr('单箱数量')+'</th>'+
+                        '<th class="px-3 py-2 text-center text-text-secondary font-medium border-b border-l border-surface-200">'+tr('品牌')+'</th>'+
+                        '<th class="px-3 py-2 text-center text-text-secondary font-medium border-b border-l border-surface-200">'+tr('材质')+'</th>'+
+                        '<th class="px-3 py-2 text-center text-text-secondary font-medium border-b border-l border-surface-200">'+tr('规格型号')+'</th>'+
+                        '<th class="px-3 py-2 text-center text-text-secondary font-medium border-b border-l border-surface-200">'+tr('海关编码')+'</th>'+
                         '<th class="w-16 px-2 py-2 text-center text-text-muted font-medium border-b border-l border-surface-200">'+tr('操作')+'</th>'+
                     '</tr>'+
                 '</thead>'+

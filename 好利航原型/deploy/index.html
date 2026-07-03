@@ -2919,7 +2919,7 @@ addPrototypeTable('wh-pallet-mgmt','上托管理','上托单号|运单号|到货
     ['PL-20260613001','WB-20260522001','深圳盐田仓','A区','TP-YT-001','10','250.00','1.350','陈工','2026-06-13 14:10','待上托'],
     ['PL-20260612006','WB-20260522002','广州南沙仓','B区','TP-NS-006','6','120.00','0.720','王工','2026-06-12 15:38','已上托']
 ]);
-addPrototypeTable('wh-pallet-info','托盘信息查询','状态|托盘号|货区|运单号|客户单号|配舱操作时间|配舱扫描件数|是否找货|是否装柜|登记方式|上托时间|上托人|登记仓|操作',['使用中','已作废'],[
+addPrototypeTable('wh-pallet-info','托盘信息查询','状态|托盘号|货区|运单号|客户单号|配舱操作时间|配舱单号|是否找货|是否装柜|登记方式|上托时间|上托人|登记仓',['使用中','已作废'],[
     ['已作废','TP202509220017','E6','ICBU00000600761','','2025-10-24 16:38:23','','否','否','员工端','2025-10-24 16:35:56','卖零食的小女孩','腾信国际'],
     ['已作废','TP202509220018','E6','ICBU00000600762','','2025-10-24 16:38:23','','否','否','员工端','2025-10-24 16:35:40','卖零食的小女孩','腾信国际'],
     ['已作废','TP202509220019','E6','ICBU00000600763','','2025-10-24 16:38:23','','否','否','员工端','2025-10-24 16:35:15','卖零食的小女孩','腾信国际'],
@@ -8895,6 +8895,12 @@ function getToolbarActions(id){
             {key:'export',label:'导出数据'}
         ];
     }
+    if(id==='wh-pallet-info'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
     const actions=[{key:'search',label:'查询数据',variant:'primary'},{type:'add',label:'新增数据',variant:'primary'},{key:'export',label:'导出数据'}];
     if(id.indexOf('wh-')===0){actions.push({key:'printLabel',label:'打印标签'},{key:'exception',label:'异常登记'},{key:'sync',label:'同步数据'});}
     else if(id.indexOf('prod-')===0||id.indexOf('cfg-')===0){actions.push({key:'enable',label:'启用/禁用'},{key:'copy',label:'复制新增'});}
@@ -8999,15 +9005,17 @@ function generatePalletBarcodes(){
     const font=parseInt((document.getElementById('pallet-print-font')||{}).value||'14',10);
     const preview=document.getElementById('pallet-print-preview');
     if(!preview)return;
-    if(typeof _palletPrintBaseSeq==='undefined')_palletPrintBaseSeq=3062884534844;
+    const d=new Date();
+    const dateStr=String(d.getFullYear())+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
     const items=[];
-    for(let i=0;i<Math.min(count,120);i++){
-        const code=prefix+String(_palletPrintBaseSeq+i)+String(i%10).padStart(3,'0');
+    for(let i=0;i<Math.min(count,999);i++){
+        const seq=String(i+1).padStart(3,'0');
+        const code=prefix+dateStr+seq;
         items.push('<div class="border border-surface-200 rounded p-3 flex flex-col items-center bg-white"><div class="w-full">'+renderPalletBarcodeSvg(code,height)+'</div><div class="text-text-secondary text-center mt-1" style="font-size:'+font+'pt">'+esc(code)+'</div></div>');
     }
     let html='<div class="text-sm font-semibold text-text-primary mb-3">'+tr('预览')+' ('+tr('共')+' '+count+' '+tr('张')+')</div>';
     html+='<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">'+items.join('')+'</div>';
-    if(count>120)html+='<div class="mt-2 text-xs text-text-muted">'+tr('预览最多显示 120 张，实际打印按张数生成。')+'</div>';
+    if(count>999)html+='<div class="mt-2 text-xs text-text-muted">'+tr('单日流水号最多 999 张，实际打印按张数生成。')+'</div>';
     preview.innerHTML=html;
 }
 

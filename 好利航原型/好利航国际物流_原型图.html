@@ -14537,7 +14537,7 @@ function collectExpressSortChecked(cls){
     return Array.from(document.querySelectorAll('.'+cls+':checked')).map(function(cb){return cb.value;});
 }
 
-function generateExpressSortSplit(){
+function addExpressSortRow(){
     const countries=collectExpressSortChecked('express-sort-country-cb');
     const transports=collectExpressSortChecked('express-sort-transport-cb');
     const dimCountry=(document.getElementById('express-dim-country')||{}).checked;
@@ -14547,6 +14547,8 @@ function generateExpressSortSplit(){
     if(!countries.length){showToast(tr('请先选择国家'));return;}
     if(!transports.length){showToast(tr('请先选择运输方式'));return;}
     if(!dimCountry&&!dimTransport){showToast(tr('请勾选至少一个拆分维度'));return;}
+    const placeholder=tbody.querySelector('.express-sort-placeholder');
+    if(placeholder)placeholder.remove();
     const rows=[];
     if(dimCountry&&dimTransport){
         countries.forEach(function(c){transports.forEach(function(t){rows.push({country:c,transport:t});});});
@@ -14555,14 +14557,33 @@ function generateExpressSortSplit(){
     }else{
         transports.forEach(function(t){rows.push({country:countries.join('、'),transport:t});});
     }
+    const startIdx=tbody.querySelectorAll('tr.express-sort-row').length;
     const html=rows.map(function(r,i){
-        const gridNo='G'+String(i+1).padStart(3,'0');
-        const sealWeight=(15+i*5)+'KG';
-        const sortCode='SC-'+String(i+1).padStart(4,'0');
-        return '<tr class="border-t border-surface-100 bg-surface-50/40"><td class="px-3 py-2 text-text-secondary">'+esc(r.country)+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r.transport)+'</td><td class="px-3 py-2 text-text-primary font-medium">'+gridNo+'</td><td class="px-3 py-2 text-text-secondary">'+sealWeight+'</td><td class="px-3 py-2 text-text-primary font-medium">'+sortCode+'</td></tr>';
+        const seq=startIdx+i+1;
+        const gridNo='G'+String(seq).padStart(3,'0');
+        const sealWeight=(15+(seq-1)*5)+'KG';
+        const sortCode='SC-'+String(seq).padStart(4,'0');
+        return '<tr class="express-sort-row border-t border-surface-100 hover:bg-surface-50/40">'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(r.country)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(r.transport)+'</td>'+
+            '<td class="px-2 py-1"><input type="text" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" value="'+esc(gridNo)+'"></td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(sealWeight)+'</td>'+
+            '<td class="px-2 py-1"><input type="text" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" value="'+esc(sortCode)+'"></td>'+
+            '<td class="px-3 py-2 text-center"><button type="button" onclick="removeExpressSortRow(this)" class="text-xs font-medium text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td>'+
+        '</tr>';
     }).join('');
-    tbody.innerHTML=html;
-    showToast(tr('已生成拆分明细')+' '+rows.length+' '+tr('条'));
+    tbody.insertAdjacentHTML('beforeend',html);
+    showToast(tr('已新增')+' '+rows.length+' '+tr('条'));
+}
+
+function removeExpressSortRow(btn){
+    const row=btn.closest('tr');
+    if(!row)return;
+    row.remove();
+    const tbody=document.getElementById('express-sort-split-body');
+    if(tbody&&!tbody.querySelector('tr.express-sort-row')){
+        tbody.innerHTML='<tr class="express-sort-placeholder"><td colspan="6" class="px-3 py-6 text-center text-text-muted">'+tr('选择国家、运输方式和拆分维度后，点击「新增托盘」按钮生成明细')+'</td></tr>';
+    }
 }
 
 function openExpressSortModal(mode,id,rowIdx,rowData){
@@ -14614,10 +14635,10 @@ function openExpressSortModal(mode,id,rowIdx,rowData){
     html+='<label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="express-dim-country" class="rounded border-surface-300 text-primary-600" checked><span>'+tr('国家')+'</span></label>';
     html+='<label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="express-dim-transport" class="rounded border-surface-300 text-primary-600" checked><span>'+tr('运输方式')+'</span></label>';
     html+='</div>';
-    html+='<button type="button" onclick="generateExpressSortSplit()" class="ml-auto h-8 px-4 text-xs font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">'+tr('生成托盘明细拆分')+'</button>';
+    html+='<button type="button" onclick="addExpressSortRow()" class="ml-auto h-8 px-4 text-xs font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">+ '+tr('新增托盘')+'</button>';
     html+='</div>';
-    html+='<div class="p-4"><div class="overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded"><thead><tr class="bg-surface-50 text-text-secondary"><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('国家')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('运输方式')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('格口号')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('封板重量')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('分拣码')+'</th></tr></thead><tbody id="express-sort-split-body"><tr><td colspan="5" class="px-3 py-6 text-center text-text-muted">'+tr('选择国家、运输方式和拆分维度后，点击「生成托盘明细拆分」按钮生成明细')+'</td></tr></tbody></table></div>';
-    html+='<div class="mt-2 text-xs text-text-muted">'+tr('表格由「生成托盘明细拆分」按钮生成，不可直接编辑；调整参数后请重新生成。')+'</div>';
+    html+='<div class="p-4"><div class="overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded"><thead><tr class="bg-surface-50 text-text-secondary"><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('国家')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('运输方式')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('格口号')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('封板重量')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('分拣码')+'</th><th class="px-3 py-2 text-center border-b border-surface-200 w-20">'+tr('操作')+'</th></tr></thead><tbody id="express-sort-split-body"><tr class="express-sort-placeholder"><td colspan="6" class="px-3 py-6 text-center text-text-muted">'+tr('选择国家、运输方式和拆分维度后，点击「新增托盘」按钮生成明细')+'</td></tr></tbody></table></div>';
+    html+='<div class="mt-2 text-xs text-text-muted">'+tr('支持多次「新增托盘」按选择维度追加行；「格口号」和「分拣码」可直接编辑；点击行末「删除」移除单行。')+'</div>';
     html+='</div></div>';
     html+='</div>';
     bodyEl.innerHTML=html;

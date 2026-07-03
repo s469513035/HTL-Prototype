@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Inline Editor · 通用版演示</title>
+
+<!-- 【可选】项目名（避免不同项目 localStorage 冲突） -->
+<meta name="ed-project" content="demo-app-v1">
+
+<!-- 【可选】自定义主题色（默认橙色，这里演示蓝色主题） -->
+<style>
+  :root {
+    /* 把下面 6 行注释解开就是蓝色主题 */
+    /*
+    --ed-primary:      #3b82f6;
+    --ed-primary-dark: #1e40af;
+    --ed-primary-bg:   #eff6ff;
+    --ed-primary-bd:   #bfdbfe;
+    --ed-primary-text: #1e3a8a;
+    --ed-primary-deep: #172554;
+    */
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: #f5f7fb; color: #1f2937; line-height: 1.6; }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+  h1 { font-size: 32px; margin: 0 0 8px; color: #111827; }
+  .sub { color: #6b7280; margin-bottom: 32px; }
+
+  .card { background: #fff; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e5e7eb; }
+  .card h2 { margin: 0 0 12px; font-size: 20px; color: #111827; }
+  .card p { margin: 0; color: #4b5563; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat { background: #fff; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #e5e7eb; }
+  .stat .label { font-size: 12px; color: #6b7280; }
+  .stat .value { font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #f97316; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; text-decoration: none; }
+  .btn:hover { background: #ea580c; }
+  .btn-outline { background: #fff; color: #f97316; border: 1px solid #f97316; }
+
+  ul { padding-left: 24px; }
+  ul li { margin-bottom: 6px; }
+
+  code { background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-size: 90%; color: #dc2626; }
+  pre { background: #1f2937; color: #f9fafb; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Inline Editor · 通用版演示</h1>
+  <p class="sub">点右下角 🖊 编辑原型 按钮进入编辑模式，然后左键点文字/右键点区域试试</p>
+
+  <div class="stats">
+    <div class="stat"><div class="label">总用户数</div><div class="value">12,860</div></div>
+    <div class="stat"><div class="label">本月订单</div><div class="value">84,260</div></div>
+    <div class="stat"><div class="label">好评率</div><div class="value">96.8%</div></div>
+  </div>
+
+  <div class="card">
+    <h2>示例卡片 1</h2>
+    <p>试着左键点这段文字，可以直接改内容。或者右键点整个卡片，可以复制或删除。</p>
+    <button class="btn">主按钮</button>
+    <button class="btn btn-outline">次按钮</button>
+  </div>
+
+  <div class="card">
+    <h2>示例卡片 2</h2>
+    <p>三大功能：</p>
+    <ul>
+      <li><b>改文字</b> — 左键点任意文字，Enter 保存</li>
+      <li><b>复制</b> — 右键选 "复制一份"（可复制整张卡片）</li>
+      <li><b>删除</b> — 右键选 "删除此项"</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>怎么用到我自己的项目？</h2>
+    <p>在任意 HTML 页面 <code>&lt;/body&gt;</code> 前加一行：</p>
+    <pre>&lt;script src="inline-editor.js" defer&gt;&lt;/script&gt;</pre>
+    <p>（可选）在 <code>&lt;head&gt;</code> 加一个 meta，避免多项目 localStorage 冲突：</p>
+    <pre>&lt;meta name="ed-project" content="my-app-v1"&gt;</pre>
+    <p>（可选）自定义主题色，在 CSS 里覆盖变量：</p>
+    <pre>:root {
+  --ed-primary:      #3b82f6;
+  --ed-primary-dark: #1e40af;
+  --ed-primary-bg:   #eff6ff;
+  --ed-primary-bd:   #bfdbfe;
+  --ed-primary-text: #1e3a8a;
+  --ed-primary-deep: #172554;
+}</pre>
+  </div>
+
+  <div class="card">
+    <h2>开发者 API</h2>
+    <p>浏览器控制台可用：</p>
+    <pre>InlineEditor.getState()   // 查看当前页所有修改（对象）
+InlineEditor.clearPage()  // 清空当前页
+InlineEditor.clearAll()   // 清空整个项目所有页
+InlineEditor.export()     // 触发导出 JSON
+InlineEditor.activate()   // 手动开启编辑模式
+InlineEditor.deactivate() // 手动关闭</pre>
+  </div>
+
+</div>
+
+<script src="inline-editor.js" defer></script>
+</body>
+</html>

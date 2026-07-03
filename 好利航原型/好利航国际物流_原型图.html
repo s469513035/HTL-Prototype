@@ -139,6 +139,7 @@
         body[data-terminal="pda"] #sidebar{display:none !important}
     </style>
 </head>
+<script src="inline-editor. js" defer></script>
 <body class="h-screen overflow-hidden">
 
 <div id="login-page" class="fixed inset-0 z-[100] flex login-fade">
@@ -8898,6 +8899,7 @@ function getToolbarActions(id){
     if(id==='wh-pallet-info'){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
+            {key:'printLabel',label:'标签打印'},
             {key:'export',label:'导出数据'}
         ];
     }
@@ -9002,7 +9004,7 @@ function generatePalletBarcodes(){
     const count=Math.max(1,parseInt((document.getElementById('pallet-print-count')||{}).value||'10',10));
     const prefix=((document.getElementById('pallet-print-prefix')||{}).value||'HLH-');
     const height=parseInt((document.getElementById('pallet-print-height')||{}).value||'70',10);
-    const font=parseInt((document.getElementById('pallet-print-font')||{}).value||'14',10);
+    const font=parseInt((document.getElementById('pallet-print-font')||{}).value||'10',10);
     const preview=document.getElementById('pallet-print-preview');
     if(!preview)return;
     const d=new Date();
@@ -9011,7 +9013,7 @@ function generatePalletBarcodes(){
     for(let i=0;i<Math.min(count,999);i++){
         const seq=String(i+1).padStart(3,'0');
         const code=prefix+dateStr+seq;
-        items.push('<div class="border border-surface-200 rounded p-3 flex flex-col items-center bg-white"><div class="w-full">'+renderPalletBarcodeSvg(code,height)+'</div><div class="text-text-secondary text-center mt-1" style="font-size:'+font+'pt">'+esc(code)+'</div></div>');
+        items.push('<div class="border border-surface-200 rounded p-3 flex flex-col items-center bg-white overflow-hidden"><div class="w-full">'+renderPalletBarcodeSvg(code,height)+'</div><div class="text-text-secondary text-center mt-1 w-full" style="font-size:'+font+'pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(code)+'">'+esc(code)+'</div></div>');
     }
     let html='<div class="text-sm font-semibold text-text-primary mb-3">'+tr('预览')+' ('+tr('共')+' '+count+' '+tr('张')+')</div>';
     html+='<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">'+items.join('')+'</div>';
@@ -9038,7 +9040,7 @@ function generatePalletPrintPage(id){
     h+='<div class="flex items-center gap-4"><label class="w-28 text-sm text-text-secondary text-right">'+tr('打印张数')+'</label><div class="flex-1 max-w-xs">'+palletPrintNumStepperHtml('pallet-print-count','10','1')+'</div></div>';
     h+='<div class="flex items-center gap-4"><label class="w-28 text-sm text-text-secondary text-right">'+tr('前缀')+'</label><input id="pallet-print-prefix" type="text" value="HLH-" class="flex-1 h-9 px-3 text-sm border border-surface-200 rounded bg-surface-50" placeholder="HLH-"></div>';
     h+='<div class="flex items-center gap-4"><label class="w-28 text-sm text-text-secondary text-right">'+tr('条形码高度(mm)')+'</label><div class="flex-1 max-w-xs">'+palletPrintNumStepperHtml('pallet-print-height','70','5')+'</div></div>';
-    h+='<div class="flex items-center gap-4"><label class="w-28 text-sm text-text-secondary text-right">'+tr('文字大小(pt)')+'</label><div class="flex-1 max-w-xs">'+palletPrintNumStepperHtml('pallet-print-font','14','1')+'</div></div>';
+    h+='<div class="flex items-center gap-4"><label class="w-28 text-sm text-text-secondary text-right">'+tr('文字大小(pt)')+'</label><div class="flex-1 max-w-xs">'+palletPrintNumStepperHtml('pallet-print-font','10','1')+'</div></div>';
     h+='</div>';
     h+='<div class="mt-5 flex items-center gap-3 pl-32"><button type="button" onclick="generatePalletBarcodes()" class="h-9 px-5 text-sm font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">'+tr('生成条形码')+'</button><button type="button" onclick="printPalletBarcodes()" class="h-9 px-5 text-sm font-medium text-white bg-emerald-500 rounded hover:bg-emerald-600 cursor-pointer">'+tr('打印')+'</button></div>';
     h+='<div id="pallet-print-preview" class="mt-6 border-t border-surface-200 pt-5"></div>';

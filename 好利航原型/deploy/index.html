@@ -2940,6 +2940,8 @@ addPrototypeTable('wh-pallet-info','托盘信息查询','状态|托盘号|货区
     {label:'状态',type:'select',field:'status',options:['使用中','已作废']},
     {label:'登记方式',type:'select',field:'regMethod',options:['员工端','PDA端']}
 ]);
+TC['wh-pallet-info'].readonlyList=true;
+TC['wh-pallet-info'].noAutoAudit=true;
 TC['wh-pallet-print']={t:'托盘打印',pageMode:'palletPrint',h:[],q:[],s:[],d:[]};
 addPrototypeTable('wh-pack-rule','配舱规则','销售产品|运输方式|目的港|配舱优先级1|配舱优先级2|配舱优先级3|是否启用',['启用','停用'],[
     ['西非海运普货','海运','拉各斯','MAERSK','COSCO','MSC','启用'],

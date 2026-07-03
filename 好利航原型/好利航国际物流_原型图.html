@@ -1972,6 +1972,7 @@ const menuData=[
 {id:'wh-replenish-drop',label:'补货落货管理',page:'wh-domestic',tab:'wh-replenish-drop'},
 {id:'wh-pallet-info',label:'托盘信息查询',page:'wh-domestic',tab:'wh-pallet-info'},
 {id:'wh-pallet-print',label:'托盘打印',page:'wh-domestic',tab:'wh-pallet-print'},
+{id:'wh-express-sort',label:'快递分拣方案管理',page:'wh-domestic',tab:'wh-express-sort'},
 {id:'warehouse-pda',label:'仓库PDA',terminalOnly:'pda',children:[
 {id:'pda-app',label:'仓库PDA',page:'warehouse-pda',tab:'pda-app'}
 ]}
@@ -2943,6 +2944,22 @@ addPrototypeTable('wh-pallet-info','托盘信息查询','状态|托盘号|货区
 TC['wh-pallet-info'].readonlyList=true;
 TC['wh-pallet-info'].noAutoAudit=true;
 TC['wh-pallet-print']={t:'托盘打印',pageMode:'palletPrint',h:[],q:[],s:[],d:[]};
+addPrototypeTable('wh-express-sort','快递分拣方案管理','方案编号|方案名称|国家|运输方式|格口号|封板重量|分拣码|操作',[],[
+    ['SP1001','西非快递主方案','塞内加尔、尼日利亚','海运、空运','G001','20KG','SC-0001'],
+    ['SP1002','东非普货方案','肯尼亚','海运','G002','25KG','SC-0002'],
+    ['SP1003','西非空运快线','尼日利亚','空运','G003','15KG','SC-0003'],
+    ['SP1004','中东铁路专线','阿联酋','铁路','G004','30KG','SC-0004'],
+    ['SP1005','南非海运普货','南非、津巴布韦','海运','G005','22KG','SC-0005']
+],[
+    {label:'方案编号',type:'text',field:'code',placeholder:'请输入方案编号'},
+    {label:'方案名称',type:'text',field:'name',placeholder:'请输入方案名称'},
+    {label:'国家',type:'text',field:'country',placeholder:'请输入国家'},
+    {label:'运输方式',type:'select',field:'transport',options:['海运','空运','铁路','快递']},
+    {label:'格口号',type:'text',field:'gridNo',placeholder:'请输入格口号'},
+    {label:'封板重量',type:'text',field:'sealWeight',placeholder:'请输入封板重量'},
+    {label:'分拣码',type:'text',field:'sortCode',placeholder:'请输入分拣码'}
+]);
+TC['wh-express-sort'].noAutoAudit=true;
 addPrototypeTable('wh-pack-rule','配舱规则','销售产品|运输方式|目的港|配舱优先级1|配舱优先级2|配舱优先级3|是否启用',['启用','停用'],[
     ['西非海运普货','海运','拉各斯','MAERSK','COSCO','MSC','启用'],
     ['空运敏感货','空运','阿比让','ET','TK','EK','启用']
@@ -8905,6 +8922,12 @@ function getToolbarActions(id){
             {key:'export',label:'导出数据'}
         ];
     }
+    if(id==='wh-express-sort'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {type:'add',label:'新增方案',variant:'primary'}
+        ];
+    }
     const actions=[{key:'search',label:'查询数据',variant:'primary'},{type:'add',label:'新增数据',variant:'primary'},{key:'export',label:'导出数据'}];
     if(id.indexOf('wh-')===0){actions.push({key:'printLabel',label:'打印标签'},{key:'exception',label:'异常登记'},{key:'sync',label:'同步数据'});}
     else if(id.indexOf('prod-')===0||id.indexOf('cfg-')===0){actions.push({key:'enable',label:'启用/禁用'},{key:'copy',label:'复制新增'});}
@@ -13212,6 +13235,11 @@ function openCrudModal(mode,id,rowIdx){
         openStowageRegisterModal(mode,id,rowIdx);
         return;
     }
+    if(id==='wh-express-sort'&&(mode==='add'||mode==='edit'||mode==='copy')){
+        openExpressSortModal(mode,id,rowIdx,rowData);
+        markCustomModalRequired(id,mode);
+        return;
+    }
     if(['fcl-quote','fcl-cost-price','fcl-business-cost','fcl-sales-price'].includes(id)&&(mode==='add'||mode==='edit'||mode==='view')){
         openFclPriceModal(mode,id,rowIdx,rowData);
         return;
@@ -14493,6 +14521,109 @@ function openEmployeeModal(mode,id,rowIdx,rowData){
         footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+(mode==='add'?tr('新增成功'):tr('保存成功'))+'\')" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 cursor-pointer">'+tr('确认提交')+'</button>';
     }
     document.getElementById('crud-modal').classList.add('show');
+}
+
+function expressSortMultiCheckboxHtml(prefix,options,selected){
+    const sel=selected||[];
+    return '<div class="flex flex-wrap gap-3 rounded-lg border border-surface-200 bg-surface-50 p-3">'+
+        options.map(function(o){
+            const on=sel.indexOf(o)>=0?' checked':'';
+            return '<label class="inline-flex items-center gap-1.5 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="'+esc(prefix)+' rounded border-surface-300 text-primary-600" value="'+esc(o)+'"'+on+'><span>'+esc(tr(o))+'</span></label>';
+        }).join('')+
+    '</div>';
+}
+
+function collectExpressSortChecked(cls){
+    return Array.from(document.querySelectorAll('.'+cls+':checked')).map(function(cb){return cb.value;});
+}
+
+function generateExpressSortSplit(){
+    const countries=collectExpressSortChecked('express-sort-country-cb');
+    const transports=collectExpressSortChecked('express-sort-transport-cb');
+    const dimCountry=(document.getElementById('express-dim-country')||{}).checked;
+    const dimTransport=(document.getElementById('express-dim-transport')||{}).checked;
+    const tbody=document.getElementById('express-sort-split-body');
+    if(!tbody)return;
+    if(!countries.length){showToast(tr('请先选择国家'));return;}
+    if(!transports.length){showToast(tr('请先选择运输方式'));return;}
+    if(!dimCountry&&!dimTransport){showToast(tr('请勾选至少一个拆分维度'));return;}
+    const rows=[];
+    if(dimCountry&&dimTransport){
+        countries.forEach(function(c){transports.forEach(function(t){rows.push({country:c,transport:t});});});
+    }else if(dimCountry){
+        countries.forEach(function(c){rows.push({country:c,transport:transports.join('、')});});
+    }else{
+        transports.forEach(function(t){rows.push({country:countries.join('、'),transport:t});});
+    }
+    const html=rows.map(function(r,i){
+        const gridNo='G'+String(i+1).padStart(3,'0');
+        const sealWeight=(15+i*5)+'KG';
+        const sortCode='SC-'+String(i+1).padStart(4,'0');
+        return '<tr class="border-t border-surface-100 bg-surface-50/40"><td class="px-3 py-2 text-text-secondary">'+esc(r.country)+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r.transport)+'</td><td class="px-3 py-2 text-text-primary font-medium">'+gridNo+'</td><td class="px-3 py-2 text-text-secondary">'+sealWeight+'</td><td class="px-3 py-2 text-text-primary font-medium">'+sortCode+'</td></tr>';
+    }).join('');
+    tbody.innerHTML=html;
+    showToast(tr('已生成拆分明细')+' '+rows.length+' '+tr('条'));
+}
+
+function openExpressSortModal(mode,id,rowIdx,rowData){
+    const c=TC[id];
+    const L=_lang[_currentLang];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const modeLabel=mode==='add'?L.add:mode==='copy'?tr('复制新增'):L.edit;
+    titleEl.textContent=modeLabel+tr(c.t);
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='76%';
+    const editCode=rowData?rowData[0]:'';
+    const editName=rowData?rowData[1]:'';
+    const editCountryStr=rowData?rowData[2]:'';
+    const editTransportStr=rowData?rowData[3]:'';
+    const editCountries=String(editCountryStr||'').split(/[、,，]/).map(function(s){return s.trim();}).filter(Boolean);
+    const editTransports=String(editTransportStr||'').split(/[、,，]/).map(function(s){return s.trim();}).filter(Boolean);
+    const data=_listData[id]||expandData(id);
+    const lastCode=(data[data.length-1]&&data[data.length-1][0])||'SP1000';
+    const lm=String(lastCode).match(/^(.*?)(\d+)$/);
+    const autoCode=lm?lm[1]+String(parseInt(lm[2],10)+1).padStart(lm[2].length,'0'):'SP1001';
+    const codeVal=mode==='add'?autoCode:mode==='copy'?'':editCode;
+    const COUNTRY_OPTS=['塞内加尔','尼日利亚','科特迪瓦','喀麦隆','多哥','加纳','利比里亚','几内亚','冈比亚','安哥拉','刚果金','刚果布','加蓬','赤道几内亚','肯尼亚','南非','津巴布韦','阿联酋'];
+    const TRANSPORT_OPTS=['海运','空运','铁路','快递'];
+    let html='<div class="space-y-5">';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>';
+    html+='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('方案编号')+'</label>';
+    html+=(mode==='edit'
+        ?'<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+esc(codeVal)+'" readonly>'
+        :'<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(codeVal)+'" placeholder="'+esc(tr('自动生成'))+'">');
+    html+='</div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500 mr-0.5">*</span>'+tr('方案名称')+'</label>';
+    html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(editName)+'" placeholder="'+esc(tr('请输入方案名称'))+'" required>';
+    html+='</div>';
+    html+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500 mr-0.5">*</span>'+tr('国家')+' <span class="text-xs text-text-muted ml-1">'+tr('可多选')+'</span></label>';
+    html+=expressSortMultiCheckboxHtml('express-sort-country-cb',COUNTRY_OPTS,editCountries);
+    html+='</div>';
+    html+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500 mr-0.5">*</span>'+tr('运输方式')+' <span class="text-xs text-text-muted ml-1">'+tr('可多选')+'</span></label>';
+    html+=expressSortMultiCheckboxHtml('express-sort-transport-cb',TRANSPORT_OPTS,editTransports);
+    html+='</div>';
+    html+='</div></div>';
+    html+='<div class="border border-surface-200 rounded-xl overflow-hidden">';
+    html+='<div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex flex-wrap items-center gap-4">';
+    html+='<div class="text-sm font-semibold text-text-primary">'+tr('托盘明细拆分')+'</div>';
+    html+='<div class="flex items-center gap-3 text-sm text-text-secondary">';
+    html+='<span>'+tr('勾选维度')+'：</span>';
+    html+='<label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="express-dim-country" class="rounded border-surface-300 text-primary-600" checked><span>'+tr('国家')+'</span></label>';
+    html+='<label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="express-dim-transport" class="rounded border-surface-300 text-primary-600" checked><span>'+tr('运输方式')+'</span></label>';
+    html+='</div>';
+    html+='<button type="button" onclick="generateExpressSortSplit()" class="ml-auto h-8 px-4 text-xs font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">'+tr('生成托盘明细拆分')+'</button>';
+    html+='</div>';
+    html+='<div class="p-4"><div class="overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded"><thead><tr class="bg-surface-50 text-text-secondary"><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('国家')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('运输方式')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('格口号')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('封板重量')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('分拣码')+'</th></tr></thead><tbody id="express-sort-split-body"><tr><td colspan="5" class="px-3 py-6 text-center text-text-muted">'+tr('选择国家、运输方式和拆分维度后，点击「生成托盘明细拆分」按钮生成明细')+'</td></tr></tbody></table></div>';
+    html+='<div class="mt-2 text-xs text-text-muted">'+tr('表格由「生成托盘明细拆分」按钮生成，不可直接编辑；调整参数后请重新生成。')+'</div>';
+    html+='</div></div>';
+    html+='</div>';
+    bodyEl.innerHTML=html;
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+(mode==='add'?tr('新增成功'):tr('保存成功'))+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+    setTimeout(function(){applyRuntimeEnhancements(bodyEl);},0);
 }
 
 function openCrmCustomerModal(mode,id,rowIdx,rowData){

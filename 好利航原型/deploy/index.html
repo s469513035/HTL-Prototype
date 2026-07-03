@@ -12178,10 +12178,48 @@ function stepWarehouseNumber(btn,delta){
     input.dispatchEvent(new Event('input',{bubbles:true}));
 }
 
+function warehouseMultiSearchWaybill(){
+    const input=document.getElementById('warehouse-multi-waybill-no');
+    if(!input)return;
+    if(!input.value)input.value='WB-20260701001';
+    const map={
+        'warehouse-multi-arrival-time':nowDateTimeLocalSeconds().replace('T',' '),
+        'warehouse-multi-transport':'海运',
+        'warehouse-multi-customer':'深圳市华运达国际货运 / 李华',
+        'warehouse-multi-zone':'深圳盐田仓 A区',
+        'warehouse-multi-forecast':'10',
+        'warehouse-multi-product':'手机配件'
+    };
+    Object.keys(map).forEach(function(k){
+        const el=document.getElementById(k);
+        if(el)el.value=map[k];
+    });
+    showToast(tr('已带出运单基础信息'));
+}
+
+function addWarehouseMultiPallet(){
+    const input=document.getElementById('warehouse-multi-pallet-input');
+    const list=document.getElementById('warehouse-multi-pallet-list');
+    if(!input||!list)return;
+    const val=(input.value||'').trim();
+    if(!val){showToast(tr('请输入托盘号'));return;}
+    if(Array.from(list.querySelectorAll('[data-pallet-no]')).some(function(el){return el.dataset.palletNo===val;})){
+        showToast(tr('该托盘已绑定'));
+        return;
+    }
+    const item=document.createElement('div');
+    item.className='pallet-item flex items-center justify-between px-3 py-2 bg-surface-50 rounded border border-surface-200';
+    item.setAttribute('data-pallet-no',val);
+    item.innerHTML='<div class="flex items-center gap-3 min-w-0"><span class="text-sm font-medium text-text-primary">'+esc(val)+'</span><span class="text-xs text-text-muted">'+tr('绑定时间')+'：'+nowDateTimeLocalSeconds().replace('T',' ')+'</span></div><button type="button" onclick="this.closest(\'.pallet-item\').remove()" class="h-7 px-2 text-xs font-medium text-red-500 border border-red-200 rounded hover:bg-red-50 cursor-pointer">'+tr('解绑')+'</button>';
+    list.appendChild(item);
+    input.value='';
+    showToast(tr('绑定成功'));
+}
+
 function warehouseServiceHintHtml(items){
     let html='<div class="flex flex-wrap gap-2">';
     (items||[]).forEach(function(name){
-        html+='<label class="inline-flex items-center gap-1.5 h-8 px-3 text-sm rounded border border-primary-100 bg-primary-50/60 text-text-secondary cursor-pointer hover:bg-primary-50"><input type="checkbox" class="rounded border-surface-300 text-primary-600"><span>'+tr(name)+'</span><span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[11px] font-bold leading-none" title="'+esc(serviceChargeTooltip(name))+'">!</span></label>';
+        html+='<label class="inline-flex items-center gap-1.5 h-8 px-3 text-sm rounded border border-primary-100 bg-primary-50/60 text-text-secondary cursor-pointer hover:bg-primary-50"><input type="checkbox" class="rounded border-surface-300 text-primary-600"><span>'+tr(name)+'</span><span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-surface-100 border border-surface-200 text-text-muted text-[11px] font-bold leading-none cursor-help" title="'+esc(serviceChargeTooltip(name))+'">?</span></label>';
     });
     html+='</div>';
     return html;
@@ -12330,23 +12368,22 @@ function generateWarehouseMultiInboundPage(id){
     h+='<section class="bg-white border border-primary-100 shadow-sm p-4">';
     h+=warehouseSectionTitle('基础信息');
     h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-2">';
-    h+=warehouseField('运单号','<div class="flex flex-col sm:flex-row gap-2"><div class="flex flex-1 min-w-0"><input id="warehouse-multi-waybill-no" class="flex-1 h-8 px-2 text-sm border border-surface-200 rounded-l bg-surface-50" placeholder="'+esc(tr('请输入运单号 回车即可确认'))+'"><button id="warehouse-multi-waybill-search" type="button" class="w-10 h-8 bg-primary-600 text-white rounded-r hover:bg-primary-700 cursor-pointer">⌕</button></div><label class="h-8 inline-flex items-center gap-2 text-sm text-text-secondary whitespace-nowrap"><input type="checkbox" class="rounded border-surface-300 text-primary-600" onchange="handleWarehouseMultiSyncWaybill(this)"><span>'+tr('勾选同步生成运单')+'</span></label></div>',true,'md:col-span-2');
-    h+=warehouseField('到货时间','<div class="flex"><input class="flex-1 h-8 px-2 text-sm border border-surface-200 rounded-l bg-surface-50" value="'+esc(nowText)+'"><button type="button" onclick="this.previousElementSibling.value=nowDateTimeLocalSeconds().replace(\'T\',\' \')" class="w-10 h-8 bg-primary-600 text-white rounded-r hover:bg-primary-700 cursor-pointer">↻</button></div>',true);
-    h+=warehouseField('运输方式','<select class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50">'+selectOptionsHtml(['海运','空运','铁路','快递'],'海运')+'</select>',true);
-    h+=warehouseField('客户/业务员',warehouseInlineInput('text','','请输入客户/业务员','', ''),false);
-    h+=warehouseField('库位库区',warehouseInlineInput('text','','请输入入库位库区','', ''),false);
-    h+=warehouseField('预报件数',warehouseNumberStepper('0','', 'min="0"'),false);
-    h+=warehouseField('包装类型','<select class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50"><option value="">'+tr('请选择包装类型')+'</option>'+selectOptionsHtml(['纸箱','木箱','托盘','编织袋','其他'],'')+'</select>',false);
-    h+=warehouseField('品名大类','<select class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50">'+selectOptionsHtml(categoryOptions,'电子产品')+'</select>',true);
-    h+=warehouseField('品名',warehouseInlineInput('text','','输入品名信息带出大类','', 'list="product-name-options" oninput="handleWarehouseProductNameInput(this)" onblur="handleCargoNameCommit(this)"'),true);
-    h+=warehouseField('内部备注',warehouseInlineInput('text','','请输入内部备注','', ''),false,'md:col-span-2');
+    h+=warehouseField('运单号','<div class="flex flex-1 min-w-0"><input id="warehouse-multi-waybill-no" class="flex-1 h-8 px-2 text-sm border border-surface-200 rounded-l bg-surface-50" placeholder="'+esc(tr('扫描/输入运单号后回车带出基础信息'))+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();warehouseMultiSearchWaybill();}"><button id="warehouse-multi-waybill-search" type="button" onclick="warehouseMultiSearchWaybill()" class="w-10 h-8 bg-primary-600 text-white rounded-r hover:bg-primary-700 cursor-pointer">⌕</button></div>',true,'md:col-span-2');
+    h+=warehouseField('到货时间','<input id="warehouse-multi-arrival-time" readonly value="'+esc(nowText)+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
+    h+=warehouseField('运输方式','<input id="warehouse-multi-transport" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
+    h+=warehouseField('客户/业务员','<input id="warehouse-multi-customer" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
+    h+=warehouseField('库位库区','<input id="warehouse-multi-zone" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
+    h+=warehouseField('预报件数','<input id="warehouse-multi-forecast" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
+    h+=warehouseField('品名','<input id="warehouse-multi-product" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
+    h+=warehouseField('操作备注',warehouseInlineInput('text','','请输入操作备注','', ''),false,'md:col-span-2');
     h+='</div>';
     h+='<div class="mt-3">'+warehouseServiceHintHtml(['报关','木箱','仿牌','带电','带磁','贴箱唛'])+'</div>';
     h+='</section>';
     h+='<section class="bg-white border border-primary-100 shadow-sm p-4">';
     h+=warehouseSectionTitle('同步绑定托盘');
-    h+='<div class="text-sm text-red-500 mb-2"><span class="font-semibold">*</span> '+tr('同步绑定托盘')+'（'+tr('不建议在PC端上操作，PDA支持扫码登记')+'）</div>';
-    h+='<div class="flex flex-col sm:flex-row gap-2"><input class="flex-1 h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50" placeholder="'+esc(tr('绑定托盘号 回车即可确认'))+'"><button type="button" onclick="showToast(\''+tr('绑定成功')+'\')" class="h-8 px-5 text-sm font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">'+tr('绑定')+'</button></div>';
+    h+='<div class="text-sm text-text-muted mb-2">'+tr('支持绑定多个托盘号，每绑定一个自动追加到下方列表')+'（'+tr('不建议在PC端上操作，PDA支持扫码登记')+'）</div>';
+    h+='<div class="flex flex-col sm:flex-row gap-2"><input id="warehouse-multi-pallet-input" class="flex-1 h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50" placeholder="'+esc(tr('输入托盘号后回车或点击绑定'))+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();addWarehouseMultiPallet();}"><button type="button" onclick="addWarehouseMultiPallet()" class="h-8 px-5 text-sm font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">'+tr('绑定')+'</button></div>';
+    h+='<div id="warehouse-multi-pallet-list" class="mt-3 space-y-2"></div>';
     h+='</section>';
     h+='</div>';
     h+='<div class="space-y-3">';

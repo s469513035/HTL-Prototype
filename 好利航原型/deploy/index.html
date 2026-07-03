@@ -13970,6 +13970,22 @@ function crmTextareaFieldHtml(label,value,readonly){
     return '<div class="flex flex-col gap-1.5'+half+'"><label class="text-sm font-medium text-text-secondary">'+tr(label)+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg '+(readonly?'bg-surface-100 cursor-not-allowed':'bg-surface-50')+' resize-none"'+(readonly?' readonly disabled':'')+'>'+esc(value||'')+'</textarea></div>';
 }
 
+function crmLeadingStarFieldHtml(label,type,value,readonly,required,opts){
+    opts=opts||{};
+    const star=required?'<span class="text-red-500 mr-0.5">*</span>':'';
+    const placeholder=opts.placeholder||('请输入'+label);
+    const attr=readonly?' readonly disabled':'';
+    const reqAttr=required&&!readonly?' required':'';
+    let control='';
+    if(type==='select'){
+        const selAttr=readonly?' disabled':'';
+        control='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg '+(readonly?'bg-surface-100 cursor-not-allowed':'bg-surface-50')+'"'+selAttr+(required&&!readonly?' required':'')+'><option value="">'+esc(tr(placeholder))+'</option>'+selectOptionsHtml(opts.options||[],value)+'</select>';
+    }else{
+        control='<input type="'+type+'" placeholder="'+esc(tr(placeholder))+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg '+(readonly?'bg-surface-100 cursor-not-allowed':'bg-surface-50')+'" value="'+esc(value||'')+'"'+attr+reqAttr+'>';
+    }
+    return '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+star+tr(label)+'</label>'+control+'</div>';
+}
+
 function crmQualFieldHtml(key,label,value,type,readonly,requiredInit){
     const attr=readonly?' readonly disabled':'';
     const reqAttr=requiredInit&&!readonly?' required':'';
@@ -14347,13 +14363,16 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     const warehouseOptions=getWarehouseNameOptions();
     String(pickupWarehouse||'').split(',').forEach(function(name){name=name.trim();if(name&&!warehouseOptions.includes(name))warehouseOptions.push(name);});
     const legalIdCard=getTableValueByHeader(c,rowData,'法人身份证','');
-    const businessLicense=getTableValueByHeader(c,rowData,'公司营业执照','');
-    const legalPhone=getTableValueByHeader(c,rowData,'法人电话','');
-    const regCapital=getTableValueByHeader(c,rowData,'注册资金','');
-    const regYears=getTableValueByHeader(c,rowData,'注册年限','');
-    const orgCode=getTableValueByHeader(c,rowData,'组织机构代码','');
+    const regCapital=getTableValueByHeader(c,rowData,'注册资本','');
     const contactPhone=getTableValueByHeader(c,rowData,'联系电话','');
-    const isFcl=bizType==='整柜';
+    const hasContract=getTableValueByHeader(c,rowData,'是否签订合同','');
+    const legalName=getTableValueByHeader(c,rowData,'法人姓名','');
+    const licenseRegDate=getTableValueByHeader(c,rowData,'营业执照注册时间','');
+    const bankAccountName=getTableValueByHeader(c,rowData,'开户名','');
+    const bankName=getTableValueByHeader(c,rowData,'开户行','');
+    const bankAccount=getTableValueByHeader(c,rowData,'银行账号','');
+    const shippingReq=getTableValueByHeader(c,rowData,'寄货要求','');
+    const pickupReq=getTableValueByHeader(c,rowData,'提货要求','');
     const bizScope=getTableValueByHeader(c,rowData,'营业范围','');
     const salesPerson=getTableValueByHeader(c,rowData,'所属业务员','');
     const settlementPerson=getTableValueByHeader(c,rowData,'所属操作','');
@@ -14368,7 +14387,7 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     html+=crmInputFieldHtml('客户代码',customerCode,'text',true);
     html+=crmInputFieldHtml('客户简称',shortName,'text',readonly);
     html+=crmInputFieldHtml('客户全称',fullName,'text',readonly);
-    html+=crmSelectFieldHtml('业务类型',['散货','整柜'],bizType,readonly,' onchange="crmBizTypeChanged(this.value)"');
+    html+=crmSelectFieldHtml('业务类型',['散货','整柜'],bizType,readonly);
     html+=crmSelectFieldHtml('所属国家',COUNTRY_CODE_NAME_OPTIONS,country,readonly);
     html+=readonly?crmWarehouseDisplayHtml('海外提货偏好仓库',warehouseOptions,pickupWarehouse):checkedDropdownFieldHtml('海外提货偏好仓库',warehouseOptions,pickupWarehouse);
     html+=crmSelectFieldHtml('启用状态',['启用','禁用'],getTableValueByHeader(c,rowData,'启用状态','启用'),readonly);
@@ -14395,22 +14414,20 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
         html+=shipmentSenderDatalistHtml();
     }
     html+='</div></div>';
-    html+='<div><div class="flex items-center mb-3 flex-wrap gap-3">'+
-        '<div class="text-sm font-semibold text-text-primary">'+tr('企业资质信息')+'</div>'+
-        (readonly?'':'<input type="file" id="crm-license-recognize-input" accept="image/*" class="hidden" onchange="recognizeCrmLicense(this)"><button type="button" onclick="document.getElementById(\'crm-license-recognize-input\').click()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer inline-flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>'+tr('快速识别营业执照照片')+'</button>')+
-    '</div>'+
-    '<div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4" id="crm-qualification-grid">';
-    html+=crmQualFieldHtml('组织机构代码','组织机构代码',orgCode,'text',readonly,isFcl);
-    html+=crmQualFieldHtml('法人身份证','法人身份证',legalIdCard,'text',readonly,!isFcl);
-    html+=crmQualFieldHtml('公司营业执照','公司营业执照',businessLicense,'text',readonly,!isFcl);
-    html+=crmQualFieldHtml('法人电话','法人电话',legalPhone,'tel',readonly,!isFcl);
-    html+=crmQualFieldHtml('注册资金','注册资金',regCapital,'text',readonly,!isFcl);
-    html+=crmQualFieldHtml('注册年限','注册年限',regYears,'text',readonly,!isFcl);
-    html+='</div>';
-    if(!isFcl){
-        html+='<div class="mt-2 text-xs text-text-muted">'+tr('业务类型为「整柜」时，仅需填写组织机构代码；其他资质字段可选填。')+'</div>';
-    }
-    html+='</div>';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('企业资质信息')+'</div>'+
+        '<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">'+
+            crmLeadingStarFieldHtml('是否签订合同','select',hasContract,readonly,true,{options:['是','否'],placeholder:'请选择'})+
+            crmLeadingStarFieldHtml('法人姓名','text',legalName,readonly,true)+
+            crmLeadingStarFieldHtml('法人身份证','text',legalIdCard,readonly,false)+
+            crmLeadingStarFieldHtml('注册资本','text',regCapital,readonly,false)+
+            crmLeadingStarFieldHtml('营业执照注册时间','date',licenseRegDate,readonly,true,{placeholder:'请选择营业执照注册时间'})+
+            crmLeadingStarFieldHtml('开户名','text',bankAccountName,readonly,false)+
+            crmLeadingStarFieldHtml('开户行','text',bankName,readonly,false)+
+            crmLeadingStarFieldHtml('银行账号','text',bankAccount,readonly,false)+
+            crmLeadingStarFieldHtml('寄货要求','text',shippingReq,readonly,false)+
+            crmLeadingStarFieldHtml('提货要求','text',pickupReq,readonly,false)+
+        '</div>'+
+    '</div>';
     html+='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('营业范围')+' <span class="text-red-500">*</span></label>';
     if(readonly){html+='<div class="px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 min-h-[60px]">'+esc(bizScope)+'</div>';}

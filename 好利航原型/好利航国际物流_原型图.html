@@ -2948,16 +2948,13 @@ addPrototypeTable('wh-express-sort','快递分拣方案管理','方案编号|方
     ['SP1001','西非快递主方案','塞内加尔、尼日利亚','海运、空运','G001','20KG','SC-0001'],
     ['SP1002','东非普货方案','肯尼亚','海运','G002','25KG','SC-0002'],
     ['SP1003','西非空运快线','尼日利亚','空运','G003','15KG','SC-0003'],
-    ['SP1004','中东铁路专线','阿联酋','铁路','G004','30KG','SC-0004'],
+    ['SP1004','中东海运专线','阿联酋','海运','G004','30KG','SC-0004'],
     ['SP1005','南非海运普货','南非、津巴布韦','海运','G005','22KG','SC-0005']
 ],[
     {label:'方案编号',type:'text',field:'code',placeholder:'请输入方案编号'},
     {label:'方案名称',type:'text',field:'name',placeholder:'请输入方案名称'},
     {label:'国家',type:'text',field:'country',placeholder:'请输入国家'},
-    {label:'运输方式',type:'select',field:'transport',options:['海运','空运','铁路','快递']},
-    {label:'格口号',type:'text',field:'gridNo',placeholder:'请输入格口号'},
-    {label:'封板重量',type:'text',field:'sealWeight',placeholder:'请输入封板重量'},
-    {label:'分拣码',type:'text',field:'sortCode',placeholder:'请输入分拣码'}
+    {label:'运输方式',type:'select',field:'transport',options:['海运','空运']}
 ]);
 TC['wh-express-sort'].noAutoAudit=true;
 addPrototypeTable('wh-pack-rule','配舱规则','销售产品|运输方式|目的港|配舱优先级1|配舱优先级2|配舱优先级3|是否启用',['启用','停用'],[
@@ -14537,6 +14534,70 @@ function collectExpressSortChecked(cls){
     return Array.from(document.querySelectorAll('.'+cls+':checked')).map(function(cb){return cb.value;});
 }
 
+var _expressSortDetails={
+    'SP1001':[
+        {country:'塞内加尔',transport:'海运',gridNo:'G001',sealWeight:'20KG',sortCode:'SC-0001'},
+        {country:'塞内加尔',transport:'空运',gridNo:'G002',sealWeight:'22KG',sortCode:'SC-0002'},
+        {country:'尼日利亚',transport:'海运',gridNo:'G003',sealWeight:'25KG',sortCode:'SC-0003'},
+        {country:'尼日利亚',transport:'空运',gridNo:'G004',sealWeight:'23KG',sortCode:'SC-0004'}
+    ],
+    'SP1002':[
+        {country:'肯尼亚',transport:'海运',gridNo:'G001',sealWeight:'25KG',sortCode:'SC-0001'}
+    ],
+    'SP1003':[
+        {country:'尼日利亚',transport:'空运',gridNo:'G001',sealWeight:'15KG',sortCode:'SC-0001'}
+    ],
+    'SP1004':[
+        {country:'阿联酋',transport:'海运',gridNo:'G001',sealWeight:'30KG',sortCode:'SC-0001'}
+    ],
+    'SP1005':[
+        {country:'南非',transport:'海运',gridNo:'G001',sealWeight:'22KG',sortCode:'SC-0001'},
+        {country:'津巴布韦',transport:'海运',gridNo:'G002',sealWeight:'22KG',sortCode:'SC-0002'}
+    ]
+};
+
+function expressSortRowHtml(r){
+    return '<tr class="express-sort-row border-t border-surface-100 hover:bg-surface-50/40" data-country="'+esc(r.country||'')+'" data-transport="'+esc(r.transport||'')+'" data-seal-weight="'+esc(r.sealWeight||'')+'">'+
+        '<td class="px-3 py-2 text-text-secondary">'+esc(r.country||'')+'</td>'+
+        '<td class="px-3 py-2 text-text-secondary">'+esc(r.transport||'')+'</td>'+
+        '<td class="px-2 py-1"><input type="text" class="express-sort-grid w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" value="'+esc(r.gridNo||'')+'"></td>'+
+        '<td class="px-3 py-2 text-text-secondary">'+esc(r.sealWeight||'')+'</td>'+
+        '<td class="px-2 py-1"><input type="text" class="express-sort-code w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" value="'+esc(r.sortCode||'')+'"></td>'+
+        '<td class="px-3 py-2 text-center"><button type="button" onclick="removeExpressSortRow(this)" class="text-xs font-medium text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td>'+
+    '</tr>';
+}
+
+function loadExpressSortDetails(code){
+    if(!code)return [];
+    const raw=_expressSortDetails[code];
+    if(!raw||!raw.length)return [];
+    return raw.map(function(r){return Object.assign({},r);});
+}
+
+function saveExpressSortDetails(code){
+    if(!code)return;
+    const tbody=document.getElementById('express-sort-split-body');
+    if(!tbody){_expressSortDetails[code]=[];return;}
+    const rows=Array.from(tbody.querySelectorAll('tr.express-sort-row')).map(function(tr){
+        const grid=tr.querySelector('.express-sort-grid');
+        const code2=tr.querySelector('.express-sort-code');
+        return {
+            country:tr.getAttribute('data-country')||'',
+            transport:tr.getAttribute('data-transport')||'',
+            gridNo:grid?grid.value:'',
+            sealWeight:tr.getAttribute('data-seal-weight')||'',
+            sortCode:code2?code2.value:''
+        };
+    });
+    _expressSortDetails[code]=rows;
+}
+
+function submitExpressSortModal(code,mode){
+    if(code)saveExpressSortDetails(code);
+    closeCrudModal();
+    showToast(mode==='add'?tr('新增成功'):tr('保存成功'));
+}
+
 function addExpressSortRow(){
     const countries=collectExpressSortChecked('express-sort-country-cb');
     const transports=collectExpressSortChecked('express-sort-transport-cb');
@@ -14560,17 +14621,13 @@ function addExpressSortRow(){
     const startIdx=tbody.querySelectorAll('tr.express-sort-row').length;
     const html=rows.map(function(r,i){
         const seq=startIdx+i+1;
-        const gridNo='G'+String(seq).padStart(3,'0');
-        const sealWeight=(15+(seq-1)*5)+'KG';
-        const sortCode='SC-'+String(seq).padStart(4,'0');
-        return '<tr class="express-sort-row border-t border-surface-100 hover:bg-surface-50/40">'+
-            '<td class="px-3 py-2 text-text-secondary">'+esc(r.country)+'</td>'+
-            '<td class="px-3 py-2 text-text-secondary">'+esc(r.transport)+'</td>'+
-            '<td class="px-2 py-1"><input type="text" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" value="'+esc(gridNo)+'"></td>'+
-            '<td class="px-3 py-2 text-text-secondary">'+esc(sealWeight)+'</td>'+
-            '<td class="px-2 py-1"><input type="text" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" value="'+esc(sortCode)+'"></td>'+
-            '<td class="px-3 py-2 text-center"><button type="button" onclick="removeExpressSortRow(this)" class="text-xs font-medium text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td>'+
-        '</tr>';
+        return expressSortRowHtml({
+            country:r.country,
+            transport:r.transport,
+            gridNo:'G'+String(seq).padStart(3,'0'),
+            sealWeight:(15+(seq-1)*5)+'KG',
+            sortCode:'SC-'+String(seq).padStart(4,'0')
+        });
     }).join('');
     tbody.insertAdjacentHTML('beforeend',html);
     showToast(tr('已新增')+' '+rows.length+' '+tr('条'));
@@ -14608,7 +14665,7 @@ function openExpressSortModal(mode,id,rowIdx,rowData){
     const autoCode=lm?lm[1]+String(parseInt(lm[2],10)+1).padStart(lm[2].length,'0'):'SP1001';
     const codeVal=mode==='add'?autoCode:mode==='copy'?'':editCode;
     const COUNTRY_OPTS=['塞内加尔','尼日利亚','科特迪瓦','喀麦隆','多哥','加纳','利比里亚','几内亚','冈比亚','安哥拉','刚果金','刚果布','加蓬','赤道几内亚','肯尼亚','南非','津巴布韦','阿联酋'];
-    const TRANSPORT_OPTS=['海运','空运','铁路','快递'];
+    const TRANSPORT_OPTS=['海运','空运'];
     let html='<div class="space-y-5">';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>';
     html+='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">';
@@ -14637,12 +14694,16 @@ function openExpressSortModal(mode,id,rowIdx,rowData){
     html+='</div>';
     html+='<button type="button" onclick="addExpressSortRow()" class="ml-auto h-8 px-4 text-xs font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">+ '+tr('新增托盘')+'</button>';
     html+='</div>';
-    html+='<div class="p-4"><div class="overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded"><thead><tr class="bg-surface-50 text-text-secondary"><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('国家')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('运输方式')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('格口号')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('封板重量')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('分拣码')+'</th><th class="px-3 py-2 text-center border-b border-surface-200 w-20">'+tr('操作')+'</th></tr></thead><tbody id="express-sort-split-body"><tr class="express-sort-placeholder"><td colspan="6" class="px-3 py-6 text-center text-text-muted">'+tr('选择国家、运输方式和拆分维度后，点击「新增托盘」按钮生成明细')+'</td></tr></tbody></table></div>';
-    html+='<div class="mt-2 text-xs text-text-muted">'+tr('支持多次「新增托盘」按选择维度追加行；「格口号」和「分拣码」可直接编辑；点击行末「删除」移除单行。')+'</div>';
+    const existingDetails=mode==='add'?[]:loadExpressSortDetails(codeVal);
+    const detailBody=existingDetails.length
+        ?existingDetails.map(expressSortRowHtml).join('')
+        :'<tr class="express-sort-placeholder"><td colspan="6" class="px-3 py-6 text-center text-text-muted">'+tr('选择国家、运输方式和拆分维度后，点击「新增托盘」按钮生成明细')+'</td></tr>';
+    html+='<div class="p-4"><div class="overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded"><thead><tr class="bg-surface-50 text-text-secondary"><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('国家')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('运输方式')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('格口号')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('封板重量')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('分拣码')+'</th><th class="px-3 py-2 text-center border-b border-surface-200 w-20">'+tr('操作')+'</th></tr></thead><tbody id="express-sort-split-body">'+detailBody+'</tbody></table></div>';
+    html+='<div class="mt-2 text-xs text-text-muted">'+tr('明细随方案保存，编辑时会加载已有记录；支持多次「新增托盘」按选择维度追加行；「格口号」和「分拣码」可直接编辑；点击行末「删除」移除单行。')+'</div>';
     html+='</div></div>';
     html+='</div>';
     bodyEl.innerHTML=html;
-    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+(mode==='add'?tr('新增成功'):tr('保存成功'))+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="submitExpressSortModal(\''+esc(codeVal)+'\',\''+mode+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
     setTimeout(function(){applyRuntimeEnhancements(bodyEl);},0);
 }

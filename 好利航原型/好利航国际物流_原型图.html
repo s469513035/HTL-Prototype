@@ -9086,15 +9086,40 @@ function nextExpressInboundPalletNo(){
     return 'TP-EI-'+String(st.palletSeq).padStart(4,'0');
 }
 
+function switchExpressInboundPalletTab(tab){
+    const st=ensureExpressInboundState();
+    st.palletTab=tab;
+    document.querySelectorAll('[data-express-pallet-tab]').forEach(function(btn){
+        const on=btn.dataset.expressPalletTab===tab;
+        btn.classList.toggle('bg-primary-600',on);
+        btn.classList.toggle('text-white',on);
+        btn.classList.toggle('bg-white',!on);
+        btn.classList.toggle('text-text-secondary',!on);
+        btn.classList.toggle('hover:bg-surface-50',!on);
+    });
+    renderExpressInboundPallets();
+}
+
 function renderExpressInboundPallets(){
     const tbody=document.getElementById('express-inbound-pallets-body');
     if(!tbody)return;
     const st=ensureExpressInboundState();
-    if(!st.pallets.length){
-        tbody.innerHTML='<tr><td colspan="9" class="px-3 py-6 text-center text-text-muted">'+tr('点击「+ 新增分板」选择分拣方案生成分板明细')+'</td></tr>';
+    const tab=st.palletTab||'active';
+    const activeCount=st.pallets.filter(function(p){return !p.sealed;}).length;
+    const sealedCount=st.pallets.filter(function(p){return p.sealed;}).length;
+    const cA=document.getElementById('express-pallet-count-active');
+    const cS=document.getElementById('express-pallet-count-sealed');
+    if(cA)cA.textContent=activeCount;
+    if(cS)cS.textContent=sealedCount;
+    const filtered=st.pallets.filter(function(p){return tab==='active'?!p.sealed:p.sealed;});
+    if(!filtered.length){
+        const msg=tab==='active'
+            ?tr('点击「+ 新增分板」选择分拣方案生成分板明细')
+            :tr('暂无已封板托盘');
+        tbody.innerHTML='<tr><td colspan="9" class="px-3 py-6 text-center text-text-muted">'+msg+'</td></tr>';
         return;
     }
-    tbody.innerHTML=st.pallets.map(function(p){
+    tbody.innerHTML=filtered.map(function(p){
         return '<tr class="border-t border-surface-100'+(p.sealed?' bg-emerald-50/40':' hover:bg-surface-50/40')+'">'+
             '<td class="px-3 py-2 text-text-primary font-medium">'+esc(p.palletNo)+(p.sealed?' <span class="text-xs text-emerald-600 ml-1">('+tr('已封板')+')</span>':'')+'</td>'+
             '<td class="px-3 py-2 text-text-secondary">'+esc(p.gridNo||'')+'</td>'+
@@ -9105,7 +9130,7 @@ function renderExpressInboundPallets(){
             '<td class="px-3 py-2 text-text-secondary">'+esc(p.sealWeight||'')+'</td>'+
             '<td class="px-3 py-2 text-text-secondary">'+esc(p.sortCode||'')+'</td>'+
             '<td class="px-3 py-2 text-center whitespace-nowrap">'+
-                (p.sealed?'<span class="text-xs text-text-muted">'+tr('已完成')+'</span>':
+                (p.sealed?'<span class="text-xs text-text-muted" title="'+esc((p.location?tr('库位')+'：'+p.location:''))+'">'+(p.location?esc(p.location):tr('已完成'))+'</span>':
                 '<button type="button" onclick="openExpressInboundSealModal(\''+esc(p.palletNo)+'\')" class="text-xs font-medium text-primary-600 hover:text-primary-700 cursor-pointer mr-3">'+tr('封板')+'</button>'+
                 '<button type="button" onclick="removeExpressInboundPallet(\''+esc(p.palletNo)+'\')" class="text-xs font-medium text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button>')+
             '</td>'+
@@ -9315,14 +9340,48 @@ function generateExpressInboundPage(id){
     h+='<div class="space-y-6">';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
     h+='<section>'+
+        '<div class="flex items-center justify-between mb-3 flex-wrap gap-2">'+
+            '<div class="text-sm font-semibold text-text-primary">'+tr('分板明细')+'</div>'+
+            '<div class="flex items-center gap-2">'+
+                '<div class="inline-flex rounded-lg border border-surface-200 overflow-hidden">'+
+                    '<button type="button" data-express-pallet-tab="active" onclick="switchExpressInboundPalletTab(\'active\')" class="h-8 px-3 text-xs font-medium bg-primary-600 text-white cursor-pointer">'+tr('待封板')+' <span id="express-pallet-count-active">0</span></button>'+
+                    '<button type="button" data-express-pallet-tab="sealed" onclick="switchExpressInboundPalletTab(\'sealed\')" class="h-8 px-3 text-xs font-medium text-text-secondary bg-white hover:bg-surface-50 border-l border-surface-200 cursor-pointer">'+tr('已封板')+' <span id="express-pallet-count-sealed">0</span></button>'+
+                '</div>'+
+                '<button type="button" onclick="openExpressInboundSchemeModal()" class="h-8 px-3 text-xs font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">+ '+tr('新增分板')+'</button>'+
+            '</div>'+
+        '</div>'+
+        '<div class="border border-surface-200 rounded-lg overflow-hidden">'+
+            '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
+                '<th class="px-3 py-2 text-left">'+tr('托盘号')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('格口号')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('国家')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('运输方式')+'</th>'+
+                '<th class="px-3 py-2 text-right">'+tr('件数')+'</th>'+
+                '<th class="px-3 py-2 text-right">'+tr('重量')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('封板重量')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('分拣码')+'</th>'+
+                '<th class="px-3 py-2 text-center w-24">'+tr('操作')+'</th>'+
+            '</tr></thead><tbody id="express-inbound-pallets-body"></tbody></table></div>'+
+        '</div>'+
+    '</section>';
+    h+='<section>'+
         '<div class="text-sm font-semibold text-text-primary mb-3">'+tr('扫描信息')+'</div>'+
-        '<div class="flex flex-wrap items-end gap-2 mb-3">'+
-            '<div class="flex-1 min-w-[220px]"><label class="text-xs text-text-muted mb-1 block">'+tr('快递单号')+'</label><input id="express-inbound-scan-input" class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" placeholder="'+esc(tr('扫描/输入快递单号后回车'))+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(this);}"></div>'+
-            '<div class="w-24"><label class="text-xs text-text-muted mb-1 block">'+tr('长(cm)')+'</label><input id="express-inbound-scan-length" type="number" min="0" step="0.1" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
-            '<div class="w-24"><label class="text-xs text-text-muted mb-1 block">'+tr('宽(cm)')+'</label><input id="express-inbound-scan-width" type="number" min="0" step="0.1" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
-            '<div class="w-24"><label class="text-xs text-text-muted mb-1 block">'+tr('高(cm)')+'</label><input id="express-inbound-scan-height" type="number" min="0" step="0.1" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
-            '<div class="w-28"><label class="text-xs text-text-muted mb-1 block">'+tr('重量(KG)')+'</label><input id="express-inbound-scan-weight" type="number" min="0" step="0.01" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
-            '<button type="button" onclick="handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'))" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">'+tr('确认扫描')+'</button>'+
+        '<div class="flex gap-2 mb-3">'+
+            '<div class="flex-1 min-w-0"><label class="text-xs text-text-muted mb-1 block">'+tr('快递单号')+'</label><input id="express-inbound-scan-input" class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" placeholder="'+esc(tr('扫描/输入快递单号后回车'))+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(this);}"></div>'+
+            '<div class="flex items-end"><button type="button" onclick="handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'))" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">'+tr('确认扫描')+'</button></div>'+
+        '</div>'+
+        '<div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">'+
+            '<div><label class="text-xs text-text-muted mb-1 block">'+tr('长(cm)')+'</label><input id="express-inbound-scan-length" type="number" min="0" step="0.1" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
+            '<div><label class="text-xs text-text-muted mb-1 block">'+tr('宽(cm)')+'</label><input id="express-inbound-scan-width" type="number" min="0" step="0.1" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
+            '<div><label class="text-xs text-text-muted mb-1 block">'+tr('高(cm)')+'</label><input id="express-inbound-scan-height" type="number" min="0" step="0.1" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
+            '<div><label class="text-xs text-text-muted mb-1 block">'+tr('重量(KG)')+'</label><input id="express-inbound-scan-weight" type="number" min="0" step="0.01" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
+        '</div>'+
+        '<div class="mb-3"><label class="text-xs text-text-muted mb-1 block">'+tr('附加服务')+'</label>'+
+            '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
+                ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
+                    return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
+                }).join('')+
+            '</div>'+
         '</div>'+
         '<div class="border border-surface-200 rounded-lg overflow-hidden">'+
             '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
@@ -9337,32 +9396,6 @@ function generateExpressInboundPage(id){
                 '<th class="px-3 py-2 text-right">'+tr('高(cm)')+'</th>'+
                 '<th class="px-3 py-2 text-right">'+tr('重量(KG)')+'</th>'+
             '</tr></thead><tbody id="express-inbound-scans-body"></tbody></table></div>'+
-        '</div>'+
-    '</section>';
-    h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
-        '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
-            ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
-                return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
-            }).join('')+
-        '</div>'+
-    '</section>';
-    h+='<section>'+
-        '<div class="flex items-center justify-between mb-3 flex-wrap gap-2">'+
-            '<div class="text-sm font-semibold text-text-primary">'+tr('分板明细')+'</div>'+
-            '<button type="button" onclick="openExpressInboundSchemeModal()" class="h-8 px-3 text-xs font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">+ '+tr('新增分板')+'</button>'+
-        '</div>'+
-        '<div class="border border-surface-200 rounded-lg overflow-hidden">'+
-            '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
-                '<th class="px-3 py-2 text-left">'+tr('托盘号')+'</th>'+
-                '<th class="px-3 py-2 text-left">'+tr('格口号')+'</th>'+
-                '<th class="px-3 py-2 text-left">'+tr('国家')+'</th>'+
-                '<th class="px-3 py-2 text-left">'+tr('运输方式')+'</th>'+
-                '<th class="px-3 py-2 text-right">'+tr('件数')+'</th>'+
-                '<th class="px-3 py-2 text-right">'+tr('重量')+'</th>'+
-                '<th class="px-3 py-2 text-left">'+tr('封板重量')+'</th>'+
-                '<th class="px-3 py-2 text-left">'+tr('分拣码')+'</th>'+
-                '<th class="px-3 py-2 text-center w-24">'+tr('操作')+'</th>'+
-            '</tr></thead><tbody id="express-inbound-pallets-body"></tbody></table></div>'+
         '</div>'+
     '</section>';
     h+='</div></div>';

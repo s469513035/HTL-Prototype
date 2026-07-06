@@ -9118,7 +9118,7 @@ function renderExpressInboundScans(){
     if(!tbody)return;
     const st=ensureExpressInboundState();
     if(!st.scans.length){
-        tbody.innerHTML='<tr><td colspan="6" class="px-3 py-6 text-center text-text-muted">'+tr('扫描快递单号即可自动统计到分板明细')+'</td></tr>';
+        tbody.innerHTML='<tr><td colspan="10" class="px-3 py-6 text-center text-text-muted">'+tr('扫描快递单号即可自动统计到分板明细')+'</td></tr>';
         return;
     }
     tbody.innerHTML=st.scans.map(function(s){
@@ -9129,6 +9129,10 @@ function renderExpressInboundScans(){
             '<td class="px-3 py-2 text-text-secondary">'+esc(s.transport)+'</td>'+
             '<td class="px-3 py-2 text-text-secondary">'+esc(s.palletNo)+'</td>'+
             '<td class="px-3 py-2 text-text-secondary">'+esc(s.gridNo)+'</td>'+
+            '<td class="px-3 py-2 text-right text-text-secondary">'+esc(s.length||'—')+'</td>'+
+            '<td class="px-3 py-2 text-right text-text-secondary">'+esc(s.width||'—')+'</td>'+
+            '<td class="px-3 py-2 text-right text-text-secondary">'+esc(s.height||'—')+'</td>'+
+            '<td class="px-3 py-2 text-right text-text-secondary">'+esc(s.weight||'—')+'</td>'+
         '</tr>';
     }).join('');
 }
@@ -9200,7 +9204,15 @@ function handleExpressInboundScan(input){
     let seed=0;
     for(let i=0;i<val.length;i++)seed=(seed*31+val.charCodeAt(i))>>>0;
     const target=available[seed%available.length];
-    const singleWeight=(0.5+(seed%30)*0.1);
+    const lengthEl=document.getElementById('express-inbound-scan-length');
+    const widthEl=document.getElementById('express-inbound-scan-width');
+    const heightEl=document.getElementById('express-inbound-scan-height');
+    const weightEl=document.getElementById('express-inbound-scan-weight');
+    const lengthV=(lengthEl&&lengthEl.value)||'';
+    const widthV=(widthEl&&widthEl.value)||'';
+    const heightV=(heightEl&&heightEl.value)||'';
+    const weightV=(weightEl&&weightEl.value)||'';
+    const singleWeight=parseFloat(weightV)||(0.5+(seed%30)*0.1);
     target.count+=1;
     const oldW=parseFloat(String(target.weight||'0').replace(/[^\d.]/g,''))||0;
     target.weight=(oldW+singleWeight).toFixed(1)+'KG';
@@ -9211,9 +9223,17 @@ function handleExpressInboundScan(input){
         country:target.country,
         transport:target.transport,
         palletNo:target.palletNo,
-        gridNo:target.gridNo
+        gridNo:target.gridNo,
+        length:lengthV,
+        width:widthV,
+        height:heightV,
+        weight:weightV||singleWeight.toFixed(1)
     });
     input.value='';
+    if(lengthEl)lengthEl.value='';
+    if(widthEl)widthEl.value='';
+    if(heightEl)heightEl.value='';
+    if(weightEl)weightEl.value='';
     input.focus();
     renderExpressInboundPallets();
     renderExpressInboundScans();
@@ -9294,6 +9314,31 @@ function generateExpressInboundPage(id){
     h+='<div class="flex items-center justify-between gap-4 mb-5"><h2 class="text-lg font-semibold text-text-primary">'+tr('快递入仓(分拣装板)')+'</h2><span class="badge bg-blue-100 text-blue-700">'+tr('作业中')+'</span></div>';
     h+='<div class="space-y-6">';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
+    h+='<section>'+
+        '<div class="text-sm font-semibold text-text-primary mb-3">'+tr('扫描信息')+'</div>'+
+        '<div class="flex flex-wrap items-end gap-2 mb-3">'+
+            '<div class="flex-1 min-w-[220px]"><label class="text-xs text-text-muted mb-1 block">'+tr('快递单号')+'</label><input id="express-inbound-scan-input" class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" placeholder="'+esc(tr('扫描/输入快递单号后回车'))+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(this);}"></div>'+
+            '<div class="w-24"><label class="text-xs text-text-muted mb-1 block">'+tr('长(cm)')+'</label><input id="express-inbound-scan-length" type="number" min="0" step="0.1" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
+            '<div class="w-24"><label class="text-xs text-text-muted mb-1 block">'+tr('宽(cm)')+'</label><input id="express-inbound-scan-width" type="number" min="0" step="0.1" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
+            '<div class="w-24"><label class="text-xs text-text-muted mb-1 block">'+tr('高(cm)')+'</label><input id="express-inbound-scan-height" type="number" min="0" step="0.1" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
+            '<div class="w-28"><label class="text-xs text-text-muted mb-1 block">'+tr('重量(KG)')+'</label><input id="express-inbound-scan-weight" type="number" min="0" step="0.01" class="w-full h-9 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white text-center" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'));}"></div>'+
+            '<button type="button" onclick="handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'))" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">'+tr('确认扫描')+'</button>'+
+        '</div>'+
+        '<div class="border border-surface-200 rounded-lg overflow-hidden">'+
+            '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
+                '<th class="px-3 py-2 text-left">'+tr('快递单号')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('客户代码')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('国家')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('运输方式')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('托盘号')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('格口号')+'</th>'+
+                '<th class="px-3 py-2 text-right">'+tr('长(cm)')+'</th>'+
+                '<th class="px-3 py-2 text-right">'+tr('宽(cm)')+'</th>'+
+                '<th class="px-3 py-2 text-right">'+tr('高(cm)')+'</th>'+
+                '<th class="px-3 py-2 text-right">'+tr('重量(KG)')+'</th>'+
+            '</tr></thead><tbody id="express-inbound-scans-body"></tbody></table></div>'+
+        '</div>'+
+    '</section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
         '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
             ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
@@ -9320,26 +9365,7 @@ function generateExpressInboundPage(id){
             '</tr></thead><tbody id="express-inbound-pallets-body"></tbody></table></div>'+
         '</div>'+
     '</section>';
-    h+='<section>'+
-        '<div class="text-sm font-semibold text-text-primary mb-3">'+tr('扫描信息')+'</div>'+
-        '<div class="flex gap-2 mb-3"><input id="express-inbound-scan-input" class="flex-1 h-9 px-3 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" placeholder="'+esc(tr('扫描/输入快递单号后回车 → 自动落入匹配分板'))+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(this);}"><button type="button" onclick="handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'))" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">'+tr('确认扫描')+'</button></div>'+
-        '<div class="border border-surface-200 rounded-lg overflow-hidden">'+
-            '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
-                '<th class="px-3 py-2 text-left">'+tr('快递单号')+'</th>'+
-                '<th class="px-3 py-2 text-left">'+tr('客户代码')+'</th>'+
-                '<th class="px-3 py-2 text-left">'+tr('国家')+'</th>'+
-                '<th class="px-3 py-2 text-left">'+tr('运输方式')+'</th>'+
-                '<th class="px-3 py-2 text-left">'+tr('托盘号')+'</th>'+
-                '<th class="px-3 py-2 text-left">'+tr('格口号')+'</th>'+
-            '</tr></thead><tbody id="express-inbound-scans-body"></tbody></table></div>'+
-        '</div>'+
-    '</section>';
     h+='</div></div>';
-    h+='<div class="bg-white rounded-xl border border-surface-200 p-4 flex flex-wrap justify-end gap-2">'+
-        '<button type="button" onclick="showToast(\''+tr('已保存入仓')+'\')" class="h-9 px-5 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存入仓')+'</button>'+
-        '<button type="button" onclick="showToast(\''+tr('已登记异常')+'\')" class="h-9 px-5 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('异常登记')+'</button>'+
-        '<button type="button" onclick="resetExpressInbound()" class="h-9 px-5 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('重置')+'</button>'+
-    '</div>';
     h+='</form></div>';
     setTimeout(function(){renderExpressInboundPallets();renderExpressInboundScans();applyRuntimeEnhancements(document.getElementById('main-content'));},0);
     return h;

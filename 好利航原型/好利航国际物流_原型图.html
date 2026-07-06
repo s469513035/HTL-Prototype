@@ -14557,11 +14557,11 @@ var _expressSortDetails={
 };
 
 function expressSortRowHtml(r){
-    return '<tr class="express-sort-row border-t border-surface-100 hover:bg-surface-50/40" data-country="'+esc(r.country||'')+'" data-transport="'+esc(r.transport||'')+'" data-seal-weight="'+esc(r.sealWeight||'')+'">'+
+    return '<tr class="express-sort-row border-t border-surface-100 hover:bg-surface-50/40" data-country="'+esc(r.country||'')+'" data-transport="'+esc(r.transport||'')+'">'+
         '<td class="px-3 py-2 text-text-secondary">'+esc(r.country||'')+'</td>'+
         '<td class="px-3 py-2 text-text-secondary">'+esc(r.transport||'')+'</td>'+
         '<td class="px-2 py-1"><input type="text" class="express-sort-grid w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" value="'+esc(r.gridNo||'')+'"></td>'+
-        '<td class="px-3 py-2 text-text-secondary">'+esc(r.sealWeight||'')+'</td>'+
+        '<td class="px-2 py-1"><input type="text" class="express-sort-weight w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" value="'+esc(r.sealWeight||'')+'"></td>'+
         '<td class="px-2 py-1"><input type="text" class="express-sort-code w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" value="'+esc(r.sortCode||'')+'"></td>'+
         '<td class="px-3 py-2 text-center"><button type="button" onclick="removeExpressSortRow(this)" class="text-xs font-medium text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td>'+
     '</tr>';
@@ -14580,12 +14580,13 @@ function saveExpressSortDetails(code){
     if(!tbody){_expressSortDetails[code]=[];return;}
     const rows=Array.from(tbody.querySelectorAll('tr.express-sort-row')).map(function(tr){
         const grid=tr.querySelector('.express-sort-grid');
+        const weight=tr.querySelector('.express-sort-weight');
         const code2=tr.querySelector('.express-sort-code');
         return {
             country:tr.getAttribute('data-country')||'',
             transport:tr.getAttribute('data-transport')||'',
             gridNo:grid?grid.value:'',
-            sealWeight:tr.getAttribute('data-seal-weight')||'',
+            sealWeight:weight?weight.value:'',
             sortCode:code2?code2.value:''
         };
     });
@@ -14699,7 +14700,7 @@ function openExpressSortModal(mode,id,rowIdx,rowData){
         ?existingDetails.map(expressSortRowHtml).join('')
         :'<tr class="express-sort-placeholder"><td colspan="6" class="px-3 py-6 text-center text-text-muted">'+tr('选择国家、运输方式和拆分维度后，点击「新增托盘」按钮生成明细')+'</td></tr>';
     html+='<div class="p-4"><div class="overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded"><thead><tr class="bg-surface-50 text-text-secondary"><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('国家')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('运输方式')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('格口号')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('封板重量')+'</th><th class="px-3 py-2 text-left border-b border-surface-200">'+tr('分拣码')+'</th><th class="px-3 py-2 text-center border-b border-surface-200 w-20">'+tr('操作')+'</th></tr></thead><tbody id="express-sort-split-body">'+detailBody+'</tbody></table></div>';
-    html+='<div class="mt-2 text-xs text-text-muted">'+tr('明细随方案保存，编辑时会加载已有记录；支持多次「新增托盘」按选择维度追加行；「格口号」和「分拣码」可直接编辑；点击行末「删除」移除单行。')+'</div>';
+    html+='<div class="mt-2 text-xs text-text-muted">'+tr('明细随方案保存，编辑时会加载已有记录；支持多次「新增托盘」按选择维度追加行；「格口号」「封板重量」「分拣码」可直接编辑；点击行末「删除」移除单行。')+'</div>';
     html+='</div></div>';
     html+='</div>';
     bodyEl.innerHTML=html;

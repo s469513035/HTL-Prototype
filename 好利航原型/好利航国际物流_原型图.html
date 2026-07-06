@@ -12554,8 +12554,7 @@ function generateWarehouseInboundPage(id){
         {label:'所属客户',value:'C10001'},
         {label:'运输方式',type:'select',options:['海运','空运','铁路','快递'],value:'海运'},
         {label:'目的港',required:true,type:'select',options:['达喀尔','拉各斯','阿比让','杜阿拉','洛美','特马','蒙罗维亚','科纳克里','班珠尔'],value:'达喀尔'},
-        {label:'品名',required:true,value:'',placeholder:'输入品名信息带出大类',list:'product-name-options',oninput:'handleWarehouseProductNameInput(this)',onblur:'handleCargoNameCommit(this)',span:'md:col-span-2'},
-        {label:'品名大类',type:'select',options:['电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他'],value:'电子产品'},
+        {label:'品名',required:true,value:'',placeholder:'输入品名信息',list:'product-name-options',oninput:'handleWarehouseProductNameInput(this)',onblur:'handleCargoNameCommit(this)',span:'md:col-span-2'},
         {label:'长(cm)',type:'number',value:''},
         {label:'宽(cm)',type:'number',value:''},
         {label:'高(cm)',type:'number',value:''},
@@ -12568,10 +12567,8 @@ function generateWarehouseInboundPage(id){
     ];
     const zoneBind=[
         {label:'货区',type:'select',required:true,options:['A区','B区','C区','异常区','待认领区'],value:'A区'},
-        {label:'托盘号',value:'TP-YT-001'},
-        {label:'绑定操作',type:'select',options:['绑定托盘','更换托盘','解绑托盘'],value:'绑定托盘'}
+        {label:'托盘号',value:'TP-YT-001'}
     ];
-    const other=[{label:'附加服务',type:'checkboxGroup',span:'md:col-span-4',options:['报关','木箱','仿牌','带电','带磁','贴箱唛'],markerTooltip:true}];
     const detailOpen=mode==='second';
     const detailContentClass=detailOpen?'':'hidden';
     const detailArrowStyle=detailOpen?' style="transform:rotate(180deg)"':'';
@@ -12586,7 +12583,11 @@ function generateWarehouseInboundPage(id){
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('货区托盘绑定')+'</div>'+renderFields(zoneBind,4)+'</section>';
     h+='<section><div class="border border-surface-200 rounded-xl overflow-hidden"><div class="flex items-center justify-between px-4 py-3 bg-surface-50 cursor-pointer hover:bg-surface-100 transition-colors" onclick="toggleCargoDetail(this)"><div class="text-sm font-semibold text-text-primary">'+tr('附加服务')+'</div><svg class="w-5 h-5 text-text-muted transition-transform cargo-detail-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"'+detailArrowStyle+'><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div><div class="cargo-detail-content '+detailContentClass+' px-4 py-3">';
-    h+=renderFields(other,4);
+    h+='<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
+        ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
+            return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
+        }).join('')+
+    '</div>';
     h+='</div></div></section>';
     if(mode==='second'){
     h+='<section><div class="border border-surface-200 rounded-xl overflow-hidden"><div class="flex items-center justify-between px-4 py-3 bg-surface-50 cursor-pointer hover:bg-surface-100 transition-colors" onclick="toggleCargoDetail(this)"><div class="text-sm font-semibold text-text-primary">'+tr('货物明细')+'</div><svg class="w-5 h-5 text-text-muted transition-transform cargo-detail-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"'+detailArrowStyle+'><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div><div class="cargo-detail-content '+detailContentClass+'">';

@@ -2944,12 +2944,12 @@ addPrototypeTable('wh-pallet-info','托盘信息查询','状态|托盘号|货区
 TC['wh-pallet-info'].readonlyList=true;
 TC['wh-pallet-info'].noAutoAudit=true;
 TC['wh-pallet-print']={t:'托盘打印',pageMode:'palletPrint',h:[],q:[],s:[],d:[]};
-addPrototypeTable('wh-express-sort','快递分拣方案管理','方案编号|方案名称|国家|运输方式|格口号|封板重量|分拣码|操作',[],[
-    ['SP1001','西非快递主方案','塞内加尔、尼日利亚','海运、空运','G001','20KG','SC-0001'],
-    ['SP1002','东非普货方案','肯尼亚','海运','G002','25KG','SC-0002'],
-    ['SP1003','西非空运快线','尼日利亚','空运','G003','15KG','SC-0003'],
-    ['SP1004','中东海运专线','阿联酋','海运','G004','30KG','SC-0004'],
-    ['SP1005','南非海运普货','南非、津巴布韦','海运','G005','22KG','SC-0005']
+addPrototypeTable('wh-express-sort','快递分拣方案管理','方案编号|方案名称|国家|运输方式|操作',[],[
+    ['SP1001','西非快递主方案','塞内加尔、尼日利亚','海运、空运'],
+    ['SP1002','东非普货方案','肯尼亚','海运'],
+    ['SP1003','西非空运快线','尼日利亚','空运'],
+    ['SP1004','中东海运专线','阿联酋','海运'],
+    ['SP1005','南非海运普货','南非、津巴布韦','海运']
 ],[
     {label:'方案编号',type:'text',field:'code',placeholder:'请输入方案编号'},
     {label:'方案名称',type:'text',field:'name',placeholder:'请输入方案名称'},

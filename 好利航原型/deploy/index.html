@@ -1973,6 +1973,7 @@ const menuData=[
 {id:'wh-pallet-info',label:'托盘信息查询',page:'wh-domestic',tab:'wh-pallet-info'},
 {id:'wh-pallet-print',label:'托盘打印',page:'wh-domestic',tab:'wh-pallet-print'},
 {id:'wh-express-sort',label:'快递分拣方案管理',page:'wh-domestic',tab:'wh-express-sort'},
+{id:'wh-express-inbound',label:'快递入仓(分拣装板)',page:'wh-domestic',tab:'wh-express-inbound'},
 {id:'warehouse-pda',label:'仓库PDA',terminalOnly:'pda',children:[
 {id:'pda-app',label:'仓库PDA',page:'warehouse-pda',tab:'pda-app'}
 ]}
@@ -2957,6 +2958,7 @@ addPrototypeTable('wh-express-sort','快递分拣方案管理','方案编号|方
     {label:'运输方式',type:'select',field:'transport',options:['海运','空运']}
 ]);
 TC['wh-express-sort'].noAutoAudit=true;
+TC['wh-express-inbound']={t:'快递入仓(分拣装板)',pageMode:'expressInbound',h:[],q:[],s:[],d:[]};
 addPrototypeTable('wh-pack-rule','配舱规则','销售产品|运输方式|目的港|配舱优先级1|配舱优先级2|配舱优先级3|是否启用',['启用','停用'],[
     ['西非海运普货','海运','拉各斯','MAERSK','COSCO','MSC','启用'],
     ['空运敏感货','空运','阿比让','ET','TK','EK','启用']
@@ -9071,6 +9073,278 @@ function generatePalletPrintPage(id){
     return h;
 }
 
+var _expressInboundState=null;
+
+function ensureExpressInboundState(){
+    if(!_expressInboundState)_expressInboundState={schemeCode:'',pallets:[],scans:[],palletSeq:0};
+    return _expressInboundState;
+}
+
+function nextExpressInboundPalletNo(){
+    const st=ensureExpressInboundState();
+    st.palletSeq=(st.palletSeq||0)+1;
+    return 'TP-EI-'+String(st.palletSeq).padStart(4,'0');
+}
+
+function renderExpressInboundPallets(){
+    const tbody=document.getElementById('express-inbound-pallets-body');
+    if(!tbody)return;
+    const st=ensureExpressInboundState();
+    if(!st.pallets.length){
+        tbody.innerHTML='<tr><td colspan="9" class="px-3 py-6 text-center text-text-muted">'+tr('点击「+ 新增分板」选择分拣方案生成分板明细')+'</td></tr>';
+        return;
+    }
+    tbody.innerHTML=st.pallets.map(function(p){
+        return '<tr class="border-t border-surface-100'+(p.sealed?' bg-emerald-50/40':' hover:bg-surface-50/40')+'">'+
+            '<td class="px-3 py-2 text-text-primary font-medium">'+esc(p.palletNo)+(p.sealed?' <span class="text-xs text-emerald-600 ml-1">('+tr('已封板')+')</span>':'')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(p.gridNo||'')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(p.country||'')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(p.transport||'')+'</td>'+
+            '<td class="px-3 py-2 text-right font-semibold text-primary-700">'+p.count+'</td>'+
+            '<td class="px-3 py-2 text-right text-text-secondary">'+esc(p.weight||'0KG')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(p.sealWeight||'')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(p.sortCode||'')+'</td>'+
+            '<td class="px-3 py-2 text-center whitespace-nowrap">'+
+                (p.sealed?'<span class="text-xs text-text-muted">'+tr('已完成')+'</span>':
+                '<button type="button" onclick="openExpressInboundSealModal(\''+esc(p.palletNo)+'\')" class="text-xs font-medium text-primary-600 hover:text-primary-700 cursor-pointer mr-3">'+tr('封板')+'</button>'+
+                '<button type="button" onclick="removeExpressInboundPallet(\''+esc(p.palletNo)+'\')" class="text-xs font-medium text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button>')+
+            '</td>'+
+        '</tr>';
+    }).join('');
+}
+
+function renderExpressInboundScans(){
+    const tbody=document.getElementById('express-inbound-scans-body');
+    if(!tbody)return;
+    const st=ensureExpressInboundState();
+    if(!st.scans.length){
+        tbody.innerHTML='<tr><td colspan="6" class="px-3 py-6 text-center text-text-muted">'+tr('扫描快递单号即可自动统计到分板明细')+'</td></tr>';
+        return;
+    }
+    tbody.innerHTML=st.scans.map(function(s){
+        return '<tr class="border-t border-surface-100 hover:bg-surface-50/40">'+
+            '<td class="px-3 py-2 text-text-primary font-medium">'+esc(s.waybillNo)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(s.custCode)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(s.country)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(s.transport)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(s.palletNo)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(s.gridNo)+'</td>'+
+        '</tr>';
+    }).join('');
+}
+
+function openExpressInboundSchemeModal(){
+    document.getElementById('crud-modal-title').textContent=tr('选择快递分拣方案');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const schemes=Object.keys(_expressSortDetails||{});
+    let html='<div class="space-y-3">';
+    html+='<div class="text-sm text-text-secondary">'+tr('选择一个已配置的分拣方案，明细将自动生成对应分板')+'</div>';
+    html+='<div class="space-y-2">';
+    if(!schemes.length){
+        html+='<div class="text-center py-8 text-text-muted text-sm">'+tr('暂无已配置的分拣方案')+'</div>';
+    }else{
+        schemes.forEach(function(code){
+            const details=(_expressSortDetails[code]||[]);
+            const preview=details.slice(0,3).map(function(d){return d.country+'/'+d.transport;}).join('、')+(details.length>3?tr(' 等'):'');
+            html+='<button type="button" onclick="applyExpressInboundScheme(\''+esc(code)+'\')" class="w-full text-left px-4 py-3 rounded-lg border border-surface-200 bg-surface-50 hover:border-primary-400 hover:bg-primary-50/40 transition-colors cursor-pointer">';
+            html+='<div class="flex items-center justify-between"><div class="font-medium text-text-primary">'+esc(code)+'</div><div class="text-xs text-text-muted">'+details.length+' '+tr('个格口')+'</div></div>';
+            html+='<div class="mt-1 text-xs text-text-muted">'+esc(preview)+'</div>';
+            html+='</button>';
+        });
+    }
+    html+='</div></div>';
+    bodyEl.innerHTML=html;
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function applyExpressInboundScheme(code){
+    const details=(_expressSortDetails||{})[code]||[];
+    if(!details.length){showToast(tr('该方案暂无明细'));return;}
+    const st=ensureExpressInboundState();
+    st.schemeCode=code;
+    details.forEach(function(d){
+        st.pallets.push({
+            palletNo:nextExpressInboundPalletNo(),
+            gridNo:d.gridNo||'',
+            country:d.country||'',
+            transport:d.transport||'',
+            count:0,
+            weight:'0KG',
+            sealWeight:d.sealWeight||'',
+            sortCode:d.sortCode||'',
+            sealed:false
+        });
+    });
+    closeCrudModal();
+    renderExpressInboundPallets();
+    showToast(tr('已生成分板明细')+' '+details.length+' '+tr('条'));
+}
+
+function removeExpressInboundPallet(palletNo){
+    const st=ensureExpressInboundState();
+    st.pallets=st.pallets.filter(function(p){return p.palletNo!==palletNo;});
+    renderExpressInboundPallets();
+    showToast(tr('已删除分板'));
+}
+
+function handleExpressInboundScan(input){
+    if(!input)return;
+    const val=(input.value||'').trim();
+    if(!val){showToast(tr('请输入快递单号'));return;}
+    const st=ensureExpressInboundState();
+    if(!st.pallets.length){showToast(tr('请先「新增分板」选择分拣方案'));input.value='';return;}
+    const available=st.pallets.filter(function(p){return !p.sealed;});
+    if(!available.length){showToast(tr('所有分板已封板，请新增分板或重置'));input.value='';return;}
+    let seed=0;
+    for(let i=0;i<val.length;i++)seed=(seed*31+val.charCodeAt(i))>>>0;
+    const target=available[seed%available.length];
+    const singleWeight=(0.5+(seed%30)*0.1);
+    target.count+=1;
+    const oldW=parseFloat(String(target.weight||'0').replace(/[^\d.]/g,''))||0;
+    target.weight=(oldW+singleWeight).toFixed(1)+'KG';
+    const custs=['C10001','C10002','C10003','C10004','C10005'];
+    st.scans.unshift({
+        waybillNo:val,
+        custCode:custs[seed%custs.length],
+        country:target.country,
+        transport:target.transport,
+        palletNo:target.palletNo,
+        gridNo:target.gridNo
+    });
+    input.value='';
+    input.focus();
+    renderExpressInboundPallets();
+    renderExpressInboundScans();
+    showToast(tr('已入板')+' '+target.palletNo);
+}
+
+function openExpressInboundSealModal(palletNo){
+    const st=ensureExpressInboundState();
+    const pallet=st.pallets.find(function(p){return p.palletNo===palletNo;});
+    if(!pallet){showToast(tr('分板不存在'));return;}
+    document.getElementById('crud-modal-title').textContent=tr('封板确认')+' - '+palletNo;
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    let html='<div class="space-y-4">';
+    html+='<div class="grid grid-cols-3 gap-4 rounded-lg border border-surface-200 bg-surface-50 p-4">';
+    html+='<div><div class="text-xs text-text-muted">'+tr('托盘号')+'</div><div class="text-sm font-semibold text-text-primary mt-1">'+esc(pallet.palletNo)+'</div></div>';
+    html+='<div><div class="text-xs text-text-muted">'+tr('总件数')+'</div><div class="text-base font-semibold text-primary-700 mt-1">'+pallet.count+'</div></div>';
+    html+='<div><div class="text-xs text-text-muted">'+tr('总重量')+'</div><div class="text-base font-semibold text-primary-700 mt-1">'+esc(pallet.weight||'0KG')+'</div></div>';
+    html+='<div><div class="text-xs text-text-muted">'+tr('格口号')+'</div><div class="text-sm text-text-primary mt-1">'+esc(pallet.gridNo||'')+'</div></div>';
+    html+='<div><div class="text-xs text-text-muted">'+tr('国家')+'</div><div class="text-sm text-text-primary mt-1">'+esc(pallet.country||'')+'</div></div>';
+    html+='<div><div class="text-xs text-text-muted">'+tr('运输方式')+'</div><div class="text-sm text-text-primary mt-1">'+esc(pallet.transport||'')+'</div></div>';
+    html+='</div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500 mr-0.5">*</span>'+tr('库位库区')+'</label><input type="text" id="express-inbound-seal-location" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('请输入库位库区，例如 A-01-03'))+'" value="'+esc(pallet.location||'')+'"></div>';
+    html+='</div>';
+    bodyEl.innerHTML=html;
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="confirmExpressInboundSeal(\''+esc(palletNo)+'\',false)" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('打印标签并封板')+'</button>'+
+        '<button onclick="confirmExpressInboundSeal(\''+esc(palletNo)+'\',true)" class="px-4 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 cursor-pointer">'+tr('打印并新增同规格托盘')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function confirmExpressInboundSeal(palletNo,addNext){
+    const st=ensureExpressInboundState();
+    const pallet=st.pallets.find(function(p){return p.palletNo===palletNo;});
+    if(!pallet)return;
+    const loc=((document.getElementById('express-inbound-seal-location')||{}).value||'').trim();
+    if(!loc){showToast(tr('请输入库位库区'));return;}
+    pallet.sealed=true;
+    pallet.location=loc;
+    if(addNext){
+        st.pallets.push({
+            palletNo:nextExpressInboundPalletNo(),
+            gridNo:pallet.gridNo,
+            country:pallet.country,
+            transport:pallet.transport,
+            count:0,
+            weight:'0KG',
+            sealWeight:pallet.sealWeight,
+            sortCode:pallet.sortCode,
+            sealed:false
+        });
+    }
+    closeCrudModal();
+    renderExpressInboundPallets();
+    showToast(tr('已打印托盘标签')+(addNext?tr('，已新增同规格托盘'):''));
+}
+
+function resetExpressInbound(){
+    _expressInboundState={schemeCode:'',pallets:[],scans:[],palletSeq:0};
+    renderExpressInboundPallets();
+    renderExpressInboundScans();
+    showToast(tr('已重置'));
+}
+
+function generateExpressInboundPage(id){
+    ensureExpressInboundState();
+    const warehouseOptions=getWarehouseNameOptions();
+    const basic=[
+        {label:'到货仓库',type:'select',required:true,options:warehouseOptions,value:currentAccountWarehouse()},
+        {label:'到货时间',type:'datetime-local',value:nowDateTimeLocalSeconds()},
+        {label:'操作人',value:'张仓管'},
+        {label:'操作备注',value:'',placeholder:'请输入操作备注',span:'md:col-span-4'}
+    ];
+    let h='';
+    h+='<div class="h-full overflow-auto p-5">';
+    h+='<form class="space-y-5">';
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-5">';
+    h+='<div class="flex items-center justify-between gap-4 mb-5"><h2 class="text-lg font-semibold text-text-primary">'+tr('快递入仓(分拣装板)')+'</h2><span class="badge bg-blue-100 text-blue-700">'+tr('作业中')+'</span></div>';
+    h+='<div class="space-y-6">';
+    h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
+    h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
+        '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
+            ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
+                return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
+            }).join('')+
+        '</div>'+
+    '</section>';
+    h+='<section>'+
+        '<div class="flex items-center justify-between mb-3 flex-wrap gap-2">'+
+            '<div class="text-sm font-semibold text-text-primary">'+tr('分板明细')+'</div>'+
+            '<button type="button" onclick="openExpressInboundSchemeModal()" class="h-8 px-3 text-xs font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">+ '+tr('新增分板')+'</button>'+
+        '</div>'+
+        '<div class="border border-surface-200 rounded-lg overflow-hidden">'+
+            '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
+                '<th class="px-3 py-2 text-left">'+tr('托盘号')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('格口号')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('国家')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('运输方式')+'</th>'+
+                '<th class="px-3 py-2 text-right">'+tr('件数')+'</th>'+
+                '<th class="px-3 py-2 text-right">'+tr('重量')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('封板重量')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('分拣码')+'</th>'+
+                '<th class="px-3 py-2 text-center w-24">'+tr('操作')+'</th>'+
+            '</tr></thead><tbody id="express-inbound-pallets-body"></tbody></table></div>'+
+        '</div>'+
+    '</section>';
+    h+='<section>'+
+        '<div class="text-sm font-semibold text-text-primary mb-3">'+tr('扫描信息')+'</div>'+
+        '<div class="flex gap-2 mb-3"><input id="express-inbound-scan-input" class="flex-1 h-9 px-3 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white" placeholder="'+esc(tr('扫描/输入快递单号后回车 → 自动落入匹配分板'))+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();handleExpressInboundScan(this);}"><button type="button" onclick="handleExpressInboundScan(document.getElementById(\'express-inbound-scan-input\'))" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">'+tr('确认扫描')+'</button></div>'+
+        '<div class="border border-surface-200 rounded-lg overflow-hidden">'+
+            '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
+                '<th class="px-3 py-2 text-left">'+tr('快递单号')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('客户代码')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('国家')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('运输方式')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('托盘号')+'</th>'+
+                '<th class="px-3 py-2 text-left">'+tr('格口号')+'</th>'+
+            '</tr></thead><tbody id="express-inbound-scans-body"></tbody></table></div>'+
+        '</div>'+
+    '</section>';
+    h+='</div></div>';
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-4 flex flex-wrap justify-end gap-2">'+
+        '<button type="button" onclick="showToast(\''+tr('已保存入仓')+'\')" class="h-9 px-5 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存入仓')+'</button>'+
+        '<button type="button" onclick="showToast(\''+tr('已登记异常')+'\')" class="h-9 px-5 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('异常登记')+'</button>'+
+        '<button type="button" onclick="resetExpressInbound()" class="h-9 px-5 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('重置')+'</button>'+
+    '</div>';
+    h+='</form></div>';
+    setTimeout(function(){renderExpressInboundPallets();renderExpressInboundScans();applyRuntimeEnhancements(document.getElementById('main-content'));},0);
+    return h;
+}
+
 function renderTabContent(id){
     if(id.indexOf('waybill-detail-')===0)return generateWaybillDetailPage(id);
     if(id==='wh-no-pre-in')return generateHeadlessClaimListPage(id,_listPage[id]||1);
@@ -9085,6 +9359,7 @@ function renderTabContent(id){
     if(c&&c.pageMode==='noPreClaim')return generateHeadlessClaimListPage(id,_listPage[id]||1);
     if(c&&c.pageMode==='inquiryQuoteEntry')return generateInquiryQuoteEntryPage(id);
     if(c&&c.pageMode==='palletPrint')return generatePalletPrintPage(id);
+    if(c&&c.pageMode==='expressInbound')return generateExpressInboundPage(id);
     if(id==='cfg-dict')return generateDictPage(_listPage[id]||1);
     return generateListPage(id,_listPage[id]||1);
 }

@@ -3100,15 +3100,16 @@ addPrototypeTable('wh-parcel-out','小包出库单','出库单号|出库计划|�
     {label:'状态',type:'select',options:['待出仓','已找货','可出仓','已出仓','待配柜','已配柜']}
 ]);
 
-addPrototypeTable('wh-final-alloc','配舱计划','配舱单号|标签编号|提单号|柜号|配柜状态|配舱状态|票数|运输方式|件数|收货实重|收货方数|操作',['待出仓','已找货','可出仓','已出仓','待配柜','已配柜'],[
-    ['ZPCD-20260625-002','260625-2','TD-20260625-002','','已配柜','可出仓','2','海运','4','4','0.000004'],
-    ['ZPCD-20260625-001','260625-1','TD-20260625-001','','已配柜','已找货','1','海运','1','1','0.000001'],
-    ['20260624-终配001','260624-1','TD-20260624-001','GH-20260624-001','已配柜','已出仓','1','海运','2','2','0.000002'],
-    ['ZPCD-20260622-001','260622-2','TD-20260622-001','GH-20260622-001','已配柜','已出仓','2','海运','4','4','0.000004'],
-    ['ZPCD-20260620-001','260620-1','TD-20260620-001','','待配柜','待出仓','1','海运','3','3','0.000003']
+addPrototypeTable('wh-final-alloc','配舱计划','配舱单号|标签编号|提单号|国家|柜号|配柜状态|配舱状态|票数|运输方式|件数|收货实重|收货方数|操作',['待出仓','已找货','可出仓','已出仓','待配柜','已配柜'],[
+    ['ZPCD-20260625-002','260625-2','TD-20260625-002','塞内加尔','','已配柜','可出仓','2','海运','4','4','0.000004'],
+    ['ZPCD-20260625-001','260625-1','TD-20260625-001','尼日利亚','','已配柜','已找货','1','海运','1','1','0.000001'],
+    ['20260624-终配001','260624-1','TD-20260624-001','加纳','GH-20260624-001','已配柜','已出仓','1','海运','2','2','0.000002'],
+    ['ZPCD-20260622-001','260622-2','TD-20260622-001','塞内加尔','GH-20260622-001','已配柜','已出仓','2','海运','4','4','0.000004'],
+    ['ZPCD-20260620-001','260620-1','TD-20260620-001','尼日利亚','','待配柜','待出仓','1','海运','3','3','0.000003']
 ],[
     {label:'配舱单号',type:'text'},
     {label:'提单号',type:'text'},
+    {label:'国家',type:'select',options:['塞内加尔','尼日利亚','加纳','科特迪瓦','喀麦隆','多哥']},
     {label:'运输类型',type:'select',options:['海运','空运','卡航','快递']},
     {label:'所属仓库',type:'select',options:['广州南沙仓','深圳坂田仓','上海洋山仓','东莞虎门仓']}
 ]);
@@ -8638,7 +8639,6 @@ function getToolbarActions(id){
             {type:'add',label:'新增',variant:'primary'},
             {key:'finalAllocAdjust',label:'调整',variant:'primary'},
             {key:'finalAllocLinkBL',label:'关联提单'},
-            {key:'finalAllocAutoReplenish',label:'自动补货'},
             {key:'export',label:'导出'}
         ];
     }
@@ -13783,7 +13783,7 @@ var _finalAllocUnselectedSeed=[
     {no:'YPC-20260626003',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004',sub:[{no:'H-YPC-20260626003-001',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004'}]},
     {no:'YPC-TY',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014',sub:[{no:'H-YPC-TY-001',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014'}]}
 ];
-var _finalAllocState={mode:'add',unselected:[],selected:[],expanded:{},header:{no:'',transport:'海运',bl:''}};
+var _finalAllocState={mode:'add',unselected:[],selected:[],expanded:{},header:{no:'',transport:'海运',bl:'',country:'',containerNo:''}};
 
 function _finalAllocClone(arr){return JSON.parse(JSON.stringify(arr));}
 
@@ -13792,7 +13792,7 @@ function _finalAllocResetState(mode,headerInit,selectedInit){
     _finalAllocState.unselected=_finalAllocClone(_finalAllocUnselectedSeed);
     _finalAllocState.selected=selectedInit?_finalAllocClone(selectedInit):[];
     _finalAllocState.expanded={};
-    _finalAllocState.header=headerInit||{no:'',transport:'海运',bl:''};
+    _finalAllocState.header=Object.assign({no:'',transport:'海运',bl:'',country:'',containerNo:''},headerInit||{});
 }
 
 function _finalAllocPanelTable(side){
@@ -13890,22 +13890,22 @@ function _finalAllocLeftPanel(showAdvanced){
     return h;
 }
 
-function _finalAllocRightPanel(showActions,showHeader){
+function _finalAllocRightPanel(showHeader){
     let h='<div class="flex-1 min-w-0">';
     h+='<div class="text-sm font-semibold text-orange-600 mb-2">'+tr('已选数据')+'</div>';
-    if(showActions){
-        h+='<div class="flex flex-wrap gap-2 mb-3">';
-        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'配舱方案已创建\'))">+'+tr('创建配舱方案')+'</button>';
-        h+='</div>';
-    }
     if(showHeader){
         const hd=_finalAllocState.header;
+        const countries=['塞内加尔','尼日利亚','加纳','科特迪瓦','喀麦隆','多哥'];
         h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3"><div class="grid grid-cols-3 gap-3">';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary"><span class="text-red-500">*</span> '+tr('配舱单号')+'</label><input type="text" value="'+esc(hd.no)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-no"></div>';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('国家')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-country"><option value="">'+tr('请选择')+'</option>';
+        countries.forEach(function(o){h+='<option'+(o===hd.country?' selected':'')+'>'+o+'</option>';});
+        h+='</select></div>';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('柜号')+'</label><input type="text" value="'+esc(hd.containerNo||'')+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-container" placeholder="'+esc(tr('请输入柜号'))+'"></div>';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-transport">';
         ['海运','空运','卡航','快递'].forEach(function(o){h+='<option'+(o===hd.transport?' selected':'')+'>'+o+'</option>';});
         h+='</select></div>';
-        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('关联提单')+'</label><input type="text" value="'+esc(hd.bl)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-bl"></div>';
+        h+='<div class="flex flex-col gap-0.5 col-span-2"><label class="text-xs text-text-secondary">'+tr('关联提单')+'</label><input type="text" value="'+esc(hd.bl)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-bl"></div>';
         h+='</div></div>';
     }
     h+=_finalAllocPanelTable('selected');
@@ -13917,7 +13917,7 @@ function _finalAllocBodyHtml(mode){
     let h='<div class="flex gap-4 items-stretch">';
     h+=_finalAllocLeftPanel(mode==='add');
     h+='<div class="flex flex-col justify-center gap-3 px-1"><button class="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-base cursor-pointer" onclick="finalAllocMove(\'right\')" title="'+tr('选入')+'">›</button><button class="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-base cursor-pointer" onclick="finalAllocMove(\'left\')" title="'+tr('移除')+'">‹</button></div>';
-    h+=_finalAllocRightPanel(mode==='add',mode==='edit');
+    h+=_finalAllocRightPanel(true);
     h+='</div>';
     return h;
 }
@@ -13978,8 +13978,21 @@ function finalAllocRerender(){
     if(body)body.innerHTML=_finalAllocBodyHtml(_finalAllocState.mode);
 }
 
+function _finalAllocNextNo(id){
+    const data=_listData[id]||(TC[id]&&TC[id].d)||[];
+    const d=new Date();
+    const dateStr=String(d.getFullYear())+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+    const prefix='ZPCD-'+dateStr+'-';
+    const todaySeqs=data.map(function(row){
+        const m=String((row&&row[0])||'').match(new RegExp('^'+prefix+'(\\d+)$'));
+        return m?parseInt(m[1],10):0;
+    });
+    const next=(todaySeqs.length?Math.max.apply(null,todaySeqs):0)+1;
+    return prefix+String(next).padStart(3,'0');
+}
+
 function openFinalAllocAddModal(id){
-    _finalAllocResetState('add',{no:'',transport:'海运',bl:''},null);
+    _finalAllocResetState('add',{no:_finalAllocNextNo(id),transport:'海运',bl:'',country:'',containerNo:''},null);
     const titleEl=document.getElementById('crud-modal-title');
     const bodyEl=document.getElementById('crud-modal-body');
     const footerEl=document.getElementById('crud-modal-footer');
@@ -13998,9 +14011,11 @@ function openFinalAllocAdjustModal(id,rowIdx){
     const row=(_listData[id]||TC[id].d)[idx]||[];
     const presetNo=row[0]||'';
     const presetBL=row[2]||'';
-    const presetTransport=row[7]||'海运';
+    const presetCountry=row[3]||'';
+    const presetContainer=row[4]||'';
+    const presetTransport=row[8]||'海运';
     const presetSelected=[{no:presetNo.replace(/-终配/,'-预配').replace(/^ZPCD-/,'YPC-'),pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002',sub:[{no:'H82606240002',pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002'}]}];
-    _finalAllocResetState('edit',{no:presetNo,transport:presetTransport,bl:presetBL},presetSelected);
+    _finalAllocResetState('edit',{no:presetNo,transport:presetTransport,bl:presetBL,country:presetCountry,containerNo:presetContainer},presetSelected);
     _finalAllocState.expanded['selected-0']=true;
     const titleEl=document.getElementById('crud-modal-title');
     const bodyEl=document.getElementById('crud-modal-body');
@@ -14019,10 +14034,14 @@ function finalAllocSubmit(mode,id){
     const noEl=document.getElementById('final-alloc-no');
     const blEl=document.getElementById('final-alloc-bl');
     const trEl=document.getElementById('final-alloc-transport');
+    const countryEl=document.getElementById('final-alloc-country');
+    const containerEl=document.getElementById('final-alloc-container');
     if(noEl)_finalAllocState.header.no=noEl.value;
     if(blEl)_finalAllocState.header.bl=blEl.value;
     if(trEl)_finalAllocState.header.transport=trEl.value;
-    if(mode==='edit'&&!_finalAllocState.header.no){showToast(tr('配舱单号必填'));return;}
+    if(countryEl)_finalAllocState.header.country=countryEl.value;
+    if(containerEl)_finalAllocState.header.containerNo=containerEl.value;
+    if(!_finalAllocState.header.no){showToast(tr('配舱单号必填'));return;}
     closeCrudModal();
     showToast(tr(mode==='add'?'终配舱登记成功':'终配舱调整成功'));
 }

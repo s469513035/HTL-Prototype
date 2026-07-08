@@ -10209,12 +10209,12 @@ function warehousePdaOperationConfigs(){
             title:'手动入仓',subtitle:'单票单件移动收货，支持扫码、称重和尺寸录入',scanLabel:'运单号/物流单号',
             sections:[
                 {title:'收货信息',fields:[
-                    {label:'运单号',type:'scan',value:'WB-20260613001',required:true},
-                    {label:'目的仓库',value:'拉各斯海外仓',readonly:true},
-                    {label:'运输方式',value:'海运',readonly:true},
-                    {label:'预报件数',value:'8',readonly:true},
-                    {label:'到货件数',value:'0',readonly:true},
-                    {label:'剩余最大到货件数',value:'8',readonly:true}
+                    {label:'运单号',type:'scan',value:'WB-20260613001',required:true,cols:6},
+                    {label:'目的仓库',value:'拉各斯海外仓',readonly:true,cols:3},
+                    {label:'运输方式',value:'海运',readonly:true,cols:3},
+                    {label:'预报件数',value:'8',readonly:true,cols:2},
+                    {label:'到货件数',value:'0',readonly:true,cols:2},
+                    {label:'剩余最大到货件数',value:'8',readonly:true,cols:2}
                 ]},
                 {title:'附加服务',type:'service'},
                 {title:'尺寸明细',type:'sizeTable',rows:[{qty:'1',l:'48',w:'36',h:'30',weight:'12.5'}]},
@@ -10417,6 +10417,11 @@ function pdaField(f){
     const required=f.required?'<span class="text-red-500 ml-1">*</span>':'';
     const placeholder=f.placeholder?tr(f.placeholder):(tr('请输入')+label);
     const value=f.value===undefined?'':f.value;
+    const spanCls=f.cols?' col-span-'+f.cols:'';
+    if(f.readonly&&f.type!=='scan'){
+        const displayVal=value===''||value===undefined?'—':String(value);
+        return '<div class="min-w-0 flex flex-col gap-0.5'+spanCls+'"><label class="text-[11px] text-text-muted break-all">'+esc(label)+'</label><div class="text-[13px] font-semibold text-text-primary break-all">'+esc(tr(displayVal))+'</div></div>';
+    }
     const readonly=f.readonly?' readonly':'';
     const roCls=f.readonly?' bg-surface-100 cursor-not-allowed text-text-secondary':'';
     const base='w-full h-10 px-3 text-xs rounded-lg border border-surface-200 bg-white focus:border-primary-400';
@@ -10429,13 +10434,13 @@ function pdaField(f){
         control='<textarea rows="3" class="w-full px-3 py-2 text-xs rounded-lg border border-surface-200 bg-white'+roCls+' resize-none"'+readonly+' placeholder="'+esc(placeholder)+'">'+esc(value)+'</textarea>';
     }else if(f.type==='checkbox'){
         control='<label class="h-10 px-3 rounded-lg border border-surface-200 bg-white flex items-center gap-2 text-xs text-text-secondary"><input type="checkbox" class="rounded border-surface-300 text-primary-600"'+(f.checked?' checked':'')+'><span>'+tr(f.label)+'</span></label>';
-        return '<div class="min-w-0">'+control+'</div>';
+        return '<div class="min-w-0'+spanCls+'">'+control+'</div>';
     }else if(f.type==='scan'){
         control='<div class="flex gap-2"><input type="text" class="'+base+'" placeholder="'+esc(placeholder)+'" value="'+esc(value)+'"><button type="button" onclick="openPdaScanModal(\'\',\''+esc(value||'WB-20260613001')+'\',\'\')" class="shrink-0 h-10 px-3 rounded-lg bg-primary-600 text-white text-xs font-medium">'+tr('扫码')+'</button></div>';
     }else{
         control='<input type="'+(f.type||'text')+'" class="'+base+roCls+'"'+readonly+' placeholder="'+esc(placeholder)+'" value="'+esc(value)+'">';
     }
-    return '<div class="min-w-0 flex flex-col gap-1.5"><label class="text-[11px] font-medium text-text-secondary break-all">'+esc(label)+required+'</label>'+control+'</div>';
+    return '<div class="min-w-0 flex flex-col gap-1.5'+spanCls+'"><label class="text-[11px] font-medium text-text-secondary break-all">'+esc(label)+required+'</label>'+control+'</div>';
 }
 
 function pdaPhotoUploader(limit){
@@ -10486,7 +10491,12 @@ function pdaSection(section){
         h+=pdaSizeTable(section.rows||[{qty:'1'}]);
     }else{
         h+='<div class="text-sm font-semibold text-text-primary mb-3">'+tr(section.title)+'</div>';
-        h+='<div class="space-y-3">'+(section.fields||[]).map(pdaField).join('')+'</div>';
+        const useGrid=(section.fields||[]).some(function(f){return f.cols;});
+        if(useGrid){
+            h+='<div class="grid grid-cols-6 gap-x-3 gap-y-3">'+(section.fields||[]).map(pdaField).join('')+'</div>';
+        }else{
+            h+='<div class="space-y-3">'+(section.fields||[]).map(pdaField).join('')+'</div>';
+        }
     }
     h+='</div>';
     return h;

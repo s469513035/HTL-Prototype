@@ -10208,11 +10208,22 @@ function warehousePdaOperationConfigs(){
         'wh-in-one':{
             title:'手动入仓',subtitle:'单票单件移动收货，支持扫码、称重和尺寸录入',scanLabel:'运单号/物流单号',
             sections:[
-                {title:'收货信息',fields:[{label:'运单号',type:'scan',value:'WB-20260613001',required:true},{label:'运输方式',type:'select',options:transport,required:true},{label:'到货货区',type:'select',options:zones,required:true},{label:'托盘号',value:'TP-YT-001',required:true}]},
-                {title:'货物信息',fields:[{label:'品名',value:'服装配件',required:true,placeholder:'输入品名信息带出大类'},{label:'品名大类',value:'普货'}]},
-                {title:'尺寸明细',type:'sizeTable',rows:[{qty:'1',l:'48',w:'36',h:'30',weight:'12.5'}]}
+                {title:'收货信息',fields:[
+                    {label:'运单号',type:'scan',value:'WB-20260613001',required:true},
+                    {label:'目的仓库',value:'拉各斯海外仓',readonly:true},
+                    {label:'运输方式',value:'海运',readonly:true},
+                    {label:'预报件数',value:'8',readonly:true},
+                    {label:'到货件数',value:'0',readonly:true},
+                    {label:'剩余最大到货件数',value:'8',readonly:true}
+                ]},
+                {title:'附加服务',type:'service'},
+                {title:'尺寸明细',type:'sizeTable',rows:[{qty:'1',l:'48',w:'36',h:'30',weight:'12.5'}]},
+                {title:'货区托盘',fields:[
+                    {label:'到货货区',type:'select',options:zones},
+                    {label:'托盘号',value:''}
+                ]}
             ],
-            servicePanel:true,primary:'保存入仓',sameRowActions:true
+            photos:true,photoLimit:5,primary:'保存入仓',sameRowActions:true
         },
         'wh-in-multi':{
             title:'入仓操作（一票多件）',subtitle:'多件货物逐件收货，支持同步生成运单和货物明细复核',scanLabel:'运单号/物流单号',
@@ -10391,13 +10402,13 @@ function pdaAction(label){
 
 function pdaServicePanel(open){
     const services=['是否报关','拆分报关','带磁','合并报关','带电','贴箱唛'];
-    let h='<details class="rounded-xl border border-surface-200 bg-white p-3 mb-3"'+(open===false?'':' open')+'>';
-    h+='<summary class="text-[13px] font-semibold text-text-primary cursor-pointer">'+tr('附加服务')+'</summary>';
-    h+='<div class="grid grid-cols-2 gap-2 mt-3">';
+    let h='<div class="rounded-xl border border-surface-200 bg-white p-3 mb-3">';
+    h+='<div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>';
+    h+='<div class="grid grid-cols-3 gap-2">';
     services.forEach(function(name){
-        h+='<label class="h-8 px-2 rounded-lg border border-surface-200 bg-surface-50 flex items-center gap-1.5 text-[11px] text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600"><span class="flex-1 truncate">'+tr(name)+'</span></label>';
+        h+='<label class="h-8 px-2 rounded-lg border border-surface-200 bg-surface-50 flex items-center gap-1 text-[11px] text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600"><span class="flex-1 truncate">'+tr(name)+'</span></label>';
     });
-    h+='</div></details>';
+    h+='</div></div>';
     return h;
 }
 
@@ -10406,21 +10417,23 @@ function pdaField(f){
     const required=f.required?'<span class="text-red-500 ml-1">*</span>':'';
     const placeholder=f.placeholder?tr(f.placeholder):(tr('请输入')+label);
     const value=f.value===undefined?'':f.value;
+    const readonly=f.readonly?' readonly':'';
+    const roCls=f.readonly?' bg-surface-100 cursor-not-allowed text-text-secondary':'';
     const base='w-full h-10 px-3 text-xs rounded-lg border border-surface-200 bg-white focus:border-primary-400';
     let control='';
     if(f.type==='select'){
-        control='<select class="'+base+'"><option value="">'+tr('请选择')+'</option>';
+        control='<select class="'+base+roCls+'"'+(f.readonly?' disabled':'')+'><option value="">'+tr('请选择')+'</option>';
         (f.options||[]).forEach(function(o){control+='<option value="'+esc(o)+'"'+(value===o?' selected':'')+'>'+esc(tr(o))+'</option>';});
         control+='</select>';
     }else if(f.type==='textarea'){
-        control='<textarea rows="3" class="w-full px-3 py-2 text-xs rounded-lg border border-surface-200 bg-white resize-none" placeholder="'+esc(placeholder)+'">'+esc(value)+'</textarea>';
+        control='<textarea rows="3" class="w-full px-3 py-2 text-xs rounded-lg border border-surface-200 bg-white'+roCls+' resize-none"'+readonly+' placeholder="'+esc(placeholder)+'">'+esc(value)+'</textarea>';
     }else if(f.type==='checkbox'){
         control='<label class="h-10 px-3 rounded-lg border border-surface-200 bg-white flex items-center gap-2 text-xs text-text-secondary"><input type="checkbox" class="rounded border-surface-300 text-primary-600"'+(f.checked?' checked':'')+'><span>'+tr(f.label)+'</span></label>';
         return '<div class="min-w-0">'+control+'</div>';
     }else if(f.type==='scan'){
         control='<div class="flex gap-2"><input type="text" class="'+base+'" placeholder="'+esc(placeholder)+'" value="'+esc(value)+'"><button type="button" onclick="openPdaScanModal(\'\',\''+esc(value||'WB-20260613001')+'\',\'\')" class="shrink-0 h-10 px-3 rounded-lg bg-primary-600 text-white text-xs font-medium">'+tr('扫码')+'</button></div>';
     }else{
-        control='<input type="'+(f.type||'text')+'" class="'+base+'" placeholder="'+esc(placeholder)+'" value="'+esc(value)+'">';
+        control='<input type="'+(f.type||'text')+'" class="'+base+roCls+'"'+readonly+' placeholder="'+esc(placeholder)+'" value="'+esc(value)+'">';
     }
     return '<div class="min-w-0 flex flex-col gap-1.5"><label class="text-[11px] font-medium text-text-secondary break-all">'+esc(label)+required+'</label>'+control+'</div>';
 }
@@ -10465,6 +10478,7 @@ function openPdaUploadChoice(){
 }
 
 function pdaSection(section){
+    if(section.type==='service')return pdaServicePanel(true);
     let h='<div class="rounded-xl border border-surface-200 bg-white p-3 mb-3">';
     if(section.type==='sizeTable'){
         h+='<div class="flex items-center justify-between mb-3"><div class="text-sm font-semibold text-text-primary">'+tr(section.title)+'</div>';

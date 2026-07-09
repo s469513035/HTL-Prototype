@@ -8160,6 +8160,14 @@ function renderField(f){
             input+='<label class="flex items-center gap-1.5 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(optionLabel)+'"'+checked+onCheck+'><span>'+esc(tr(optionLabel))+'</span>'+marker+'</label>';
         });
         input+='</div>';
+    }else if(f.type==='radioGroup'){
+        const groupName=f.name||('radio-'+String(rawLabel).replace(/\s+/g,'-'));
+        input='<div class="flex flex-wrap items-center gap-x-5 gap-y-2 min-h-10 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">';
+        (f.options||[]).forEach(function(o,i){
+            const checked=(f.value===o||(i===0&&(f.value===undefined||f.value===null||f.value==='')))?' checked':'';
+            input+='<label class="inline-flex items-center gap-1.5 text-sm text-text-secondary cursor-pointer"><input type="radio" name="'+esc(groupName)+'" value="'+esc(o)+'" class="border-surface-300 text-primary-600"'+checked+'><span>'+esc(tr(o))+'</span></label>';
+        });
+        input+='</div>';
     }else{
         const eventAttrs=(f.oninput?' oninput="'+f.oninput+'"':'')+(f.onblur?' onblur="'+f.onblur+'"':'')+(f.onchange?' onchange="'+f.onchange+'"':'');
         const listAttr=f.list?' list="'+esc(f.list)+'"':'';
@@ -15778,6 +15786,47 @@ function selectedDataSummary(id,rowData){
     return '<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 mb-4 text-sm text-text-secondary">'+tr('未勾选数据，将按当前页面或筛选条件处理。')+'</div>';
 }
 
+function waybillDetailSummaryHtml(id,rowData){
+    const c=TC[id]||{};
+    const hArr=c.h||[];
+    const val=function(label){
+        const idx=hArr.indexOf(label);
+        if(idx<0)return '';
+        const v=rowData[idx];
+        return v===undefined||v===null?'':String(v);
+    };
+    const waybill=val('运单号')||(rowData&&rowData[0])||'';
+    const weightRaw=val('重量(KG)')||val('重量');
+    const cbmRaw=val('体积(CBM)')||val('体积');
+    const weightNum=parseFloat(String(weightRaw).replace(/[^\d.]/g,''))||0;
+    const cbmNum=parseFloat(String(cbmRaw).replace(/[^\d.]/g,''))||0;
+    const volumeWeight=cbmNum>0?(cbmNum*167).toFixed(2)+' KG':'—';
+    const settleWeight=Math.max(weightNum,cbmNum*167);
+    const settleDisplay=(cbmNum>0||weightNum>0)?(cbmRaw||'—')+' / '+settleWeight.toFixed(2)+' KG':'—';
+    const cargoType=val('货物类型')||val('品名信息')||'普货';
+    const items=[
+        ['客户名称',val('客户名称')||'—'],
+        ['产品',val('所属产品')||'—'],
+        ['发货仓库',val('国内仓库')||'—'],
+        ['目的仓库',val('目的仓库')||'—'],
+        ['件数',val('件数')||'—'],
+        ['货物类型',cargoType],
+        ['收货仓库',val('海外提货仓')||val('目的仓库')||'—'],
+        ['实际重量',weightRaw?weightRaw+(String(weightRaw).indexOf('KG')<0?' KG':''):'—'],
+        ['实际体积',cbmRaw?cbmRaw+(String(cbmRaw).indexOf('CBM')<0?' CBM':''):'—'],
+        ['实际体积重',volumeWeight],
+        ['结算体积/重量',settleDisplay]
+    ];
+    let html='<div class="rounded-lg border border-primary-100 bg-primary-50/40 p-3 mb-4">';
+    html+='<div class="flex items-center justify-between mb-2"><div class="text-sm font-semibold text-primary-700">'+tr('运单信息')+'</div><div class="text-xs text-text-muted">'+esc(waybill)+'</div></div>';
+    html+='<div class="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-2">';
+    items.forEach(function(item){
+        html+='<div class="flex flex-col gap-0.5 min-w-0"><span class="text-[11px] text-text-muted">'+tr(item[0])+'</span><span class="text-sm font-medium text-text-primary break-all">'+esc(item[1])+'</span></div>';
+    });
+    html+='</div></div>';
+    return html;
+}
+
 function getRowsByIndices(id,indices){
     const data=_listData[id]||[];
     return (indices||[]).map(function(idx){return data[idx];}).filter(Boolean);
@@ -18473,7 +18522,7 @@ function actionConfig(action,id,rowData){
     if(action==='mergeDeclaration')return {title:'合并报关 - '+name,fields:[{label:'报关方式',type:'select',required:true,options:['合并报关','买单报关']},{label:'报关主体',type:'select',options:['客户自有抬头','好利航代理','第三方报关行']},{label:'合并说明',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认合并报关'};
     if(action==='splitDeclaration')return {title:'拆分报关 - '+name,fields:[{label:'拆分方式',type:'select',required:true,options:['按品名拆分','按件数拆分','按客户要求拆分']},{label:'拆分票数',type:'number',value:'2'},{label:'拆分说明',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认拆分报关'};
     if(action==='mergeBilling')return {title:'合并计费 - '+name,fields:[{label:'合并费用项',type:'checkboxGroup',span:'md:col-span-2',options:['运费'],checkedOptions:['运费']},{label:'计费备注',type:'textarea',span:'md:col-span-2'}],confirm:'确认合并计费'};
-    if(action==='specialPrice')return {title:'特价申请 - '+name,fields:[{label:'申请类型',type:'select',required:true,options:['单价模式','总价模式']},{label:'申请价格',required:true,placeholder:'请输入特价金额'},{label:'申请原因',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'提交特价申请'};
+    if(action==='specialPrice')return {title:'特价申请 - '+name,fields:[{label:'申请类型',type:'radioGroup',required:true,options:['单价模式','总价模式'],value:'单价模式',span:'md:col-span-2'},{label:'申请价格',required:true,placeholder:'请输入特价金额'},{label:'币别',type:'select',required:true,options:['CNY','USD','EUR']},{label:'申请原因',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'提交特价申请'};
     if(action==='ticketManage'||action==='workOrder')return {title:'工单管理 - '+name,fields:[{label:'工单标题',required:true},{label:'工单类型',type:'select',required:true,options:['费用争议','资料补充','异常处理','客户咨询']},{label:'优先级',type:'select',options:['高','中','低']},{label:'工单内容',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'创建工单'};
     if(action==='cargoHold')return {title:'查货扣件 - '+name,fields:[{label:'查货标记',type:'checkboxGroup',span:'md:col-span-2',options:['敏感货','玩具','手机','危险品','易碎','带电','带磁','严禁品']},{label:'是否扣货',type:'checkboxGroup',options:['是']},{label:'产品备注',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认'};
     if(action==='productConfirm')return {title:'产品确认 - '+name,fields:[{label:'产品备注',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认'};
@@ -18671,6 +18720,7 @@ function openActionModal(action,id,rowIdx){
     }
     let body='';
     if(action==='mergeBilling'&&id==='wb-manage')body+=waybillBillingSummaryHtml(id,idx);
+    else if(action==='specialPrice'&&(id==='wb-manage'||id==='wb-client-manage')&&rowData)body+=waybillDetailSummaryHtml(id,rowData);
     else if(action!=='search'&&action!=='selectRequired')body+=selectedDataSummary(id,rowData);
     body+=renderFields(cfg.fields||[],cfg.cols||'modal');
     document.getElementById('crud-modal-body').innerHTML=body;

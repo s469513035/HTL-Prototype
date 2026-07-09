@@ -18527,7 +18527,18 @@ function actionConfig(action,id,rowData){
     if(action==='cargoHold')return {title:'查货扣件 - '+name,fields:[{label:'查货标记',type:'checkboxGroup',span:'md:col-span-2',options:['敏感货','玩具','手机','危险品','易碎','带电','带磁','严禁品']},{label:'是否扣货',type:'checkboxGroup',options:['是']},{label:'产品备注',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认'};
     if(action==='productConfirm')return {title:'产品确认 - '+name,fields:[{label:'产品备注',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认'};
     if(action==='modifyWaybill')return {title:'修改运单 - '+name,fields:[{label:'修改字段',type:'select',required:true,options:['客户名称','目的港','运输方式','件数','重量','体积','报关状态']},{label:'修改后内容',required:true},{label:'修改原因',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'保存修改'};
-    if(action==='manualFreight')return {title:'手改运费（不触发重算） - '+name,fields:[{label:'当前运费',value:rowData&&rowData[8]?rowData[8]:'USD 0',readonly:true},{label:'手改后运费',required:true,placeholder:'请输入运费'},{label:'币别',type:'select',required:true,options:['CNY','USD','EUR']},{label:'手改原因',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认手改运费'};
+    if(action==='manualFreight'){
+        const _mfCfg=TC[id]||{};
+        const _mfFreight=String(getTableValueByHeader(_mfCfg,rowData,'运费','USD 0')||'USD 0');
+        const _mfCurrencyMatch=_mfFreight.match(/(CNY|USD|EUR|GBP)/i);
+        const _mfCurrency=_mfCurrencyMatch?_mfCurrencyMatch[1].toUpperCase():'USD';
+        return {title:'手改运费（不触发重算） - '+name,fields:[
+            {label:'当前运费',value:_mfFreight,readonly:true},
+            {label:'手改后运费',type:'number',required:true,placeholder:'请输入运费'},
+            {label:'币别',value:_mfCurrency,readonly:true},
+            {label:'手改原因',type:'textarea',required:true,span:'md:col-span-2'}
+        ],confirm:'确认手改运费'};
+    }
     if(action==='printLabel'||action==='labelPrint')return {title:'标签打印 - '+name,fields:[{label:'标签模板',type:'select',options:['运单标签-标准','货物标签-标准','托盘标签'],value:'运单标签-标准'},{label:'打印份数',type:'number',value:'1'}],confirm:'确认'};
     if(action==='scan')return {title:'扫码 - '+name,fields:[{label:'扫描单号',required:true,placeholder:'请扫描或输入袋号/分拣单号'},{label:'扫码结果',type:'textarea',span:'md:col-span-2',value:'扫码后自动带出装袋数据，可继续新增或确认封袋。'}],confirm:'确认扫码'};
     if(action==='exception')return {title:'异常登记 - '+name,fields:[{label:'异常说明',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'提交异常'};

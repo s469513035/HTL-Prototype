@@ -12741,10 +12741,10 @@ function warehouseMultiSearchWaybill(){
     const map={
         'warehouse-multi-arrival-time':nowDateTimeLocalSeconds().replace('T',' '),
         'warehouse-multi-transport':'海运',
-        'warehouse-multi-customer':'深圳市华运达国际货运 / 李华',
+        'warehouse-multi-customer':'深圳市华运达国际货运',
         'warehouse-multi-zone':'深圳盐田仓 A区',
         'warehouse-multi-forecast':'10',
-        'warehouse-multi-product':'手机配件'
+        'warehouse-multi-cargo-type':'普货'
     };
     Object.keys(map).forEach(function(k){
         const el=document.getElementById(k);
@@ -12927,9 +12927,9 @@ function generateWarehouseMultiInboundPage(id){
     h+=warehouseField('运单号','<div class="flex flex-1 min-w-0"><input id="warehouse-multi-waybill-no" class="flex-1 h-8 px-2 text-sm border border-surface-200 rounded-l bg-surface-50" placeholder="'+esc(tr('扫描/输入运单号后回车带出基础信息'))+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();warehouseMultiSearchWaybill();}"><button id="warehouse-multi-waybill-search" type="button" onclick="warehouseMultiSearchWaybill()" class="w-10 h-8 bg-primary-600 text-white rounded-r hover:bg-primary-700 cursor-pointer">⌕</button></div>',true,'md:col-span-2');
     h+=warehouseField('到货时间','<input id="warehouse-multi-arrival-time" readonly value="'+esc(nowText)+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
     h+=warehouseField('运输方式','<input id="warehouse-multi-transport" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
-    h+=warehouseField('客户/业务员','<input id="warehouse-multi-customer" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
+    h+=warehouseField('客户','<input id="warehouse-multi-customer" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
     h+=warehouseField('预报件数','<input id="warehouse-multi-forecast" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
-    h+=warehouseField('品名','<input id="warehouse-multi-product" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
+    h+=warehouseField('货物类型','<select id="warehouse-multi-cargo-type" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50"><option value="普货">'+esc(tr('普货'))+'</option><option value="敏感货">'+esc(tr('敏感货'))+'</option></select>',false);
     h+=warehouseField('库位库区','<input id="warehouse-multi-zone" value="" placeholder="'+esc(tr('请输入库位库区'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50">',false,'md:col-span-2');
     h+=warehouseField('操作备注',warehouseInlineInput('text','','请输入操作备注','', ''),false,'md:col-span-2');
     h+='</div>';

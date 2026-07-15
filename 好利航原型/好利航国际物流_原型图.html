@@ -2924,30 +2924,84 @@ addPrototypeTable('wh-pallet-mgmt','上托管理','上托单号|运单号|到货
     ['PL-20260613001','WB-20260522001','深圳盐田仓','A区','TP-YT-001','10','250.00','1.350','陈工','2026-06-13 14:10','待上托'],
     ['PL-20260612006','WB-20260522002','广州南沙仓','B区','TP-NS-006','6','120.00','0.720','王工','2026-06-12 15:38','已上托']
 ]);
-addPrototypeTable('wh-pallet-info','托盘信息查询','状态|托盘类型|托盘号|货区|运单号|件数|客户单号|配舱操作时间|配舱单号|是否找货|是否装柜|封板状态|登记方式|上托时间|上托人|登记仓',['使用中','已作废'],[
-    ['已作废','快递','TP202509220017','E6','ICBU00000600761','15','','2025-10-24 16:38:23','','否','否','未封板','员工端','2025-10-24 16:35:56','卖零食的小女孩','腾信国际'],
-    ['已作废','快递','TP202509220018','E6','ICBU00000600762','18','','2025-10-24 16:38:23','','否','否','未封板','员工端','2025-10-24 16:35:40','卖零食的小女孩','腾信国际'],
-    ['已作废','快递','TP202509220019','E6','ICBU00000600763','20','','2025-10-24 16:38:23','','否','否','未封板','员工端','2025-10-24 16:35:15','卖零食的小女孩','腾信国际'],
-    ['使用中','快递','TP202509220011','A12','ICBU00000600741','8','','','','是','否','未封板','员工端','2025-10-21 16:49:35','卖零食的小女孩','腾信国际'],
-    ['使用中','快递','TX20250927018','','ICBU00000600714','12','','','','否','否','未封板','员工端','2025-09-27 19:00:03','卖零食的小女孩','腾信国际'],
-    ['使用中','快递','TX20250927019','','ICBU00000600715','10','','','','否','否','未封板','员工端','2025-09-27 18:58:27','卖零食的小女孩','腾信国际'],
-    ['使用中','快递','TP202509190011','','ICBU00000600626','25','','','','否','否','未封板','员工端','2025-09-23 13:49:38','卖零食的小女孩','腾信国际'],
-    ['使用中','非快递','KAPAI-11','','ICBU00000600504','30','','','','否','否','未封板','员工端','2025-09-18 14:33:53','卢慧恒','深圳坂田'],
-    ['已作废','非快递','ZIYING22','','ICBU00000600494','7','','2025-09-18 10:25:23','','否','否','已封板','员工端','2025-09-18 10:21:02','卢慧恒','深圳坂田'],
-    ['已作废','非快递','11','','ICBU00000600447','3','','2025-09-11 15:20:03','','否','否','已封板','员工端','2025-09-11 14:58:00','卢慧恒','深圳坂田'],
-    ['已作废','非快递','12','','ICBU00000600445','5','','2025-09-11 16:14:59','','否','否','已封板','员工端','2025-09-11 14:17:38','卢慧恒','深圳坂田'],
-    ['已作废','快递','tp54684','A12','ICBU00000600425','22','义乌总仓-中美UPS快递-A12','2025-09-11 10:28:47','','是','是','已封板','PDA端','2025-09-08 16:17:36','卖零食的小女孩','腾信国际'],
-    ['已作废','快递','TP546876','A12','ICBU00000600425','18','义乌总仓-中美UPS快递-A12','2025-09-11 10:28:47','','是','是','已封板','PDA端','2025-09-08 15:15:23','卖零食的小女孩','腾信国际']
+addPrototypeTable('wh-pallet-info','托盘信息查询','状态|托盘类型|托盘号|货区|国家|运输方式|件数|重量|封板状态|登记方式|登记人|登记仓|操作',['使用中','已作废'],[
+    ['已作废','快递','TP202509220017','E6','塞内加尔','海运','15','37.5KG','未封板','员工端','卖零食的小女孩','腾信国际'],
+    ['已作废','快递','TP202509220018','E6','尼日利亚','海运','18','45.0KG','未封板','员工端','卖零食的小女孩','腾信国际'],
+    ['已作废','快递','TP202509220019','E6','加纳','空运','20','50.0KG','未封板','员工端','卖零食的小女孩','腾信国际'],
+    ['使用中','快递','TP202509220011','A12','塞内加尔','海运','8','20.0KG','未封板','员工端','卖零食的小女孩','腾信国际'],
+    ['使用中','快递','TX20250927018','','尼日利亚','空运','12','30.0KG','未封板','员工端','卖零食的小女孩','腾信国际'],
+    ['使用中','快递','TX20250927019','','塞内加尔','空运','10','25.0KG','未封板','员工端','卖零食的小女孩','腾信国际'],
+    ['使用中','快递','TP202509190011','','科特迪瓦','海运','25','62.5KG','未封板','员工端','卖零食的小女孩','腾信国际'],
+    ['使用中','非快递','KAPAI-11','','喀麦隆','海运','30','75.0KG','未封板','员工端','卢慧恒','深圳坂田'],
+    ['已作废','非快递','ZIYING22','','加纳','空运','7','17.5KG','已封板','员工端','卢慧恒','深圳坂田'],
+    ['已作废','非快递','11','','多哥','海运','3','7.5KG','已封板','员工端','卢慧恒','深圳坂田'],
+    ['已作废','非快递','12','','塞内加尔','海运','5','12.5KG','已封板','员工端','卢慧恒','深圳坂田'],
+    ['已作废','快递','tp54684','A12','尼日利亚','空运','22','55.0KG','已封板','PDA端','卖零食的小女孩','腾信国际'],
+    ['已作废','快递','TP546876','A12','尼日利亚','空运','18','45.0KG','已封板','PDA端','卖零食的小女孩','腾信国际']
 ],[
     {label:'托盘编号',type:'text',field:'palletNo',placeholder:'请输入托盘编号'},
-    {label:'运单号',type:'text',field:'waybillNo',placeholder:'请输入运单号或客户单号'},
+    {label:'国家',type:'select',field:'country',options:['塞内加尔','尼日利亚','加纳','科特迪瓦','喀麦隆','多哥']},
+    {label:'运输方式',type:'select',field:'transport',options:['海运','空运']},
     {label:'托盘类型',type:'select',field:'palletType',options:['快递','非快递']},
     {label:'状态',type:'select',field:'status',options:['使用中','已作废']},
     {label:'封板状态',type:'select',field:'sealStatus',options:['已封板','未封板']},
     {label:'登记方式',type:'select',field:'regMethod',options:['员工端','PDA端']}
 ]);
-TC['wh-pallet-info'].readonlyList=true;
 TC['wh-pallet-info'].noAutoAudit=true;
+var _palletInfoDetailMap={
+    'TP202509220017':{subNo:'ICBU00000600761-01',waybillNo:'ICBU00000600761',customerNo:'',boxingNo:'','boxingTime':'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:35:56'},
+    'TP202509220018':{subNo:'ICBU00000600762-01',waybillNo:'ICBU00000600762',customerNo:'','boxingNo':'','boxingTime':'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:35:40'},
+    'TP202509220019':{subNo:'ICBU00000600763-01',waybillNo:'ICBU00000600763',customerNo:'','boxingNo':'','boxingTime':'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:35:15'},
+    'TP202509220011':{subNo:'ICBU00000600741-01',waybillNo:'ICBU00000600741',customerNo:'','boxingNo':'','boxingTime':'',findGoods:'是',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-21 16:49:35'},
+    'TX20250927018':{subNo:'ICBU00000600714-01',waybillNo:'ICBU00000600714',customerNo:'','boxingNo':'','boxingTime':'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-27 19:00:03'},
+    'TX20250927019':{subNo:'ICBU00000600715-01',waybillNo:'ICBU00000600715',customerNo:'','boxingNo':'','boxingTime':'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-27 18:58:27'},
+    'TP202509190011':{subNo:'ICBU00000600626-01',waybillNo:'ICBU00000600626',customerNo:'','boxingNo':'','boxingTime':'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-23 13:49:38'},
+    'KAPAI-11':{subNo:'ICBU00000600504-01',waybillNo:'ICBU00000600504',customerNo:'','boxingNo':'','boxingTime':'',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-18 14:33:53'},
+    'ZIYING22':{subNo:'ICBU00000600494-01',waybillNo:'ICBU00000600494',customerNo:'','boxingNo':'','boxingTime':'2025-09-18 10:25:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-18 10:21:02'},
+    '11':{subNo:'ICBU00000600447-01',waybillNo:'ICBU00000600447',customerNo:'','boxingNo':'','boxingTime':'2025-09-11 15:20:03',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-11 14:58:00'},
+    '12':{subNo:'ICBU00000600445-01',waybillNo:'ICBU00000600445',customerNo:'','boxingNo':'','boxingTime':'2025-09-11 16:14:59',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-11 14:17:38'},
+    'tp54684':{subNo:'ICBU00000600425-01',waybillNo:'ICBU00000600425',customerNo:'义乌总仓-中美UPS快递-A12',boxingNo:'BOX-20250911-001',boxingTime:'2025-09-11 10:28:47',findGoods:'是',loadingContainer:'是',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-08 16:17:36'},
+    'TP546876':{subNo:'ICBU00000600425-02',waybillNo:'ICBU00000600425',customerNo:'义乌总仓-中美UPS快递-A12',boxingNo:'BOX-20250911-001',boxingTime:'2025-09-11 10:28:47',findGoods:'是',loadingContainer:'是',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-08 15:15:23'}
+};
+
+function openPalletInfoDetailModal(id,rowIdx){
+    const c=TC[id]||{};
+    const data=_listData[id]||c.d||[];
+    const rowData=data[rowIdx];
+    if(!rowData){showToast(tr('未找到托盘数据'));return;}
+    const palletNo=getTableValueByHeader(c,rowData,'托盘号','')||rowData[2]||'';
+    const detail=_palletInfoDetailMap[palletNo]||{subNo:'',waybillNo:'',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'',loadingContainer:'',upPalletBy:'',upPalletTime:''};
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='58%';
+    titleEl.textContent=tr('托盘明细')+' - '+palletNo;
+    const items=[
+        ['托盘号',palletNo],
+        ['子单号',detail.subNo],
+        ['运单号',detail.waybillNo],
+        ['客户单号',detail.customerNo],
+        ['配舱单号',detail.boxingNo],
+        ['配舱时间',detail.boxingTime],
+        ['是否找货',detail.findGoods],
+        ['是否装柜',detail.loadingContainer],
+        ['上托人',detail.upPalletBy],
+        ['上托时间',detail.upPalletTime]
+    ];
+    let html='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">';
+    items.forEach(function(item){
+        const val=item[1]||'—';
+        html+='<div class="flex flex-col gap-1 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
+            '<div class="text-xs text-text-muted">'+tr(item[0])+'</div>'+
+            '<div class="text-sm font-medium text-text-primary break-all">'+esc(val)+'</div>'+
+        '</div>';
+    });
+    html+='</div>';
+    bodyEl.innerHTML=html;
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
 TC['wh-pallet-print']={t:'托盘打印',pageMode:'palletPrint',h:[],q:[],s:[],d:[]};
 addPrototypeTable('wh-express-sort','快递分拣方案管理','方案编号|方案名称|国家|运输方式|操作',[],[
     ['SP1001','西非快递主方案','塞内加尔、尼日利亚','海运、空运'],
@@ -13501,9 +13555,9 @@ function generateListPage(id,page,statusFilter){
             var deleteAction=(id==='wb-manage'||id==='wb-client-manage')?'cancel':'delete';
             const rowBg=gi%2===1?'#F8FAFC':'#FFFFFF';
             const airScanIds=['wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan'];
-            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt'].concat(airScanIds).includes(id);
-            const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt'].concat(airScanIds).includes(id);
-            const viewClick=(id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')')));
+            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info'].concat(airScanIds).includes(id);
+            const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info'].concat(airScanIds).includes(id);
+            const viewClick=(id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':(id==='wh-pallet-info'?'openPalletInfoDetailModal(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')'))));
             let actionHtml='';
             if(id==='cfg-label-template'){
                 actionHtml='<a class="text-orange-500 hover:text-orange-600 cursor-pointer mr-3" onclick="openLabelTemplateModal(\'edit\',\''+id+'\','+gi+')">'+tr('修改')+'</a>'+

@@ -2949,19 +2949,68 @@ addPrototypeTable('wh-pallet-info','托盘信息查询','状态|托盘类型|托
 ]);
 TC['wh-pallet-info'].noAutoAudit=true;
 var _palletInfoDetailMap={
-    'TP202509220017':{subNo:'ICBU00000600761-01',waybillNo:'ICBU00000600761',customerNo:'',boxingNo:'','boxingTime':'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:35:56'},
-    'TP202509220018':{subNo:'ICBU00000600762-01',waybillNo:'ICBU00000600762',customerNo:'','boxingNo':'','boxingTime':'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:35:40'},
-    'TP202509220019':{subNo:'ICBU00000600763-01',waybillNo:'ICBU00000600763',customerNo:'','boxingNo':'','boxingTime':'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:35:15'},
-    'TP202509220011':{subNo:'ICBU00000600741-01',waybillNo:'ICBU00000600741',customerNo:'','boxingNo':'','boxingTime':'',findGoods:'是',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-21 16:49:35'},
-    'TX20250927018':{subNo:'ICBU00000600714-01',waybillNo:'ICBU00000600714',customerNo:'','boxingNo':'','boxingTime':'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-27 19:00:03'},
-    'TX20250927019':{subNo:'ICBU00000600715-01',waybillNo:'ICBU00000600715',customerNo:'','boxingNo':'','boxingTime':'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-27 18:58:27'},
-    'TP202509190011':{subNo:'ICBU00000600626-01',waybillNo:'ICBU00000600626',customerNo:'','boxingNo':'','boxingTime':'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-23 13:49:38'},
-    'KAPAI-11':{subNo:'ICBU00000600504-01',waybillNo:'ICBU00000600504',customerNo:'','boxingNo':'','boxingTime':'',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-18 14:33:53'},
-    'ZIYING22':{subNo:'ICBU00000600494-01',waybillNo:'ICBU00000600494',customerNo:'','boxingNo':'','boxingTime':'2025-09-18 10:25:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-18 10:21:02'},
-    '11':{subNo:'ICBU00000600447-01',waybillNo:'ICBU00000600447',customerNo:'','boxingNo':'','boxingTime':'2025-09-11 15:20:03',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-11 14:58:00'},
-    '12':{subNo:'ICBU00000600445-01',waybillNo:'ICBU00000600445',customerNo:'','boxingNo':'','boxingTime':'2025-09-11 16:14:59',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-11 14:17:38'},
-    'tp54684':{subNo:'ICBU00000600425-01',waybillNo:'ICBU00000600425',customerNo:'义乌总仓-中美UPS快递-A12',boxingNo:'BOX-20250911-001',boxingTime:'2025-09-11 10:28:47',findGoods:'是',loadingContainer:'是',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-08 16:17:36'},
-    'TP546876':{subNo:'ICBU00000600425-02',waybillNo:'ICBU00000600425',customerNo:'义乌总仓-中美UPS快递-A12',boxingNo:'BOX-20250911-001',boxingTime:'2025-09-11 10:28:47',findGoods:'是',loadingContainer:'是',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-08 15:15:23'}
+    'TP202509220017':[
+        {subNo:'ICBU00000600761-01',waybillNo:'ICBU00000600761',customerNo:'',boxingNo:'',boxingTime:'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:35:56'},
+        {subNo:'ICBU00000600761-02',waybillNo:'ICBU00000600761',customerNo:'',boxingNo:'',boxingTime:'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:36:12'},
+        {subNo:'ICBU00000600771-01',waybillNo:'ICBU00000600771',customerNo:'',boxingNo:'',boxingTime:'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:37:04'}
+    ],
+    'TP202509220018':[
+        {subNo:'ICBU00000600762-01',waybillNo:'ICBU00000600762',customerNo:'',boxingNo:'',boxingTime:'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:35:40'},
+        {subNo:'ICBU00000600762-02',waybillNo:'ICBU00000600762',customerNo:'',boxingNo:'',boxingTime:'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:35:58'},
+        {subNo:'ICBU00000600772-01',waybillNo:'ICBU00000600772',customerNo:'',boxingNo:'',boxingTime:'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:36:22'}
+    ],
+    'TP202509220019':[
+        {subNo:'ICBU00000600763-01',waybillNo:'ICBU00000600763',customerNo:'',boxingNo:'',boxingTime:'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:35:15'},
+        {subNo:'ICBU00000600763-02',waybillNo:'ICBU00000600763',customerNo:'',boxingNo:'',boxingTime:'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:35:38'},
+        {subNo:'ICBU00000600773-01',waybillNo:'ICBU00000600773',customerNo:'',boxingNo:'',boxingTime:'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:36:02'},
+        {subNo:'ICBU00000600773-02',waybillNo:'ICBU00000600773',customerNo:'',boxingNo:'',boxingTime:'2025-10-24 16:38:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-24 16:36:24'}
+    ],
+    'TP202509220011':[
+        {subNo:'ICBU00000600741-01',waybillNo:'ICBU00000600741',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'是',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-21 16:49:35'},
+        {subNo:'ICBU00000600741-02',waybillNo:'ICBU00000600741',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'是',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-10-21 16:50:12'}
+    ],
+    'TX20250927018':[
+        {subNo:'ICBU00000600714-01',waybillNo:'ICBU00000600714',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-27 19:00:03'},
+        {subNo:'ICBU00000600714-02',waybillNo:'ICBU00000600714',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-27 19:01:15'}
+    ],
+    'TX20250927019':[
+        {subNo:'ICBU00000600715-01',waybillNo:'ICBU00000600715',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-27 18:58:27'},
+        {subNo:'ICBU00000600715-02',waybillNo:'ICBU00000600715',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-27 18:59:44'}
+    ],
+    'TP202509190011':[
+        {subNo:'ICBU00000600626-01',waybillNo:'ICBU00000600626',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-23 13:49:38'},
+        {subNo:'ICBU00000600626-02',waybillNo:'ICBU00000600626',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-23 13:50:22'},
+        {subNo:'ICBU00000600626-03',waybillNo:'ICBU00000600626',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-23 13:51:06'},
+        {subNo:'ICBU00000600636-01',waybillNo:'ICBU00000600636',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-23 13:52:14'}
+    ],
+    'KAPAI-11':[
+        {subNo:'ICBU00000600504-01',waybillNo:'ICBU00000600504',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-18 14:33:53'},
+        {subNo:'ICBU00000600504-02',waybillNo:'ICBU00000600504',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-18 14:35:18'},
+        {subNo:'ICBU00000600514-01',waybillNo:'ICBU00000600514',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-18 14:37:02'},
+        {subNo:'ICBU00000600514-02',waybillNo:'ICBU00000600514',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-18 14:38:44'},
+        {subNo:'ICBU00000600524-01',waybillNo:'ICBU00000600524',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-18 14:40:11'}
+    ],
+    'ZIYING22':[
+        {subNo:'ICBU00000600494-01',waybillNo:'ICBU00000600494',customerNo:'',boxingNo:'',boxingTime:'2025-09-18 10:25:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-18 10:21:02'},
+        {subNo:'ICBU00000600494-02',waybillNo:'ICBU00000600494',customerNo:'',boxingNo:'',boxingTime:'2025-09-18 10:25:23',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-18 10:22:31'}
+    ],
+    '11':[
+        {subNo:'ICBU00000600447-01',waybillNo:'ICBU00000600447',customerNo:'',boxingNo:'',boxingTime:'2025-09-11 15:20:03',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-11 14:58:00'}
+    ],
+    '12':[
+        {subNo:'ICBU00000600445-01',waybillNo:'ICBU00000600445',customerNo:'',boxingNo:'',boxingTime:'2025-09-11 16:14:59',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-11 14:17:38'},
+        {subNo:'ICBU00000600445-02',waybillNo:'ICBU00000600445',customerNo:'',boxingNo:'',boxingTime:'2025-09-11 16:14:59',findGoods:'否',loadingContainer:'否',upPalletBy:'卢慧恒',upPalletTime:'2025-09-11 14:18:22'}
+    ],
+    'tp54684':[
+        {subNo:'ICBU00000600425-01',waybillNo:'ICBU00000600425',customerNo:'义乌总仓-中美UPS快递-A12',boxingNo:'BOX-20250911-001',boxingTime:'2025-09-11 10:28:47',findGoods:'是',loadingContainer:'是',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-08 16:17:36'},
+        {subNo:'ICBU00000600425-02',waybillNo:'ICBU00000600425',customerNo:'义乌总仓-中美UPS快递-A12',boxingNo:'BOX-20250911-001',boxingTime:'2025-09-11 10:28:47',findGoods:'是',loadingContainer:'是',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-08 16:18:44'},
+        {subNo:'ICBU00000600435-01',waybillNo:'ICBU00000600435',customerNo:'义乌总仓-中美UPS快递-A12',boxingNo:'BOX-20250911-001',boxingTime:'2025-09-11 10:28:47',findGoods:'是',loadingContainer:'是',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-08 16:20:03'}
+    ],
+    'TP546876':[
+        {subNo:'ICBU00000600425-03',waybillNo:'ICBU00000600425',customerNo:'义乌总仓-中美UPS快递-A12',boxingNo:'BOX-20250911-001',boxingTime:'2025-09-11 10:28:47',findGoods:'是',loadingContainer:'是',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-08 15:15:23'},
+        {subNo:'ICBU00000600445-01',waybillNo:'ICBU00000600445',customerNo:'义乌总仓-中美UPS快递-A12',boxingNo:'BOX-20250911-001',boxingTime:'2025-09-11 10:28:47',findGoods:'是',loadingContainer:'是',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-08 15:16:38'},
+        {subNo:'ICBU00000600455-01',waybillNo:'ICBU00000600455',customerNo:'义乌总仓-中美UPS快递-A12',boxingNo:'BOX-20250911-001',boxingTime:'2025-09-11 10:28:47',findGoods:'是',loadingContainer:'是',upPalletBy:'卖零食的小女孩',upPalletTime:'2025-09-08 15:18:11'}
+    ]
 };
 
 function openPalletInfoDetailModal(id,rowIdx){
@@ -2970,33 +3019,47 @@ function openPalletInfoDetailModal(id,rowIdx){
     const rowData=data[rowIdx];
     if(!rowData){showToast(tr('未找到托盘数据'));return;}
     const palletNo=getTableValueByHeader(c,rowData,'托盘号','')||rowData[2]||'';
-    const detail=_palletInfoDetailMap[palletNo]||{subNo:'',waybillNo:'',customerNo:'',boxingNo:'',boxingTime:'',findGoods:'',loadingContainer:'',upPalletBy:'',upPalletTime:''};
+    const rows=_palletInfoDetailMap[palletNo]||[];
     const titleEl=document.getElementById('crud-modal-title');
     const bodyEl=document.getElementById('crud-modal-body');
     const footerEl=document.getElementById('crud-modal-footer');
     const panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='58%';
+    if(panel)panel.style.width='78%';
     titleEl.textContent=tr('托盘明细')+' - '+palletNo;
-    const items=[
-        ['托盘号',palletNo],
-        ['子单号',detail.subNo],
-        ['运单号',detail.waybillNo],
-        ['客户单号',detail.customerNo],
-        ['配舱单号',detail.boxingNo],
-        ['配舱时间',detail.boxingTime],
-        ['是否找货',detail.findGoods],
-        ['是否装柜',detail.loadingContainer],
-        ['上托人',detail.upPalletBy],
-        ['上托时间',detail.upPalletTime]
-    ];
-    let html='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">';
-    items.forEach(function(item){
-        const val=item[1]||'—';
-        html+='<div class="flex flex-col gap-1 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
-            '<div class="text-xs text-text-muted">'+tr(item[0])+'</div>'+
-            '<div class="text-sm font-medium text-text-primary break-all">'+esc(val)+'</div>'+
-        '</div>';
+    /* 顶部信息条：托盘号 + 汇总（子单笔数、涉及运单数） */
+    const waybillSet={};
+    rows.forEach(function(r){if(r.waybillNo)waybillSet[r.waybillNo]=true;});
+    let html='<div class="space-y-4">';
+    html+='<div class="flex flex-wrap items-center gap-6 rounded-lg border border-primary-100 bg-primary-50/40 px-4 py-3">';
+    [['托盘号',palletNo],['子单笔数',String(rows.length)],['涉及运单数',String(Object.keys(waybillSet).length)]].forEach(function(item){
+        html+='<div><div class="text-xs text-text-muted">'+tr(item[0])+'</div><div class="text-sm font-semibold text-primary-700 mt-0.5">'+esc(item[1]||'—')+'</div></div>';
     });
+    html+='</div>';
+    /* 明细表格 */
+    html+='<div class="border border-surface-200 rounded-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm min-w-[1120px]">';
+    html+='<thead class="bg-surface-50 text-text-secondary"><tr>'+
+        ['子单号','运单号','客户单号','配舱单号','配舱时间','是否找货','是否装柜','上托人','上托时间'].map(function(hd){
+            return '<th class="px-3 py-2 text-left whitespace-nowrap border-b border-surface-200">'+tr(hd)+'</th>';
+        }).join('')+
+    '</tr></thead><tbody>';
+    if(!rows.length){
+        html+='<tr><td colspan="9" class="px-3 py-8 text-center text-text-muted">'+tr('该托盘暂无明细数据')+'</td></tr>';
+    }else{
+        rows.forEach(function(r){
+            html+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">'+
+                '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(r.subNo||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.waybillNo||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.customerNo||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.boxingNo||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.boxingTime||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.findGoods||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.loadingContainer||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.upPalletBy||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.upPalletTime||'—')+'</td>'+
+            '</tr>';
+        });
+    }
+    html+='</tbody></table></div></div>';
     html+='</div>';
     bodyEl.innerHTML=html;
     footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>';

@@ -12865,13 +12865,10 @@ function warehouseMultiSearchWaybill(){
         const el=document.getElementById(k);
         if(el)el.value=map[k];
     });
-    const custSel=document.getElementById('warehouse-multi-customer');
-    let custVal='';
-    if(custSel){
-        const opt=Array.from(custSel.options).find(function(o){return o.value.indexOf('C10001')>=0;});
-        custVal=opt?opt.value:(custSel.options[1]?custSel.options[1].value:'');
-        custSel.value=custVal;
-    }
+    const custEl=document.getElementById('warehouse-multi-customer');
+    const custOpts=getCrmCustomerOptions();
+    const custVal=custOpts.find(function(o){return o.indexOf('C10001')>=0;})||custOpts[0]||'';
+    if(custEl)custEl.value=custVal;
     fillDestWarehouseFromCustomer(custVal||'华运达国际货运','warehouse-multi-dest-warehouse');
     const prodSel=document.getElementById('warehouse-multi-product');
     if(prodSel){prodSel.value='西非海运专线';handleWarehouseMultiProductChange(prodSel);}
@@ -13047,6 +13044,7 @@ function generateWarehouseMultiInboundPage(id){
     h+='<div class="h-full overflow-auto bg-surface-50 p-3 md:p-4">';
     h+='<form id="warehouse-inbound-form" class="space-y-4">';
     h+=productNameDatalistHtml();
+    h+=crmCustomerDatalistHtml();
     h+='<div class="grid gap-3 xl:grid-cols-2">';
     h+='<div class="space-y-3">';
     h+='<section class="bg-white border border-primary-100 shadow-sm p-4">';
@@ -13055,7 +13053,7 @@ function generateWarehouseMultiInboundPage(id){
     h+=warehouseField('运单号','<div class="flex items-center gap-2"><div class="flex"><input id="warehouse-multi-waybill-no" class="w-56 h-8 px-2 text-sm border border-surface-200 rounded-l bg-surface-50" placeholder="'+esc(tr('扫描/输入运单号后回车带出基础信息'))+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();warehouseMultiSearchWaybill();}"><button id="warehouse-multi-waybill-search" type="button" onclick="warehouseMultiSearchWaybill()" class="w-10 h-8 bg-primary-600 text-white rounded-r hover:bg-primary-700 cursor-pointer">⌕</button></div><label class="inline-flex items-center gap-1.5 text-sm text-text-secondary whitespace-nowrap cursor-pointer"><input type="checkbox" id="warehouse-multi-no-order" class="rounded border-surface-300 text-primary-600" onchange="toggleWarehouseMultiNoOrder(this)"><span>'+tr('无单收货')+'</span></label></div>',true,'md:col-span-2');
     h+=warehouseField('到货时间','<input id="warehouse-multi-arrival-time" readonly value="'+esc(nowText)+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
     h+=warehouseField('产品','<select id="warehouse-multi-product" onchange="handleWarehouseMultiProductChange(this)" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50"><option value="">'+tr('请选择')+'</option>'+(multiProductOptions.length?multiProductOptions:['西非海运专线','西非空运专线']).map(function(o){return '<option value="'+esc(o)+'">'+esc(tr(o))+'</option>';}).join('')+'</select>',false);
-    h+=warehouseField('客户','<select id="warehouse-multi-customer" disabled onchange="handleWarehouseMultiCustomerChange(this)" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed"><option value="">'+tr('扫描运单号后自动带出')+'</option>'+multiCustomerOptions.map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join('')+'</select>',false);
+    h+=warehouseField('客户','<input id="warehouse-multi-customer" list="crm-customer-options" readonly onchange="handleWarehouseMultiCustomerChange(this)" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed">',false);
     h+=warehouseField('目的仓库','<select id="warehouse-multi-dest-warehouse" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50"><option value="">'+tr('请选择')+'</option>'+multiDestOptions.map(function(o){return '<option value="'+esc(o)+'">'+esc(tr(o))+'</option>';}).join('')+'</select>',false);
     h+=warehouseField('件数','<input id="warehouse-multi-forecast" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
     h+=warehouseField('库位库区','<input id="warehouse-multi-zone" value="" placeholder="'+esc(tr('请输入库位库区'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50">',false,'md:col-span-2');
@@ -13184,6 +13182,12 @@ function handleWarehouseMultiCustomerChange(select){
     fillDestWarehouseFromCustomer(select&&select.value,'warehouse-multi-dest-warehouse');
 }
 
+function crmCustomerDatalistHtml(){
+    return '<datalist id="crm-customer-options">'+getCrmCustomerOptions().map(function(o){
+        return '<option value="'+esc(o)+'"></option>';
+    }).join('')+'</datalist>';
+}
+
 function handleWarehouseMultiProductChange(select){
     refreshProductServices(select,'warehouse-multi-services');
 }
@@ -13206,7 +13210,7 @@ function toggleWarehouseMultiNoOrder(cb){
     }
     const cust=document.getElementById('warehouse-multi-customer');
     if(cust){
-        cust.disabled=!on;
+        cust.readOnly=!on;
         cust.classList.toggle('bg-surface-50',!!on);
         cust.classList.toggle('bg-surface-100',!on);
         cust.classList.toggle('cursor-not-allowed',!on);
@@ -13247,7 +13251,7 @@ function generateWarehouseInboundPage(id){
     const basic=[
         {label:'快递单号',value:'SF10086523'},
         {label:'到货仓库',type:'select',required:true,options:warehouseOptions,value:currentAccountWarehouse()},
-        {label:'所属客户',type:'select',options:inboundCustomerOptions,value:inboundCustomerOptions[0]||'',id:'warehouse-inbound-customer',onchange:'handleWarehouseInboundCustomerChange(this)',span:'md:col-start-1'},
+        {label:'所属客户',value:inboundCustomerOptions[0]||'',id:'warehouse-inbound-customer',list:'crm-customer-options',placeholder:'输入客户代码/名称模糊筛选',onchange:'handleWarehouseInboundCustomerChange(this)',span:'md:col-start-1'},
         {label:'目的仓库',required:true,type:'select',id:'warehouse-inbound-dest',options:['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓','特马海外仓','蒙罗维亚海外仓','科纳克里海外仓','班珠尔海外仓'],value:'达喀尔海外仓'},
         {label:'产品',type:'select',options:inboundProductOptions.length?inboundProductOptions:['西非海运专线','西非空运专线'],onchange:'handleWarehouseProductChange(this)'},
         {label:'品名',required:true,value:'',placeholder:'输入品名信息',list:'product-name-options',oninput:'handleWarehouseProductNameInput(this)',onblur:'handleCargoNameCommit(this)'},
@@ -13272,6 +13276,7 @@ function generateWarehouseInboundPage(id){
     h+='<div class="h-full overflow-auto p-5">';
     h+='<form id="warehouse-inbound-form" class="space-y-5">';
     h+=productNameDatalistHtml();
+    h+=crmCustomerDatalistHtml();
     h+=warehouseReceiveTabs(id,mode);
     h+='<div class="bg-white rounded-xl border border-surface-200 p-5">';
     h+='<div class="flex items-center justify-between gap-4 mb-5"><div><h2 class="text-lg font-semibold text-text-primary">'+tr(title)+'</h2></div><span class="badge bg-blue-100 text-blue-700">'+tr(status)+'</span></div>';

@@ -9767,15 +9767,16 @@ function generateShipmentEntryPage(id,options){
     options=options||{};
     const isAdmin=!!options.showCustomerCode;
     const defaultCustomer=isAdmin?defaultShipmentCustomer():null;
+    const productOptions=((TC['prod-manage']&&TC['prod-manage'].d)||[]).map(function(r){return r&&r[1];}).filter(Boolean);
     const basic=[
-        ...(isAdmin?[
-            {label:'客户代码',required:true,value:defaultCustomer.code,placeholder:'请输入客户代码',list:'shipment-customer-code-options',span:'md:col-span-4'}
-        ]:[]),
         {label:'物流单号',value:''},
-        {label:'运输方式',type:'select',required:true,options:['海运','空运','铁路','快递']},
+        {label:'产品',type:'select',required:true,options:productOptions.length?productOptions:['西非海运专线','西非空运专线']},
         {label:'国内仓库',type:'select',required:true,options:['深圳盐田仓','广州南沙仓','上海浦东仓','义乌仓']},
-        {label:'目的仓库',required:true,type:'select',options:['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓','特马海外仓','蒙罗维亚海外仓','科纳克里海外仓','班珠尔海外仓'],value:'达喀尔海外仓'},
         {label:'件数',type:'number',required:true,value:'1'},
+        ...(isAdmin?[
+            {label:'客户代码',required:true,value:defaultCustomer.code,placeholder:'请输入客户代码',list:'shipment-customer-code-options'}
+        ]:[]),
+        {label:'目的仓库',required:true,type:'select',options:['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓','特马海外仓','蒙罗维亚海外仓','科纳克里海外仓','班珠尔海外仓'],value:'达喀尔海外仓'},
         {label:'总体积(CBM)',type:'number',value:''},
         {label:'总重量(KG)',type:'number',value:''},
         {label:'预计送货时间',type:'datetime-local'}

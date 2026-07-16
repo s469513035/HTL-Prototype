@@ -13082,19 +13082,30 @@ function generateWarehouseMultiInboundPage(id){
     return h;
 }
 
-var _productDefaultServices={
+var _productServices={
     '西非海运专线':['报关','木箱'],
     '西非空运专线':['报关','带电','带磁']
 };
 
 function handleWarehouseProductChange(select){
     const val=select&&select.value;
-    const services=(val&&val!=='请选择')?(_productDefaultServices[val]||[]):[];
+    const services=(val&&val!=='请选择')?(_productServices[val]||[]):[];
     const container=document.getElementById('warehouse-inbound-services');
     if(!container)return;
     container.querySelectorAll('input[type="checkbox"][data-cb-label]').forEach(function(cb){
         cb.checked=services.includes(cb.dataset.cbLabel);
     });
+}
+
+function saveProductManageServices(productName){
+    if(!productName)return;
+    const container=document.getElementById('prod-manage-services-container');
+    if(!container)return;
+    const selected=[];
+    container.querySelectorAll('input[type="checkbox"][data-cb-label]:checked').forEach(function(cb){
+        selected.push(cb.dataset.cbLabel);
+    });
+    _productServices[productName]=selected;
 }
 
 function generateWarehouseInboundPage(id){
@@ -14528,10 +14539,14 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     html+='<div class="border border-surface-200 rounded-xl overflow-hidden">'+
         '<div class="px-4 py-3 bg-surface-50 border-b border-surface-200"><div class="text-sm font-semibold text-text-primary">'+tr('附加服务')+'</div></div>'+
         '<div class="p-4">'+
-            '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
-                ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
-                    return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
-                }).join('')+
+            '<div id="prod-manage-services-container" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
+                (function(){
+                    const preSelected=(_productServices[editName]||[]);
+                    return ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
+                        const on=preSelected.indexOf(o)>=0?' checked':'';
+                        return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"'+on+'><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
+                    }).join('');
+                })()+
             '</div>'+
         '</div>'+
     '</div>';
@@ -14549,7 +14564,7 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     html+='</tbody></table></div></div>';
     html+='</div>';
     bodyEl.innerHTML=html;
-    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr('保存成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存产品')+'</button>';
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="saveProductManageServices(\''+esc(editName)+'\');closeCrudModal();showToast(\''+tr('保存成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存产品')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
 }
 

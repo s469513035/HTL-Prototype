@@ -13089,12 +13089,20 @@ var _productServices={
 
 function handleWarehouseProductChange(select){
     const val=select&&select.value;
-    const services=(val&&val!=='请选择')?(_productServices[val]||[]):[];
     const container=document.getElementById('warehouse-inbound-services');
     if(!container)return;
-    container.querySelectorAll('input[type="checkbox"][data-cb-label]').forEach(function(cb){
-        cb.checked=services.includes(cb.dataset.cbLabel);
-    });
+    if(!val||val==='请选择'){
+        container.innerHTML='<span class="text-xs text-text-muted">'+tr('请先选择产品')+'</span>';
+        return;
+    }
+    const services=_productServices[val]||[];
+    if(!services.length){
+        container.innerHTML='<span class="text-xs text-text-muted">'+tr('该产品未配置附加服务')+'</span>';
+        return;
+    }
+    container.innerHTML=services.map(function(o){
+        return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'" checked><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
+    }).join('');
 }
 
 function saveProductManageServices(productName){
@@ -13154,10 +13162,8 @@ function generateWarehouseInboundPage(id){
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('货区托盘绑定')+'</div>'+renderFields(zoneBind,4)+'</section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
-        '<div id="warehouse-inbound-services" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
-            ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
-                return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
-            }).join('')+
+        '<div id="warehouse-inbound-services" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 min-h-[42px]">'+
+            '<span class="text-xs text-text-muted">'+tr('请先选择产品')+'</span>'+
         '</div>'+
     '</section>';
     if(mode==='second'){

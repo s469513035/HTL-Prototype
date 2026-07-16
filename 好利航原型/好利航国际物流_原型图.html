@@ -13082,6 +13082,21 @@ function generateWarehouseMultiInboundPage(id){
     return h;
 }
 
+var _productDefaultServices={
+    '西非海运专线':['报关','木箱'],
+    '西非空运专线':['报关','带电','带磁']
+};
+
+function handleWarehouseProductChange(select){
+    const val=select&&select.value;
+    const services=(val&&val!=='请选择')?(_productDefaultServices[val]||[]):[];
+    const container=document.getElementById('warehouse-inbound-services');
+    if(!container)return;
+    container.querySelectorAll('input[type="checkbox"][data-cb-label]').forEach(function(cb){
+        cb.checked=services.includes(cb.dataset.cbLabel);
+    });
+}
+
 function generateWarehouseInboundPage(id){
     const cfg=TC[id]||{};
     const defaultMode=cfg.receiveModeDefault==='multi'?'second':(cfg.receiveModeDefault==='one'?'fast':'');
@@ -13092,14 +13107,14 @@ function generateWarehouseInboundPage(id){
     const title=cfg.receiveModeDefault?cfg.t:(titleMap[mode]||'极速收货');
     const status=mode==='noPre'?'待补录':'待入仓';
     const warehouseOptions=getWarehouseNameOptions();
+    const inboundProductOptions=((TC['prod-manage']&&TC['prod-manage'].d)||[]).map(function(r){return r&&r[1];}).filter(Boolean);
     const basic=[
         {label:'快递单号',value:'SF10086523'},
         {label:'到货仓库',type:'select',required:true,options:warehouseOptions,value:currentAccountWarehouse()},
         {label:'所属客户',value:'C10001'},
-        {label:'运输方式',type:'select',options:['海运','空运','铁路','快递'],value:'海运'},
         {label:'目的仓库',required:true,type:'select',options:['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓','特马海外仓','蒙罗维亚海外仓','科纳克里海外仓','班珠尔海外仓'],value:'达喀尔海外仓'},
-        {label:'品名',required:true,value:'',placeholder:'输入品名信息',list:'product-name-options',oninput:'handleWarehouseProductNameInput(this)',onblur:'handleCargoNameCommit(this)',span:'md:col-span-2'},
-        {label:'货物类型',type:'select',options:['普货','敏感货'],value:'普货'},
+        {label:'产品',type:'select',options:['请选择'].concat(inboundProductOptions.length?inboundProductOptions:['西非海运专线','西非空运专线']),value:'请选择',onchange:'handleWarehouseProductChange(this)'},
+        {label:'品名',required:true,value:'',placeholder:'输入品名信息',list:'product-name-options',oninput:'handleWarehouseProductNameInput(this)',onblur:'handleCargoNameCommit(this)'},
         {label:'长(cm)',type:'number',value:''},
         {label:'宽(cm)',type:'number',value:''},
         {label:'高(cm)',type:'number',value:''},
@@ -13128,7 +13143,7 @@ function generateWarehouseInboundPage(id){
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('货区托盘绑定')+'</div>'+renderFields(zoneBind,4)+'</section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
-        '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
+        '<div id="warehouse-inbound-services" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
             ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
                 return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
             }).join('')+

@@ -14510,6 +14510,16 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     html+='<div class="flex flex-col gap-1.5 md:col-span-4"><label class="text-sm font-medium text-text-secondary">'+tr('产品备注')+'</label>';
     html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+tr('请输入产品备注')+'">'+esc(editRemark)+'</textarea></div>';
     html+='</div></div>';
+    html+='<div class="border border-surface-200 rounded-xl overflow-hidden">'+
+        '<div class="px-4 py-3 bg-surface-50 border-b border-surface-200"><div class="text-sm font-semibold text-text-primary">'+tr('附加服务')+'</div></div>'+
+        '<div class="p-4">'+
+            '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
+                ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
+                    return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
+                }).join('')+
+            '</div>'+
+        '</div>'+
+    '</div>';
     html+='<div class="border border-surface-200 rounded-xl overflow-hidden"><div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between"><div class="text-sm font-semibold text-text-primary">'+tr('取重规则配置')+'</div><button type="button" onclick="addWeightRule()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增规则')+'</button></div>';
     html+='<div class="p-4 overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded-lg"><thead><tr class="bg-surface-50">';
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('条件表达式')+'</th>';

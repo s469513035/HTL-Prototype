@@ -9774,7 +9774,7 @@ function generateShipmentEntryPage(id,options){
         ]:[]),
         {label:'目的仓库',required:true,type:'select',options:['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓','特马海外仓','蒙罗维亚海外仓','科纳克里海外仓','班珠尔海外仓'],value:'达喀尔海外仓',span:isAdmin?'md:col-span-2':'md:col-span-4'},
         {label:'物流单号',value:''},
-        {label:'产品',type:'select',required:true,options:productOptions.length?productOptions:['西非海运专线','西非空运专线']},
+        {label:'产品',type:'select',required:true,options:['请选择'].concat(productOptions.length?productOptions:['西非海运专线','西非空运专线']),value:'请选择',onchange:'handleShipmentEntryProductChange(this)'},
         {label:'国内仓库',type:'select',required:true,options:['深圳盐田仓','广州南沙仓','上海浦东仓','义乌仓']},
         {label:'件数',type:'number',required:true,value:'1'},
         {label:'总体积(CBM)',type:'number',value:''},
@@ -9802,10 +9802,8 @@ function generateShipmentEntryPage(id,options){
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('发件人信息')+'</div>'+renderFields(sender,4)+'</section>';
     h+='<section>'+
         '<div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
-        '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">'+
-            ['报关','仿牌','木箱','带电','带磁','贴箱唛'].map(function(o){
-                return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
-            }).join('')+
+        '<div id="shipment-entry-services" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 min-h-[42px]">'+
+            '<span class="text-xs text-text-muted">'+tr('请先选择产品')+'</span>'+
         '</div>'+
     '</section>';
     h+='<section>'+
@@ -13087,9 +13085,9 @@ var _productServices={
     '西非空运专线':['报关','带电','带磁']
 };
 
-function handleWarehouseProductChange(select){
+function refreshProductServices(select,containerId){
     const val=select&&select.value;
-    const container=document.getElementById('warehouse-inbound-services');
+    const container=document.getElementById(containerId);
     if(!container)return;
     if(!val||val==='请选择'){
         container.innerHTML='<span class="text-xs text-text-muted">'+tr('请先选择产品')+'</span>';
@@ -13103,6 +13101,14 @@ function handleWarehouseProductChange(select){
     container.innerHTML=services.map(function(o){
         return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(o)+'"><span>'+esc(tr(o))+'</span><span class="inline-flex w-4 h-4 items-center justify-center rounded-full bg-surface-100 border border-surface-200 text-[11px] font-bold leading-none text-text-muted cursor-help" title="'+esc(serviceChargeTooltip(o))+'">?</span></label>';
     }).join('');
+}
+
+function handleWarehouseProductChange(select){
+    refreshProductServices(select,'warehouse-inbound-services');
+}
+
+function handleShipmentEntryProductChange(select){
+    refreshProductServices(select,'shipment-entry-services');
 }
 
 function saveProductManageServices(productName){

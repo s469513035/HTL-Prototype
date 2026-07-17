@@ -2017,7 +2017,8 @@ const menuData=[
 {id:'cfg-risk',label:'风控规则',langKey:'cfg_risk',page:'biz-cfg',tab:'cfg-risk'},
 {id:'cfg-i18n',label:'多语言配置',langKey:'cfg_i18n',page:'biz-cfg',tab:'cfg-i18n'},
 {id:'cfg-coding-rule',label:'编码规则管理',page:'biz-cfg',tab:'cfg-coding-rule'},
-{id:'fcl-provider-api',label:'服务商API配置',page:'biz-cfg',tab:'fcl-provider-api'}
+{id:'fcl-provider-api',label:'服务商API配置',page:'biz-cfg',tab:'fcl-provider-api'},
+{id:'biz-msg-flow',label:'消息流程管理',page:'biz-cfg',tab:'biz-msg-flow'}
 ]}
 ]},
 
@@ -2727,6 +2728,11 @@ TC['biz-track-cfg']={t:'轨迹配置',forceLocalHeader:true,readonlyList:true,h:
 ['yyscz','预约送仓中','','','预约送仓中','Delivery Appointment Scheduled','是','','','2026-07-15 16:15:12','系统'],
 ['YJDL','已交快递服务商','','','已交快递服务商','Handover to Courier Company','是','','','2026-07-15 16:15:12','系统']]};
 TC['biz-track-cfg'].q=[{label:'轨迹名称',type:'text'},{label:'轨迹类型',type:'select',options:['头程','干线','尾程','清关','派送','签收','异常']},{label:'对应系统业务',type:'select',options:['订单','入仓','出库','运输','清关','派送','签收','自提']},{label:'中文内容',type:'text'},{label:'客户端显示标志',type:'select',options:['是','否']}];
+TC['biz-msg-flow']={t:'消息流程管理',forceLocalHeader:true,readonlyList:true,h:['流程编号','流程名称','流程类型','流程节点','流程连接线','类型','启用状态','备注','创建时间','创建人','修改时间','操作'],s:['启用','禁用'],d:[
+['2071935585487982594','测试开箱验货','待办流程','[{"id":"229feadc-b7d0-40e1-9f3a-1c2d3e4f5a6b","type":"start","name":"开始"}]','[{"lineFrom":"229feadc-b7d0","lineTo":"a1b2c3d4"}]','KXYH','启用','','2026-06-30 20:35:13','CS08',''],
+['MANUAL_SETTLEMENT_REMIND','人工结算提醒消息','待办流程','[{"id":"05d1e531-4da2-4c8f-9a1b-2c3d4e5f6a7b","type":"start"}]','[{"lineFrom":"05d1e531-4da2","lineTo":"b2c3d4e5"}]','MANUAL_SETTLEMENT','启用','系统内置消息,请勿删除(勿动)','2026-06-24 16:27:15','HYD','2026-06-30 20:30:33'],
+['2063895840006410242','问题件待办流程','待办流程','[{"id":"44ede0a6-1234-5678-90ab-cdef12345678","type":"start"}]','[{"lineFrom":"44ede0a6-1234","lineTo":"c3d4e5f6"}]','TXWTJLX','启用','','2026-06-08 16:08:08','HYD','']]};
+TC['biz-msg-flow'].q=[{label:'流程名称',type:'text'},{label:'消息类型-业务操作',type:'select',options:['人工结算','出货复核','收货复核','库内盘点']},{label:'消息类型-问题件',type:'select',options:['破损','开箱验货','测试问题类型']},{label:'启用状态',type:'select',options:['启用','禁用']}];
 
 TC['crm-cust'].q=[{label:'客户代码',type:'text'},{label:'客户简称',type:'text'},{label:'客户类型',type:'select',options:['直客','同行','平台','代理']},{label:'所属业务员',type:'select',options:['张三','李四','王五','赵六']},{label:'所属客服',type:'select',options:['陈七','周八','吴九']},{label:'启用状态',type:'select',options:['启用','禁用']},{label:'客户等级',type:'select',options:['A类','B类','C类','D类']}];
 TC['crm-pool'].q=[{label:'客户名称',type:'text',field:'name'},{label:'客户类型',type:'select',field:'type',options:['直客','同行']},{label:'原归属销售',type:'text',field:'sales'},{label:'公海原因',type:'select',field:'reason',options:['销售离职','超期未跟进','客户放弃']},{label:'状态',type:'select',field:'status'}];
@@ -8829,6 +8835,16 @@ function getToolbarActions(id){
             {key:'trackMapping',label:'轨迹映射'}
         ];
     }
+    if(id==='biz-msg-flow'){
+        return [
+            {key:'search',label:'查询',variant:'primary'},
+            {type:'add',label:'新增',variant:'primary'},
+            {type:'edit',label:'修改'},
+            {key:'setEnable',label:'启用',variant:'success'},
+            {key:'setDisable',label:'禁用'},
+            {key:'batchDelete',label:'删除'}
+        ];
+    }
     if(id==='base-provider'){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
@@ -14235,6 +14251,10 @@ function openCrudModal(mode,id,rowIdx){
         openTrackCfgModal(mode,id,rowIdx,rowData);
         return;
     }
+    if(id==='biz-msg-flow'&&(mode==='add'||mode==='edit')){
+        openMsgFlowModal(mode,id,rowIdx,rowData);
+        return;
+    }
     const colClass=modalGridFullClass(modalFields,'modal');
     if(mode==='view'){
         let html='';
@@ -14384,6 +14404,74 @@ function openCsIssueTypeModal(mode,id,rowIdx,rowData){
     const toast=isEdit?tr('保存成功'):tr('新增成功');
     footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+toast+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+(isEdit?tr('保存修改'):tr('确认提交'))+'</button>';
     document.getElementById('crud-modal').classList.add('show');
+}
+
+function openMsgFlowModal(mode,id,rowIdx,rowData){
+    const L=_lang[_currentLang];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='94%';
+    const isEdit=mode==='edit';
+    const name=rowData?rowData[1]:'';
+    const status=rowData?(rowData[6]||'启用'):'启用';
+    const remark=rowData?rowData[7]:'';
+    const typeVal=rowData?rowData[5]:'';
+    titleEl.textContent=isEdit?tr('编辑'):tr('新增');
+    const inputCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    const issueSubs=(TC['cs-issue-type']&&TC['cs-issue-type'].d?TC['cs-issue-type'].d.map(function(r){return r[1];}):['破损','开箱验货','测试问题类型']);
+    const bizSubs=['人工结算','出货复核','收货复核','库内盘点'];
+    function leaf(cat,v){return '<div onclick="pickMsgFlowType(\''+esc(cat)+'\',\''+esc(v)+'\')" class="px-3 py-2 text-sm text-text-secondary hover:bg-primary-50 hover:text-primary-600 cursor-pointer whitespace-nowrap">'+esc(v)+'</div>';}
+    let html='';
+    html+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mb-4">';
+    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('流程名称')+'</label><input type="text" required class="'+inputCls+'" value="'+esc(name)+'" placeholder="'+esc(tr('请输入流程名称'))+'"></div>';
+    html+='<div class="relative"><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('消息类型')+'</label>';
+    html+='<input id="msgflow-type-input" type="text" readonly onclick="toggleMsgFlowTypeMenu()" class="'+inputCls+' cursor-pointer" value="'+esc(typeVal)+'" placeholder="'+esc(tr('请选择消息类型'))+'">';
+    html+='<div id="msgflow-type-menu" class="hidden absolute left-0 top-full mt-1 z-50 w-44 bg-white border border-surface-200 rounded-lg shadow-lg py-1">';
+    html+='<div class="group relative"><div class="flex items-center justify-between px-3 py-2 text-sm text-text-primary hover:bg-primary-50 cursor-pointer"><span>'+tr('问题件')+'</span><span class="text-text-muted">›</span></div>';
+    html+='<div class="hidden group-hover:block absolute left-full top-0 w-40 bg-white border border-surface-200 rounded-lg shadow-lg py-1">'+issueSubs.map(function(v){return leaf('问题件',v);}).join('')+'</div></div>';
+    html+='<div class="group relative"><div class="flex items-center justify-between px-3 py-2 text-sm text-text-primary hover:bg-primary-50 cursor-pointer"><span>'+tr('业务操作')+'</span><span class="text-text-muted">›</span></div>';
+    html+='<div class="hidden group-hover:block absolute left-full top-0 w-40 bg-white border border-surface-200 rounded-lg shadow-lg py-1">'+bizSubs.map(function(v){return leaf('业务操作',v);}).join('')+'</div></div>';
+    html+='</div></div>';
+    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('启用状态')+'</label><select class="'+inputCls+'">'+['启用','禁用'].map(function(o){return '<option'+(status===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
+    html+='</div>';
+    html+='<div class="mb-4"><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('备注')+'</label><input type="text" class="'+inputCls+'" value="'+esc(remark)+'" placeholder="'+esc(tr('请输入备注'))+'"></div>';
+    html+='<div class="flex gap-3" style="height:460px">';
+    html+='<div class="w-32 flex-shrink-0 border border-surface-200 rounded-lg bg-white p-3 flex flex-col gap-3">';
+    html+='<div class="text-sm font-semibold text-text-primary">'+tr('流程节点')+'</div>';
+    html+='<div class="h-9 flex items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 text-sm cursor-grab">'+tr('开始')+'</div>';
+    html+='<div class="h-9 flex items-center justify-center rounded-lg border border-green-200 bg-green-50 text-green-600 text-sm cursor-grab">'+tr('待办节点')+'</div>';
+    html+='<div class="h-9 flex items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600 text-sm cursor-grab">'+tr('消息节点')+'</div>';
+    html+='<div class="flex gap-2 mt-1"><button type="button" onclick="showToast(\''+esc(tr('请先选中节点'))+'\')" class="flex-1 h-8 text-xs text-white bg-red-500 rounded hover:bg-red-600 cursor-pointer">'+tr('删除选中')+'</button><button type="button" onclick="showToast(\''+esc(tr('流程已导出'))+'\')" class="h-8 px-3 text-xs text-white bg-amber-500 rounded hover:bg-amber-600 cursor-pointer">'+tr('导出')+'</button></div>';
+    html+='</div>';
+    html+='<div class="flex-1 border border-surface-200 rounded-lg relative overflow-hidden" style="background-color:#fff;background-image:linear-gradient(#eef2f7 1px,transparent 1px),linear-gradient(90deg,#eef2f7 1px,transparent 1px);background-size:22px 22px">';
+    html+='<svg class="absolute inset-0 w-full h-full pointer-events-none"><defs><marker id="mf-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="none" stroke="#94a3b8" stroke-width="1.2"/></marker></defs><path d="M224,98 L224,150 L198,150 L198,196" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#mf-arrow)"/></svg>';
+    html+='<div class="absolute" style="left:180px;top:60px"><div class="px-6 py-2 rounded-full border border-blue-300 bg-blue-50 text-blue-600 text-sm shadow-sm">'+tr('开始')+'</div></div>';
+    html+='<div class="absolute" style="left:150px;top:196px"><div class="px-6 py-2 rounded border border-blue-300 bg-white text-text-primary text-sm shadow-sm">'+tr('待办节点')+'</div></div>';
+    html+='<div class="absolute" style="left:320px;top:196px"><div class="px-6 py-2 rounded border border-blue-300 bg-white text-text-primary text-sm shadow-sm">'+tr('消息节点')+'</div></div>';
+    html+='</div>';
+    html+='<div class="w-52 flex-shrink-0 border border-surface-200 rounded-lg bg-white p-3">';
+    html+='<div class="text-sm font-semibold text-text-primary mb-3">'+tr('节点/连接线信息')+'</div>';
+    html+='<div class="text-xs text-text-muted leading-relaxed">'+tr('点击画布中的节点或连接线以查看信息')+'</div>';
+    html+='</div>';
+    html+='</div>';
+    bodyEl.innerHTML=html;
+    const toast=isEdit?tr('保存成功'):tr('新增成功');
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+toast+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+(isEdit?tr('保存修改'):tr('确认提交'))+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function toggleMsgFlowTypeMenu(){
+    const m=document.getElementById('msgflow-type-menu');
+    if(m)m.classList.toggle('hidden');
+}
+
+function pickMsgFlowType(cat,val){
+    const inp=document.getElementById('msgflow-type-input');
+    if(inp)inp.value=cat+' / '+val;
+    const m=document.getElementById('msgflow-type-menu');
+    if(m)m.classList.add('hidden');
 }
 
 function openTrackCfgModal(mode,id,rowIdx,rowData){

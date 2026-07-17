@@ -1932,7 +1932,6 @@ const menuData=[
 {id:'waybill',label:'运单管理（管理端）',langKey:'waybill',children:[
 {id:'wb-special',label:'下单录入',langKey:'wb_special',page:'waybill',tab:'wb-special'},
 {id:'wb-manage',label:'运单管理（管理端）',langKey:'wb_manage',page:'waybill',tab:'wb-manage'},
-{id:'wb-work-order',label:'工单管理',langKey:'wb_work_order',page:'waybill',tab:'wb-work-order'},
 {id:'wb-op-instruction',label:'操作指令',page:'waybill',tab:'wb-op-instruction'}
 ]}
 ]},
@@ -2621,10 +2620,6 @@ TC['wb-special']={t:'专线下单',h:['运单号','客户名称','国内仓库',
 TC['wb-fcl']={t:'整柜下单',h:['运单号','客户名称','起运港','目的港','柜型','柜量','船公司','开船日期','状态','操作'],s:['待确认','已确认','已取消'],d:[['FC20250001','鑫达贸易','深圳','达喀尔','20GP','2','MAERSK','2025-06-01','待确认'],['FC20250002','远洋物流','广州','拉各斯','40HQ','1','MSC','2025-06-05','已确认']]};
 TC['wb-import']={t:'批量导入',h:['批次号','导入时间','导入人','总条数','成功数','失败数','状态','操作'],s:['导入中','已完成','导入失败'],d:[['IMP20250001','2025-05-10 14:30','李华','100','98','2','已完成'],['IMP20250002','2025-05-11 09:15','张伟','50','50','0','已完成']]};
 TC['wb-manage']={t:'运单管理（管理端）',h:'运单号|物流单号|客户名称|客户代码|所属产品|海外提货仓|所属业务员|所属客服|所属操作|国内仓库|目的仓库|产品名称|件数|重量(KG)|体积(CBM)|运费|运单状态|仓库异常备注|问题件状态|操作'.split('|'),s:['已预报','已到货','已确认','已配舱','已出库','已签收','已退件','已取消'],d:[['WB-20260522001','SF10086523','深圳市华运达国际货运','C10004','西非海运专线','深圳盐田仓','李华','王海波','赵雅琴','深圳盐田仓','达喀尔海外仓','西非海运专线','10','250.00','1.350','CNY 8,580','已预报','','正常'],['WB-20260522002','YT98876543','广州远洋进出口贸易','C10002','西非海运专线','广州南沙仓','刘晓东','陈志远','赵雅琴','广州南沙仓','拉各斯海外仓','西非海运专线','6','120.00','0.720','CNY 5,360','已到货','外包装破损','处理中'],['WB-20260522003','ZT20037654','佛山恒通货运代理','C10003','西非海运专线','深圳盐田仓','王明辉','王海波','赵雅琴','深圳盐田仓','阿比让海外仓','西非海运专线','4','180.00','0.960','CNY 6,920','已确认','','正常'],['WB-20260522004','','东莞市鑫海物流','CUS-004','西非海运专线','广州南沙仓','王明辉','陈志远','赵雅琴','广州南沙仓','杜阿拉海外仓','西非海运专线','8','96.00','0.540','CNY 3,280','已退件','货物信息不符','已关闭'],['WB-20260522005','JD30012345','上海锦程国际贸易','C10005','西非海运专线','上海浦东仓','赵雅琴','王海波','赵雅琴','上海浦东仓','洛美海外仓','西非海运专线','12','360.00','2.160','CNY 12,800','已配舱','','正常']]};
-TC['wb-work-order']={t:'工单管理',forceLocalHeader:true,h:['工单编号','标题','类型','优先级','工单状态','当前处理人','客户','单号','创建人','创建时间','创建公司','操作'],s:['待处理','处理中','已完成','已关闭'],d:[
-['WO202606001','报关资料补充','资料补充','高','待处理','王海波','深圳市华运达国际货运','WB-20260522001','李华','2026-06-02 10:40','深圳分公司'],
-['WO202606002','费用差异核对','费用争议','中','处理中','赵雅琴','广州远洋进出口贸易','WB-20260522002','刘晓东','2026-06-02 11:18','广州分公司'],
-['WO202606003','货物破损处理','异常处理','高','已完成','陈志远','东莞市鑫海物流','WB-20260522004','王明辉','2026-06-03 09:26','广州分公司']]};
 TC['wb-op-instruction']={t:'操作指令',forceLocalHeader:true,readonlyList:true,h:['运单号','指令类型','接收仓库','指令状态','指令内容','操作时间','操作人','备注','创建时间','创建人','更新时间','更新人','操作'],s:['待处理','已处理'],d:[
 ['H2607090003','库内盘点','天地仓库','待处理','库内盘点2','','','库内盘点3','2026-07-09 15:37:29','天地仓总部管理员','',''],
 ['H2607090001','库内盘点','天地仓','已处理','库内盘点2','2026-07-09 15:56:45','天地仓管理员','库内盘点3','2026-07-09 15:37:29','天地仓总部管理员','2026-07-09 15:56:45','天地仓管理员'],
@@ -2704,7 +2699,6 @@ TC['wb-special'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'客户�
 TC['wb-fcl'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'客户名称',type:'text',field:'custName'},{label:'柜型',type:'select',field:'cntrType',options:['20GP','40GP','40HQ']},{label:'船公司',type:'text',field:'carrier'},{label:'状态',type:'select',field:'status'}];
 TC['wb-import'].q=[{label:'批次号',type:'text',field:'batchNo'},{label:'导入人',type:'text',field:'operator'},{label:'状态',type:'select',field:'status'}];
 TC['wb-manage'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'物流单号',type:'text',field:'logisticsNo'},{label:'客户名称',type:'select',field:'custName',options:['深圳市华运达国际货运','广州远洋进出口贸易','佛山恒通货运代理','东莞市鑫海物流','上海锦程国际贸易']},{label:'客户代码',type:'select',field:'custCode',options:['C10001','C10002','C10003','C10004','C10005']},{label:'所属产品',type:'select',field:'product',options:['西非海运专线','西非空运专线']},{label:'海外提货仓',type:'select',field:'pickupWarehouse',options:['深圳盐田仓','广州南沙仓','上海浦东仓']},{label:'国内仓库',type:'select',field:'domesticWarehouse',options:['深圳盐田仓','广州南沙仓','上海浦东仓','义乌仓']},{label:'目的仓库',type:'select',field:'destWarehouse',options:['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓']},{label:'运输方式',type:'select',field:'transport',options:['海运','空运']},{label:'运单状态',type:'select',field:'status',options:['已预报','已到货','已确认','已配舱','已出库','已签收','已退件','已取消']},{label:'问题件状态',type:'select',field:'issueStatus',options:['正常','待处理','处理中','已关闭']}];
-TC['wb-work-order'].q=[{label:'工单编号',type:'text',field:'code'},{label:'标题',type:'text',field:'title'},{label:'类型',type:'select',field:'type',options:['费用争议','资料补充','异常处理','客户咨询']},{label:'优先级',type:'select',field:'priority',options:['高','中','低']},{label:'工单状态',type:'select',field:'status'}];
 TC['wb-op-instruction'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'指令类型',type:'select',field:'cmdType',options:['库内盘点','开箱验货','出货复核','收货复核']},{label:'指令状态',type:'select',field:'cmdStatus',options:['待处理','已处理']}];
 TC['wb-client-list'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'物流单号',type:'text',field:'logisticsNo'},{label:'客户名称',type:'text',field:'custName'},{label:'起运港',type:'text',field:'fromPort'},{label:'目的港',type:'text',field:'toPort'},{label:'运输方式',type:'select',field:'transport',options:['海运','空运']},{label:'运单状态',type:'select',field:'status',options:['草稿','已预报','已到货','已确认','已配舱','已出库','已签收','已取消']}];
 TC['wb-client-special'].q=[{label:'运单号',type:'text',field:'wbNo'},{label:'客户名称',type:'text',field:'custName'},{label:'起运港',type:'text',field:'fromPort'},{label:'目的港',type:'text',field:'toPort'},{label:'状态',type:'select',field:'status'}];
@@ -8839,7 +8833,7 @@ function getToolbarActions(id){
             {key:'labelPrint',label:'标签打印'},
             {key:'mergeBilling',label:'合并计费'},
             {key:'specialPrice',label:'特价申请'},
-            {key:'workOrder',label:'工单管理'},
+            {key:'sendInstruction',label:'发送指令'},
             {key:'manualFreight',label:'手改运费'},
             {key:'export',label:'导出数据'}
         ];
@@ -18831,6 +18825,7 @@ function actionConfig(action,id,rowData){
     if(action==='splitDeclaration')return {title:'拆分报关 - '+name,fields:[{label:'拆分方式',type:'select',required:true,options:['按品名拆分','按件数拆分','按客户要求拆分']},{label:'拆分票数',type:'number',value:'2'},{label:'拆分说明',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认拆分报关'};
     if(action==='mergeBilling')return {title:'合并计费 - '+name,fields:[{label:'合并费用项',type:'checkboxGroup',span:'md:col-span-2',options:['运费'],checkedOptions:['运费']},{label:'计费备注',type:'textarea',span:'md:col-span-2'}],confirm:'确认合并计费'};
     if(action==='specialPrice')return {title:'特价申请 - '+name,fields:[{label:'申请类型',type:'radioGroup',required:true,options:['单价模式','总价模式'],value:'单价模式',span:'md:col-span-2'},{label:'申请价格',required:true,placeholder:'请输入特价金额'},{label:'币别',type:'select',required:true,options:['CNY','USD','EUR']},{label:'申请原因',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'提交特价申请'};
+    if(action==='sendInstruction')return {title:'发送指令',fields:[{label:'指令类型',type:'select',required:true,options:['库内盘点','开箱验货','出货复核','收货复核'],span:'md:col-span-2'},{label:'指令内容',type:'textarea',required:true,span:'md:col-span-2'},{label:'备注',type:'textarea',span:'md:col-span-2'}],confirm:'确认'};
     if(action==='ticketManage'||action==='workOrder')return {title:'工单管理 - '+name,fields:[{label:'工单标题',required:true},{label:'工单类型',type:'select',required:true,options:['费用争议','资料补充','异常处理','客户咨询']},{label:'优先级',type:'select',options:['高','中','低']},{label:'工单内容',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'创建工单'};
     if(action==='cargoHold')return {title:'查货扣件 - '+name,fields:[{label:'查货标记',type:'checkboxGroup',span:'md:col-span-2',options:['敏感货','玩具','手机','危险品','易碎','带电','带磁','严禁品']},{label:'是否扣货',type:'checkboxGroup',options:['是']},{label:'产品备注',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认'};
     if(action==='productConfirm')return {title:'产品确认 - '+name,fields:[{label:'产品备注',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认'};
@@ -19040,7 +19035,7 @@ function openActionModal(action,id,rowIdx){
     let body='';
     if(action==='mergeBilling'&&id==='wb-manage')body+=waybillBillingSummaryHtml(id,idx);
     else if((action==='specialPrice'||action==='manualFreight')&&(id==='wb-manage'||id==='wb-client-manage')&&rowData)body+=waybillDetailSummaryHtml(id,rowData);
-    else if(action!=='search'&&action!=='selectRequired')body+=selectedDataSummary(id,rowData);
+    else if(action!=='search'&&action!=='selectRequired'&&action!=='sendInstruction')body+=selectedDataSummary(id,rowData);
     body+=renderFields(cfg.fields||[],cfg.cols||'modal');
     document.getElementById('crud-modal-body').innerHTML=body;
     const dangerClass=cfg.danger?'bg-red-600 hover:bg-red-700':'bg-primary-600 hover:bg-primary-700';
@@ -19072,6 +19067,11 @@ function confirmAction(action,id){
     if(action==='labelPrint'||action==='printLabel'){
         closeCrudModal();
         showToast(tr('标签PDF已生成，可打印或下载'));
+        return;
+    }
+    if(action==='sendInstruction'){
+        closeCrudModal();
+        showToast(tr('指令发送成功'));
         return;
     }
     if(action==='resetEntry'){

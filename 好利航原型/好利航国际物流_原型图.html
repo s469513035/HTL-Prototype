@@ -14422,7 +14422,7 @@ function openMsgFlowModal(mode,id,rowIdx,rowData){
     const bodyEl=document.getElementById('crud-modal-body');
     const footerEl=document.getElementById('crud-modal-footer');
     const panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='94%';
+    if(panel)panel.style.width='78%';
     const isEdit=mode==='edit';
     const name=rowData?rowData[1]:'';
     const status=rowData?(rowData[6]||'启用'):'启用';
@@ -14490,7 +14490,7 @@ function openApprovalFlowModal(mode,id,rowIdx,rowData){
     const bodyEl=document.getElementById('crud-modal-body');
     const footerEl=document.getElementById('crud-modal-footer');
     const panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='94%';
+    if(panel)panel.style.width='78%';
     const isEdit=mode==='edit';
     const name=rowData?rowData[1]:'';
     const status=rowData?(rowData[6]||'启用'):'启用';

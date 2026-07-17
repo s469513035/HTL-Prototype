@@ -1997,7 +1997,8 @@ const menuData=[
 {id:'basedata',label:'基础资料',langKey:'basedata',children:[
 {label:'服务商管理',id:'base-provider',langKey:'base_provider',page:'basedata',tab:'base-provider'},
 {label:'员工管理',id:'base-employee',langKey:'base_employee',page:'basedata',tab:'base-employee'},
-{label:'发件人信息',id:'base-sender',langKey:'base_sender',page:'basedata',tab:'base-sender'}
+{label:'发件人信息',id:'base-sender',langKey:'base_sender',page:'basedata',tab:'base-sender'},
+{id:'biz-track-cfg',label:'轨迹配置',page:'basedata',tab:'biz-track-cfg'}
 ]},
 {id:'product',label:'产品配置',langKey:'product',children:[
 {id:'prod-manage',label:'产品管理',langKey:'prod_manage',page:'product',tab:'prod-manage'},
@@ -2692,6 +2693,40 @@ TC['cfg-i18n']={t:'多语言配置',modalExcludedFields:['配置编号','模块'
 TC['cfg-product-name'].forceLocalHeader=true;
 TC['cfg-i18n'].forceLocalHeader=true;
 TC['cfg-risk'].forceLocalHeader=true;
+TC['biz-track-cfg']={t:'轨迹配置',forceLocalHeader:true,readonlyList:true,h:['轨迹编号','轨迹名称','轨迹类型','对应系统业务','中文内容','英文内容','客户端是否显示','备注','排序号','创建时间','创建人','操作'],s:[],d:[
+['自提完结','自提完结','','自提完结','自提完结','End of self-withdrawal','是','','100','2026-07-16 15:19:34','天地总部管理员'],
+['UPOD','上传POD签收单','','上传POD签收单','上传POD签收单','Upload POD receipt','是','','100','2026-07-16 15:19:08','天地总部管理员'],
+['WPOD','无POD签收单','','无POD签收单','无POD签收单','No POD receipt','是','','100','2026-07-16 15:18:37','天地总部管理员'],
+['CFDJ','出发登记','','出发登记','出发登记','Departure registration','是','','100','2026-07-16 15:15:37','天地总部管理员'],
+['YCDJ','约仓登记','','约仓登记','约仓登记','Booking registration','是','','100','2026-07-16 15:15:05','天地总部管理员'],
+['TBWC','已完成贴标','','','已完成贴标','Labels Applied / Stickered','否','','','2026-07-15 16:15:14','系统'],
+['YJBLDZ','预计班列到达站时间','','','预计班列到达站时间','ETA (Estimated Time of Arrival)','是','','','2026-07-15 16:15:14','系统'],
+['YDJC','已到目的地机场','','','已到目的机场','Arrived at Destination Airport','是','','','2026-07-15 16:15:14','系统'],
+['jhld','计划落地时间','','','计划落地时间','ETA (Estimated Time of Arrival)','是','','','2026-07-15 16:15:14','系统'],
+['SJRJS','收件人拒收','','','收件人拒收','Reject by Cnee','否','','','2026-07-15 16:15:13','系统'],
+['QSD','已回传签收单','','','已回传签收单','POD (Proof of Delivery) Received','是','','','2026-07-15 16:15:13','系统'],
+['GXRC','更新入仓','','','更新入仓','delivery date update','是','','','2026-07-15 16:15:13','系统'],
+['HBYF','航班已飞','','','航班已飞','Flight Departed','是','','','2026-07-15 16:15:13','系统'],
+['blyk','班列已开','','','班列已开','Train Departed','是','','','2026-07-15 16:15:13','系统'],
+['YJKBL','预计开班列时间','','','预计开班列时间','ETD (Estimated Time of Departure)','是','','','2026-07-15 16:15:13','系统'],
+['BLYDZ','班列已到站','','','班列已到站','Arrived at Destination Station','是','','','2026-07-15 16:15:13','系统'],
+['yshc','已上火车','','','已上火车','Loaded onto Train','是','','','2026-07-15 16:15:13','系统'],
+['pdshc','排队等待上火车','','','排队等待上火车','Waiting for Train Loading','是','','','2026-07-15 16:15:13','系统'],
+['HWYQSSS','货物已签收','','','货物已签收','deliveried','是','','','2026-07-15 16:15:13','系统'],
+['HWDS','货物丢失','','','货物丢失','Package lost','否','','','2026-07-15 16:15:13','系统'],
+['PSYC','派送异常','','','派送异常','Delivery Failure','是','','','2026-07-15 16:15:13','系统'],
+['HBQFYW','航班起飞延误','','','航班起飞延误','Flight departure delayed','是','','','2026-07-15 16:15:13','系统'],
+['YJHB','预计航班时间','','','预计航班时间','ETD (Flight)','是','','','2026-07-15 16:15:13','系统'],
+['CYFX','清关查验已放行','','','清关查验已放行','Inspection Cleared','是','','','2026-07-15 16:15:12','系统'],
+['JHTQ','计划提柜','','','计划提柜','Planned Pick-up','是','','','2026-07-15 16:15:12','系统'],
+['GXTG','更新提柜计划','','','更新提柜计划','Revised Pick-up Plan','否','','','2026-07-15 16:15:12','系统'],
+['YT','提柜异常','','','提柜异常','Container showing HOLD','是','','','2026-07-15 16:15:12','系统'],
+['ZY','已提柜','','','已提柜','Shipment Picked Up','是','','','2026-07-15 16:15:12','系统'],
+['KHLJ','扣货拦截','','','扣货拦截','Shipment on Hold / Intercepted','是','','','2026-07-15 16:15:12','系统'],
+['qxkh','取消拦截','','','取消拦截','Hold Released / Cancelled','是','','','2026-07-15 16:15:12','系统'],
+['yyscz','预约送仓中','','','预约送仓中','Delivery Appointment Scheduled','是','','','2026-07-15 16:15:12','系统'],
+['YJDL','已交快递服务商','','','已交快递服务商','Handover to Courier Company','是','','','2026-07-15 16:15:12','系统']]};
+TC['biz-track-cfg'].q=[{label:'轨迹名称',type:'text'},{label:'轨迹类型',type:'select',options:['头程','干线','尾程','清关','派送','签收','异常']},{label:'对应系统业务',type:'select',options:['订单','入仓','出库','运输','清关','派送','签收','自提']},{label:'中文内容',type:'text'},{label:'客户端显示标志',type:'select',options:['是','否']}];
 
 TC['crm-cust'].q=[{label:'客户代码',type:'text'},{label:'客户简称',type:'text'},{label:'客户类型',type:'select',options:['直客','同行','平台','代理']},{label:'所属业务员',type:'select',options:['张三','李四','王五','赵六']},{label:'所属客服',type:'select',options:['陈七','周八','吴九']},{label:'启用状态',type:'select',options:['启用','禁用']},{label:'客户等级',type:'select',options:['A类','B类','C类','D类']}];
 TC['crm-pool'].q=[{label:'客户名称',type:'text',field:'name'},{label:'客户类型',type:'select',field:'type',options:['直客','同行']},{label:'原归属销售',type:'text',field:'sales'},{label:'公海原因',type:'select',field:'reason',options:['销售离职','超期未跟进','客户放弃']},{label:'状态',type:'select',field:'status'}];
@@ -8761,6 +8796,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='editCodingRule')click='openCodingRuleEditModal(\''+id+'\')';
     else if(action.key==='genBill'&&id==='fcl-bill-entry')click='showToast(\''+esc(tr('账单生成成功'))+'\')';
     else if(action.key==='genBill'&&id==='fin-fee-mgmt')click='openFeeMgmtGenBillModal(\''+id+'\')';
+    else if(action.key==='trackMapping')click='showToast(\''+esc(tr('轨迹映射配置'))+'\')';
     else click='openActionModal(\''+action.key+'\',\''+id+'\',-1)';
     const widthStyle=action.fixedWidth?'width:'+(action.width||'104px'):'min-width:'+(action.width||'96px');
     return '<button onclick="'+click+'" class="toolbar-action font-medium rounded-lg cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap '+color+'" style="'+widthStyle+'">'+esc(tr(action.label))+'</button>';
@@ -8786,6 +8822,14 @@ function getToolbarActions(id){
             {type:'edit',label:'修改'},
             {key:'setEnable',label:'启用',variant:'success'},
             {key:'setDisable',label:'禁用'}
+        ];
+    }
+    if(id==='biz-track-cfg'){
+        return [
+            {key:'search',label:'查询',variant:'primary'},
+            {type:'add',label:'新增轨迹',variant:'primary'},
+            {type:'edit',label:'更新轨迹'},
+            {key:'trackMapping',label:'轨迹映射'}
         ];
     }
     if(id==='base-provider'){
@@ -14034,6 +14078,10 @@ function openCrudModal(mode,id,rowIdx){
         openCsIssueTypeModal(mode,id,rowIdx,rowData);
         return;
     }
+    if(id==='biz-track-cfg'&&(mode==='add'||mode==='edit')){
+        openTrackCfgModal(mode,id,rowIdx,rowData);
+        return;
+    }
     const colClass=modalGridFullClass(modalFields,'modal');
     if(mode==='view'){
         let html='';
@@ -14178,6 +14226,50 @@ function openCsIssueTypeModal(mode,id,rowIdx,rowData){
     html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('区域类型')+'</label><select required class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('请选择区域类型')+'</option>'+regionOptions.map(function(o){return '<option value="'+esc(o)+'"'+(region===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
     html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('问题说明')+'</label><textarea rows="3" required class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入问题说明'))+'">'+esc(template)+'</textarea></div>';
     html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'">'+esc(remark)+'</textarea></div>';
+    html+='</div>';
+    bodyEl.innerHTML=html;
+    const toast=isEdit?tr('保存成功'):tr('新增成功');
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+toast+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+(isEdit?tr('保存修改'):tr('确认提交'))+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function openTrackCfgModal(mode,id,rowIdx,rowData){
+    const L=_lang[_currentLang];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='72%';
+    const isEdit=mode==='edit';
+    const code=rowData?rowData[0]:'';
+    const name=rowData?rowData[1]:'';
+    const type=rowData?rowData[2]:'';
+    const sysBizVal=rowData?rowData[3]:'';
+    const cnContent=rowData?rowData[4]:'';
+    const enContent=rowData?rowData[5]:'';
+    const clientShow=rowData?(rowData[6]||'是'):'是';
+    const remark=rowData?rowData[7]:'';
+    const sortNo=(rowData&&rowData[8])?rowData[8]:'100';
+    const trackTypes=['头程','干线','尾程','清关','派送','签收','异常'];
+    const sysBizOpts=['订单','入仓','出库','运输','清关','派送','签收','自提'];
+    titleEl.textContent=isEdit?tr('编辑'):tr('新增');
+    const inputCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    function lbl(t,req){return '<label class="text-sm font-medium text-text-secondary mb-1.5 block">'+(req?'<span class="text-red-500">*</span> ':'')+tr(t)+'</label>';}
+    function selHtml(opts,val,ph){var s='<select class="'+inputCls+'"><option value="">'+tr(ph)+'</option>';opts.forEach(function(o){s+='<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});return s+'</select>';}
+    let html='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
+    html+='<div>'+lbl('轨迹编号',true);
+    if(isEdit){html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+esc(code)+'" readonly></div>';}
+    else{html+='<input type="text" required class="'+inputCls+'" value="'+esc(code)+'" placeholder="'+esc(tr('请输入轨迹编号'))+'"></div>';}
+    html+='<div>'+lbl('轨迹名称',true)+'<input type="text" required class="'+inputCls+'" value="'+esc(name)+'" placeholder="'+esc(tr('请输入轨迹名称'))+'"></div>';
+    html+='<div>'+lbl('轨迹类型',false)+selHtml(trackTypes,type,'请选择轨迹类型')+'</div>';
+    html+='<div>'+lbl('对应系统业务',false)+selHtml(sysBizOpts,sysBizVal,'请选择对应系统业务')+'</div>';
+    html+='<div>'+lbl('中文内容',false)+'<input type="text" class="'+inputCls+'" value="'+esc(cnContent)+'" placeholder="'+esc(tr('请输入中文内容'))+'"></div>';
+    html+='<div>'+lbl('中文内容(字典维护映射值)',false)+'<input type="text" class="'+inputCls+'" placeholder="'+esc(tr('请输入中文内容(字典维护映射值)'))+'"></div>';
+    html+='<div>'+lbl('英文内容',false)+'<input type="text" class="'+inputCls+'" value="'+esc(enContent)+'" placeholder="'+esc(tr('请输入英文内容'))+'"></div>';
+    html+='<div>'+lbl('英文内容(字典维护映射值)',false)+'<input type="text" class="'+inputCls+'" placeholder="'+esc(tr('请输入英文内容(字典维护映射值)'))+'"></div>';
+    html+='<div>'+lbl('客户端显示标志',true)+'<select class="'+inputCls+'">'+['是','否'].map(function(o){return '<option value="'+esc(o)+'"'+(clientShow===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
+    html+='<div>'+lbl('排序',false)+'<input type="number" class="'+inputCls+'" value="'+esc(sortNo)+'"></div>';
+    html+='<div>'+lbl('备注',false)+'<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'">'+esc(remark)+'</textarea></div>';
     html+='</div>';
     bodyEl.innerHTML=html;
     const toast=isEdit?tr('保存成功'):tr('新增成功');

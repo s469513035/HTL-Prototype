@@ -9775,6 +9775,7 @@ function generateShipmentEntryPage(id,options){
         {label:'目的仓库',required:true,type:'select',id:'shipment-dest-warehouse',options:['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓','特马海外仓','蒙罗维亚海外仓','科纳克里海外仓','班珠尔海外仓'],value:'达喀尔海外仓',span:isAdmin?'md:col-span-2':'md:col-span-4'},
         {label:'物流单号',value:''},
         {label:'产品',type:'select',required:true,options:productOptions.length?productOptions:['西非海运专线','西非空运专线'],onchange:'handleShipmentEntryProductChange(this)'},
+        {label:'货物类型',type:'select',required:true,options:['普货','敏感货']},
         {label:'国内仓库',type:'select',required:true,options:['深圳盐田仓','广州南沙仓','上海浦东仓','义乌仓']},
         {label:'件数',type:'number',required:true,value:'1'},
         {label:'总体积(CBM)',type:'number',value:''},

@@ -2654,7 +2654,7 @@ TC['wh-headless']={t:'无头件',pageMode:'warehouseHeadlessInbound',h:[],s:[],d
 TC['wh-sort']={t:'理货',h:['理货单号','入仓单号','品名','件数','重量(KG)','体积(CBM)','理货人','理货时间','状态','操作'],s:['待理货','理货中','已完成'],d:[['ST20250001','WH20250001','电子产品','10','250.5','1.8','陈工','2025-05-10','已完成'],['ST20250002','WH20250002','服装','5','120.0','0.9','王工','2025-05-11','待理货']]};
 TC['wh-pallet']={t:'上托',h:['上托单号','入仓单号','托盘号','件数','重量(KG)','体积(CBM)','操作人','操作时间','状态','操作'],s:['待上托','已上托'],d:[['PT20250001','WH20250001','TP001','10','250.5','1.8','陈工','2025-05-10','已上托'],['PT20250002','WH20250002','TP002','5','120.0','0.9','王工','2025-05-11','待上托']]};
 TC['wh-out']={t:'出库',h:['出库单号','入仓单号','客户代号','目的港','件数','重量(KG)','体积(CBM)','出库时间','状态','操作'],s:['待出库','已出库'],d:[['OT20250001','WH20250001','C10001','达喀尔','10','250.5','1.8','2025-05-12','已出库'],['OT20250002','WH20250002','C10002','拉各斯','5','120.0','0.9','2025-05-13','待出库']]};
-TC['prod-manage']={t:'产品管理',h:['产品编号','产品名称','业务类型','货物类型','运输方式','目的国家','产品备注','计泡比规则','重货取敏感货标识','使用客户','启用','操作'],s:['启用','停用'],d:[['P001','西非海运专线','散货','普货','海运','塞内加尔','标准货物','1CBM=167KG','否','全部客户','启用'],['P002','西非空运专线','散货','敏感货','空运','尼日利亚','敏感货注意','1CBM=167KG','是','鑫达贸易,远洋物流','启用']]};
+TC['prod-manage']={t:'产品管理',h:['产品编号','产品名称','业务类型','运输方式','目的国家','产品备注','计泡比规则','使用客户','启用','操作'],s:['启用','停用'],d:[['P001','西非海运专线','散货','海运','塞内加尔','标准货物','1CBM=167KG','全部客户','启用'],['P002','西非空运专线','散货','空运','尼日利亚','敏感货注意','1CBM=167KG','鑫达贸易,远洋物流','启用']]};
 TC['prod-price-lcl']={t:'销售报价(散货)',h:['报价编号','报价名称','销售产品','报价开始时间','报价结束时间','发货仓库','使用客户','目的仓库','状态','操作'],s:['已生效','待生效','已失效'],d:[['QP001','西非散货标准报价','西非海运专线,西非空运专线','2026-01-01','2026-12-31','深圳盐田仓,广州南沙仓','全部客户','达喀尔海外仓,拉各斯海外仓','已生效'],['QP002','敏感货空运报价','西非空运专线','2026-03-01','2026-09-30','广州南沙仓','指定客户','拉各斯海外仓','待生效']]};
 TC['prod-cost-fcl']={t:'业务员成本(整柜)',h:['成本编号','产品名称','柜型','起运港','目的港','成本价格','币种','生效日期','状态','操作'],s:['已生效','待生效','已失效'],d:[['FC001','西非海运专线','20GP','深圳','达喀尔','USD 2800','USD','2025-01-01','已生效'],['FC002','西非海运专线','40HQ','深圳','达喀尔','USD 4200','USD','2025-01-01','已生效']]};
 TC['prod-surcharge']={t:'附加杂费配置',h:['附加费代码','附加费名称','品名大类','状态','开始时间','结束时间','备注','操作'],s:['启用','停用'],d:[['SC001','报关费','电子产品','启用','2025-01-01','2025-12-31','按国家与报关方式维护明细'],['SC002','仓储费','服装鞋帽','启用','2025-01-01','2025-12-31','按件数、重量或体积组合计费'],['SC003','文件费','其他','停用','2025-01-01','2025-06-30','固定文件处理费']]};
@@ -13753,10 +13753,7 @@ function generateListPage(id,page,statusFilter){
             const rawCell=cell===undefined||cell===null?'':String(cell);
             const displayCell=tr(rawCell);
             const titleCell=esc(displayCell);
-            if(id==='prod-manage'&&th==='重货取敏感货标识'){
-                h+='<td class="px-4 py-3 text-sm whitespace-nowrap '+(rawCell==='是'?'text-red-500':'text-green-600')+' font-medium" title="'+titleCell+'">'+esc(displayCell)+'</td>';
-            }
-            else if(ci===si||(c.statusBadgeCols&&c.statusBadgeCols.indexOf(th)>=0)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap">'+statusBadge(rawCell)+'</td>';}
+            if(ci===si||(c.statusBadgeCols&&c.statusBadgeCols.indexOf(th)>=0)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap">'+statusBadge(rawCell)+'</td>';}
             else if((id==='wb-manage'||id==='wb-client-manage')&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold" onclick="openWaybillDetail(\''+id+'\','+gi+')">'+esc(displayCell)+'</button></td>';}
             else if(id==='fin-fee-mgmt'&&th==='运单号'){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold" ondblclick="openFeeMgmtDetail(\''+id+'\','+gi+')" title="'+esc(tr('双击进入详情'))+'">'+esc(displayCell)+'</button></td>';}
             else if(id==='fcl-bill'&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold" ondblclick="openBillDetailModal(\''+id+'\','+gi+')" title="'+esc(tr('双击进入详情'))+'">'+esc(displayCell)+'</button></td>';}
@@ -14621,14 +14618,12 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     const editCategory='电子产品';
     const editCargoInfo='';
     const editBusinessType=rowData?rowData[2]:'散货';
-    const editCargoType=rowData?rowData[3]:'普货';
-    const editTransport=rowData?rowData[4]:'';
-    const editCountry=rowData?rowData[5]:'';
-    const editRemark=rowData?rowData[6]:'';
-    const editBubbleRatio=rowData?rowData[7]:'';
-    const editCustomers=rowData?rowData[9]:'全部客户';
-    const editStatus=rowData?rowData[10]:'启用';
-    const sensitiveChecked=rowData&&rowData[8]==='是'?' checked':'';
+    const editTransport=rowData?rowData[3]:'';
+    const editCountry=rowData?rowData[4]:'';
+    const editRemark=rowData?rowData[5]:'';
+    const editBubbleRatio=rowData?rowData[6]:'';
+    const editCustomers=rowData?rowData[7]:'全部客户';
+    const editStatus=rowData?rowData[8]:'启用';
     const activeChecked=(!rowData||editStatus==='启用'||editStatus==='已生效')?' checked':'';
     let html='<div class="space-y-5">';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('产品基本信息')+'</div>';
@@ -14648,8 +14643,6 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     }
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('业务类型')+'</label>';
     html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['散货','整柜'],editBusinessType)+'</select></div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('货物类型')+'</label>';
-    html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['普货','敏感货'],editCargoType)+'</select></div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('运输方式')+'</label>';
     html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">';
     ['海运','空运'].forEach(function(t){html+='<option value="'+esc(t)+'"'+(editTransport===t?' selected':'')+'>'+esc(tr(t))+'</option>';});
@@ -14658,7 +14651,6 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['塞内加尔','尼日利亚','科特迪瓦','喀麦隆','多哥','加纳','利比里亚','几内亚','冈比亚','安哥拉','刚果金','刚果布','加蓬','赤道几内亚'],editCountry)+'</select></div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('计泡比规则')+'</label>';
     html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(editBubbleRatio)+'" placeholder="1CBM=167KG"></div>';
-    html+='<div class="flex items-center gap-2 self-end pb-1"><input type="checkbox" id="sensitive-cb" class="w-4 h-4 rounded border-surface-300 cursor-pointer"'+sensitiveChecked+'><label for="sensitive-cb" class="text-sm font-medium text-text-secondary cursor-pointer">'+tr('重货取敏感货标识')+'</label></div>';
     html+='<div class="flex items-center gap-2 self-end pb-1"><input type="checkbox" id="prod-active-cb" class="w-4 h-4 rounded border-surface-300 cursor-pointer"'+activeChecked+'><label for="prod-active-cb" class="text-sm font-medium text-text-secondary cursor-pointer">'+tr('启用')+'</label></div>';
     html+='<div class="md:col-span-4">'+checkedDropdownFieldHtml('使用客户',['全部客户','指定客户','鑫达贸易','远洋物流','速达货运','蓝海跨境','华运达国际'],editCustomers)+'</div>';
     html+='<div class="flex flex-col gap-1.5 md:col-span-4"><label class="text-sm font-medium text-text-secondary">'+tr('产品备注')+'</label>';

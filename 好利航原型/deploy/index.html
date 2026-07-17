@@ -1983,6 +1983,7 @@ const menuData=[
 
 {id:'cs',label:'客服',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"/></svg>',children:[
 {id:'cs-issue-track',label:'问题件跟踪',page:'cs',tab:'cs-issue-track'},
+{id:'cs-issue-type',label:'问题件类型',page:'cs',tab:'cs-issue-type'},
 {id:'cs-track-query',label:'轨迹查询',page:'cs',tab:'cs-track-query'},
 {id:'cs-track-maint',label:'轨迹维护',page:'cs',tab:'cs-track-maint'}
 ]},
@@ -3342,6 +3343,11 @@ addPrototypeTable('cs-track-maint','轨迹维护','序号|运单号|轨迹节点
     ['1','WB-20260613001','派送中','2026-06-13 14:30','已到达派送站','王客服','正常',''],
     ['2','WB-20260612002','已签收','2026-06-12 18:00','客户已签收','王客服','正常','']
 ],[{label:'运单号',type:'text'}]);
+TC['cs-issue-type']={t:'问题件类型',forceLocalHeader:true,readonlyList:true,h:['问题件类型编号','问题件类型名称','问题件处理模板','区域类型','备注','启用状态','创建时间','创建员工编号','修改时间','修改员工编号','操作'],s:['启用','禁用'],d:[
+['WTJ_PS','破损','货物存在破损','头程问题件','破损备注2','启用','2026-06-27 17:55:31','天地总部管理员','2026-06-30 20:10:06','天地总部管理员'],
+['KXYH','开箱验货','开箱验货','头程问题件','系统内置问题件类型-请勿删除','启用','2026-06-10 15:40:42','HYD-开发者','2026-07-07 16:20:36','天地总部管理员'],
+['TXWTJLX','测试问题类型','测试问题类型内容','海外问题件','测试备注','启用','2026-03-16 17:22:02','HYD-开发者','2026-07-07 10:26:54','屈鑫']]};
+TC['cs-issue-type'].q=[{label:'问题件类型名称',type:'text'},{label:'区域类型',type:'select',options:['头程问题件','海外问题件']},{label:'启用状态',type:'select',options:['启用','禁用']}];
 
 // ========== OMS 客户端 - 查询小屏 ==========
 addPrototypeTable('oms-wb-query','运单查询','运单号|物流单号|起运港|目的港|运输方式|当前状态|预计到达|操作',['运输中','已到港','已签收'],[
@@ -8711,7 +8717,10 @@ function openSelectedCrud(mode,id){
 
 function renderToolbarAction(action,id){
     const isDanger=action.key==='enable'||action.key==='delete'||action.key==='cancel'||action.key==='csRevokeRelease'||action.key==='setDisable'||action.key==='batchDelete'||action.variant==='danger';
-    const color=isDanger
+    const isSuccess=action.variant==='success';
+    const color=isSuccess
+        ?'text-white bg-green-500 hover:bg-green-600'
+        :isDanger
         ?'text-white bg-red-500 hover:bg-red-600'
         :'text-white bg-blue-600 hover:bg-blue-700';
     let click='';
@@ -8769,6 +8778,15 @@ function getToolbarActions(id){
     }
     if(id==='perm-log'||id==='wb-op-instruction'){
         return [{key:'search',label:'查询数据',variant:'primary'}];
+    }
+    if(id==='cs-issue-type'){
+        return [
+            {key:'search',label:'查询',variant:'primary'},
+            {type:'add',label:'新增',variant:'primary'},
+            {type:'edit',label:'修改'},
+            {key:'setEnable',label:'启用',variant:'success'},
+            {key:'setDisable',label:'禁用'}
+        ];
     }
     if(id==='base-provider'){
         return [
@@ -14012,6 +14030,10 @@ function openCrudModal(mode,id,rowIdx){
         markCustomModalRequired(id,mode);
         return;
     }
+    if(id==='cs-issue-type'&&(mode==='add'||mode==='edit')){
+        openCsIssueTypeModal(mode,id,rowIdx,rowData);
+        return;
+    }
     const colClass=modalGridFullClass(modalFields,'modal');
     if(mode==='view'){
         let html='';
@@ -14128,6 +14150,39 @@ function closeCrudModal(){
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='';
     closeExpressionModal();
+}
+
+function openCsIssueTypeModal(mode,id,rowIdx,rowData){
+    const L=_lang[_currentLang];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='60%';
+    const isEdit=mode==='edit';
+    const code=rowData?rowData[0]:'';
+    const name=rowData?rowData[1]:'';
+    const template=rowData?rowData[2]:'';
+    const region=rowData?rowData[3]:'';
+    const remark=rowData?rowData[4]:'';
+    const regionOptions=['头程问题件','海外问题件'];
+    titleEl.textContent=isEdit?tr('编辑'):tr('新增');
+    let html='<div class="space-y-4">';
+    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('问题类型代码')+'</label>';
+    if(isEdit){
+        html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+esc(code)+'" readonly></div>';
+    }else{
+        html+='<input type="text" required class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(code)+'" placeholder="'+esc(tr('请输入问题类型代码'))+'"></div>';
+    }
+    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('问题类型名称')+'</label><input type="text" required class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(name)+'" placeholder="'+esc(tr('请输入问题类型名称'))+'"></div>';
+    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('区域类型')+'</label><select required class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('请选择区域类型')+'</option>'+regionOptions.map(function(o){return '<option value="'+esc(o)+'"'+(region===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
+    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('问题说明')+'</label><textarea rows="3" required class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入问题说明'))+'">'+esc(template)+'</textarea></div>';
+    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'">'+esc(remark)+'</textarea></div>';
+    html+='</div>';
+    bodyEl.innerHTML=html;
+    const toast=isEdit?tr('保存成功'):tr('新增成功');
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+toast+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+(isEdit?tr('保存修改'):tr('确认提交'))+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
 }
 
 /* ===== 配舱计划 wh-final-alloc 弹窗集合 ===== */

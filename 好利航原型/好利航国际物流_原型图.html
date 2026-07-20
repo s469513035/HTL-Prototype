@@ -1990,7 +1990,8 @@ const menuData=[
 
 {id:'finance',label:'财务结算',langKey:'finance',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',children:[
 {id:'fin-fee-mgmt',label:'费用管理',langKey:'fin_fee_mgmt',page:'finance',tab:'fin-fee-mgmt'},
-{id:'fin-bill-mgmt',label:'账单管理',langKey:'fin_bill_mgmt',page:'finance',tab:'fin-bill-mgmt'}
+{id:'fin-bill-mgmt',label:'账单管理',langKey:'fin_bill_mgmt',page:'finance',tab:'fin-bill-mgmt'},
+{id:'fin-bank-account',label:'银行账户',page:'finance',tab:'fin-bank-account'}
 ]},
 
 {id:'biz-config',label:'业务配置',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',children:[
@@ -2739,6 +2740,29 @@ TC['biz-approval-flow']={t:'审批流程管理',forceLocalHeader:true,readonlyLi
 ['2081935585487990002','客户开户审批流程','审批流程','[{"id":"7d2e1a0b-9c8d-7e6f-5a4b-3c2d1e0f9a8b","type":"start"}]','[{"lineFrom":"7d2e1a0b","lineTo":"c3d4e5f6"}]','客户开户','启用','新客户开户三级审批','2026-06-20 09:30:00','HYD','2026-06-29 14:05:33'],
 ['2081935585487990003','客户理赔审批流程','审批流程','[{"id":"9f4a5b6c-1d2e-3f40-5a6b-7c8d9e0f1a2b","type":"start"}]','[{"lineFrom":"9f4a5b6c","lineTo":"d4e5f6a7"}]','客户理赔申请','启用','','2026-06-15 16:45:20','HYD','']]};
 TC['biz-approval-flow'].q=[{label:'流程名称',type:'text'},{label:'审核类型',type:'select',options:['应收异动申请','财务预付款申请','客户开户','创建快递单申请','合并计费申请','客户理赔申请','服务商理赔申请']},{label:'启用状态',type:'select',options:['启用','禁用']}];
+TC['fin-bank-account']={t:'银行账户',forceLocalHeader:true,readonlyList:true,h:['账户号码','账户名称','账户名称(英文)','开户银行','开户银行(英文)','币别','分行支行','开户人名','账户余额','启用状态','备注','操作'],s:['启用','禁用'],d:[
+['4222827128731113','zp','chinese','中国银行','ICBC','人民币','深圳','zz','1000000','启用',''],
+['43110340001212','中国银行1','One Bank of China','中国银行1','One Bank of China','美元','人民总行1','张三','100000','启用','测试'],
+['UAT045235','UAT045235','UAT045235','UAT045235','UAT045235','美元','UAT045235','UAT045235','-1','禁用','UAT045235'],
+['UAT06190239547','UAT06190239547','UATEDIT024034','UAT06190239547','UAT06190239547','美元','UAT06190239547','UAT06190239547','1000','禁用','UAT06190239547'],
+['UAT061901421947','UAT061901421947','UAT061901421947','UAT061901421947','UAT061901421947','美元','UAT061901421947','UAT061901421947','1000','启用','UAT061901421947'],
+['UAT214209','UAT214209','UAT214209','UAT214209','UAT214209','美元','UAT214209','UAT214209','1000','禁用','UAT214209'],
+['UAT214157','UAT214157','UAT214157','UAT214157','UAT214157','美元','UAT214157','UAT214157','-1','禁用','UAT214157'],
+['UAT061818100847','UAT061818100847','UATEDIT181050','UAT061818100847','UAT061818100847','美元','UAT061818100847','UAT061818100847','1000','禁用','UAT061818100847'],
+['UAT061815374959','UAT061815374959','UATEDIT153832','UAT061815374959','UAT061815374959','美元','UAT061815374959','UAT061815374959','1000','启用','UAT061815374959'],
+['UAT061815123598','UAT061815123598','UATEDIT151319','UAT061815123598','UAT061815123598','美元','UAT061815123598','UAT061815123598','1000','启用','UAT061815123598'],
+['UAT061709265993','UAT061709265993','UATEDIT092740','UAT061709265993','UAT061709265993','美元','UAT061709265993','UAT061709265993','1000','启用','UAT061709265993'],
+['UAT061708573364','UAT061708573364','UATEDIT085802','UAT061708573364','UAT061708573364','美元','UAT061708573364','UAT061708573364','1000','启用','UAT061708573364'],
+['UAT061701380048','UAT061701380048','UATEDIT013829','UAT061701380048','UAT061701380048','美元','UAT061701380048','UAT061701380048','1000','禁用','UAT061701380048'],
+['UAT061700152996','UAT061700152996','UATEDIT001606','UAT061700152996','UAT061700152996','美元','UAT061700152996','UAT061700152996','1000','禁用','UAT061700152996'],
+['UAT061700080571','UAT061700080571','UATEDIT000847','UAT061700080571','UAT061700080571','美元','UAT061700080571','UAT061700080571','1000','禁用','UAT061700080571'],
+['UAT061622511334','UAT061622511334','UAT061622511334','UAT061622511334','UAT061622511334','美元','UAT061622511334','UAT061622511334','1000','禁用','UAT061622511334'],
+['UAT061618412646','UAT061618412646','UAT061618412646','UAT061618412646','UAT061618412646','美元','UAT061618412646','UAT061618412646','1000','禁用','UAT061618412646'],
+['UAT061617284735','UAT061617284735','UAT061617284735','UAT061617284735','UAT061617284735','美元','UAT061617284735','UAT061617284735','1000','禁用','UAT061617284735'],
+['5432154321','梦幻总部美元账户001','Dream Headquarters USD Account 001','梦幻银行','Dream Bank','美元','梦幻支行','梦幻总部','0','启用','备注'],
+['1234512345','梦幻总部人民币账户001','Dream Headquarters RMB Account 001','梦幻银行','Dream Bank','人民币','梦幻支行','梦幻总部','0','启用','备注'],
+['123456','测试账户1','test-account','中国银行','china bank','美元','龙岗支行','czz','50000','启用','测试银行账户']]};
+TC['fin-bank-account'].q=[{label:'账户名称',type:'text'},{label:'币别',type:'select',options:['人民币','美元','欧元']},{label:'启用状态',type:'select',options:['启用','禁用']}];
 
 TC['crm-cust'].q=[{label:'客户代码',type:'text'},{label:'客户简称',type:'text'},{label:'客户类型',type:'select',options:['直客','同行','平台','代理']},{label:'所属业务员',type:'select',options:['张三','李四','王五','赵六']},{label:'所属客服',type:'select',options:['陈七','周八','吴九']},{label:'启用状态',type:'select',options:['启用','禁用']},{label:'客户等级',type:'select',options:['A类','B类','C类','D类']}];
 TC['crm-pool'].q=[{label:'客户名称',type:'text',field:'name'},{label:'客户类型',type:'select',field:'type',options:['直客','同行']},{label:'原归属销售',type:'text',field:'sales'},{label:'公海原因',type:'select',field:'reason',options:['销售离职','超期未跟进','客户放弃']},{label:'状态',type:'select',field:'status'}];
@@ -7865,7 +7889,7 @@ var _statusLangMap={'启用':'tabActive','停用':'tabInactive','冻结':'tabFro
 
 function statusBadge(val){
     const g=['启用','已通过','已入仓','已确认','已完成','已放行','已同步','已对齐','已生效','已出库','已作废','已结算','已开具','已登记','已补录','已处理','已验证','已付款','已开票','正常','运行中','已领取','已复核','在途','全部放行','已解决'];
-    const r=['停用','已驳回','异常','已销毁','已过期','冻结','熔断','未通过'];
+    const r=['停用','禁用','已驳回','异常','已销毁','已过期','冻结','熔断','未通过'];
     const a=['待审核','待审批','待入仓','待定','待处理','待确认','待补录','待领取','待到港','待预约','待出库','待开票','待同步','有差异','告警中','告警','维护中','待抢单','待结算','预警','待通知','已登记'];
     const label=_statusLangMap[val]&&_lang[_currentLang][_statusLangMap[val]]?_lang[_currentLang][_statusLangMap[val]]:tr(val);
     if(g.includes(val))return '<span class="badge bg-green-50 text-green-700">'+label+'</span>';
@@ -8849,6 +8873,15 @@ function getToolbarActions(id){
             {key:'setEnable',label:'启用',variant:'success'},
             {key:'setDisable',label:'禁用'},
             {key:'batchDelete',label:'删除'}
+        ];
+    }
+    if(id==='fin-bank-account'){
+        return [
+            {key:'search',label:'查询',variant:'primary'},
+            {type:'add',label:'新增',variant:'primary'},
+            {type:'edit',label:'修改'},
+            {key:'setEnable',label:'启用',variant:'success'},
+            {key:'setDisable',label:'禁用'}
         ];
     }
     if(id==='base-provider'){
@@ -14265,6 +14298,10 @@ function openCrudModal(mode,id,rowIdx){
         openApprovalFlowModal(mode,id,rowIdx,rowData);
         return;
     }
+    if(id==='fin-bank-account'&&(mode==='add'||mode==='edit')){
+        openBankAccountModal(mode,id,rowIdx,rowData);
+        return;
+    }
     const colClass=modalGridFullClass(modalFields,'modal');
     if(mode==='view'){
         let html='';
@@ -14543,6 +14580,46 @@ function switchApprovalMemberTab(btn){
         const on=b===btn;
         b.className=(on?'pb-2 -mb-px border-b-2 border-primary-500 text-primary-600 font-medium':'pb-2 -mb-px border-b-2 border-transparent text-text-secondary hover:text-primary-600')+' cursor-pointer';
     });
+}
+
+function openBankAccountModal(mode,id,rowIdx,rowData){
+    const L=_lang[_currentLang];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='64%';
+    const isEdit=mode==='edit';
+    const g=function(i){return rowData?(rowData[i]||''):'';};
+    const acctNo=g(0),name=g(1),nameEn=g(2),bank=g(3),bankEn=g(4);
+    const currency=rowData?(rowData[5]||'人民币'):'人民币';
+    const branch=g(6),holder=g(7);
+    const balance=rowData?(rowData[8]||'0'):'0';
+    const status=rowData?(rowData[9]||'启用'):'启用';
+    const remark=g(10);
+    const currencies=['人民币','美元','欧元'];
+    titleEl.textContent=isEdit?tr('编辑'):tr('新增');
+    const inputCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    function lbl(t,req){return '<label class="text-sm font-medium text-text-secondary mb-1.5 block">'+(req?'<span class="text-red-500">*</span> ':'')+tr(t)+'</label>';}
+    function txt(val,ph,req){return '<input type="text"'+(req?' required':'')+' class="'+inputCls+'" value="'+esc(val)+'" placeholder="'+esc(tr(ph))+'">';}
+    function selHtml(opts,val){var s='<select class="'+inputCls+'">';opts.forEach(function(o){s+='<option'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});return s+'</select>';}
+    let html='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">';
+    html+='<div>'+lbl('账户号码',true)+txt(acctNo,'请输入账户号码',true)+'</div>';
+    html+='<div>'+lbl('账户名称',true)+txt(name,'请输入账户名称',true)+'</div>';
+    html+='<div>'+lbl('账户名称(英文)',false)+txt(nameEn,'请输入账户名称(英文)',false)+'</div>';
+    html+='<div>'+lbl('开户银行',true)+txt(bank,'请输入开户银行',true)+'</div>';
+    html+='<div>'+lbl('开户银行(英文)',false)+txt(bankEn,'请输入开户银行(英文)',false)+'</div>';
+    html+='<div>'+lbl('币别',true)+selHtml(currencies,currency)+'</div>';
+    html+='<div>'+lbl('分行支行',false)+txt(branch,'请输入分行支行',false)+'</div>';
+    html+='<div>'+lbl('开户人名',false)+txt(holder,'请输入开户人名',false)+'</div>';
+    html+='<div>'+lbl('账户余额',false)+'<input type="number" class="'+inputCls+'" value="'+esc(balance)+'"></div>';
+    html+='<div>'+lbl('启用状态',true)+selHtml(['启用','禁用'],status)+'</div>';
+    html+='<div class="md:col-span-2">'+lbl('备注',false)+'<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'">'+esc(remark)+'</textarea></div>';
+    html+='</div>';
+    bodyEl.innerHTML=html;
+    const toast=isEdit?tr('保存成功'):tr('新增成功');
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+toast+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+(isEdit?tr('保存修改'):tr('确认提交'))+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
 }
 
 function openTrackCfgModal(mode,id,rowIdx,rowData){

@@ -1998,7 +1998,10 @@ const menuData=[
 {id:'fin-bank-account',label:'银行账户',page:'finance',tab:'fin-bank-account'},
 {id:'fin-account',label:'财务科目',page:'finance',tab:'fin-account'},
 {id:'fin-bank-voucher',label:'银行凭证',page:'finance',tab:'fin-bank-voucher'},
-{id:'fin-rate',label:'汇率管理',page:'finance',tab:'fin-rate'}
+{id:'fin-rate',label:'汇率管理',page:'finance',tab:'fin-rate'},
+{id:'fin-ar',label:'应收管理',children:[
+{id:'fin-ar-detail',label:'应收明细',page:'finance',tab:'fin-ar-detail'}
+]}
 ]},
 
 {id:'biz-config',label:'业务配置',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',children:[
@@ -2824,6 +2827,7 @@ TC['fin-rate'].q=[{label:'币别编号',type:'select',options:['人民币','美�
 TC['ws-sales']={t:'业务工作台',pageMode:'roleDashboard',h:[],s:[],d:[]};
 TC['ws-cs']={t:'客服工作台',pageMode:'roleDashboard',h:[],s:[],d:[]};
 TC['ws-ops']={t:'操作工作台',pageMode:'roleDashboard',h:[],s:[],d:[]};
+TC['fin-ar-detail']={t:'应收明细',pageMode:'arDetail',h:[],s:[],d:[]};
 
 TC['crm-cust'].q=[{label:'客户代码',type:'text'},{label:'客户简称',type:'text'},{label:'客户类型',type:'select',options:['直客','同行','平台','代理']},{label:'所属业务员',type:'select',options:['张三','李四','王五','赵六']},{label:'所属客服',type:'select',options:['陈七','周八','吴九']},{label:'启用状态',type:'select',options:['启用','禁用']},{label:'客户等级',type:'select',options:['A类','B类','C类','D类']}];
 TC['crm-pool'].q=[{label:'客户名称',type:'text',field:'name'},{label:'客户类型',type:'select',field:'type',options:['直客','同行']},{label:'原归属销售',type:'text',field:'sales'},{label:'公海原因',type:'select',field:'reason',options:['销售离职','超期未跟进','客户放弃']},{label:'状态',type:'select',field:'status'}];
@@ -9941,6 +9945,198 @@ function fillTrackContent(sel){
     if(en)en.value=row[5]||'';
 }
 
+/* ===== 应收明细 fin-ar-detail（左栏客户/业务员 + 状态页签 + 宽表 + 新增弹窗） ===== */
+var _arDetailSeed=[
+{wb:'H2607090013',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'6938.42',cur:'人民币',rate:'1',rmb:'6938.42',used:'0',unused:'6938.42',st:'待核销',ftime:'2026-07-09 15:12:03',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-09 15:12:10',cb:'HYD-开发者'},
+{wb:'H2607140001',cust:'天地直客',sales:'天地销售',fee:'客户理赔费',amt:'-10000',cur:'美元',rate:'7',rmb:'-70000',used:'0',unused:'-70000',st:'待核销',ftime:'2026-07-14 10:20:11',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'应收异动申请',ct:'2026-07-14 10:21:00',cb:'HYD-开发者'},
+{wb:'H2607130006',cust:'蓝城电商公司',sales:'天地销售',fee:'应收EMF申报费',amt:'6000',cur:'人民币',rate:'1',rmb:'6000',used:'0',unused:'6000',st:'待核销',ftime:'2026-07-13 09:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-13 09:01:00',cb:'HYD-开发者'},
+{wb:'H2607140001',cust:'天地直客',sales:'天地销售',fee:'客户理赔费',amt:'-100',cur:'人民币',rate:'1',rmb:'-100',used:'0',unused:'-100',st:'待核销',ftime:'2026-07-14 10:22:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-14 10:22:30',cb:'HYD-开发者'},
+{wb:'H2607110011',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'48',cur:'人民币',rate:'1',rmb:'48',used:'0',unused:'48',st:'待核销',ftime:'2026-07-11 14:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-11 14:01:00',cb:'HYD-开发者'},
+{wb:'H2607100001',cust:'梦幻直客客户',sales:'天地销售',fee:'应收附加费',amt:'22',cur:'美元',rate:'7',rmb:'154',used:'0',unused:'154',st:'待核销',ftime:'2026-07-10 11:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-10 11:01:00',cb:'梦幻管理员'},
+{wb:'H2607100001',cust:'梦幻直客客户',sales:'天地销售',fee:'运费',amt:'2460',cur:'人民币',rate:'1',rmb:'2460',used:'0',unused:'2460',st:'待核销',ftime:'2026-07-10 11:02:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-10 11:03:00',cb:'梦幻管理员'},
+{wb:'H2607090009',cust:'天地直客',sales:'天地销售',fee:'应收附加费',amt:'15000',cur:'人民币',rate:'1',rmb:'15000',used:'0',unused:'15000',st:'待核销',ftime:'2026-07-09 16:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-09 16:01:00',cb:'HYD-开发者'},
+{wb:'H2606270001',cust:'蓝色有限',sales:'梦幻小业务',fee:'应收附加费',amt:'1200',cur:'人民币',rate:'1',rmb:'1200',used:'1200',unused:'0',st:'全部核销',ftime:'2026-06-14 11:51:55',cyc:'签收月结',days:'2',bf:'是',bn:'RB2606140002',rk:'123',src:'人工录入',ct:'2026-06-14 11:52:18',cb:'梦幻小业务'},
+{wb:'H82605240003',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'880',cur:'人民币',rate:'1',rmb:'880',used:'120',unused:'760',st:'部分核销',ftime:'2026-05-24 01:15:16',cyc:'出货月结',days:'1',bf:'是',bn:'RB2605240003',rk:'E2E Auto Generated Fee',src:'系统生成',ct:'2026-05-24 01:15:17',cb:'UAT0003'},
+{wb:'H82605240004',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'880',cur:'人民币',rate:'1',rmb:'880',used:'880',unused:'0',st:'全部核销',ftime:'2026-05-24 01:12:36',cyc:'出货月结',days:'1',bf:'是',bn:'RB2605240002',rk:'E2E Auto Generated Fee',src:'系统生成',ct:'2026-05-24 01:12:37',cb:'UAT0003'},
+{wb:'H82605240005',cust:'星星玩具电商',sales:'BTWOZCW',fee:'报关费',amt:'200',cur:'人民币',rate:'1',rmb:'200',used:'0',unused:'200',st:'部分核销',ftime:'2026-05-24 01:03:00',cyc:'出货月结',days:'1',bf:'否',bn:'',rk:'E2E Auto Generated Fee',src:'系统生成',ct:'2026-05-24 01:03:01',cb:'UAT0003'},
+{wb:'H2607060001',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'100',cur:'人民币',rate:'1',rmb:'100',used:'0',unused:'100',st:'待核销',ftime:'2026-07-06 16:29:57',cyc:'出货票结',days:'3',bf:'是',bn:'RB2607060001',rk:'11',src:'人工录入',ct:'2026-07-06 16:30:17',cb:'HYD-开发者'},
+{wb:'H2606140001',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'运费',amt:'2000',cur:'人民币',rate:'2',rmb:'4000',used:'0',unused:'4000',st:'作废',ftime:'2026-06-14 11:51:55',cyc:'签收月结',days:'2',bf:'是',bn:'RB2606140001',rk:'测试z',src:'人工录入',ct:'2026-06-14 11:52:18',cb:'梦幻小业务'},
+{wb:'H2605120001',cust:'蓝城电商公司',sales:'天地销售',fee:'客户理赔费',amt:'-100',cur:'人民币',rate:'1',rmb:'-100',used:'0',unused:'-100',st:'作废',ftime:'2026-05-07 16:53:08',cyc:'出货月结',days:'1',bf:'否',bn:'',rk:'测试3',src:'人工录入',ct:'2026-05-07 16:53:25',cb:'HYD-开发者'},
+{wb:'H2604170009',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'派送费',amt:'111116666',cur:'人民币',rate:'1',rmb:'111116666',used:'0',unused:'111116666',st:'待核销',ftime:'2026-04-17 17:26:28',cyc:'出货月结',days:'1',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-04-17 17:26:35',cb:'HYD-开发者'}
+];
+var _arCustomers=[
+{name:'蓝城电商公司',pending:'-100',out:'-100'},
+{name:'天地直客',pending:'-34373.58',out:'-40713.58'},
+{name:'星星玩具电商',pending:'1693.85',out:'3588.85'},
+{name:'梦幻直客客户',pending:'2460',out:'2615'}
+];
+var _arSales=[
+{name:'天地销售',pending:'-27435.58',out:'-38510.58'},
+{name:'梦幻小业务',pending:'2460',out:'2615'},
+{name:'BTWOZCW',pending:'1693.85',out:'3588.85'}
+];
+var _arDetailRows=_arDetailSeed.slice();
+var _arLeftTab='cust';
+var _arStatusFilter='';
+var _arCustFilter='';
+
+function arStatusBadge(st){
+    var cls='bg-primary-50 text-primary-700';
+    if(st==='全部核销')cls='bg-green-50 text-green-700';
+    else if(st==='待核销'||st==='部分核销')cls='bg-amber-50 text-amber-700';
+    else if(st==='作废')cls='bg-red-50 text-red-700';
+    else if(st==='待确认')cls='bg-blue-50 text-blue-700';
+    return '<span class="badge '+cls+'">'+esc(st)+'</span>';
+}
+
+function arLeftListHtml(){
+    var list=_arLeftTab==='sales'?_arSales:_arCustomers;
+    var h='<div onclick="filterArByCustomer(\'\')" class="px-4 py-3 border-b border-surface-100 cursor-pointer '+(_arCustFilter===''?'bg-amber-50 border-l-2 border-l-amber-400':'hover:bg-surface-50')+'"><div class="text-sm font-medium text-text-primary">'+tr('全部')+' ('+_arDetailRows.length+')</div></div>';
+    list.forEach(function(c){
+        var on=_arCustFilter===c.name;
+        h+='<div onclick="filterArByCustomer(\''+esc(c.name)+'\')" class="px-4 py-3 border-b border-surface-100 cursor-pointer '+(on?'bg-amber-50 border-l-2 border-l-amber-400':'hover:bg-surface-50')+'">';
+        h+='<div class="text-sm font-medium text-text-primary mb-1">'+esc(c.name)+'</div>';
+        h+='<div class="text-xs text-text-muted">'+tr('待核销')+': <span class="'+(parseFloat(c.pending)<0?'text-red-500':'text-primary-600')+'">'+esc(c.pending)+'</span>　'+tr('待出账')+': <span class="'+(parseFloat(c.out)<0?'text-red-500':'text-primary-600')+'">'+esc(c.out)+'</span></div>';
+        h+='</div>';
+    });
+    return h;
+}
+
+function arStatusTabsHtml(){
+    var defs=[['','全部'],['待确认','待确认'],['待核销','待核销'],['部分核销','部分核销'],['全部核销','全部核销'],['作废','作废']];
+    return defs.map(function(d){
+        var cnt=d[0]===''?_arDetailRows.length:_arDetailRows.filter(function(r){return r.st===d[0];}).length;
+        var on=_arStatusFilter===d[0];
+        return '<button type="button" onclick="filterArByStatus(\''+d[0]+'\')" class="px-3 py-1.5 rounded-lg text-sm cursor-pointer '+(on?'bg-primary-600 text-white':'bg-surface-100 text-text-secondary hover:bg-surface-200')+'">'+tr(d[1])+' ('+cnt+')</button>';
+    }).join('');
+}
+
+function renderArDetailRows(){
+    var rows=_arDetailRows.filter(function(r){
+        if(_arCustFilter&&r.cust!==_arCustFilter)return false;
+        if(_arStatusFilter&&r.st!==_arStatusFilter)return false;
+        return true;
+    });
+    if(!rows.length)return '<tr><td colspan="22" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    return rows.map(function(r,i){
+        var h='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
+        h+='<td class="px-3 py-2.5 text-text-muted">'+(i+1)+'</td>';
+        h+='<td class="px-3 py-2.5"><input type="checkbox" class="ar-detail-check" value="'+i+'"></td>';
+        h+='<td class="px-3 py-2.5 font-medium text-primary-700 whitespace-nowrap">'+esc(r.wb)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.cust)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.sales)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.fee)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(r.amt)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.cur)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.rate)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(r.rmb)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.used)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.unused)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap">'+arStatusBadge(r.st)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.ftime)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.cyc)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.days)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.bf)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.bn)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.rk)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.src)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.ct)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.cb)+'</td>';
+        h+='</tr>';
+        return h;
+    }).join('');
+}
+
+function switchArLeftTab(tab){
+    _arLeftTab=tab;
+    document.querySelectorAll('[data-ar-ltab]').forEach(function(b){
+        var on=b.dataset.arLtab===tab;
+        b.className='flex-1 py-2 cursor-pointer text-sm '+(on?'text-primary-600 font-medium border-b-2 border-primary-500':'text-text-secondary hover:text-primary-600');
+    });
+    var ll=document.getElementById('ar-left-list'); if(ll)ll.innerHTML=arLeftListHtml();
+}
+
+function filterArByCustomer(name){
+    _arCustFilter=name;
+    var ll=document.getElementById('ar-left-list'); if(ll)ll.innerHTML=arLeftListHtml();
+    var tb=document.getElementById('ar-detail-tbody'); if(tb)tb.innerHTML=renderArDetailRows();
+}
+
+function filterArByStatus(status){
+    _arStatusFilter=status;
+    var st=document.getElementById('ar-status-tabs'); if(st)st.innerHTML=arStatusTabsHtml();
+    var tb=document.getElementById('ar-detail-tbody'); if(tb)tb.innerHTML=renderArDetailRows();
+}
+
+function arDetailAction(kind){
+    var checked=document.querySelectorAll('.ar-detail-check:checked');
+    if(!checked.length){showToast(tr('请先勾选数据'));return;}
+    if(kind==='genBill'){ openConfirmTip(tr('确定为选中的应收明细生成账单吗?'),function(){showToast(tr('账单生成成功'));}); return; }
+    if(kind==='void'){ openConfirmTip(tr('确定作废选中的应收明细吗?'),function(){showToast(tr('已作废'));}); return; }
+}
+
+function openArDetailModal(){
+    const L=_lang[_currentLang];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='72%';
+    titleEl.textContent=tr('新增');
+    const inputCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    const subjects=['运费','报关费','应收附加费','客户理赔费','应收EMF申报费','仓储费','派送费'];
+    function lbl(t,req){return '<label class="text-sm font-medium text-text-secondary mb-1.5 block">'+(req?'<span class="text-red-500">*</span> ':'')+tr(t)+'</label>';}
+    function selHtml(opts,ph){var s='<select class="'+inputCls+'"><option value="">'+tr(ph)+'</option>';opts.forEach(function(o){s+='<option>'+esc(o)+'</option>';});return s+'</select>';}
+    let html='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
+    html+='<div>'+lbl('运单号',true)+'<input type="text" required class="'+inputCls+'" placeholder="'+esc(tr('请输入运单号'))+'"></div>';
+    html+='<div>'+lbl('财务科目',true)+selHtml(subjects,'请选择财务科目')+'</div>';
+    html+='<div>'+lbl('单位',true)+selHtml(['票','件','实际重量','计费重量'],'请选择单位')+'</div>';
+    html+='<div>'+lbl('金额',true)+'<input type="number" required class="'+inputCls+'" placeholder="'+esc(tr('请输入金额'))+'"></div>';
+    html+='<div>'+lbl('类型',true)+selHtml(['追加','覆盖','总值'],'请选择类型')+'</div>';
+    html+='<div>'+lbl('币别',true)+selHtml(['人民币','美元','欧元'],'请选择币别')+'</div>';
+    html+='<div>'+lbl('汇率',true)+'<input type="text" required class="'+inputCls+'" value="1.0000"></div>';
+    html+='<div>'+lbl('交易时间',true)+'<input type="datetime-local" class="'+inputCls+'" value="2026-07-20T17:49"></div>';
+    html+='<div>'+lbl('税点(%)',false)+'<input type="number" step="0.01" class="'+inputCls+'" value="0.00"></div>';
+    html+='<div class="md:col-span-3">'+lbl('备注',false)+'<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'"></textarea></div>';
+    html+='</div>';
+    bodyEl.innerHTML=html;
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr('新增成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function generateArDetailPage(id){
+    _arDetailRows=_arDetailSeed.slice();_arStatusFilter='';_arCustFilter='';_arLeftTab='cust';
+    let h='<div class="h-full flex overflow-hidden bg-surface-50">';
+    h+='<div class="w-60 flex-shrink-0 flex flex-col border-r border-surface-200 bg-white">';
+    h+='<div class="p-3 border-b border-surface-200"><div class="relative"><svg class="w-4 h-4 text-text-muted absolute left-2 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input class="w-full h-8 pl-8 pr-3 text-xs border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('搜索...'))+'"></div></div>';
+    h+='<div class="flex border-b border-surface-200">';
+    h+='<button type="button" data-ar-ltab="cust" onclick="switchArLeftTab(\'cust\')" class="flex-1 py-2 cursor-pointer text-sm text-primary-600 font-medium border-b-2 border-primary-500">'+tr('客户')+'</button>';
+    h+='<button type="button" data-ar-ltab="sales" onclick="switchArLeftTab(\'sales\')" class="flex-1 py-2 cursor-pointer text-sm text-text-secondary hover:text-primary-600">'+tr('业务员')+'</button>';
+    h+='</div>';
+    h+='<div id="ar-left-list" class="flex-1 overflow-auto">'+arLeftListHtml()+'</div>';
+    h+='</div>';
+    h+='<div class="flex-1 flex flex-col overflow-hidden">';
+    h+='<div class="px-4 py-3 border-b border-surface-200 bg-white">';
+    h+='<div class="flex items-end gap-3 mb-3">';
+    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('运单号')+'</label><input class="h-8 px-3 text-xs border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('运单号'))+'"></div>';
+    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('财务科目')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('全部')+'</option><option>运费</option><option>报关费</option><option>应收附加费</option><option>客户理赔费</option></select></div>';
+    h+='</div>';
+    h+='<div class="flex items-center gap-2">';
+    h+='<button type="button" onclick="filterArByStatus(_arStatusFilter)" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';
+    h+='<button type="button" onclick="openArDetailModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">+ '+tr('新增')+'</button>';
+    h+='<button type="button" onclick="arDetailAction(\'genBill\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('生成账单')+'</button>';
+    h+='<button type="button" onclick="arDetailAction(\'void\')" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('作废')+'</button>';
+    h+='</div>';
+    h+='<div id="ar-status-tabs" class="flex items-center gap-2 mt-3 flex-wrap">'+arStatusTabsHtml()+'</div>';
+    h+='</div>';
+    h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto"><table class="w-full text-sm" style="min-width:2000px;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    h+='<th class="px-3 py-3 text-left font-semibold" style="width:40px">#</th><th class="px-3 py-3 text-left font-semibold" style="width:40px"><input type="checkbox" onchange="document.querySelectorAll(\'.ar-detail-check\').forEach(function(c){c.checked=this.checked;}.bind(this))"></th>';
+    ['运单号','客户名称','业务员名称','费用名称','金额(原币)','币别编号','汇率','金额(人民币)','已核销金额','未核销金额','核销标识','费用时间','结算周期','结算周期天数','制账单标识','账单编号','备注','数据来源','创建时间','创建员工编号'].forEach(function(c){h+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    h+='</tr></thead><tbody id="ar-detail-tbody">'+renderArDetailRows()+'</tbody></table></div></div>';
+    h+='</div></div>';
+    return h;
+}
+
 /* ===== 角色工作台首页（业务/客服/操作） ===== */
 function generateRoleDashboard(id){
     const qIcon='<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>';
@@ -10075,6 +10271,7 @@ function renderTabContent(id){
     if(c&&c.pageMode==='expressInbound')return generateExpressInboundPage(id);
     if(c&&c.pageMode==='trackMaintain')return generateTrackMaintainPage(id);
     if(c&&c.pageMode==='roleDashboard')return generateRoleDashboard(id);
+    if(c&&c.pageMode==='arDetail')return generateArDetailPage(id);
     if(id==='cfg-dict')return generateDictPage(_listPage[id]||1);
     return generateListPage(id,_listPage[id]||1);
 }

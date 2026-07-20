@@ -1991,7 +1991,8 @@ const menuData=[
 {id:'finance',label:'财务结算',langKey:'finance',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',children:[
 {id:'fin-fee-mgmt',label:'费用管理',langKey:'fin_fee_mgmt',page:'finance',tab:'fin-fee-mgmt'},
 {id:'fin-bill-mgmt',label:'账单管理',langKey:'fin_bill_mgmt',page:'finance',tab:'fin-bill-mgmt'},
-{id:'fin-bank-account',label:'银行账户',page:'finance',tab:'fin-bank-account'}
+{id:'fin-bank-account',label:'银行账户',page:'finance',tab:'fin-bank-account'},
+{id:'fin-account',label:'财务科目',page:'finance',tab:'fin-account'}
 ]},
 
 {id:'biz-config',label:'业务配置',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',children:[
@@ -2763,6 +2764,35 @@ TC['fin-bank-account']={t:'银行账户',forceLocalHeader:true,readonlyList:true
 ['1234512345','梦幻总部人民币账户001','Dream Headquarters RMB Account 001','梦幻银行','Dream Bank','人民币','梦幻支行','梦幻总部','0','启用','备注'],
 ['123456','测试账户1','test-account','中国银行','china bank','美元','龙岗支行','czz','50000','启用','测试银行账户']]};
 TC['fin-bank-account'].q=[{label:'账户名称',type:'text'},{label:'币别',type:'select',options:['人民币','美元','欧元']},{label:'启用状态',type:'select',options:['启用','禁用']}];
+TC['fin-account']={t:'财务科目',forceLocalHeader:true,readonlyList:true,h:['科目代码','科目名称','科目名称(英文)','科目全称','余额方向','类别','级次','末级','币别','状态','账套','操作'],s:['启用','禁用'],d:[
+['1001','库存现金','Cash on Hand','库存现金','借','资产','1','否','ALL','启用','HOLLY TRANS-2020'],
+['100101','深圳现金','Shenzhen Cash','库存现金\\深圳现金','借','资产','2','是','ALL','启用','HOLLY TRANS-2020'],
+['100102','武汉现金','Wuhan Cash','库存现金\\武汉现金','借','资产','2','是','ALL','启用','HOLLY TRANS-2020'],
+['1002','银行存款','Bank Deposit','银行存款','借','资产','1','否','ALL','启用','HOLLY TRANS-2020'],
+['100201','民生银行','CMBC','银行存款\\民生银行','借','资产','2','是','ALL','启用','HOLLY TRANS-2020'],
+['100202','中行对公','BOC Corporate','银行存款\\中行对公','借','资产','2','是','ALL','启用','HOLLY TRANS-2020'],
+['100216','塞内加尔账户','Senegal Account','银行存款\\塞内加尔账户','借','资产','2','是','CFA','启用','HOLLY TRANS-2020'],
+['100233','宁波线上-USD','Ningbo Online-USD','银行存款\\宁波线上-USD','借','资产','2','是','USD','启用','HOLLY TRANS-2020'],
+['1122','应收账款','Accounts Receivable','应收账款','借','资产','1','否','ALL','启用','HOLLY TRANS-2020'],
+['1123','预付账款','Prepayments','预付账款','借','资产','1','否','ALL','启用','HOLLY TRANS-2020'],
+['1221','其他应收款','Other Receivables','其他应收款','借','资产','1','否','ALL','启用','HOLLY TRANS-2020'],
+['1601','固定资产','Fixed Assets','固定资产','借','资产','1','否','RMB','启用','HOLLY TRANS-2020'],
+['1603','累计折旧','Accumulated Depreciation','累计折旧','贷','资产','1','否','RMB','启用','HOLLY TRANS-2020'],
+['2001','短期借款','Short-term Loans','短期借款','贷','负债','1','否','RMB','启用','HOLLY TRANS-2020'],
+['2202','应付账款','Accounts Payable','应付账款','贷','负债','1','否','ALL','启用','HOLLY TRANS-2020'],
+['2203','预收账款','Advances from Customers','预收账款','贷','负债','1','否','ALL','启用','HOLLY TRANS-2020'],
+['2211','应付职工薪酬','Employee Compensation Payable','应付职工薪酬','贷','负债','1','否','RMB','启用','HOLLY TRANS-2020'],
+['2221','应交税费','Taxes Payable','应交税费','贷','负债','1','否','RMB','启用','HOLLY TRANS-2020'],
+['2241','其他应付款','Other Payables','其他应付款','贷','负债','1','否','ALL','启用','HOLLY TRANS-2020'],
+['4001','实收资本','Paid-in Capital','实收资本','贷','权益','1','否','RMB','启用','HOLLY TRANS-2020'],
+['4103','本年利润','Current Year Profit','本年利润','贷','权益','1','否','RMB','启用','HOLLY TRANS-2020'],
+['4104','利润分配','Profit Distribution','利润分配','贷','权益','1','否','RMB','启用','HOLLY TRANS-2020'],
+['6001','主营业务收入','Main Business Revenue','主营业务收入','贷','损益','1','否','RMB','启用','HOLLY TRANS-2020'],
+['6401','主营业务成本','Main Business Cost','主营业务成本','借','损益','1','否','RMB','启用','HOLLY TRANS-2020'],
+['9901','销售费用','Selling Expenses','销售费用','借','损益','1','否','RMB','启用','HOLLY TRANS-2020'],
+['9902','管理费用','Admin Expenses','管理费用','借','损益','1','否','RMB','启用','HOLLY TRANS-2020'],
+['9903','财务费用','Financial Expenses','财务费用','借','损益','1','否','RMB','禁用','HOLLY TRANS-2020']]};
+TC['fin-account'].q=[{label:'科目代码',type:'text'},{label:'科目名称',type:'text'},{label:'类别',type:'select',options:['资产','负债','权益','成本','损益']},{label:'币别',type:'select',options:['ALL','RMB','USD','CFA','GHS','EUR']},{label:'状态',type:'select',options:['启用','禁用']}];
 
 TC['crm-cust'].q=[{label:'客户代码',type:'text'},{label:'客户简称',type:'text'},{label:'客户类型',type:'select',options:['直客','同行','平台','代理']},{label:'所属业务员',type:'select',options:['张三','李四','王五','赵六']},{label:'所属客服',type:'select',options:['陈七','周八','吴九']},{label:'启用状态',type:'select',options:['启用','禁用']},{label:'客户等级',type:'select',options:['A类','B类','C类','D类']}];
 TC['crm-pool'].q=[{label:'客户名称',type:'text',field:'name'},{label:'客户类型',type:'select',field:'type',options:['直客','同行']},{label:'原归属销售',type:'text',field:'sales'},{label:'公海原因',type:'select',field:'reason',options:['销售离职','超期未跟进','客户放弃']},{label:'状态',type:'select',field:'status'}];
@@ -8875,7 +8905,7 @@ function getToolbarActions(id){
             {key:'batchDelete',label:'删除'}
         ];
     }
-    if(id==='fin-bank-account'){
+    if(id==='fin-bank-account'||id==='fin-account'){
         return [
             {key:'search',label:'查询',variant:'primary'},
             {type:'add',label:'新增',variant:'primary'},
@@ -14302,6 +14332,10 @@ function openCrudModal(mode,id,rowIdx){
         openBankAccountModal(mode,id,rowIdx,rowData);
         return;
     }
+    if(id==='fin-account'&&(mode==='add'||mode==='edit')){
+        openAccountModal(mode,id,rowIdx,rowData);
+        return;
+    }
     const colClass=modalGridFullClass(modalFields,'modal');
     if(mode==='view'){
         let html='';
@@ -14580,6 +14614,54 @@ function switchApprovalMemberTab(btn){
         const on=b===btn;
         b.className=(on?'pb-2 -mb-px border-b-2 border-primary-500 text-primary-600 font-medium':'pb-2 -mb-px border-b-2 border-transparent text-text-secondary hover:text-primary-600')+' cursor-pointer';
     });
+}
+
+function openAccountModal(mode,id,rowIdx,rowData){
+    const L=_lang[_currentLang];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='72%';
+    const isEdit=mode==='edit';
+    const g=function(i){return rowData?(rowData[i]||''):'';};
+    const code=g(0),name=g(1),nameEn=g(2),full=g(3);
+    const dir=rowData?(rowData[4]||'借'):'借';
+    const cat=rowData?(rowData[5]||'资产'):'资产';
+    const level=rowData?(rowData[6]||'1'):'1';
+    const leaf=rowData?(rowData[7]||'是'):'是';
+    const currency=rowData?(rowData[8]||'ALL'):'ALL';
+    const status=rowData?(rowData[9]||'启用'):'启用';
+    const acctSet=rowData?(rowData[10]||'HOLLY TRANS-2020'):'HOLLY TRANS-2020';
+    titleEl.textContent=isEdit?tr('编辑'):tr('新增');
+    const inputCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    function lbl(t,req){return '<label class="text-sm font-medium text-text-secondary mb-1.5 block">'+(req?'<span class="text-red-500">*</span> ':'')+tr(t)+'</label>';}
+    function txt(val,ph,req,ro){return '<input type="text"'+(req?' required':'')+(ro?' readonly':'')+' class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg '+(ro?'bg-surface-100 cursor-not-allowed':'bg-surface-50')+'" value="'+esc(val)+'" placeholder="'+esc(tr(ph))+'">';}
+    function selHtml(opts,val){var s='<select class="'+inputCls+'">';opts.forEach(function(o){s+='<option'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});return s+'</select>';}
+    let html='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
+    html+='<div>'+lbl('科目代码',true)+txt(code,'请输入科目代码',true,isEdit)+'</div>';
+    html+='<div>'+lbl('科目名称',true)+txt(name,'请输入科目名称',true,false)+'</div>';
+    html+='<div>'+lbl('科目名称(英文)',false)+txt(nameEn,'请输入科目名称(英文)',false,false)+'</div>';
+    html+='<div>'+lbl('科目全称',false)+txt(full,'请输入科目全称',false,false)+'</div>';
+    html+='<div>'+lbl('科目全称(英文)',false)+txt('','请输入科目全称(英文)',false,false)+'</div>';
+    html+='<div>'+lbl('余额方向',true)+selHtml(['借','贷'],dir)+'</div>';
+    html+='<div>'+lbl('类别',true)+selHtml(['资产','负债','权益','成本','损益'],cat)+'</div>';
+    html+='<div>'+lbl('级次',false)+'<input type="number" class="'+inputCls+'" value="'+esc(level)+'"></div>';
+    html+='<div>'+lbl('末级',false)+selHtml(['是','否'],leaf)+'</div>';
+    html+='<div>'+lbl('币别',true)+selHtml(['ALL','RMB','USD','CFA','GHS','EUR'],currency)+'</div>';
+    html+='<div>'+lbl('账套',true)+selHtml(['HOLLY TRANS-2020','SZX'],acctSet)+'</div>';
+    html+='<div>'+lbl('状态',true)+selHtml(['启用','禁用'],status)+'</div>';
+    html+='</div>';
+    html+='<div class="mt-5 pt-4 border-t border-surface-200"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('核算属性')+'</div>';
+    html+='<div class="flex flex-wrap gap-x-6 gap-y-2">';
+    ['期末调汇','项目核算','部门核算','人员核算','往来单位核算','现金流量核算','日记账','银行账'].forEach(function(o){
+        html+='<label class="inline-flex items-center gap-2 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600"><span>'+tr(o)+'</span></label>';
+    });
+    html+='</div></div>';
+    bodyEl.innerHTML=html;
+    const toast=isEdit?tr('保存成功'):tr('新增成功');
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+toast+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+(isEdit?tr('保存修改'):tr('确认提交'))+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
 }
 
 function openBankAccountModal(mode,id,rowIdx,rowData){

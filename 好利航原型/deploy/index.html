@@ -14660,9 +14660,71 @@ function bankVoucherAction(kind){
     if(idx<0){showToast(tr('请先勾选数据'));return;}
     const row=(_listData[id]&&_listData[id][idx])?_listData[id][idx]:(TC[id]&&TC[id].d?TC[id].d[idx]:null);
     if(kind==='detail'){ openBankVoucherDetailModal(id,idx,row); return; }
+    if(kind==='claim'){ openVoucherClaimModal(row); return; }
+    if(kind==='rate'){ openVoucherRateModal(row); return; }
+    if(kind==='remark'){ openVoucherRemarkModal(row); return; }
+    if(kind==='unclaim'){ openConfirmTip(tr('确定撤销认领吗?'),function(){showToast(tr('已撤销认领'));}); return; }
     if(kind==='void'){ openConfirmTip(tr('确定作废选中凭证吗?'),function(){showToast(tr('凭证已作废'));}); return; }
-    const msg={claim:'认领成功',unclaim:'已撤销认领',rate:'汇率已修改',remark:'财务备注已修改'}[kind]||'操作成功';
-    showToast(tr(msg));
+    showToast(tr('操作成功'));
+}
+
+function voucherClaimTargetHtml(type){
+    const custOpts=['HYDXX | HYDXX','深圳市腾讯 | TX001','上海云图供应链管理有限公司 | C0003','幻想直客客户 | C0009','蓝色有限 | LSYX1','天地直客 | TDKH1','咖美智慧公司 | KMKH1','莆城电商公司 | MKKH1'];
+    const provOpts=['梦幻装柜服务商01 | MHZG1','邮乐服务商02 | XC002','报关服务商01 | BG001'];
+    const opts=type==='服务商'?provOpts:custOpts;
+    const label=type==='服务商'?'服务商':'客户';
+    let h='<label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr(label)+'</label>';
+    h+='<input list="voucher-claim-list" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('请选择或输入筛选'))+'">';
+    h+='<datalist id="voucher-claim-list">'+opts.map(function(o){return '<option value="'+esc(o)+'"></option>';}).join('')+'</datalist>';
+    return h;
+}
+
+function updateVoucherClaimTarget(){
+    const sel=document.getElementById('voucher-claim-type');
+    const wrap=document.getElementById('voucher-claim-target-wrap');
+    if(sel&&wrap)wrap.innerHTML=voucherClaimTargetHtml(sel.value);
+}
+
+function openVoucherClaimModal(row){
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='48%';
+    titleEl.textContent=tr('凭证认领');
+    let html='<div class="space-y-4">';
+    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('认领类型')+'</label><select id="voucher-claim-type" onchange="updateVoucherClaimTarget()" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"><option value="客户">'+tr('客户')+'</option><option value="服务商">'+tr('服务商')+'</option></select></div>';
+    html+='<div id="voucher-claim-target-wrap">'+voucherClaimTargetHtml('客户')+'</div>';
+    html+='</div>';
+    bodyEl.innerHTML=html;
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button><button onclick="closeCrudModal();showToast(\''+tr('认领成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function openVoucherRateModal(row){
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='48%';
+    const rate=(row&&row[8])?row[8]:'1.0000';
+    titleEl.textContent=tr('修改汇率');
+    bodyEl.innerHTML='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('新汇率')+'</label><input type="text" required class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(rate)+'"></div>';
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button><button onclick="closeCrudModal();showToast(\''+tr('汇率已修改')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function openVoucherRemarkModal(row){
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='48%';
+    const remark=(row&&row[23])?row[23]:'';
+    titleEl.textContent=tr('修改财务备注');
+    bodyEl.innerHTML='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('财务备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入财务备注'))+'">'+esc(remark)+'</textarea></div>';
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button><button onclick="closeCrudModal();showToast(\''+tr('财务备注已修改')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
 }
 
 function openBankVoucherModal(mode,id,rowIdx,rowData){

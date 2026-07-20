@@ -10073,8 +10073,52 @@ function filterArByStatus(status){
 function arDetailAction(kind){
     var checked=document.querySelectorAll('.ar-detail-check:checked');
     if(!checked.length){showToast(tr('请先勾选数据'));return;}
-    if(kind==='genBill'){ openConfirmTip(tr('确定为选中的应收明细生成账单吗?'),function(){showToast(tr('账单生成成功'));}); return; }
+    if(kind==='genBill'){ openArGenBillModal(); return; }
     if(kind==='void'){ openConfirmTip(tr('确定作废选中的应收明细吗?'),function(){showToast(tr('已作废'));}); return; }
+}
+
+function openArGenBillModal(){
+    var rows=_arDetailRows.filter(function(r){
+        if(_arCustFilter&&r.cust!==_arCustFilter)return false;
+        if(_arStatusFilter&&r.st!==_arStatusFilter)return false;
+        return true;
+    });
+    var checked=Array.prototype.slice.call(document.querySelectorAll('.ar-detail-check:checked')).map(function(c){return parseInt(c.value,10);});
+    var sel=checked.map(function(i){return rows[i];}).filter(Boolean);
+    if(!sel.length){showToast(tr('请先勾选要生成账单的应收明细'));return;}
+    var wbSet={},custSet={},totalRmb=0;
+    sel.forEach(function(r){ if(r.wb)wbSet[r.wb]=1; if(r.cust)custSet[r.cust]=1; totalRmb+=parseFloat(String(r.rmb||'0').replace(/,/g,''))||0; });
+    var d=new Date();
+    var pad=function(n){return String(n).padStart(2,'0');};
+    var dateStr=String(d.getFullYear())+pad(d.getMonth()+1)+pad(d.getDate());
+    var seq=String(Math.floor(Math.random()*900+100));
+    var defaultBillNo='RB'+dateStr+seq;
+    var defaultBatch='PC'+dateStr+'001';
+    var due=new Date(d.getTime()+30*86400000);
+    var dueStr=String(due.getFullYear())+'-'+pad(due.getMonth()+1)+'-'+pad(due.getDate());
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='58%';
+    document.getElementById('crud-modal-title').textContent=tr('生成账单')+' - '+tr('应收明细');
+    var html='<div class="space-y-5">';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('统计汇总')+'</div><div class="grid grid-cols-2 md:grid-cols-4 gap-3">';
+    var stats=[
+        {label:'运单票数',value:Object.keys(wbSet).length,cls:'text-primary-700'},
+        {label:'费用笔数',value:sel.length,cls:'text-blue-700'},
+        {label:'客户数',value:Object.keys(custSet).length,cls:'text-emerald-700'},
+        {label:'应收总金额',value:'CNY '+totalRmb.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}),cls:'text-orange-600'}
+    ];
+    stats.forEach(function(s){ html+='<div class="rounded-lg border border-surface-200 bg-surface-50 px-4 py-3"><div class="text-xs text-text-secondary">'+tr(s.label)+'</div><div class="mt-1 text-lg font-semibold '+s.cls+'">'+esc(String(s.value))+'</div></div>'; });
+    html+='</div></div>';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('账单信息')+'</div><div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500 mr-0.5">*</span>'+tr('账单号')+'</label><input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(defaultBillNo)+'"></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('账单批次号')+'</label><input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(defaultBatch)+'" placeholder="'+esc(tr('请输入账单批次号'))+'"></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('账单到期时间')+'</label><input type="date" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+dueStr+'"></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('结算周期')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"><option>出货票结</option><option>出货月结</option><option>签收月结</option></select></div>';
+    html+='<div class="md:col-span-2 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('生成说明')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('可选，补充账单说明'))+'"></textarea></div>';
+    html+='</div></div></div>';
+    document.getElementById('crud-modal-body').innerHTML=html;
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="closeCrudModal();showToast(\''+tr('账单生成成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认生成')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
 }
 
 function openArDetailModal(){

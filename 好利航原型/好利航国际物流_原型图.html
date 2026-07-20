@@ -10077,45 +10077,101 @@ function arDetailAction(kind){
     if(kind==='void'){ openConfirmTip(tr('确定作废选中的应收明细吗?'),function(){showToast(tr('已作废'));}); return; }
 }
 
-function openArGenBillModal(){
+function arGetSelectedRows(){
     var rows=_arDetailRows.filter(function(r){
         if(_arCustFilter&&r.cust!==_arCustFilter)return false;
         if(_arStatusFilter&&r.st!==_arStatusFilter)return false;
         return true;
     });
     var checked=Array.prototype.slice.call(document.querySelectorAll('.ar-detail-check:checked')).map(function(c){return parseInt(c.value,10);});
-    var sel=checked.map(function(i){return rows[i];}).filter(Boolean);
+    return checked.map(function(i){return rows[i];}).filter(Boolean);
+}
+
+function arPcsOf(wb){ var n=0,s=String(wb||''); for(var i=0;i<s.length;i++)n+=s.charCodeAt(i); return (n%20)+1; }
+
+function arGroupSelected(sel){
+    var map={};
+    sel.forEach(function(r){
+        var key=r.cust+'||'+r.cur;
+        if(!map[key])map[key]={cust:r.cust,cur:r.cur,fee:0,wb:{}};
+        map[key].fee+=parseFloat(String(r.amt||'0').replace(/,/g,''))||0;
+        if(r.wb)map[key].wb[r.wb]=1;
+    });
+    return Object.keys(map).map(function(k){
+        var g=map[k];var wbs=Object.keys(g.wb);
+        var pcs=wbs.reduce(function(a,w){return a+arPcsOf(w);},0);
+        return {cust:g.cust,cur:g.cur,fee:g.fee,wbCount:wbs.length,pcs:pcs};
+    });
+}
+
+function arGroupListHtml(groups){
+    var h='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    ['客户','币别','总费用','总票数','总件数'].forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    h+='</tr></thead><tbody>';
+    if(!groups.length){h+='<tr><td colspan="5" class="py-6 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';}
+    var tf=0,tw=0,tp=0;
+    groups.forEach(function(g){
+        tf+=g.fee;tw+=g.wbCount;tp+=g.pcs;
+        h+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
+        h+='<td class="px-3 py-2.5 text-text-primary whitespace-nowrap">'+esc(g.cust)+'</td>';
+        h+='<td class="px-3 py-2.5 text-text-secondary whitespace-nowrap">'+esc(g.cur)+'</td>';
+        h+='<td class="px-3 py-2.5 font-semibold text-orange-600 whitespace-nowrap">'+g.fee.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>';
+        h+='<td class="px-3 py-2.5 text-primary-700">'+g.wbCount+'</td>';
+        h+='<td class="px-3 py-2.5 text-blue-700">'+g.pcs+'</td></tr>';
+    });
+    if(groups.length){
+        h+='<tr class="border-t border-surface-200 bg-surface-50 font-semibold"><td class="px-3 py-2.5 text-text-primary">'+tr('合计')+'</td><td class="px-3 py-2.5"></td><td class="px-3 py-2.5 text-orange-600">'+tf.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td><td class="px-3 py-2.5 text-primary-700">'+tw+'</td><td class="px-3 py-2.5 text-blue-700">'+tp+'</td></tr>';
+    }
+    h+='</tbody></table></div>';
+    return h;
+}
+
+function openArConfirmModal(){
+    var sel=arGetSelectedRows();
+    if(!sel.length){showToast(tr('请先勾选要确认的费用明细'));return;}
+    var groups=arGroupSelected(sel);
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='60%';
+    document.getElementById('crud-modal-title').textContent=tr('费用确认');
+    var html='<div class="space-y-4">';
+    html+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+tr('确认后，勾选的费用明细进入「待核销」列表；未确认的保留在「待确认」列表。')+'</div>';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用汇总')+'</div>'+arGroupListHtml(groups)+'</div>';
+    html+='</div>';
+    document.getElementById('crud-modal-body').innerHTML=html;
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="arConfirmFees()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 cursor-pointer">'+tr('确认费用')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function arConfirmFees(){
+    var sel=arGetSelectedRows();
+    sel.forEach(function(r){ r.st='待核销'; });
+    closeCrudModal();
+    filterArByStatus(_arStatusFilter);
+    showToast(tr('费用确认成功，已进入待核销列表'));
+}
+
+function openArGenBillModal(){
+    var sel=arGetSelectedRows();
     if(!sel.length){showToast(tr('请先勾选要生成账单的应收明细'));return;}
-    var wbSet={},custSet={},totalRmb=0;
-    sel.forEach(function(r){ if(r.wb)wbSet[r.wb]=1; if(r.cust)custSet[r.cust]=1; totalRmb+=parseFloat(String(r.rmb||'0').replace(/,/g,''))||0; });
+    var groups=arGroupSelected(sel);
     var d=new Date();
     var pad=function(n){return String(n).padStart(2,'0');};
     var dateStr=String(d.getFullYear())+pad(d.getMonth()+1)+pad(d.getDate());
-    var seq=String(Math.floor(Math.random()*900+100));
-    var defaultBillNo='RB'+dateStr+seq;
     var defaultBatch='PC'+dateStr+'001';
     var due=new Date(d.getTime()+30*86400000);
     var dueStr=String(due.getFullYear())+'-'+pad(due.getMonth()+1)+'-'+pad(due.getDate());
     const panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='58%';
+    if(panel)panel.style.width='62%';
     document.getElementById('crud-modal-title').textContent=tr('生成账单')+' - '+tr('应收明细');
     var html='<div class="space-y-5">';
-    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('统计汇总')+'</div><div class="grid grid-cols-2 md:grid-cols-4 gap-3">';
-    var stats=[
-        {label:'运单票数',value:Object.keys(wbSet).length,cls:'text-primary-700'},
-        {label:'费用笔数',value:sel.length,cls:'text-blue-700'},
-        {label:'客户数',value:Object.keys(custSet).length,cls:'text-emerald-700'},
-        {label:'应收总金额',value:'CNY '+totalRmb.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2}),cls:'text-orange-600'}
-    ];
-    stats.forEach(function(s){ html+='<div class="rounded-lg border border-surface-200 bg-surface-50 px-4 py-3"><div class="text-xs text-text-secondary">'+tr(s.label)+'</div><div class="mt-1 text-lg font-semibold '+s.cls+'">'+esc(String(s.value))+'</div></div>'; });
-    html+='</div></div>';
-    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('账单信息')+'</div><div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500 mr-0.5">*</span>'+tr('账单号')+'</label><input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(defaultBillNo)+'"></div>';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('账单信息')+'</div><div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('账单批次号')+'</label><input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(defaultBatch)+'" placeholder="'+esc(tr('请输入账单批次号'))+'"></div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('账单到期时间')+'</label><input type="date" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+dueStr+'"></div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('结算周期')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"><option>出货票结</option><option>出货月结</option><option>签收月结</option></select></div>';
-    html+='<div class="md:col-span-2 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('生成说明')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('可选，补充账单说明'))+'"></textarea></div>';
-    html+='</div></div></div>';
+    html+='<div class="md:col-span-3 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('生成备注')+'</label><textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('可选，补充账单备注'))+'"></textarea></div>';
+    html+='</div></div>';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用汇总')+'</div>'+arGroupListHtml(groups)+'</div>';
+    html+='</div>';
     document.getElementById('crud-modal-body').innerHTML=html;
     document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="closeCrudModal();showToast(\''+tr('账单生成成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认生成')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
@@ -10170,6 +10226,7 @@ function generateArDetailPage(id){
     h+='<div class="flex items-center gap-2">';
     h+='<button type="button" onclick="filterArByStatus(_arStatusFilter)" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';
     h+='<button type="button" onclick="openArDetailModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">+ '+tr('新增')+'</button>';
+    h+='<button type="button" onclick="openArConfirmModal()" class="h-9 px-4 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 cursor-pointer">'+tr('费用确认')+'</button>';
     h+='<button type="button" onclick="arDetailAction(\'genBill\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('生成账单')+'</button>';
     h+='<button type="button" onclick="arDetailAction(\'void\')" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('作废')+'</button>';
     h+='</div>';

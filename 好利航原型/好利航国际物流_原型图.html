@@ -1992,7 +1992,8 @@ const menuData=[
 {id:'fin-fee-mgmt',label:'费用管理',langKey:'fin_fee_mgmt',page:'finance',tab:'fin-fee-mgmt'},
 {id:'fin-bill-mgmt',label:'账单管理',langKey:'fin_bill_mgmt',page:'finance',tab:'fin-bill-mgmt'},
 {id:'fin-bank-account',label:'银行账户',page:'finance',tab:'fin-bank-account'},
-{id:'fin-account',label:'财务科目',page:'finance',tab:'fin-account'}
+{id:'fin-account',label:'财务科目',page:'finance',tab:'fin-account'},
+{id:'fin-bank-voucher',label:'银行凭证',page:'finance',tab:'fin-bank-voucher'}
 ]},
 
 {id:'biz-config',label:'业务配置',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',children:[
@@ -2793,6 +2794,20 @@ TC['fin-account']={t:'财务科目',forceLocalHeader:true,readonlyList:true,h:['
 ['9902','管理费用','Admin Expenses','管理费用','借','损益','1','否','RMB','启用','HOLLY TRANS-2020'],
 ['9903','财务费用','Financial Expenses','财务费用','借','损益','1','否','RMB','禁用','HOLLY TRANS-2020']]};
 TC['fin-account'].q=[{label:'科目代码',type:'text'},{label:'科目名称',type:'text'},{label:'类别',type:'select',options:['资产','负债','权益','成本','损益']},{label:'币别',type:'select',options:['ALL','RMB','USD','CFA','GHS','EUR']},{label:'状态',type:'select',options:['启用','禁用']}];
+TC['fin-bank-voucher']={t:'银行凭证',forceLocalHeader:true,readonlyList:true,h:['凭证编号','凭证状态','凭证借贷标识','认领账户类型','认领账户代码','认领账户名称','总金额(原币)','币别','汇率','总金额(人民币)','已使用金额(人民币)','未使用金额(人民币)','我方账户','我方账户名称','对方账户','对方账号名称','对方开户行','交易流水号','费用时间','交割方式','认领时间','认领人','财务摘要','财务备注','数据来源','操作'],s:['待抵扣','部分抵扣','全部抵扣','作废'],d:[
+['P2607160001','待抵扣','收入','客户','C0003','上海回供应链管理有限公司','1000','人民币','1','1000','0','1000','4222827128731113','zp','11','111','111','20260716','2026-07-16 17:20:06','现金','2026-07-16 17:21:18','天地总部管理员','11','11','人工录入'],
+['P2607150012TX','全部抵扣','支出','客户','C0009','幻想直客客户','-500','人民币','1','-500','-500','0','4222827128731113','zp','','','','','2026-07-15 13:57:59','','2026-07-15 13:58:10','天地总部管理员','提现','提现','人工提现'],
+['P2607150011','待抵扣','收入','客户','C0009','幻想直客客户','500','人民币','1.1','550','0','550','4222827128731113','zp','','','','','2026-07-15 13:56:10','现金','2026-07-15 13:56:30','天地总部管理员','提现','','人工录入'],
+['P2607150010TX','全部抵扣','支出','客户','C0009','幻想直客客户','-500','人民币','1','-500','-500','0','4222827128731113','zp','','','','','2026-07-15 13:55:41','','2026-07-15 13:55:51','天地总部管理员','提现','提现','人工提现'],
+['P2607150009','作废','收入','客户','C0009','幻想直客客户','1000','人民币','1','1000','0','1000','4222827128731113','zp','','','','','2026-07-15 12:27:55','微信','2026-07-15 12:28:47','天地总部管理员','','','人工录入'],
+['P2607150008','全部抵扣','收入','客户','C0009','幻想直客客户','1000','人民币','1','1000','1000','0','4222827128731113','zp','','','','','2026-07-15 12:27:05','支付宝','2026-07-15 12:27:28','天地总部管理员','','','人工录入'],
+['P2607150007','待抵扣','收入','客户','TX001','深圳市测试','1000','人民币','1','1000','0','1000','4222827128731113','zp','','','','','2026-07-15 12:26:14','微信','2026-07-15 12:26:31','天地总部管理员','','','人工录入'],
+['P2607150006','待抵扣','支出','客户','TX001','深圳市测试','1000','人民币','1','1000','0','1000','431110340001212','中国银行1','','','','','2026-07-15 11:26:26','支付宝','2026-07-15 11:26:46','天地总部管理员','','','人工录入'],
+['P2607150005','作废','支出','客户','TX001','深圳市测试','1000','人民币','1','1000','0','1000','431110340001212','中国银行1','','','','','2026-07-15 11:02:44','支付宝','2026-07-15 11:03:10','天地总部管理员','','','人工录入'],
+['P2607070011','全部抵扣','收入','服务商','MHZG1','梦幻装柜服务商01','100','人民币','1','100','100','0','431110340001212','中国银行1','11','111','11','20260711','2026-07-07 11:30:10','微信','2026-07-07 11:30:39','HYD-开发者','111','对冲1','人工录入'],
+['P2607070010','部分抵扣','收入','服务商','MHZG1','梦幻装柜服务商01','100000','人民币','1','100000','500','99500','431110340001212','中国银行1','1','1','1','1','2026-07-07 19:59:55','现金','2026-07-07 20:00:27','HYD-开发者','1','1','人工录入'],
+['P2607010001','部分抵扣','收入','客户','CSKH2','梦幻同行客户','1000.26','人民币','1.2','1200.31','180','1020.31','431110340001212','中国银行1','户001','张三','北京支行','Test202607011532','2026-07-01 15:32:27','银行','2026-07-01 16:18:18','屈鑫','测试','Product name classification','人工录入']]};
+TC['fin-bank-voucher'].q=[{label:'凭证编号',type:'text'},{label:'认领账号',type:'text'},{label:'凭证状态',type:'select',options:['待抵扣','部分抵扣','全部抵扣','作废']},{label:'借贷标识',type:'select',options:['收入','支出']},{label:'币别',type:'select',options:['人民币','美元','欧元']},{label:'交易流水号',type:'text'}];
 
 TC['crm-cust'].q=[{label:'客户代码',type:'text'},{label:'客户简称',type:'text'},{label:'客户类型',type:'select',options:['直客','同行','平台','代理']},{label:'所属业务员',type:'select',options:['张三','李四','王五','赵六']},{label:'所属客服',type:'select',options:['陈七','周八','吴九']},{label:'启用状态',type:'select',options:['启用','禁用']},{label:'客户等级',type:'select',options:['A类','B类','C类','D类']}];
 TC['crm-pool'].q=[{label:'客户名称',type:'text',field:'name'},{label:'客户类型',type:'select',field:'type',options:['直客','同行']},{label:'原归属销售',type:'text',field:'sales'},{label:'公海原因',type:'select',field:'reason',options:['销售离职','超期未跟进','客户放弃']},{label:'状态',type:'select',field:'status'}];
@@ -7918,9 +7933,9 @@ applyStandardSheetTable('cfg-dict','数据字典',
 var _statusLangMap={'启用':'tabActive','停用':'tabInactive','冻结':'tabFrozen','在职':'tabOnDuty','离职':'tabResigned','休假':'tabOnLeave','待审批':'tabPending','已通过':'tabApproved','已驳回':'tabRejected','未读':'tabUnread','已读':'tabRead','锁定':'tabLocked','待入仓':'tabPendingIn','已入仓':'tabReceived','异常':'tabAbnormal','已作废':'tabVoided','进行中':'tabProcessing','已完成':'tabCompleted','待处理':'tabPendingProcess','已处理':'tabProcessed','待审核':'tabPendingReview','可领取':'tabAvailable','已领取':'tabClaimed','已生效':'tabEffective','待抢单':'tabPendingGrab','已抢单':'tabGrabbed','已复核':'tabReviewed','待确认':'tabPendingConfirm','已确认':'tabConfirmed','生效中':'tabEffectiveRunning','已失效':'tabInvalid','待生效':'tabPendingEffect','已登记':'tabRegistered','已通知':'tabNotified','待补录':'tabPendingSupplement','已补录':'tabSupplemented','已提交':'tabSubmitted','已对齐':'tabAligned','未对齐':'tabUnaligned','已回滚':'tabRolledback','正常':'tabNormal','预警':'tabWarning','提醒中':'tabReminding','已解决':'tabResolved','已付款':'tabPaid','待开票':'tabPendingInvoice','已开票':'tabInvoiced','在途':'tabInTransit','抵港':'tabArrived','清关中':'tabClearing','已提柜':'tabPickedUp','待出库':'tabPendingOut','已出库':'tabOutbound','已放行':'tabReleased','未通过':'tabNotPassed','部分放行':'tabPartialRelease','全部放行':'tabFullRelease','待同步':'tabPendingSync','已同步':'tabSynced','有差异':'tabDiff','告警中':'tabAlerting','熔断':'tabCircuitBreak','运行中':'tabRunning','维护中':'tabMaintaining','告警':'tabAlert','待提交':'tabPending','已提交':'tabSubmitted','已确认':'tabConfirmed','已出单':'tabCompleted','生成中':'tabProcessing','已完成':'tabCompleted','已失败':'tabRejected','有差异':'tabDiff','进行中':'tabProcessing'};
 
 function statusBadge(val){
-    const g=['启用','已通过','已入仓','已确认','已完成','已放行','已同步','已对齐','已生效','已出库','已作废','已结算','已开具','已登记','已补录','已处理','已验证','已付款','已开票','正常','运行中','已领取','已复核','在途','全部放行','已解决'];
-    const r=['停用','禁用','已驳回','异常','已销毁','已过期','冻结','熔断','未通过'];
-    const a=['待审核','待审批','待入仓','待定','待处理','待确认','待补录','待领取','待到港','待预约','待出库','待开票','待同步','有差异','告警中','告警','维护中','待抢单','待结算','预警','待通知','已登记'];
+    const g=['启用','已通过','已入仓','已确认','已完成','已放行','已同步','已对齐','已生效','已出库','已作废','已结算','已开具','已登记','已补录','已处理','已验证','已付款','已开票','正常','运行中','已领取','已复核','在途','全部放行','已解决','全部抵扣'];
+    const r=['停用','禁用','已驳回','异常','已销毁','已过期','冻结','熔断','未通过','作废'];
+    const a=['待审核','待审批','待入仓','待定','待处理','待确认','待补录','待领取','待到港','待预约','待出库','待开票','待同步','有差异','告警中','告警','维护中','待抢单','待结算','预警','待通知','已登记','待抵扣','部分抵扣'];
     const label=_statusLangMap[val]&&_lang[_currentLang][_statusLangMap[val]]?_lang[_currentLang][_statusLangMap[val]]:tr(val);
     if(g.includes(val))return '<span class="badge bg-green-50 text-green-700">'+label+'</span>';
     if(r.includes(val))return '<span class="badge bg-red-50 text-red-700">'+label+'</span>';
@@ -8860,6 +8875,12 @@ function renderToolbarAction(action,id){
     else if(action.key==='genBill'&&id==='fcl-bill-entry')click='showToast(\''+esc(tr('账单生成成功'))+'\')';
     else if(action.key==='genBill'&&id==='fin-fee-mgmt')click='openFeeMgmtGenBillModal(\''+id+'\')';
     else if(action.key==='trackMapping')click='showToast(\''+esc(tr('轨迹映射配置'))+'\')';
+    else if(action.key==='voucherDetail')click='bankVoucherAction(\'detail\')';
+    else if(action.key==='voucherClaim')click='bankVoucherAction(\'claim\')';
+    else if(action.key==='voucherUnclaim')click='bankVoucherAction(\'unclaim\')';
+    else if(action.key==='voucherRate')click='bankVoucherAction(\'rate\')';
+    else if(action.key==='voucherRemark')click='bankVoucherAction(\'remark\')';
+    else if(action.key==='voucherVoid')click='bankVoucherAction(\'void\')';
     else click='openActionModal(\''+action.key+'\',\''+id+'\',-1)';
     const widthStyle=action.fixedWidth?'width:'+(action.width||'104px'):'min-width:'+(action.width||'96px');
     return '<button onclick="'+click+'" class="toolbar-action font-medium rounded-lg cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap '+color+'" style="'+widthStyle+'">'+esc(tr(action.label))+'</button>';
@@ -8912,6 +8933,19 @@ function getToolbarActions(id){
             {type:'edit',label:'修改'},
             {key:'setEnable',label:'启用',variant:'success'},
             {key:'setDisable',label:'禁用'}
+        ];
+    }
+    if(id==='fin-bank-voucher'){
+        return [
+            {key:'search',label:'查询',variant:'primary'},
+            {type:'add',label:'新增',variant:'primary'},
+            {type:'edit',label:'修改'},
+            {key:'voucherDetail',label:'详情'},
+            {key:'voucherClaim',label:'认领',variant:'success'},
+            {key:'voucherUnclaim',label:'撤销认领',variant:'danger'},
+            {key:'voucherRate',label:'修改汇率'},
+            {key:'voucherRemark',label:'修改财务备注'},
+            {key:'voucherVoid',label:'凭证作废',variant:'danger'}
         ];
     }
     if(id==='base-provider'){
@@ -14336,6 +14370,10 @@ function openCrudModal(mode,id,rowIdx){
         openAccountModal(mode,id,rowIdx,rowData);
         return;
     }
+    if(id==='fin-bank-voucher'&&(mode==='add'||mode==='edit')){
+        openBankVoucherModal(mode,id,rowIdx,rowData);
+        return;
+    }
     const colClass=modalGridFullClass(modalFields,'modal');
     if(mode==='view'){
         let html='';
@@ -14614,6 +14652,127 @@ function switchApprovalMemberTab(btn){
         const on=b===btn;
         b.className=(on?'pb-2 -mb-px border-b-2 border-primary-500 text-primary-600 font-medium':'pb-2 -mb-px border-b-2 border-transparent text-text-secondary hover:text-primary-600')+' cursor-pointer';
     });
+}
+
+function bankVoucherAction(kind){
+    const id='fin-bank-voucher';
+    const idx=getSelectedRowIndex();
+    if(idx<0){showToast(tr('请先勾选数据'));return;}
+    const row=(_listData[id]&&_listData[id][idx])?_listData[id][idx]:(TC[id]&&TC[id].d?TC[id].d[idx]:null);
+    if(kind==='detail'){ openBankVoucherDetailModal(id,idx,row); return; }
+    if(kind==='void'){ openConfirmTip(tr('确定作废选中凭证吗?'),function(){showToast(tr('凭证已作废'));}); return; }
+    const msg={claim:'认领成功',unclaim:'已撤销认领',rate:'汇率已修改',remark:'财务备注已修改'}[kind]||'操作成功';
+    showToast(tr(msg));
+}
+
+function openBankVoucherModal(mode,id,rowIdx,rowData){
+    const L=_lang[_currentLang];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='76%';
+    const isEdit=mode==='edit';
+    const g=function(i){return rowData?(rowData[i]||''):'';};
+    const dc=rowData?(rowData[2]||'收入'):'收入';
+    const settle=g(19),claimType=g(3),amount=g(6);
+    const currency=rowData?(rowData[7]||'人民币'):'人民币';
+    const rate=rowData?(rowData[8]||'1.0000'):'1.0000';
+    const serial=g(17),ourAcct=g(12),oppName=g(15),oppBank=g(16),oppAcct=g(14),summary=g(22),remark=g(23);
+    const bankAccts=(TC['fin-bank-account']&&TC['fin-bank-account'].d?TC['fin-bank-account'].d.map(function(r){return r[0];}):[]);
+    const bankAcctLabels={};
+    if(TC['fin-bank-account']&&TC['fin-bank-account'].d){TC['fin-bank-account'].d.forEach(function(r){bankAcctLabels[r[0]]=r[0]+' '+r[1];});}
+    titleEl.textContent=isEdit?tr('编辑'):tr('新增');
+    const inputCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    const taCls='w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y';
+    function lbl(t,req){return '<label class="text-sm font-medium text-text-secondary mb-1.5 block">'+(req?'<span class="text-red-500">*</span> ':'')+tr(t)+'</label>';}
+    function selHtml(opts,val,ph){var s='<select class="'+inputCls+'">'+(ph?'<option value="">'+tr(ph)+'</option>':'');opts.forEach(function(o){s+='<option'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});return s+'</select>';}
+    let html='';
+    html+='<div class="mb-3 flex items-center gap-2"><span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-sm font-semibold text-text-primary">'+tr('基本信息')+'</span></div>';
+    html+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
+    html+='<div>'+lbl('借贷标识',false)+'<div class="h-10 flex items-center gap-6 text-sm text-text-secondary"><label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="voucher-dc" value="支出"'+(dc==='支出'?' checked':'')+'><span>'+tr('支出')+'</span></label><label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="voucher-dc" value="收入"'+(dc!=='支出'?' checked':'')+'><span>'+tr('收入')+'</span></label></div></div>';
+    html+='<div>'+lbl('交割方式',true)+selHtml(['现金','微信','支付宝','银行'],settle,'请选择')+'</div>';
+    html+='<div>'+lbl('认领类型',false)+selHtml(['客户','服务商'],claimType,'请选择')+'</div>';
+    html+='<div>'+lbl('凭证金额',true)+'<input type="number" required class="'+inputCls+'" value="'+esc(amount)+'" placeholder="'+esc(tr('请输入凭证金额'))+'"></div>';
+    html+='<div>'+lbl('金额大写',false)+'<input type="text" readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" placeholder="'+esc(tr('自动生成'))+'"></div>';
+    html+='<div>'+lbl('币别',true)+selHtml(['人民币','美元','欧元'],currency)+'</div>';
+    html+='<div>'+lbl('汇率',true)+'<input type="text" required class="'+inputCls+'" value="'+esc(rate)+'"></div>';
+    html+='<div>'+lbl('交易流水号',false)+'<input type="text" class="'+inputCls+'" value="'+esc(serial)+'" placeholder="'+esc(tr('请输入交易流水号'))+'"></div>';
+    html+='<div>'+lbl('交易时间',true)+'<input type="datetime-local" class="'+inputCls+'" value="2026-07-20T14:36"></div>';
+    html+='<div>'+lbl('我方银行账户',true)+'<select class="'+inputCls+'"><option value="">'+tr('请选择')+'</option>'+bankAccts.map(function(a){return '<option value="'+esc(a)+'"'+(ourAcct===a?' selected':'')+'>'+esc(bankAcctLabels[a]||a)+'</option>';}).join('')+'</select></div>';
+    html+='<div>'+lbl('对方账户户名',false)+'<input type="text" class="'+inputCls+'" value="'+esc(oppName)+'" placeholder="'+esc(tr('请输入对方账户户名'))+'"></div>';
+    html+='<div>'+lbl('对方账户开户行',false)+'<input type="text" class="'+inputCls+'" value="'+esc(oppBank)+'" placeholder="'+esc(tr('请输入对方账户开户行'))+'"></div>';
+    html+='<div>'+lbl('对方账户号码',false)+'<input type="text" class="'+inputCls+'" value="'+esc(oppAcct)+'" placeholder="'+esc(tr('请输入对方账户号码'))+'"></div>';
+    html+='<div>'+lbl('财务摘要',false)+'<textarea rows="2" class="'+taCls+'" placeholder="'+esc(tr('请输入财务摘要'))+'">'+esc(summary)+'</textarea></div>';
+    html+='<div>'+lbl('财务备注',false)+'<textarea rows="2" class="'+taCls+'" placeholder="'+esc(tr('请输入财务备注'))+'">'+esc(remark)+'</textarea></div>';
+    html+='</div>';
+    html+='<div class="mt-6 mb-3 flex items-center gap-2"><span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-sm font-semibold text-text-primary">'+tr('附件信息')+'</span></div>';
+    html+='<div class="flex items-center gap-3 mb-3"><label class="text-sm text-text-secondary whitespace-nowrap">'+tr('请选择附件类型')+'</label><select class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 w-48">'+['凭证水单','合同','发票','其他'].map(function(o){return '<option'+(o==='凭证水单'?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
+    html+='<div class="border-2 border-dashed border-surface-200 rounded-lg py-8 text-center bg-surface-50/50">';
+    html+='<svg class="w-8 h-8 mx-auto text-text-muted mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>';
+    html+='<div class="text-sm text-text-secondary">'+tr('点击或者拖动文件到该区域来上传')+'</div>';
+    html+='<div class="text-xs text-text-muted mt-1">'+tr('请上传 大小不超过 25MB 格式为 doc/xls/xlsx/txt/pdf/zip/rar/jpg/jpeg/png/gif/bmp 的文件 最多上传10个附件')+'</div>';
+    html+='</div>';
+    html+='<div class="mt-3 border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    ['序号','文件名称','文件类型','缩略图','文件大小(kb)','上传人','上传时间','操作'].forEach(function(c){html+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    html+='</tr></thead><tbody><tr><td colspan="8" class="py-8 text-center text-text-muted">'+tr('无数据')+'</td></tr></tbody></table></div>';
+    bodyEl.innerHTML=html;
+    const toast=isEdit?tr('保存成功'):tr('新增成功');
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+toast+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+(isEdit?tr('保存修改'):tr('确认提交'))+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function openBankVoucherDetailModal(id,idx,rowData){
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='90%';
+    const g=function(i){var v=rowData?(rowData[i]||''):'';return v===''?'—':esc(v);};
+    titleEl.textContent=tr('凭证详情');
+    let ourBank='';
+    if(TC['fin-bank-account']&&TC['fin-bank-account'].d){var m=TC['fin-bank-account'].d.find(function(r){return r[0]===(rowData?rowData[12]:'');});if(m)ourBank=m[3];}
+    function card(title,color,rows){
+        var cls={green:'bg-green-50 border-green-100',blue:'bg-blue-50 border-blue-100',yellow:'bg-amber-50 border-amber-100',red:'bg-red-50 border-red-100'}[color];
+        var tcls={green:'text-green-700',blue:'text-blue-700',yellow:'text-amber-700',red:'text-red-700'}[color];
+        var h='<div class="rounded-lg border '+cls+' p-4">';
+        if(title)h+='<div class="text-sm font-semibold '+tcls+' mb-3">'+tr(title)+'</div>';
+        rows.forEach(function(r){h+='<div class="flex items-start justify-between gap-3 text-sm py-1"><span class="text-text-secondary whitespace-nowrap">'+tr(r[0])+'</span><span class="font-medium text-text-primary text-right break-all">'+r[1]+'</span></div>';});
+        return h+'</div>';
+    }
+    let html='<div class="mb-3 flex items-center gap-2"><span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-sm font-semibold text-text-primary">'+tr('凭证信息')+'</span></div>';
+    html+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">';
+    html+=card('','green',[['凭证编号',g(0)],['凭证借贷标识',g(2)],['总金额(原币)',g(6)],['币别',g(7)],['汇率',g(8)]]);
+    html+=card('','blue',[['认领账户类型',g(3)],['认领账户名称',g(5)],['总金额(人民币)',g(9)],['已使用金额(人民币)',g(10)],['未使用金额(人民币)',g(11)]]);
+    html+=card('我方账户信息','yellow',[['账户号码',g(12)],['账户名称',g(13)],['账户开户行',ourBank?esc(ourBank):'—'],['费用时间',g(18)]]);
+    html+=card('对方账户信息','red',[['账户号码',g(14)],['账户名称',g(15)],['账号开户行',g(16)],['交易流水号',g(17)]]);
+    html+='</div>';
+    html+='<div class="flex items-center gap-4 border-b border-surface-200 mb-3 text-sm">';
+    html+='<button type="button" data-vd-tab="writeoff" onclick="switchVoucherDetailTab(this,\'writeoff\')" class="pb-2 -mb-px border-b-2 border-primary-500 text-primary-600 font-medium cursor-pointer">'+tr('核销明细')+'</button>';
+    html+='<button type="button" data-vd-tab="attach" onclick="switchVoucherDetailTab(this,\'attach\')" class="pb-2 -mb-px border-b-2 border-transparent text-text-secondary hover:text-primary-600 cursor-pointer">'+tr('附件信息')+'</button>';
+    html+='</div>';
+    html+='<div id="vd-writeoff"><div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm" style="min-width:1000px"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    ['#','操作说明','费用编号/提现凭证','使用金额','剩余金额','核销时间','核销人','是否作废','核销明细'].forEach(function(c){html+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    html+='</tr></thead><tbody>';
+    var woRows=[['1','凭证提现','P2607150010TX','500','500','2026-07-15 13:55:51','天地总部管理员','否','凭证提现, 凭证剩余金额[1000.0], 本次提现金额[500.0]...'],['2','凭证提现','P2607150012TX','500','0','2026-07-15 13:58:10','天地总部管理员','否','凭证提现, 凭证剩余金额[500.0], 本次提现金额[500.0], ...']];
+    woRows.forEach(function(r){html+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">'+r.map(function(c,ci){return '<td class="px-3 py-3 whitespace-nowrap '+(ci===0?'text-text-muted':'text-text-secondary')+'">'+esc(c)+'</td>';}).join('')+'</tr>';});
+    html+='</tbody></table></div></div>';
+    html+='<div id="vd-attach" class="hidden"><div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    ['序号','文件名称','文件类型','缩略图','文件大小(kb)','上传人','上传时间','操作'].forEach(function(c){html+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    html+='</tr></thead><tbody><tr><td colspan="8" class="py-8 text-center text-text-muted">'+tr('无数据')+'</td></tr></tbody></table></div></div>';
+    bodyEl.innerHTML=html;
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function switchVoucherDetailTab(btn,tab){
+    btn.parentElement.querySelectorAll('[data-vd-tab]').forEach(function(b){
+        const on=b===btn;
+        b.className=(on?'pb-2 -mb-px border-b-2 border-primary-500 text-primary-600 font-medium':'pb-2 -mb-px border-b-2 border-transparent text-text-secondary hover:text-primary-600')+' cursor-pointer';
+    });
+    const wo=document.getElementById('vd-writeoff'),at=document.getElementById('vd-attach');
+    if(wo)wo.classList.toggle('hidden',tab!=='writeoff');
+    if(at)at.classList.toggle('hidden',tab!=='attach');
 }
 
 function openAccountModal(mode,id,rowIdx,rowData){

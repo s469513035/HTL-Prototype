@@ -2000,7 +2000,8 @@ const menuData=[
 {id:'fin-bank-voucher',label:'银行凭证',page:'finance',tab:'fin-bank-voucher'},
 {id:'fin-rate',label:'汇率管理',page:'finance',tab:'fin-rate'},
 {id:'fin-ar',label:'应收管理',children:[
-{id:'fin-ar-detail',label:'应收明细',page:'finance',tab:'fin-ar-detail'}
+{id:'fin-ar-detail',label:'应收明细',page:'finance',tab:'fin-ar-detail'},
+{id:'fin-ar-receipt',label:'收款管理',page:'finance',tab:'fin-ar-receipt'}
 ]}
 ]},
 
@@ -2828,6 +2829,16 @@ TC['ws-sales']={t:'业务工作台',pageMode:'roleDashboard',h:[],s:[],d:[]};
 TC['ws-cs']={t:'客服工作台',pageMode:'roleDashboard',h:[],s:[],d:[]};
 TC['ws-ops']={t:'操作工作台',pageMode:'roleDashboard',h:[],s:[],d:[]};
 TC['fin-ar-detail']={t:'应收明细',pageMode:'arDetail',h:[],s:[],d:[]};
+TC['fin-ar-receipt']={t:'收款管理',forceLocalHeader:true,readonlyList:true,h:['凭证编号','凭证状态','凭证借贷标识','认领账户类型','认领账户代码','认领账户名称','总金额(原币)','币别','汇率','总金额(人民币)','已使用金额(人民币)','未使用金额(人民币)','我方账户','我方账户名称','对方账户','对方账号名称','对方开户行','交易流水号','费用时间','交割方式','认领时间','认领人','财务摘要','财务备注','数据来源','操作'],s:['待抵扣','部分抵扣','全部抵扣','作废'],d:[
+['P2607070002TX','待抵扣','收入','客户','XXWJ0','星星玩具电商','-30','人民币','1','-30','-30','0','43110340001212','中国银行1','','','','','2026-07-07 10:23:42','现金','2026-07-07 10:24:01','HYD-开发者','','','人工录入'],
+['SK2607160001','全部抵扣','收入','客户','C0003','上海云图供应链管理有限公司','5000','人民币','1','5000','5000','0','4222827128731113','zp','','','','','2026-07-16 09:00:00','银行','2026-07-16 09:05:00','天地总部管理员','客户回款','','人工录入'],
+['SK2607150001','部分抵扣','收入','客户','C0009','幻想直客客户','3000','人民币','1','3000','1000','2000','4222827128731113','zp','','','','','2026-07-15 14:00:00','微信','2026-07-15 14:02:00','天地总部管理员','','','人工录入'],
+['SK2607140001','待抵扣','收入','客户','LSYX1','蓝色有限','1200','人民币','1','1200','0','1200','431110340001212','中国银行1','','','','','2026-07-14 10:00:00','支付宝','2026-07-14 10:01:00','梦幻小业务','','','人工录入'],
+['SK2607130001','全部抵扣','收入','客户','TDKH1','天地直客','8000','人民币','1','8000','8000','0','4222827128731113','zp','','','','','2026-07-13 11:00:00','银行','2026-07-13 11:05:00','天地总部管理员','','','人工录入'],
+['SK2607120001','待抵扣','收入','客户','TX001','深圳市腾讯','2000','美元','7','14000','0','14000','431110340001212','中国银行1','','','','SW202607120001','2026-07-12 15:00:00','银行','2026-07-12 15:03:00','HYD-开发者','外币收款','','人工录入'],
+['SK2607110001','作废','收入','客户','KMKH1','咖美智慧公司','500','人民币','1','500','0','500','4222827128731113','zp','','','','','2026-07-11 16:00:00','现金','2026-07-11 16:01:00','HYD-开发者','测试作废','','人工录入'],
+['SK2607100001','部分抵扣','收入','客户','MHKH1','梦幻直客客户','6000','人民币','1','6000','2000','4000','431110340001212','中国银行1','','','','','2026-07-10 09:30:00','银行','2026-07-10 09:32:00','梦幻小业务','','','人工录入']]};
+TC['fin-ar-receipt'].q=[{label:'凭证编号',type:'text'},{label:'认领账号',type:'text'},{label:'凭证状态',type:'select',options:['待抵扣','部分抵扣','全部抵扣','作废']},{label:'借贷标识',type:'select',options:['收入','支出']},{label:'币别',type:'select',options:['人民币','美元','欧元']},{label:'交易流水号',type:'text'}];
 
 TC['crm-cust'].q=[{label:'客户代码',type:'text'},{label:'客户简称',type:'text'},{label:'客户类型',type:'select',options:['直客','同行','平台','代理']},{label:'所属业务员',type:'select',options:['张三','李四','王五','赵六']},{label:'所属客服',type:'select',options:['陈七','周八','吴九']},{label:'启用状态',type:'select',options:['启用','禁用']},{label:'客户等级',type:'select',options:['A类','B类','C类','D类']}];
 TC['crm-pool'].q=[{label:'客户名称',type:'text',field:'name'},{label:'客户类型',type:'select',field:'type',options:['直客','同行']},{label:'原归属销售',type:'text',field:'sales'},{label:'公海原因',type:'select',field:'reason',options:['销售离职','超期未跟进','客户放弃']},{label:'状态',type:'select',field:'status'}];
@@ -8895,12 +8906,12 @@ function renderToolbarAction(action,id){
     else if(action.key==='genBill'&&id==='fcl-bill-entry')click='showToast(\''+esc(tr('账单生成成功'))+'\')';
     else if(action.key==='genBill'&&id==='fin-fee-mgmt')click='openFeeMgmtGenBillModal(\''+id+'\')';
     else if(action.key==='trackMapping')click='showToast(\''+esc(tr('轨迹映射配置'))+'\')';
-    else if(action.key==='voucherDetail')click='bankVoucherAction(\'detail\')';
-    else if(action.key==='voucherClaim')click='bankVoucherAction(\'claim\')';
-    else if(action.key==='voucherUnclaim')click='bankVoucherAction(\'unclaim\')';
-    else if(action.key==='voucherRate')click='bankVoucherAction(\'rate\')';
-    else if(action.key==='voucherRemark')click='bankVoucherAction(\'remark\')';
-    else if(action.key==='voucherVoid')click='bankVoucherAction(\'void\')';
+    else if(action.key==='voucherDetail')click='bankVoucherAction(\'detail\',\''+id+'\')';
+    else if(action.key==='voucherClaim')click='bankVoucherAction(\'claim\',\''+id+'\')';
+    else if(action.key==='voucherUnclaim')click='bankVoucherAction(\'unclaim\',\''+id+'\')';
+    else if(action.key==='voucherRate')click='bankVoucherAction(\'rate\',\''+id+'\')';
+    else if(action.key==='voucherRemark')click='bankVoucherAction(\'remark\',\''+id+'\')';
+    else if(action.key==='voucherVoid')click='bankVoucherAction(\'void\',\''+id+'\')';
     else click='openActionModal(\''+action.key+'\',\''+id+'\',-1)';
     const widthStyle=action.fixedWidth?'width:'+(action.width||'104px'):'min-width:'+(action.width||'96px');
     return '<button onclick="'+click+'" class="toolbar-action font-medium rounded-lg cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap '+color+'" style="'+widthStyle+'">'+esc(tr(action.label))+'</button>';
@@ -8963,7 +8974,7 @@ function getToolbarActions(id){
             {key:'batchDelete',label:'批量删除汇率',variant:'danger'}
         ];
     }
-    if(id==='fin-bank-voucher'){
+    if(id==='fin-bank-voucher'||id==='fin-ar-receipt'){
         return [
             {key:'search',label:'查询',variant:'primary'},
             {type:'add',label:'新增',variant:'primary'},
@@ -14812,7 +14823,7 @@ function openCrudModal(mode,id,rowIdx){
         openAccountModal(mode,id,rowIdx,rowData);
         return;
     }
-    if(id==='fin-bank-voucher'&&(mode==='add'||mode==='edit')){
+    if((id==='fin-bank-voucher'||id==='fin-ar-receipt')&&(mode==='add'||mode==='edit')){
         openBankVoucherModal(mode,id,rowIdx,rowData);
         return;
     }
@@ -15100,8 +15111,8 @@ function switchApprovalMemberTab(btn){
     });
 }
 
-function bankVoucherAction(kind){
-    const id='fin-bank-voucher';
+function bankVoucherAction(kind,id){
+    id=id||'fin-bank-voucher';
     const idx=getSelectedRowIndex();
     if(idx<0){showToast(tr('请先勾选数据'));return;}
     const row=(_listData[id]&&_listData[id][idx])?_listData[id][idx]:(TC[id]&&TC[id].d?TC[id].d[idx]:null);
@@ -15200,7 +15211,12 @@ function openBankVoucherModal(mode,id,rowIdx,rowData){
     html+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
     html+='<div>'+lbl('借贷标识',false)+'<div class="h-10 flex items-center gap-6 text-sm text-text-secondary"><label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="voucher-dc" value="支出"'+(dc==='支出'?' checked':'')+'><span>'+tr('支出')+'</span></label><label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="voucher-dc" value="收入"'+(dc!=='支出'?' checked':'')+'><span>'+tr('收入')+'</span></label></div></div>';
     html+='<div>'+lbl('交割方式',true)+selHtml(['现金','微信','支付宝','银行'],settle,'请选择')+'</div>';
-    html+='<div>'+lbl('认领类型',false)+selHtml(['客户','服务商'],claimType,'请选择')+'</div>';
+    if(id==='fin-ar-receipt'){
+        var arReceiptCustList=['上海云图供应链管理有限公司','幻想直客客户','深圳市腾讯','蓝色有限','天地直客','咖美智慧公司','星星玩具电商','梦幻直客客户'];
+        html+='<div>'+lbl('客户',true)+selHtml(arReceiptCustList,g(5),'请选择客户')+'</div>';
+    }else{
+        html+='<div>'+lbl('认领类型',false)+selHtml(['客户','服务商'],claimType,'请选择')+'</div>';
+    }
     html+='<div>'+lbl('凭证金额',true)+'<input type="number" required class="'+inputCls+'" value="'+esc(amount)+'" placeholder="'+esc(tr('请输入凭证金额'))+'"></div>';
     html+='<div>'+lbl('金额大写',false)+'<input type="text" readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" placeholder="'+esc(tr('自动生成'))+'"></div>';
     html+='<div>'+lbl('币别',true)+selHtml(['人民币','美元','欧元'],currency)+'</div>';

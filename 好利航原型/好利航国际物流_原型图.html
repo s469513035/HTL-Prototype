@@ -3408,17 +3408,16 @@ addPrototypeTable('wh-final-alloc','配舱计划','配舱单号|标签编号|提
     c.statusBadgeCols=['配柜状态','配舱状态'];
     c.summaryFooter=['票数','件数','收货实重','收货方数'];
 })();
-addPrototypeTable('wh-sort-bag','分拣装袋管理','袋号|件数|尺寸|重量(KG)|体积(CBM)|目的国家|运输方式|品名大类|目的仓库|最大限重(KG)|装袋时间|装袋操作人|状态|操作',['进行中','已完成','已打印'],[
-    ['BAG-20260613001','12','45×35×30','62.50','0.567','尼日利亚','海运','电子产品','拉各斯仓','80','2026-06-13 14:20','张志伟','已打印'],
-    ['BAG-20260613002','8','40×30×25','48.00','0.240','塞内加尔','海运','服装鞋帽','达喀尔仓','60','2026-06-13 15:05','李慧敏','已完成'],
-    ['BAG-20260613003','15','50×40×35','71.50','1.050','科特迪瓦','海运','五金工具','阿比让仓','80','2026-06-13 16:18','陈志远','已打印'],
-    ['BAG-20260613004','6','35×30×20','35.20','0.126','多哥','海运','家居用品','洛美仓','50','2026-06-13 17:30','王明辉','已完成'],
-    ['BAG-20260613005','10','45×35×30','55.00','0.473','喀麦隆','海运','食品','杜阿拉仓','60','2026-06-14 09:15','张志伟','进行中']
+addPrototypeTable('wh-sort-bag','分拣装袋管理','袋号|件数|尺寸|重量(KG)|体积(CBM)|产品|货物类型|目的仓库|最大限重(KG)|最大尺寸限制|装袋时间|装袋操作人|状态|操作',['进行中','已完成','已打印'],[
+    ['BAG-20260613001','12','45×35×30','62.50','0.567','西非海运专线','敏感货','拉各斯仓','80','120×100×100','2026-06-13 14:20','张志伟','已打印'],
+    ['BAG-20260613002','8','40×30×25','48.00','0.240','西非海运专线','普货','达喀尔仓','60','120×80×80','2026-06-13 15:05','李慧敏','已完成'],
+    ['BAG-20260613003','15','50×40×35','71.50','1.050','西非海运专线','普货','阿比让仓','80','150×120×100','2026-06-13 16:18','陈志远','已打印'],
+    ['BAG-20260613004','6','35×30×20','35.20','0.126','西非海运专线','普货','洛美仓','50','100×80×60','2026-06-13 17:30','王明辉','已完成'],
+    ['BAG-20260613005','10','45×35×30','55.00','0.473','西非空运专线','普货','杜阿拉仓','60','120×100×80','2026-06-14 09:15','张志伟','进行中']
 ],[
     {label:'袋号',type:'text',field:'bagNo'},
-    {label:'目的国家',type:'select',field:'country',options:['尼日利亚','塞内加尔','科特迪瓦','多哥','喀麦隆']},
-    {label:'运输方式',type:'select',field:'transport',options:['海运','空运']},
-    {label:'品名大类',type:'select',field:'category',options:['电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他']},
+    {label:'产品',type:'select',field:'product',options:['西非海运专线','西非空运专线']},
+    {label:'货物类型',type:'select',field:'cargoType',options:['普货','敏感货']},
     {label:'目的仓库',type:'select',field:'warehouse',options:['拉各斯仓','达喀尔仓','阿比让仓','洛美仓','杜阿拉仓']},
     {label:'装袋操作人',type:'text',field:'operator'},
     {label:'状态',type:'select',field:'status',options:['进行中','已完成','已打印']}
@@ -19015,27 +19014,27 @@ function openSortBagDetailModal(id,idx){
     const headers=(TC[id]&&TC[id].h)||[];
     const get=function(name){const i=headers.indexOf(name);return i>=0?(row[i]||''):'';};
     const bagNo=get('袋号');
-    const country=get('目的国家');
-    const transport=get('运输方式');
-    const category=get('品名大类');
+    const product=get('产品');
+    const cargoType=get('货物类型');
+    const maxSize=get('最大尺寸限制');
     const warehouse=get('目的仓库');
-    // mock：根据袋子规则从候选池抽 3-5 条作为该袋的订单明细
-    const candidates=sortBagCandidateOrders().filter(function(o){return o.country===country&&o.transport===transport&&o.category===category&&o.warehouse===warehouse;});
+    // mock：按目的仓库从候选池抽取作为该袋的订单明细
+    const candidates=sortBagCandidateOrders().filter(function(o){return o.warehouse===warehouse;});
     const targetQty=parseInt(get('件数'))||0;
     const items=[];
     let qtyAcc=0;
     for(let i=0;i<candidates.length&&qtyAcc<targetQty;i++){items.push(candidates[i]);qtyAcc+=candidates[i].qty;}
     let h='<div class="mb-3 rounded-xl border border-primary-100 bg-primary-50/60 p-3">';
     h+='<div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">';
-    [['袋号',bagNo],['目的国家',country],['运输方式',transport],['品名大类',category],['目的仓库',warehouse],['总件数',get('件数')],['总重量(KG)',get('重量(KG)')],['总体积(CBM)',get('体积(CBM)')],['装袋操作人',get('装袋操作人')]].forEach(function(p){
+    [['袋号',bagNo],['产品',product],['货物类型',cargoType],['最大尺寸限制',maxSize||'—'],['目的仓库',warehouse],['总件数',get('件数')],['总重量(KG)',get('重量(KG)')],['总体积(CBM)',get('体积(CBM)')],['装袋操作人',get('装袋操作人')]].forEach(function(p){
         h+='<div><span class="text-text-muted">'+tr(p[0])+'：</span><span class="font-medium text-text-primary">'+esc(p[1])+'</span></div>';
     });
     h+='</div></div>';
     h+='<div class="rounded-lg border border-surface-200 overflow-hidden bg-white"><div class="px-3 py-2 bg-surface-50 text-xs font-semibold text-text-secondary">'+tr('订单明细')+'（'+items.length+' '+tr('条')+'）</div>';
     h+='<div class="overflow-auto"><table class="w-full text-xs"><thead class="bg-surface-50 text-text-secondary"><tr>';
-    ['订单号','客户名称','件数','尺寸','重量(KG)','体积(CBM)','目的国家','运输方式','品名大类','目的仓库'].forEach(function(hd){h+='<th class="px-3 py-2 text-left whitespace-nowrap">'+tr(hd)+'</th>';});
+    ['订单号','客户名称','件数','尺寸','重量(KG)','体积(CBM)','货物类型','目的仓库'].forEach(function(hd){h+='<th class="px-3 py-2 text-left whitespace-nowrap">'+tr(hd)+'</th>';});
     h+='</tr></thead><tbody>';
-    if(!items.length){h+='<tr><td colspan="10" class="px-3 py-6 text-center text-text-muted">'+tr('暂无订单明细')+'</td></tr>';}
+    if(!items.length){h+='<tr><td colspan="8" class="px-3 py-6 text-center text-text-muted">'+tr('暂无订单明细')+'</td></tr>';}
     items.forEach(function(o){
         h+='<tr class="border-t border-surface-100">';
         h+='<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(o.wb)+'</td>';
@@ -19044,9 +19043,7 @@ function openSortBagDetailModal(id,idx){
         h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.size)+'</td>';
         h+='<td class="px-3 py-2 text-right text-text-secondary">'+o.weight.toFixed(1)+'</td>';
         h+='<td class="px-3 py-2 text-right text-text-secondary">'+(o.vol||0).toFixed(3)+'</td>';
-        h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.country)+'</td>';
-        h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.transport)+'</td>';
-        h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.category)+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.category==='电子产品'?'敏感货':'普货')+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.warehouse)+'</td>';
         h+='</tr>';
     });
@@ -19061,16 +19058,15 @@ function openSortBagDetailModal(id,idx){
 
 function openSortBagRuleModal(id){
     _sortBagState={id:id,rule:null,bagNo:'',items:[],scanInput:''};
-    const countries=['尼日利亚','塞内加尔','科特迪瓦','多哥','喀麦隆'];
-    const transports=['海运','空运'];
-    const categories=['电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他'];
+    const products=['西非海运专线','西非空运专线'];
+    const cargoTypes=['普货','敏感货'];
     const warehouses=['拉各斯仓','达喀尔仓','阿比让仓','洛美仓','杜阿拉仓'];
     function selOptions(opts){let s='<option value="">'+esc(tr('请选择'))+'</option>';opts.forEach(function(o){s+='<option value="'+esc(o)+'">'+esc(tr(o))+'</option>';});return s;}
     let h='<div class="text-xs text-text-muted mb-3">'+tr('请先设置装袋规则。系统按规则过滤可入袋的订单，并以最大限重作为装满判断。')+'</div>';
     h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
-    h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('目的国家')+' *</label><select id="sb-rule-country" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white">'+selOptions(countries)+'</select></div>';
-    h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('运输方式')+' *</label><select id="sb-rule-transport" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white">'+selOptions(transports)+'</select></div>';
-    h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('品名大类')+' *</label><select id="sb-rule-category" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white">'+selOptions(categories)+'</select></div>';
+    h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('产品')+' *</label><select id="sb-rule-product" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white">'+selOptions(products)+'</select></div>';
+    h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('货物类型')+' *</label><select id="sb-rule-cargotype" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white">'+selOptions(cargoTypes)+'</select></div>';
+    h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('最大尺寸限制')+'</label><input id="sb-rule-maxsize" type="text" placeholder="'+esc(tr('如 120×100×100 cm'))+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div>';
     h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('目的仓库')+' *</label><select id="sb-rule-warehouse" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white">'+selOptions(warehouses)+'</select></div>';
     h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('最大限重(KG)')+' *</label><input id="sb-rule-maxweight" type="number" min="1" value="60" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div>';
     h+='<div class="flex items-end"><label class="inline-flex items-center gap-2 cursor-pointer"><input id="sb-rule-print" type="checkbox" checked class="rounded border-surface-300 text-primary-600"><span class="text-sm text-text-secondary">'+tr('完成装袋后自动打印袋子标签')+'</span></label></div>';
@@ -19084,14 +19080,14 @@ function openSortBagRuleModal(id){
 }
 
 function submitSortBagRule(id){
-    const country=document.getElementById('sb-rule-country').value;
-    const transport=document.getElementById('sb-rule-transport').value;
-    const category=document.getElementById('sb-rule-category').value;
+    const product=document.getElementById('sb-rule-product').value;
+    const cargoType=document.getElementById('sb-rule-cargotype').value;
+    const maxSize=document.getElementById('sb-rule-maxsize').value;
     const warehouse=document.getElementById('sb-rule-warehouse').value;
     const maxWeight=parseFloat(document.getElementById('sb-rule-maxweight').value)||0;
     const printLabel=document.getElementById('sb-rule-print').checked;
-    if(!country||!transport||!category||!warehouse||maxWeight<=0){showToast(tr('请完整填写装袋规则'));return;}
-    _sortBagState={id:id,rule:{country:country,transport:transport,category:category,warehouse:warehouse,maxWeight:maxWeight,printLabel:printLabel},bagNo:nextSortBagNo(),items:[],scanInput:''};
+    if(!product||!cargoType||!warehouse||maxWeight<=0){showToast(tr('请完整填写装袋规则'));return;}
+    _sortBagState={id:id,rule:{product:product,cargoType:cargoType,maxSize:maxSize,warehouse:warehouse,maxWeight:maxWeight,printLabel:printLabel},bagNo:nextSortBagNo(),items:[],scanInput:''};
     renderSortBagScanScreen();
 }
 
@@ -19126,7 +19122,7 @@ function renderSortBagScanScreen(){
     h+='<div class="flex items-center justify-between mb-2"><div class="text-sm font-semibold text-primary-700">'+tr('当前袋')+'：'+esc(st.bagNo)+'</div>';
     h+='<label class="inline-flex items-center gap-2 text-xs cursor-pointer"><input id="sb-print-toggle" type="checkbox"'+(r.printLabel?' checked':'')+' onchange="_sortBagState.rule.printLabel=this.checked" class="rounded border-surface-300 text-primary-600"><span>'+tr('完成时打印袋标签')+'</span></label></div>';
     h+='<div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">';
-    [['目的国家',r.country],['运输方式',r.transport],['品名大类',r.category],['目的仓库',r.warehouse]].forEach(function(p){
+    [['产品',r.product],['货物类型',r.cargoType],['最大尺寸限制',r.maxSize||'—'],['目的仓库',r.warehouse]].forEach(function(p){
         h+='<div><span class="text-text-muted">'+tr(p[0])+'：</span><span class="font-medium text-text-primary">'+esc(p[1])+'</span></div>';
     });
     h+='</div>';

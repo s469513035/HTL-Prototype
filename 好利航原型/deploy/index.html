@@ -16215,7 +16215,6 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('计泡比规则')+'</label>';
     html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(editBubbleRatio)+'" placeholder="1CBM=167KG"></div>';
     html+='<div class="flex items-center gap-2 self-end pb-1"><input type="checkbox" id="prod-active-cb" class="w-4 h-4 rounded border-surface-300 cursor-pointer"'+activeChecked+'><label for="prod-active-cb" class="text-sm font-medium text-text-secondary cursor-pointer">'+tr('启用')+'</label></div>';
-    html+='<div class="md:col-span-4">'+checkedDropdownFieldHtml('使用客户',['全部客户','指定客户','鑫达贸易','远洋物流','速达货运','蓝海跨境','华运达国际'],editCustomers)+'</div>';
     html+='<div class="flex flex-col gap-1.5 md:col-span-4"><label class="text-sm font-medium text-text-secondary">'+tr('产品备注')+'</label>';
     html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+tr('请输入产品备注')+'">'+esc(editRemark)+'</textarea></div>';
     html+='</div></div>';
@@ -16235,6 +16234,7 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     '</div>';
     html+='<div class="border border-surface-200 rounded-xl overflow-hidden"><div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between"><div class="text-sm font-semibold text-text-primary">'+tr('取重规则配置')+'</div><button type="button" onclick="addWeightRule()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增规则')+'</button></div>';
     html+='<div class="p-4 overflow-x-auto"><table class="w-full text-sm border border-surface-200 rounded-lg"><thead><tr class="bg-surface-50">';
+    html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('使用客户')+'</th>';
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('条件表达式')+'</th>';
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('取重表达式')+'</th>';
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('单件最小')+'</th>';
@@ -16242,8 +16242,8 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('取整方式')+'</th>';
     html+='<th class="px-2 py-2 text-center text-xs font-semibold text-text-secondary">'+tr('操作')+'</th>';
     html+='</tr></thead><tbody id="weight-rule-tbody">';
-    html+=weightRuleRowHtml();
-    html+=weightRuleRowHtml('总重量>50','MAX(实重,材积重)','1','2','四舍五入');
+    html+=weightRuleRowHtml((editCustomers||'').split(',')[0]||'全部客户');
+    html+=weightRuleRowHtml('指定客户','总重量>50','MAX(实重,材积重)','1','2','四舍五入');
     html+='</tbody></table></div></div>';
     html+='</div>';
     bodyEl.innerHTML=html;
@@ -16251,13 +16251,15 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     document.getElementById('crud-modal').classList.add('show');
 }
 
-function weightRuleRowHtml(conditionExpr,weightExpr,pieceMin,ticketMin,roundType){
+function weightRuleRowHtml(customer,conditionExpr,weightExpr,pieceMin,ticketMin,roundType){
+    customer=customer||'全部客户';
     conditionExpr=conditionExpr||'总重量>100';
     weightExpr=weightExpr||'MAX(实重,材积重)';
     pieceMin=pieceMin||'0.5';
     ticketMin=ticketMin||'1';
     roundType=roundType||'进一法';
     return '<tr class="hover:bg-surface-50">'+
+        '<td class="px-2 py-1 min-w-[130px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['全部客户','指定客户','鑫达贸易','远洋物流','速达货运','蓝海跨境','华运达国际'],customer)+'</select></td>'+
         '<td class="px-2 py-1 min-w-[170px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(conditionExpr)+'"></td>'+
         '<td class="px-2 py-1 min-w-[180px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(weightExpr)+'"></td>'+
         '<td class="px-2 py-1 min-w-[110px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(pieceMin)+'"></td>'+

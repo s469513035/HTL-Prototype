@@ -13161,7 +13161,7 @@ function generatePdaSortScanScreen(){
         h+='<section class="rounded-xl border '+(isOver?'border-amber-300 bg-amber-50/60':'border-primary-100 bg-primary-50/60')+' p-3 space-y-2">';
         h+='<div class="text-xs font-semibold text-primary-700">'+tr('当前袋')+'：'+esc(_pdaSortScanBagNo)+'</div>';
         h+='<div class="grid grid-cols-2 gap-y-1 text-[11px]">';
-        [['目的国家',rule.country],['运输方式',rule.transport],['品名大类',rule.category],['目的仓库',rule.warehouse]].forEach(function(p){
+        [['产品',rule.product],['货物类型',rule.cargoType],['最大体积(CBM)',rule.maxVol||'—'],['目的仓库',rule.warehouse]].forEach(function(p){
             h+='<div><span class="text-text-muted">'+tr(p[0])+'：</span><span class="font-medium text-text-primary">'+esc(p[1])+'</span></div>';
         });
         h+='</div>';
@@ -13204,9 +13204,8 @@ function generatePdaSortScanScreen(){
 function openPdaSortScanBagModal(){
     const old=document.getElementById('pda-sort-scan-bag-modal');
     if(old)old.remove();
-    const countries=['尼日利亚','塞内加尔','科特迪瓦','多哥','喀麦隆'];
-    const transports=['海运','空运'];
-    const categories=['电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他'];
+    const products=['西非海运专线','西非空运专线'];
+    const cargoTypes=['普货','敏感货'];
     const warehouses=['拉各斯仓','达喀尔仓','阿比让仓','洛美仓','杜阿拉仓'];
     const cur=_pdaSortScanRule||{};
     const selOptions=function(opts,picked){var s='<option value="">'+esc(tr('请选择'))+'</option>';opts.forEach(function(o){s+='<option value="'+esc(o)+'"'+(o===picked?' selected':'')+'>'+esc(tr(o))+'</option>';});return s;};
@@ -13216,11 +13215,11 @@ function openPdaSortScanBagModal(){
     modal.innerHTML='<div class="w-full rounded-2xl bg-white p-4 shadow-xl max-h-[90vh] overflow-y-auto" style="max-width:340px">'
         +'<div class="text-sm font-semibold text-text-primary mb-3">'+tr('新增袋子')+'</div>'
         +'<div class="grid grid-cols-2 gap-2">'
-        +'<div><div class="text-xs text-text-secondary mb-1">'+tr('目的国家')+' *</div><select id="pda-sb-country" class="w-full h-9 px-2 text-xs border border-surface-200 rounded-lg bg-white">'+selOptions(countries,cur.country)+'</select></div>'
-        +'<div><div class="text-xs text-text-secondary mb-1">'+tr('运输方式')+' *</div><select id="pda-sb-transport" class="w-full h-9 px-2 text-xs border border-surface-200 rounded-lg bg-white">'+selOptions(transports,cur.transport)+'</select></div>'
-        +'<div><div class="text-xs text-text-secondary mb-1">'+tr('品名大类')+' *</div><select id="pda-sb-category" class="w-full h-9 px-2 text-xs border border-surface-200 rounded-lg bg-white">'+selOptions(categories,cur.category)+'</select></div>'
+        +'<div><div class="text-xs text-text-secondary mb-1">'+tr('产品')+' *</div><select id="pda-sb-product" class="w-full h-9 px-2 text-xs border border-surface-200 rounded-lg bg-white">'+selOptions(products,cur.product)+'</select></div>'
+        +'<div><div class="text-xs text-text-secondary mb-1">'+tr('货物类型')+' *</div><select id="pda-sb-cargotype" class="w-full h-9 px-2 text-xs border border-surface-200 rounded-lg bg-white">'+selOptions(cargoTypes,cur.cargoType)+'</select></div>'
         +'<div><div class="text-xs text-text-secondary mb-1">'+tr('目的仓库')+'</div><select id="pda-sb-warehouse" class="w-full h-9 px-2 text-xs border border-surface-200 rounded-lg bg-white">'+selOptions(warehouses,cur.warehouse)+'</select></div>'
-        +'<div class="col-span-2"><div class="text-xs text-text-secondary mb-1">'+tr('最大限重(KG)')+'</div><input id="pda-sb-maxweight" type="number" min="0" value="'+(cur.maxWeight||'')+'" placeholder="'+tr('选填')+'" class="w-full h-9 px-3 text-xs border border-surface-200 rounded-lg"></div>'
+        +'<div><div class="text-xs text-text-secondary mb-1">'+tr('最大限重(KG)')+'</div><input id="pda-sb-maxweight" type="number" min="0" value="'+(cur.maxWeight||'')+'" placeholder="'+tr('选填')+'" class="w-full h-9 px-3 text-xs border border-surface-200 rounded-lg"></div>'
+        +'<div class="col-span-2"><div class="text-xs text-text-secondary mb-1">'+tr('最大体积(CBM)')+'</div><input id="pda-sb-maxvol" type="number" min="0" step="0.01" value="'+(cur.maxVol||'')+'" placeholder="'+tr('选填')+'" class="w-full h-9 px-3 text-xs border border-surface-200 rounded-lg"></div>'
         +'</div>'
         +'<div class="grid grid-cols-2 gap-2 mt-4"><button type="button" onclick="closePdaSortScanBagModal()" class="h-10 rounded-lg bg-surface-100 text-text-secondary text-sm">'+tr('取消')+'</button><button type="button" onclick="confirmPdaSortScanBag()" class="h-10 rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('开始装袋')+'</button></div>'
         +'</div>';
@@ -13233,13 +13232,13 @@ function closePdaSortScanBagModal(){
 }
 
 function confirmPdaSortScanBag(){
-    const country=document.getElementById('pda-sb-country').value;
-    const transport=document.getElementById('pda-sb-transport').value;
-    const category=document.getElementById('pda-sb-category').value;
+    const product=document.getElementById('pda-sb-product').value;
+    const cargoType=document.getElementById('pda-sb-cargotype').value;
     const warehouse=document.getElementById('pda-sb-warehouse').value;
     const maxWeight=parseFloat(document.getElementById('pda-sb-maxweight').value)||0;
-    if(!country||!transport||!category){showToast(tr('请完整填写目的国家、运输方式、品名大类'));return;}
-    _pdaSortScanRule={country:country,transport:transport,category:category,warehouse:warehouse,maxWeight:maxWeight};
+    const maxVol=parseFloat(document.getElementById('pda-sb-maxvol').value)||0;
+    if(!product||!cargoType){showToast(tr('请完整填写产品、货物类型'));return;}
+    _pdaSortScanRule={product:product,cargoType:cargoType,warehouse:warehouse,maxWeight:maxWeight,maxVol:maxVol};
     _pdaSortScanBagNo=nextPdaSortScanBagNo();
     _pdaSortScanItems=[];
     closePdaSortScanBagModal();

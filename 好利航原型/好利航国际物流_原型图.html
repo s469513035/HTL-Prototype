@@ -17247,7 +17247,7 @@ function renderLclWeightPriceTable(mode){
         const matrix=getLclHorizontalModel();
         html+='<div class="overflow-auto max-h-[360px]" id="lcl-weight-price-horizontal"><table class="w-max min-w-full text-xs border-collapse">';
         html+='<thead><tr class="bg-[#EFF6FF] text-text-secondary">';
-        ['货物类型','计重类型','计费方式'].forEach(function(hd){html+='<th rowspan="2" class="text-left px-3 py-2 border border-surface-200 min-w-[110px] bg-[#EFF6FF]">'+tr(hd)+'</th>';});
+        ['货物类型','计费方式'].forEach(function(hd){html+='<th rowspan="2" class="text-left px-3 py-2 border border-surface-200 min-w-[110px] bg-[#EFF6FF]">'+tr(hd)+'</th>';});
         html+='<th colspan="'+Math.max(matrix.segments.length,1)+'" class="text-left px-3 py-2 border border-surface-200">'+tr('重量段')+'</th>';
         html+='<th rowspan="2" class="sticky right-0 z-20 text-center px-3 py-2 border border-surface-200 min-w-[96px] bg-[#EFF6FF] shadow-[-6px_0_8px_-8px_rgba(15,23,42,.45)]">'+tr('操作')+'</th></tr>';
         html+='<tr class="bg-[#EFF6FF] text-text-secondary">';
@@ -17260,7 +17260,6 @@ function renderLclWeightPriceTable(mode){
         matrix.groups.forEach(function(group){
             html+='<tr data-horizontal-row data-group-id="'+esc(group.groupId)+'" class="hover:bg-primary-50/30">';
             html+='<td class="border border-surface-200 bg-white"><select data-horizontal-cargo-type class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['普货','敏感货'],group.cargoType||'普货')+'</select></td>';
-            html+='<td class="border border-surface-200 bg-white"><select data-horizontal-weight-type class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['重量','体积'],group.weightType||'重量')+'</select></td>';
             html+='<td class="border border-surface-200 bg-white"><select data-horizontal-billing-mode class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['单价','总价'],group.billingMode||'单价')+'</select></td>';
             matrix.segments.forEach(function(seg){
                 html+='<td class="min-w-[128px] border border-surface-200 bg-white">'+lclExcelInput(group.prices[seg]||'','text-right').replace('data-excel-cell','data-excel-cell data-horizontal-price')+'</td>';
@@ -17271,12 +17270,11 @@ function renderLclWeightPriceTable(mode){
         html+='</tbody></table></div>';
     }else{
         html+='<div class="overflow-auto max-h-[360px]" id="lcl-weight-price-vertical"><table class="w-full min-w-[760px] text-xs border-collapse">';
-        html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary"><th class="text-left px-3 py-2 border border-surface-200 min-w-[120px]">'+tr('货物类型')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('重量段')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[110px]">'+tr('计重类型')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('单价/总价')+'</th><th class="text-left px-3 py-2 border border-surface-200">'+tr('计费方式')+'</th><th class="text-center px-3 py-2 border border-surface-200">'+tr('操作')+'</th></tr></thead><tbody>';
+        html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary"><th class="text-left px-3 py-2 border border-surface-200 min-w-[120px]">'+tr('货物类型')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('重量段')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('单价/总价')+'</th><th class="text-left px-3 py-2 border border-surface-200">'+tr('计费方式')+'</th><th class="text-center px-3 py-2 border border-surface-200">'+tr('操作')+'</th></tr></thead><tbody>';
         rows.forEach(function(row,idx){
             html+='<tr data-group-id="'+esc(row.groupId||nextLclWeightPriceGroupId())+'" class="hover:bg-primary-50/30">';
             html+='<td class="border border-surface-200 bg-white"><select data-field="cargoType" class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['普货','敏感货'],row.cargoType||'普货')+'</select></td>';
             html+='<td class="border border-surface-200 bg-white">'+lclExcelInput(row.weightSeg)+'<input type="hidden" data-field="weightSeg" value="'+esc(row.weightSeg||'')+'"></td>';
-            html+='<td class="border border-surface-200 bg-white"><select data-field="weightType" class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['重量','体积'],row.weightType||'重量')+'</select></td>';
             html+='<td class="border border-surface-200 bg-white">'+lclExcelInput(row.price,'text-right')+'<input type="hidden" data-field="price" value="'+esc(row.price||'')+'"></td>';
             html+='<td class="border border-surface-200 bg-white"><select data-field="billingMode" class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['单价','总价'],row.billingMode||'单价')+'</select></td>';
             html+='<td class="border border-surface-200 text-center bg-white"><button type="button" onclick="removeLclWeightPriceRow('+idx+')" class="text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td></tr>';

@@ -3408,12 +3408,12 @@ addPrototypeTable('wh-final-alloc','配舱计划','配舱单号|标签编号|提
     c.statusBadgeCols=['配柜状态','配舱状态'];
     c.summaryFooter=['票数','件数','收货实重','收货方数'];
 })();
-addPrototypeTable('wh-sort-bag','分拣装袋管理','袋号|件数|尺寸|重量(KG)|体积(CBM)|产品|货物类型|目的仓库|最大限重(KG)|最大尺寸限制|装袋时间|装袋操作人|状态|操作',['进行中','已完成','已打印'],[
-    ['BAG-20260613001','12','45×35×30','62.50','0.567','西非海运专线','敏感货','拉各斯仓','80','120×100×100','2026-06-13 14:20','张志伟','已打印'],
-    ['BAG-20260613002','8','40×30×25','48.00','0.240','西非海运专线','普货','达喀尔仓','60','120×80×80','2026-06-13 15:05','李慧敏','已完成'],
-    ['BAG-20260613003','15','50×40×35','71.50','1.050','西非海运专线','普货','阿比让仓','80','150×120×100','2026-06-13 16:18','陈志远','已打印'],
-    ['BAG-20260613004','6','35×30×20','35.20','0.126','西非海运专线','普货','洛美仓','50','100×80×60','2026-06-13 17:30','王明辉','已完成'],
-    ['BAG-20260613005','10','45×35×30','55.00','0.473','西非空运专线','普货','杜阿拉仓','60','120×100×80','2026-06-14 09:15','张志伟','进行中']
+addPrototypeTable('wh-sort-bag','分拣装袋管理','袋号|件数|尺寸|重量(KG)|体积(CBM)|产品|货物类型|目的仓库|最大限重(KG)|最大体积限制|装袋时间|装袋操作人|状态|操作',['进行中','已完成','已打印'],[
+    ['BAG-20260613001','12','45×35×30','62.50','0.567','西非海运专线','敏感货','拉各斯仓','80','1.00','2026-06-13 14:20','张志伟','已打印'],
+    ['BAG-20260613002','8','40×30×25','48.00','0.240','西非海运专线','普货','达喀尔仓','60','0.80','2026-06-13 15:05','李慧敏','已完成'],
+    ['BAG-20260613003','15','50×40×35','71.50','1.050','西非海运专线','普货','阿比让仓','80','1.50','2026-06-13 16:18','陈志远','已打印'],
+    ['BAG-20260613004','6','35×30×20','35.20','0.126','西非海运专线','普货','洛美仓','50','0.50','2026-06-13 17:30','王明辉','已完成'],
+    ['BAG-20260613005','10','45×35×30','55.00','0.473','西非空运专线','普货','杜阿拉仓','60','1.20','2026-06-14 09:15','张志伟','进行中']
 ],[
     {label:'袋号',type:'text',field:'bagNo'},
     {label:'产品',type:'select',field:'product',options:['西非海运专线','西非空运专线']},
@@ -19016,7 +19016,7 @@ function openSortBagDetailModal(id,idx){
     const bagNo=get('袋号');
     const product=get('产品');
     const cargoType=get('货物类型');
-    const maxSize=get('最大尺寸限制');
+    const maxSize=get('最大体积限制');
     const warehouse=get('目的仓库');
     // mock：按目的仓库从候选池抽取作为该袋的订单明细
     const candidates=sortBagCandidateOrders().filter(function(o){return o.warehouse===warehouse;});
@@ -19026,7 +19026,7 @@ function openSortBagDetailModal(id,idx){
     for(let i=0;i<candidates.length&&qtyAcc<targetQty;i++){items.push(candidates[i]);qtyAcc+=candidates[i].qty;}
     let h='<div class="mb-3 rounded-xl border border-primary-100 bg-primary-50/60 p-3">';
     h+='<div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">';
-    [['袋号',bagNo],['产品',product],['货物类型',cargoType],['最大尺寸限制',maxSize||'—'],['目的仓库',warehouse],['总件数',get('件数')],['总重量(KG)',get('重量(KG)')],['总体积(CBM)',get('体积(CBM)')],['装袋操作人',get('装袋操作人')]].forEach(function(p){
+    [['袋号',bagNo],['产品',product],['货物类型',cargoType],['最大体积限制(CBM)',maxSize||'—'],['目的仓库',warehouse],['总件数',get('件数')],['总重量(KG)',get('重量(KG)')],['总体积(CBM)',get('体积(CBM)')],['装袋操作人',get('装袋操作人')]].forEach(function(p){
         h+='<div><span class="text-text-muted">'+tr(p[0])+'：</span><span class="font-medium text-text-primary">'+esc(p[1])+'</span></div>';
     });
     h+='</div></div>';
@@ -19066,7 +19066,7 @@ function openSortBagRuleModal(id){
     h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
     h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('产品')+' *</label><select id="sb-rule-product" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white">'+selOptions(products)+'</select></div>';
     h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('货物类型')+' *</label><select id="sb-rule-cargotype" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white">'+selOptions(cargoTypes)+'</select></div>';
-    h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('最大尺寸限制')+'</label><input id="sb-rule-maxsize" type="text" placeholder="'+esc(tr('如 120×100×100 cm'))+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div>';
+    h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('最大体积限制(CBM)')+'</label><input id="sb-rule-maxsize" type="number" step="0.01" min="0" placeholder="'+esc(tr('如 1.50'))+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div>';
     h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('目的仓库')+' *</label><select id="sb-rule-warehouse" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white">'+selOptions(warehouses)+'</select></div>';
     h+='<div><label class="block text-sm font-medium text-text-secondary mb-1.5">'+tr('最大限重(KG)')+' *</label><input id="sb-rule-maxweight" type="number" min="1" value="60" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div>';
     h+='<div class="flex items-end"><label class="inline-flex items-center gap-2 cursor-pointer"><input id="sb-rule-print" type="checkbox" checked class="rounded border-surface-300 text-primary-600"><span class="text-sm text-text-secondary">'+tr('完成装袋后自动打印袋子标签')+'</span></label></div>';
@@ -19122,7 +19122,7 @@ function renderSortBagScanScreen(){
     h+='<div class="flex items-center justify-between mb-2"><div class="text-sm font-semibold text-primary-700">'+tr('当前袋')+'：'+esc(st.bagNo)+'</div>';
     h+='<label class="inline-flex items-center gap-2 text-xs cursor-pointer"><input id="sb-print-toggle" type="checkbox"'+(r.printLabel?' checked':'')+' onchange="_sortBagState.rule.printLabel=this.checked" class="rounded border-surface-300 text-primary-600"><span>'+tr('完成时打印袋标签')+'</span></label></div>';
     h+='<div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">';
-    [['产品',r.product],['货物类型',r.cargoType],['最大尺寸限制',r.maxSize||'—'],['目的仓库',r.warehouse]].forEach(function(p){
+    [['产品',r.product],['货物类型',r.cargoType],['最大体积限制(CBM)',r.maxSize||'—'],['目的仓库',r.warehouse]].forEach(function(p){
         h+='<div><span class="text-text-muted">'+tr(p[0])+'：</span><span class="font-medium text-text-primary">'+esc(p[1])+'</span></div>';
     });
     h+='</div>';

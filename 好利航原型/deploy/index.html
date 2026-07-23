@@ -3815,6 +3815,7 @@ TC['fcl-trial-calc-biz'].q=[];
 TC['fcl-trial-calc-biz'].pageMode='fclTrialCalc';
 TC['pda-app']={t:'仓库PDA',pageMode:'warehousePda',h:[],q:[],s:[],d:[]};
 TC['wb-manage'].forceLocalHeader=true;
+TC['wb-manage'].readonlyList=true;
 TC['prod-manage'].forceLocalHeader=true;
 TC['prod-surcharge'].forceLocalHeader=true;
 TC['prod-price-lcl'].forceLocalHeader=true;
@@ -8912,6 +8913,8 @@ function renderToolbarAction(action,id){
     else if(action.key==='genBill'&&id==='fin-fee-mgmt')click='openFeeMgmtGenBillModal(\''+id+'\')';
     else if(action.key==='trackMapping')click='showToast(\''+esc(tr('轨迹映射配置'))+'\')';
     else if(action.key==='subOrderInfo')click='openSubOrderInfoModal(\''+id+'\')';
+    else if(action.key==='viewWaybillDetail')click='openSelectedWaybillDetail(\''+id+'\')';
+    else if(action.key==='cancelWaybill')click='cancelSelectedWaybill(\''+id+'\')';
     else if(action.key==='voucherDetail')click='bankVoucherAction(\'detail\',\''+id+'\')';
     else if(action.key==='voucherClaim')click='bankVoucherAction(\'claim\',\''+id+'\')';
     else if(action.key==='voucherUnclaim')click='bankVoucherAction(\'unclaim\',\''+id+'\')';
@@ -8980,6 +8983,18 @@ function openWaybillModifyModal(field,id){
     bodyEl.innerHTML=html;
     footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="closeCrudModal();showToast(\''+tr('修改成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认修改')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
+}
+
+function openSelectedWaybillDetail(id){
+    var idx=getSelectedRowIndex();
+    if(idx<0){openActionModal('selectRequired',id,-1);return;}
+    openWaybillDetail(id,idx);
+}
+
+function cancelSelectedWaybill(id){
+    var idx=getSelectedRowIndex();
+    if(idx<0){openActionModal('selectRequired',id,-1);return;}
+    openSimpleCancelConfirm(id,idx);
 }
 
 function openSubOrderInfoModal(id){
@@ -9135,6 +9150,7 @@ function getToolbarActions(id){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
             {key:'addWaybill',label:'新增数据',variant:'primary'},
+            {key:'viewWaybillDetail',label:'查看详情',variant:'primary'},
             {key:'businessConfirm',label:'业务确认',variant:'primary'},
             {key:'declareOps',label:'报关操作',dropdown:[
                 {label:'合并报关',onclick:"tbDropdownAction('mergeDeclare','wb-manage')"},
@@ -9157,6 +9173,7 @@ function getToolbarActions(id){
             {key:'specialPrice',label:'特价申请'},
             {key:'sendInstruction',label:'发送指令'},
             {key:'manualFreight',label:'手改运费'},
+            {key:'cancelWaybill',label:'去掉订单',variant:'danger'},
             {key:'export',label:'导出数据'}
         ];
     }

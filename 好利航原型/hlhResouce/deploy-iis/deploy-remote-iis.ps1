@@ -99,6 +99,25 @@ if ($Password) {
     $cred = Get-Credential -UserName $Username -Message "远程服务器 $RemoteHost 凭据"
 }
 
+# ---- 3.5 本机 WinRM 客户端前置（需管理员；HTTP + 非域/IP 直连要 TrustedHosts）----
+if (-not $UseSSL) {
+    try {
+        $winrm = Get-Service WinRM -ErrorAction Stop
+        if ($winrm.Status -ne 'Running') { Log '启动本机 WinRM 客户端服务…' Yellow; Start-Service WinRM -ErrorAction Stop }
+        $th = (Get-Item WSMan:\localhost\Client\TrustedHosts -ErrorAction SilentlyContinue).Value
+        if ($th -ne '*' -and ($th -notmatch [regex]::Escape($RemoteHost))) {
+            Log "把 $RemoteHost 加入本机 TrustedHosts…" Yellow
+            Set-Item WSMan:\localhost\Client\TrustedHosts -Value $RemoteHost -Concatenate -Force -ErrorAction Stop
+        }
+    } catch {
+        Log "本机 WinRM 客户端前置未就绪：$($_.Exception.Message)" Red
+        Write-Host "  需以【管理员】运行本脚本；或先在管理员 PowerShell 手动执行一次：" -ForegroundColor Yellow
+        Write-Host "    Start-Service WinRM" -ForegroundColor White
+        Write-Host "    Set-Item WSMan:\localhost\Client\TrustedHosts -Value '$RemoteHost' -Concatenate -Force" -ForegroundColor White
+        throw
+    }
+}
+
 # ---- 4. 连接 WinRM ----
 Step ("连接远程 {0}（WinRM/{1}）" -f $RemoteHost, $(if($UseSSL){'HTTPS'}else{'HTTP'}))
 $sp = @{ ComputerName = $RemoteHost; Credential = $cred; ErrorAction = 'Stop' }

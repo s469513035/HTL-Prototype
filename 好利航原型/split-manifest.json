@@ -1,0 +1,453 @@
+{
+  "backup": "好利航国际物流_原型图.backup-split.html",
+  "shell": "好利航国际物流_原型图.html",
+  "headLen": 1248,
+  "linkLen": 48,
+  "staticLen": 33404,
+  "tagsLen": 1935,
+  "tailLen": 18,
+  "scriptStart": 426,
+  "scriptEnd": 22693,
+  "wrappers": {
+    "styleOpen": "ICAgIDxzdHlsZT4NCg==",
+    "styleClose": "ICAgIDwvc3R5bGU+DQo=",
+    "scriptOpen": "PHNjcmlwdD4NCg==",
+    "scriptClose": "PC9zY3JpcHQ+DQo="
+  },
+  "css": "css/app.css",
+  "files": [
+    {
+      "name": "00-config-roles.js",
+      "loadIndex": 0,
+      "ranges": [
+        [
+          426,
+          479
+        ]
+      ],
+      "bytes": 2955
+    },
+    {
+      "name": "01-i18n-dict.js",
+      "loadIndex": 1,
+      "ranges": [
+        [
+          480,
+          1827
+        ]
+      ],
+      "bytes": 207806
+    },
+    {
+      "name": "02-i18n-helpers.js",
+      "loadIndex": 2,
+      "ranges": [
+        [
+          1828,
+          1924
+        ]
+      ],
+      "bytes": 3763
+    },
+    {
+      "name": "03-menu-data.js",
+      "loadIndex": 3,
+      "ranges": [
+        [
+          1925,
+          2053
+        ]
+      ],
+      "bytes": 12227
+    },
+    {
+      "name": "04-table-catalog.js",
+      "loadIndex": 4,
+      "ranges": [
+        [
+          2054,
+          3039
+        ]
+      ],
+      "bytes": 156094
+    },
+    {
+      "name": "04a-warehouse-name-options.js",
+      "loadIndex": 5,
+      "ranges": [
+        [
+          16482,
+          16491
+        ]
+      ],
+      "bytes": 312
+    },
+    {
+      "name": "05-tables-build.js",
+      "loadIndex": 6,
+      "ranges": [
+        [
+          3040,
+          3954
+        ]
+      ],
+      "bytes": 86252
+    },
+    {
+      "name": "06-standard-sheet-engine.js",
+      "loadIndex": 7,
+      "ranges": [
+        [
+          3955,
+          4034
+        ]
+      ],
+      "bytes": 6631
+    },
+    {
+      "name": "07-base-config-catalog.js",
+      "loadIndex": 8,
+      "ranges": [
+        [
+          4035,
+          7124
+        ]
+      ],
+      "bytes": 76538
+    },
+    {
+      "name": "08-runtime-consts.js",
+      "loadIndex": 9,
+      "ranges": [
+        [
+          7125,
+          7965
+        ]
+      ],
+      "bytes": 25455
+    },
+    {
+      "name": "09-list-engine-core.js",
+      "loadIndex": 10,
+      "ranges": [
+        [
+          7966,
+          9521
+        ]
+      ],
+      "bytes": 84674
+    },
+    {
+      "name": "10-express-sort.js",
+      "loadIndex": 11,
+      "ranges": [
+        [
+          9522,
+          9933
+        ]
+      ],
+      "bytes": 28108
+    },
+    {
+      "name": "11-config-track-a.js",
+      "loadIndex": 12,
+      "ranges": [
+        [
+          9934,
+          10081
+        ]
+      ],
+      "bytes": 12782
+    },
+    {
+      "name": "12-ar-detail.js",
+      "loadIndex": 13,
+      "ranges": [
+        [
+          10082,
+          10376
+        ]
+      ],
+      "bytes": 27385
+    },
+    {
+      "name": "13-dashboard.js",
+      "loadIndex": 14,
+      "ranges": [
+        [
+          10377,
+          10493
+        ]
+      ],
+      "bytes": 8906
+    },
+    {
+      "name": "14-receipt-writeoff.js",
+      "loadIndex": 15,
+      "ranges": [
+        [
+          10494,
+          10698
+        ]
+      ],
+      "bytes": 18571
+    },
+    {
+      "name": "15-tab-dispatch-shipment.js",
+      "loadIndex": 16,
+      "ranges": [
+        [
+          10699,
+          11062
+        ]
+      ],
+      "bytes": 28752
+    },
+    {
+      "name": "16-claim-a-inbound-a.js",
+      "loadIndex": 17,
+      "ranges": [
+        [
+          11063,
+          11326
+        ]
+      ],
+      "bytes": 18728
+    },
+    {
+      "name": "17-warehouse-pda.js",
+      "loadIndex": 18,
+      "ranges": [
+        [
+          11327,
+          13963
+        ]
+      ],
+      "bytes": 174652
+    },
+    {
+      "name": "18-inbound-b-claim-b.js",
+      "loadIndex": 19,
+      "ranges": [
+        [
+          13964,
+          14563
+        ]
+      ],
+      "bytes": 42762
+    },
+    {
+      "name": "19-config-modals-b.js",
+      "loadIndex": 20,
+      "ranges": [
+        [
+          14564,
+          14715
+        ]
+      ],
+      "bytes": 12568
+    },
+    {
+      "name": "20-generate-list-crud.js",
+      "loadIndex": 21,
+      "ranges": [
+        [
+          14716,
+          15282
+        ]
+      ],
+      "bytes": 45405
+    },
+    {
+      "name": "21-config-c-bankvoucher.js",
+      "loadIndex": 22,
+      "ranges": [
+        [
+          15283,
+          15756
+        ]
+      ],
+      "bytes": 49006
+    },
+    {
+      "name": "22-config-d-final-alloc.js",
+      "loadIndex": 23,
+      "ranges": [
+        [
+          15757,
+          16121
+        ]
+      ],
+      "bytes": 27631
+    },
+    {
+      "name": "23-config-e-selectopts.js",
+      "loadIndex": 24,
+      "ranges": [
+        [
+          16122,
+          16481
+        ],
+        [
+          16492,
+          16544
+        ]
+      ],
+      "bytes": 37339
+    },
+    {
+      "name": "24-crm.js",
+      "loadIndex": 25,
+      "ranges": [
+        [
+          16545,
+          17130
+        ]
+      ],
+      "bytes": 50312
+    },
+    {
+      "name": "25-lcl-surcharge-perm.js",
+      "loadIndex": 26,
+      "ranges": [
+        [
+          17131,
+          17757
+        ]
+      ],
+      "bytes": 51039
+    },
+    {
+      "name": "26-waybill-b-fee.js",
+      "loadIndex": 27,
+      "ranges": [
+        [
+          17758,
+          18359
+        ]
+      ],
+      "bytes": 41115
+    },
+    {
+      "name": "27-outbound-fcl-a.js",
+      "loadIndex": 28,
+      "ranges": [
+        [
+          18360,
+          18645
+        ]
+      ],
+      "bytes": 23741
+    },
+    {
+      "name": "28-cs-issue-config-track-b.js",
+      "loadIndex": 29,
+      "ranges": [
+        [
+          18646,
+          19142
+        ]
+      ],
+      "bytes": 35423
+    },
+    {
+      "name": "29-sortbag-config-f.js",
+      "loadIndex": 30,
+      "ranges": [
+        [
+          19143,
+          19449
+        ]
+      ],
+      "bytes": 25714
+    },
+    {
+      "name": "30-waybill-c-claim-c.js",
+      "loadIndex": 31,
+      "ranges": [
+        [
+          19450,
+          19708
+        ]
+      ],
+      "bytes": 21926
+    },
+    {
+      "name": "31-transfer-stowage-bl.js",
+      "loadIndex": 32,
+      "ranges": [
+        [
+          19709,
+          19992
+        ]
+      ],
+      "bytes": 22733
+    },
+    {
+      "name": "32-fcl-b.js",
+      "loadIndex": 33,
+      "ranges": [
+        [
+          19993,
+          20479
+        ]
+      ],
+      "bytes": 37385
+    },
+    {
+      "name": "33-action-modal-appshell.js",
+      "loadIndex": 34,
+      "ranges": [
+        [
+          20480,
+          21663
+        ]
+      ],
+      "bytes": 89406
+    },
+    {
+      "name": "34-reqdoc-generators.js",
+      "loadIndex": 35,
+      "ranges": [
+        [
+          21664,
+          22298
+        ]
+      ],
+      "bytes": 58436
+    },
+    {
+      "name": "35-i18n-switch.js",
+      "loadIndex": 36,
+      "ranges": [
+        [
+          22299,
+          22483
+        ]
+      ],
+      "bytes": 11722
+    },
+    {
+      "name": "36-init-misc.js",
+      "loadIndex": 37,
+      "ranges": [
+        [
+          22484,
+          22591
+        ]
+      ],
+      "bytes": 4023
+    },
+    {
+      "name": "99-boot.js",
+      "loadIndex": 38,
+      "ranges": [
+        [
+          22592,
+          22693
+        ]
+      ],
+      "bytes": 6515
+    }
+  ]
+}

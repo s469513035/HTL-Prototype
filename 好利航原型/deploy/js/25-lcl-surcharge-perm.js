@@ -1,0 +1,627 @@
+function openCrmCustomerModal(mode,id,rowIdx,rowData){
+    const c=TC[id];
+    const L=_lang[_currentLang];
+    const readonly=mode==='view';
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const modeLabel=mode==='view'?L.view:mode==='add'?L.add:L.edit;
+    titleEl.textContent=modeLabel+tr(c.t);
+    const codeIdx=(c.h||[]).indexOf('客户代码');
+    const rawData=TC[id].d||[];
+    const lastCode=(rawData[rawData.length-1]&&rawData[rawData.length-1][codeIdx])||'C10000';
+    const lm=String(lastCode).match(/^(.*?)(\d+)$/);
+    const autoCode=lm?lm[1]+String(parseInt(lm[2],10)+1).padStart(lm[2].length,'0'):'C10001';
+    const customerCode=mode==='add'?autoCode:getTableValueByHeader(c,rowData,'客户代码','');
+    const shortName=getTableValueByHeader(c,rowData,'客户简称','');
+    const fullName=getTableValueByHeader(c,rowData,'客户全称','');
+    const bizType=getTableValueByHeader(c,rowData,'业务类型','');
+    const country=getTableValueByHeader(c,rowData,'所属国家','CN 中国');
+    const pickupWarehouse=getTableValueByHeader(c,rowData,'海外提货偏好仓库','');
+    const riskControl=getTableValueByHeader(c,rowData,'风险把控','');
+    const warehouseOptions=getWarehouseNameOptions();
+    String(pickupWarehouse||'').split(',').forEach(function(name){name=name.trim();if(name&&!warehouseOptions.includes(name))warehouseOptions.push(name);});
+    const legalIdCard=getTableValueByHeader(c,rowData,'法人身份证','');
+    const regCapital=getTableValueByHeader(c,rowData,'注册资本','');
+    const contactPhone=getTableValueByHeader(c,rowData,'联系电话','');
+    const hasContract=getTableValueByHeader(c,rowData,'是否签订合同','');
+    const legalName=getTableValueByHeader(c,rowData,'法人姓名','');
+    const licenseRegDate=getTableValueByHeader(c,rowData,'营业执照注册时间','');
+    const bankAccountName=getTableValueByHeader(c,rowData,'开户名','');
+    const bankName=getTableValueByHeader(c,rowData,'开户行','');
+    const bankAccount=getTableValueByHeader(c,rowData,'银行账号','');
+    const salesPerson=getTableValueByHeader(c,rowData,'所属业务员','');
+    const settlementPerson=getTableValueByHeader(c,rowData,'所属操作','');
+    const csrPerson=getTableValueByHeader(c,rowData,'所属客服','');
+    const senderContact=getTableValueByHeader(c,rowData,'发件人','');
+    const senderCompany=getTableValueByHeader(c,rowData,'发件人公司','');
+    const senderPhone=getTableValueByHeader(c,rowData,'发件人电话','');
+    const senderAddress=getTableValueByHeader(c,rowData,'发件人地址','');
+    let html='<div class="space-y-5">';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('客户基本信息')+'</div><div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
+    html+=crmInputFieldHtml('客户代码',customerCode,'text',true);
+    html+=crmInputFieldHtml('客户简称',shortName,'text',readonly);
+    html+=crmInputFieldHtml('客户全称',fullName,'text',readonly);
+    html+=crmSelectFieldHtml('业务类型',['散货','整柜'],bizType,readonly);
+    html+=crmSelectFieldHtml('所属国家',COUNTRY_CODE_NAME_OPTIONS,country,readonly);
+    html+=readonly?crmWarehouseDisplayHtml('海外提货偏好仓库',warehouseOptions,pickupWarehouse):checkedDropdownFieldHtml('海外提货偏好仓库',warehouseOptions,pickupWarehouse);
+    html+=crmSelectFieldHtml('启用状态',['启用','禁用'],getTableValueByHeader(c,rowData,'启用状态','启用'),readonly);
+    html+=crmSelectFieldHtml('客户等级',['A类','B类','C类','D类'],getTableValueByHeader(c,rowData,'客户等级',''),readonly);
+    html+=crmInputFieldHtml('联系人',getTableValueByHeader(c,rowData,'联系人',''),'text',readonly);
+    html+=crmInputFieldHtml('联系电话',contactPhone,'tel',readonly);
+    html+=crmInputFieldHtml('客户邮箱',getTableValueByHeader(c,rowData,'客户邮箱',''),'email',readonly);
+    html+=crmSelectFieldHtml('客户类型',['直客','同行','平台','代理'],getTableValueByHeader(c,rowData,'客户类型',''),readonly);
+    html+=crmSelectFieldHtml('所属业务员',getEmployeeNameOptions(),salesPerson,readonly);
+    html+=crmSelectFieldHtml('所属操作',getEmployeeNameOptions(),settlementPerson,readonly);
+    html+=crmSelectFieldHtml('所属客服',getEmployeeNameOptions(),csrPerson,readonly);
+    html+='</div></div>';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('发件人信息')+'</div><div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
+    if(readonly){
+        html+=crmInputFieldHtml('发件人',senderContact,'text',true);
+        html+=crmInputFieldHtml('发件人公司',senderCompany,'text',true);
+        html+=crmInputFieldHtml('发件人电话',senderPhone,'tel',true);
+        html+='<div class="md:col-span-1 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发件人地址')+'</label><input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+esc(senderAddress||'')+'" readonly disabled></div>';
+    }else{
+        html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发件人')+'</label><input type="text" list="shipment-sender-options" oninput="fillShipmentSenderInfo(this)" onchange="fillShipmentSenderInfo(this)" value="'+esc(senderContact||'')+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+tr('输入联系人模糊匹配，选中自动带出')+'"></div>';
+        html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发件人公司')+'</label><input type="text" id="shipment-sender-company" value="'+esc(senderCompany||'')+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+tr('选中发件人后自动填充')+'"></div>';
+        html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发件人电话')+'</label><input type="tel" id="shipment-sender-phone" value="'+esc(senderPhone||'')+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+tr('选中发件人后自动填充')+'"></div>';
+        html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发件人地址')+'</label><input type="text" id="shipment-sender-address" value="'+esc(senderAddress||'')+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+tr('选中发件人后自动填充')+'"></div>';
+        html+=shipmentSenderDatalistHtml();
+    }
+    html+='</div></div>';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('企业资质信息')+'</div>'+
+        '<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">'+
+            crmLeadingStarFieldHtml('是否签订合同','select',hasContract,readonly,true,{options:['是','否'],placeholder:'请选择'})+
+            crmLeadingStarFieldHtml('法人姓名','text',legalName,readonly,true)+
+            crmLeadingStarFieldHtml('法人身份证','text',legalIdCard,readonly,false)+
+            crmLeadingStarFieldHtml('注册资本','text',regCapital,readonly,false)+
+            crmLeadingStarFieldHtml('营业执照注册时间','date',licenseRegDate,readonly,true,{placeholder:'请选择营业执照注册时间'})+
+            crmLeadingStarFieldHtml('开户名','text',bankAccountName,readonly,false)+
+            crmLeadingStarFieldHtml('开户行','text',bankName,readonly,false)+
+            crmLeadingStarFieldHtml('银行账号','text',bankAccount,readonly,false)+
+        '</div>'+
+    '</div>';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附件信息')+'</div>'+
+        '<div class="grid grid-cols-2 md:grid-cols-4 gap-4">'+
+            crmAttachmentSlot('license','营业执照','大小不能超过5M，支持 jpg、png 格式','image/jpeg,image/png',readonly)+
+            crmAttachmentSlot('idcard','身份证正反面','大小不能超过5M，支持 jpg、png、bmp 格式','image/jpeg,image/png,image/bmp',readonly)+
+            crmAttachmentSlot('contract','签约合同','大小不能超过5M，支持 jpg、png、xlsx、xls、pdf 格式','image/jpeg,image/png,.xlsx,.xls,.pdf',readonly)+
+            crmAttachmentSlot('other','其他附件','大小不能超过5M，支持 jpg、png、bmp、xlsx、xls、pdf 格式','image/jpeg,image/png,image/bmp,.xlsx,.xls,.pdf',readonly)+
+        '</div>'+
+    '</div>';
+    bodyEl.innerHTML=html;
+    if(readonly){
+        footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button>';
+    }else{
+        footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+(mode==='add'?tr('新增成功'):tr('保存成功'))+'\')" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 cursor-pointer">'+tr('确认提交')+'</button>';
+    }
+    document.getElementById('crud-modal').classList.add('show');
+    setTimeout(function(){applyRuntimeEnhancements(bodyEl);},0);
+}
+
+function openLclQuoteModal(mode,id,rowIdx,rowData){
+    const c=TC[id];
+    const L=_lang[_currentLang];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const modeLabel=mode==='view'?L.view:mode==='add'?L.add:mode==='copy'?tr('复制新增'):L.edit;
+    titleEl.textContent=modeLabel+tr(c.t);
+    const isView=mode==='view';
+    const data=_listData[id]||expandData(id);
+    const lastCode=data.length&&data[data.length-1][0]?data[data.length-1][0]:'QP000';
+    const lm=lastCode.match(/^(.*?)(\d+)$/);
+    const autoCode=lm?lm[1]+String(parseInt(lm[2])+1).padStart(lm[2].length,'0'):'QP001';
+    const quoteCode=mode==='add'?autoCode:mode==='copy'?'':(rowData?rowData[0]:'');
+    const quoteName=rowData?rowData[1]:'西非散货标准报价';
+    const products=rowData?rowData[2]:'西非海运专线,西非空运专线';
+    const startDate=rowData?rowData[3]:'2026-01-01';
+    const endDate=rowData?rowData[4]:'2026-12-31';
+    const branches=rowData?rowData[5]:'深圳盐田仓,广州南沙仓';
+    const customer=rowData?rowData[6]:'全部客户';
+    const ports=rowData?rowData[7]:'达喀尔海外仓,拉各斯海外仓';
+    const status=rowData?rowData[8]:'待生效';
+    const warehouseOptions=getWarehouseNameOptions();
+    const destWarehouseOptions=['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓'];
+    const roCls=isView?' readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed"':'';
+    const roSelectCls=isView?' disabled':'';
+    let html='<div class="space-y-5">';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('报价基本信息')+'</div>';
+    html+='<div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('报价编号')+'</label>'+(mode==='copy'?'<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(quoteCode)+'" placeholder="'+tr('自动生成')+'">':'<input type="text" readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+esc(quoteCode)+'">')+'</div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('报价名称')+'</label><input type="text" '+(isView?roCls:'class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"')+' value="'+esc(quoteName)+'"></div>';
+    if(isView){
+        html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('销售产品')+'</label><input type="text"'+roCls+' value="'+esc(products)+'"></div>';
+        html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发货仓库')+'</label><input type="text"'+roCls+' value="'+esc(branches)+'"></div>';
+        html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('目的仓库')+'</label><input type="text"'+roCls+' value="'+esc(ports)+'"></div>';
+    }else{
+        html+=checkedDropdownFieldHtml('销售产品',['西非海运专线','西非空运专线','中东海运专线','欧洲铁路专线'],products);
+        html+=checkedDropdownFieldHtml('发货仓库',warehouseOptions,branches);
+        html+=checkedDropdownFieldHtml('目的仓库',destWarehouseOptions,ports);
+    }
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('报价开始时间')+'</label><input type="date" '+(isView?roCls:'class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"')+' value="'+esc(startDate)+'"></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('报价结束时间')+'</label><input type="date" '+(isView?roCls:'class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"')+' value="'+esc(endDate)+'"></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('使用客户')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['全部客户','指定客户','鑫达贸易','远洋物流','速达货运'],customer)+'</select></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('状态')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['已生效','待生效','已失效'],status)+'</select></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('所属币别')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['CNY','USD','EUR','GBP'],'USD')+'</select></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('计重类型')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['重量','体积'],'重量')+'</select></div>';
+    html+='<div class="md:col-span-4 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y"'+(isView?' readonly':'')+'>'+tr('按客户、产品、发货仓库和目的仓库维护散货报价。')+'</textarea></div>';
+    html+='</div></div>';
+    html+='<div class="border border-surface-200 rounded-xl overflow-hidden"><div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3"><div class="text-sm font-semibold text-text-primary">'+tr('价格维护')+'</div>'+(isView?'':'<div class="flex items-center gap-2"><button type="button" onclick="addLclWeightPriceRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button><button type="button" onclick="switchLclWeightPriceMode(\'horizontal\')" class="h-8 px-3 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('横向')+'</button><button type="button" onclick="switchLclWeightPriceMode(\'vertical\')" class="h-8 px-3 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('纵向')+'</button></div>')+'</div>';
+    html+='<div id="lcl-weight-price-wrap">'+renderLclWeightPriceTable(_lclWeightPriceMode)+'</div></div>';
+    html+='</div>';
+    bodyEl.innerHTML=html;
+    if(isView){
+        footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
+    }else{
+        footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr('保存成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存报价')+'</button>';
+    }
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function lclExcelInput(value,extraClass){
+    return '<input data-excel-cell onpaste="handleLclExcelPaste(event,this)" class="w-full h-9 px-2 text-xs border-0 outline-none bg-transparent focus:bg-primary-50 '+(extraClass||'')+'" value="'+esc(value||'')+'">';
+}
+
+function defaultLclWeightPriceRow(base){
+    base=base||{};
+    return {groupId:base.groupId||nextLclWeightPriceGroupId(),weightSeg:base.weightSeg||'',price:base.price||'',cargoType:base.cargoType||'普货',weightType:base.weightType||'重量',billingMode:base.billingMode||'单价'};
+}
+
+function nextLclWeightPriceGroupId(){
+    let max=0;
+    (_lclWeightPriceRows||[]).forEach(function(row){
+        const m=String((row&&row.groupId)||'').match(/lcl-g-(\d+)/);
+        if(m)max=Math.max(max,parseInt(m[1],10)||0);
+    });
+    return 'lcl-g-'+(max+1);
+}
+
+function getLclHorizontalModel(){
+    const source=_lclWeightPriceRows.length?_lclWeightPriceRows:[defaultLclWeightPriceRow({groupId:'lcl-g-1',weightSeg:'0-1',price:'1'})];
+    const segments=[];
+    const groups=[];
+    const groupMap={};
+    source.forEach(function(row,idx){
+        const seg=row.weightSeg||'';
+        if(!segments.includes(seg))segments.push(seg);
+        const key=row.groupId||('auto-'+(row.cargoType||'普货')+'-'+(row.currency||'USD')+'-'+(row.billingMode||'单价')+'-'+(row.billingUnit||'KGS'));
+        if(!groupMap[key]){
+            groupMap[key]={groupId:row.groupId||('lcl-g-auto-'+idx),cargoType:row.cargoType||'普货',weightType:row.weightType||'重量',currency:row.currency||'USD',billingMode:row.billingMode||'单价',billingUnit:row.billingUnit||'KGS',prices:{}};
+            groups.push(groupMap[key]);
+        }
+        groupMap[key].prices[seg]=row.price||'';
+    });
+    if(!segments.length)segments.push('');
+    if(!groups.length)groups.push({groupId:nextLclWeightPriceGroupId(),cargoType:'普货',weightType:'重量',currency:'USD',billingMode:'单价',billingUnit:'KGS',prices:{}});
+    return {segments:segments,groups:groups};
+}
+
+function captureLclWeightPriceRows(){
+    const vertical=document.getElementById('lcl-weight-price-vertical');
+    const horizontal=document.getElementById('lcl-weight-price-horizontal');
+    if(vertical){
+        _lclWeightPriceRows=Array.from(vertical.querySelectorAll('tbody tr')).map(function(row){
+            return {
+                groupId:row.dataset.groupId||nextLclWeightPriceGroupId(),
+                weightSeg:(row.querySelector('[data-field="weightSeg"]')||{}).value||'',
+                price:(row.querySelector('[data-field="price"]')||{}).value||'',
+                cargoType:(row.querySelector('[data-field="cargoType"]')||{}).value||'普货',
+                currency:(row.querySelector('[data-field="currency"]')||{}).value||'USD',
+                billingMode:(row.querySelector('[data-field="billingMode"]')||{}).value||'单价',
+                billingUnit:(row.querySelector('[data-field="billingUnit"]')||{}).value||'KGS'
+            };
+        });
+    }else if(horizontal){
+        const weightInputs=Array.from(horizontal.querySelectorAll('thead [data-horizontal-weight-seg]'));
+        const segments=weightInputs.map(function(input){return input.value||'';});
+        const nextRows=[];
+        Array.from(horizontal.querySelectorAll('tbody tr[data-horizontal-row]')).forEach(function(row){
+            const groupId=row.dataset.groupId||nextLclWeightPriceGroupId();
+            const cargoType=(row.querySelector('[data-horizontal-cargo-type]')||{}).value||'普货';
+            const currency=(row.querySelector('[data-horizontal-currency]')||{}).value||'USD';
+            const billingMode=(row.querySelector('[data-horizontal-billing-mode]')||{}).value||'单价';
+            const billingUnit=(row.querySelector('[data-horizontal-billing-unit]')||{}).value||'KGS';
+            const prices=Array.from(row.querySelectorAll('[data-horizontal-price]'));
+            segments.forEach(function(seg,i){
+                nextRows.push({groupId:groupId,weightSeg:seg,price:(prices[i]||{}).value||'',cargoType:cargoType,currency:currency,billingMode:billingMode,billingUnit:billingUnit});
+            });
+        });
+        _lclWeightPriceRows=nextRows;
+    }
+    if(_lclWeightPriceRows.length===0)_lclWeightPriceRows=[defaultLclWeightPriceRow()];
+}
+
+function renderLclWeightPriceTable(mode){
+    mode=mode||_lclWeightPriceMode;
+    const rows=_lclWeightPriceRows.length?_lclWeightPriceRows:[{weightSeg:'0-1',price:'1',cargoType:'普货',billingMode:'单价'}];
+    let html='';
+    if(mode==='horizontal'){
+        const matrix=getLclHorizontalModel();
+        html+='<div class="overflow-auto max-h-[360px]" id="lcl-weight-price-horizontal"><table class="w-max min-w-full text-xs border-collapse">';
+        html+='<thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+        ['货物类型','计费方式'].forEach(function(hd){html+='<th rowspan="2" class="text-left px-3 py-2 border border-surface-200 min-w-[110px] bg-[#EFF6FF]">'+tr(hd)+'</th>';});
+        html+='<th colspan="'+Math.max(matrix.segments.length,1)+'" class="text-left px-3 py-2 border border-surface-200">'+tr('重量段')+'</th>';
+        html+='<th rowspan="2" class="sticky right-0 z-20 text-center px-3 py-2 border border-surface-200 min-w-[96px] bg-[#EFF6FF] shadow-[-6px_0_8px_-8px_rgba(15,23,42,.45)]">'+tr('操作')+'</th></tr>';
+        html+='<tr class="bg-[#EFF6FF] text-text-secondary">';
+        matrix.segments.forEach(function(seg){
+            html+='<th class="px-2 py-1 border border-surface-200 min-w-[128px]"><div class="flex items-center gap-1">'+
+                '<input data-excel-cell data-horizontal-weight-seg onpaste="handleLclExcelPaste(event,this)" class="w-full h-8 px-2 text-xs border border-surface-200 rounded bg-white outline-none focus:bg-primary-50" value="'+esc(seg||'')+'">'+
+                '</div></th>';
+        });
+        html+='</tr></thead><tbody>';
+        matrix.groups.forEach(function(group){
+            html+='<tr data-horizontal-row data-group-id="'+esc(group.groupId)+'" class="hover:bg-primary-50/30">';
+            html+='<td class="border border-surface-200 bg-white"><select data-horizontal-cargo-type class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['普货','敏感货'],group.cargoType||'普货')+'</select></td>';
+            html+='<td class="border border-surface-200 bg-white"><select data-horizontal-billing-mode class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['单价','总价'],group.billingMode||'单价')+'</select></td>';
+            matrix.segments.forEach(function(seg){
+                html+='<td class="min-w-[128px] border border-surface-200 bg-white">'+lclExcelInput(group.prices[seg]||'','text-right').replace('data-excel-cell','data-excel-cell data-horizontal-price')+'</td>';
+            });
+            html+='<td class="sticky right-0 z-10 border border-surface-200 text-center bg-white shadow-[-6px_0_8px_-8px_rgba(15,23,42,.45)]"><button type="button" onclick="removeLclHorizontalRow(\''+esc(group.groupId)+'\')" class="h-8 px-3 text-xs text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td>';
+            html+='</tr>';
+        });
+        html+='</tbody></table></div>';
+    }else{
+        html+='<div class="overflow-auto max-h-[360px]" id="lcl-weight-price-vertical"><table class="w-full min-w-[760px] text-xs border-collapse">';
+        html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary"><th class="text-left px-3 py-2 border border-surface-200 min-w-[120px]">'+tr('货物类型')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('重量段')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('单价/总价')+'</th><th class="text-left px-3 py-2 border border-surface-200">'+tr('计费方式')+'</th><th class="text-center px-3 py-2 border border-surface-200">'+tr('操作')+'</th></tr></thead><tbody>';
+        rows.forEach(function(row,idx){
+            html+='<tr data-group-id="'+esc(row.groupId||nextLclWeightPriceGroupId())+'" class="hover:bg-primary-50/30">';
+            html+='<td class="border border-surface-200 bg-white"><select data-field="cargoType" class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['普货','敏感货'],row.cargoType||'普货')+'</select></td>';
+            html+='<td class="border border-surface-200 bg-white">'+lclExcelInput(row.weightSeg)+'<input type="hidden" data-field="weightSeg" value="'+esc(row.weightSeg||'')+'"></td>';
+            html+='<td class="border border-surface-200 bg-white">'+lclExcelInput(row.price,'text-right')+'<input type="hidden" data-field="price" value="'+esc(row.price||'')+'"></td>';
+            html+='<td class="border border-surface-200 bg-white"><select data-field="billingMode" class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['单价','总价'],row.billingMode||'单价')+'</select></td>';
+            html+='<td class="border border-surface-200 text-center bg-white"><button type="button" onclick="removeLclWeightPriceRow('+idx+')" class="text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td></tr>';
+        });
+        html+='</tbody></table></div>';
+    }
+    html+='<div class="px-4 py-2 text-[11px] text-text-muted bg-surface-50 border-t border-surface-200">'+tr('支持从 Excel 复制多行多列数据后直接粘贴到表格单元格。')+'</div>';
+    return html;
+}
+
+function syncVisibleLclExcelInputs(){
+    const vertical=document.getElementById('lcl-weight-price-vertical');
+    if(!vertical)return;
+    vertical.querySelectorAll('tbody tr').forEach(function(row){
+        const cells=row.querySelectorAll('[data-excel-cell]');
+        const weight=row.querySelector('[data-field="weightSeg"]');
+        const price=row.querySelector('[data-field="price"]');
+        if(weight&&cells[0])weight.value=cells[0].value;
+        if(price&&cells[1])price.value=cells[1].value;
+    });
+}
+
+function switchLclWeightPriceMode(mode){
+    syncVisibleLclExcelInputs();
+    captureLclWeightPriceRows();
+    _lclWeightPriceMode=mode;
+    renderLclWeightPriceWrap(mode);
+}
+
+function renderLclWeightPriceWrap(mode){
+    const wrap=document.getElementById('lcl-weight-price-wrap');
+    if(wrap){
+        wrap.innerHTML=renderLclWeightPriceTable(mode||_lclWeightPriceMode);
+        applyRuntimeEnhancements(wrap);
+    }
+}
+
+function addLclWeightPriceRow(){
+    syncVisibleLclExcelInputs();
+    captureLclWeightPriceRows();
+    if(_lclWeightPriceMode==='horizontal'){
+        const matrix=getLclHorizontalModel();
+        const base=matrix.groups[0]||{cargoType:'普货',currency:'USD',billingMode:'单价',billingUnit:'KGS'};
+        const groupId=nextLclWeightPriceGroupId();
+        matrix.segments.forEach(function(seg){
+            _lclWeightPriceRows.push(defaultLclWeightPriceRow({groupId:groupId,weightSeg:seg,price:'',cargoType:base.cargoType,currency:base.currency,billingMode:base.billingMode,billingUnit:base.billingUnit}));
+        });
+    }else{
+        const base=_lclWeightPriceRows[0]||defaultLclWeightPriceRow();
+        _lclWeightPriceRows.push(defaultLclWeightPriceRow({groupId:base.groupId,weightSeg:'',price:'',cargoType:base.cargoType,currency:base.currency,billingMode:base.billingMode,billingUnit:base.billingUnit}));
+    }
+    renderLclWeightPriceWrap(_lclWeightPriceMode);
+}
+
+function removeLclWeightPriceRow(idx){
+    syncVisibleLclExcelInputs();
+    captureLclWeightPriceRows();
+    _lclWeightPriceRows.splice(idx,1);
+    if(_lclWeightPriceRows.length===0)_lclWeightPriceRows.push(defaultLclWeightPriceRow());
+    renderLclWeightPriceWrap(_lclWeightPriceMode);
+}
+
+function removeLclHorizontalRow(groupId){
+    syncVisibleLclExcelInputs();
+    captureLclWeightPriceRows();
+    _lclWeightPriceRows=_lclWeightPriceRows.filter(function(row){return row.groupId!==groupId;});
+    if(_lclWeightPriceRows.length===0)_lclWeightPriceRows.push(defaultLclWeightPriceRow());
+    renderLclWeightPriceWrap(_lclWeightPriceMode);
+}
+
+function handleLclExcelPaste(e,input){
+    const text=(e.clipboardData||window.clipboardData).getData('text');
+    if(!text||(!text.includes('\t')&&!text.includes('\n')))return;
+    e.preventDefault();
+    const table=input.closest('table');
+    if(!table)return;
+    const cells=Array.from(table.querySelectorAll('[data-excel-cell]'));
+    const startIdx=cells.indexOf(input);
+    const matrix=text.trim().split(/\r?\n/).map(function(row){return row.split('\t');});
+    if(table.closest('#lcl-weight-price-horizontal')){
+        const rows=Array.from(table.querySelectorAll('tr'));
+        const startRow=input.closest('tr');
+        const rowIdx=rows.indexOf(startRow);
+        const colIdx=Array.from(startRow.querySelectorAll('[data-excel-cell]')).indexOf(input);
+        matrix.forEach(function(r,ri){
+            const targetRow=rows[rowIdx+ri];
+            if(!targetRow)return;
+            const rowCells=Array.from(targetRow.querySelectorAll('[data-excel-cell]'));
+            r.forEach(function(v,ci){if(rowCells[colIdx+ci])rowCells[colIdx+ci].value=v;});
+        });
+    }else{
+        matrix.forEach(function(r,ri){
+            r.forEach(function(v,ci){
+                const target=cells[startIdx+ri*2+ci];
+                if(target)target.value=v;
+            });
+        });
+        syncVisibleLclExcelInputs();
+    }
+}
+
+function appendFormulaToken(targetId,token){
+    const input=document.getElementById(targetId);
+    if(!input)return;
+    const start=input.selectionStart||input.value.length;
+    const end=input.selectionEnd||input.value.length;
+    input.value=input.value.slice(0,start)+token+input.value.slice(end);
+    input.focus();
+    input.setSelectionRange(start+token.length,start+token.length);
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+}
+
+function formulaOperatorTokens(){
+    return [
+        {label:'1',token:'1'},{label:'2',token:'2'},{label:'3',token:'3'},{label:'4',token:'4'},{label:'5',token:'5'},{label:'6',token:'6'},{label:'7',token:'7'},{label:'8',token:'8'},{label:'9',token:'9'},{label:'0',token:'0'},{label:'.',token:'.'},
+        {label:'+',token:'+'},{label:'-',token:'-'},{label:'*',token:'*'},{label:'/',token:'/'},
+        {label:'大于',token:'>'},{label:'等于',token:'='},{label:'小于',token:'<'},{label:'不等于',token:'!='},{label:'大于等于',token:'>='},{label:'小于等于',token:'<='},
+        {label:'MAX',token:'MAX('},{label:'min',token:'min('},{label:'AND',token:' AND '},{label:'OR',token:' OR '},{label:'(',token:'('},{label:')',token:')'}
+    ];
+}
+
+function formulaButtonGroup(targetId,fields){
+    const left=fields||['总件数','总重量','总体积','计费重量','国家','是否扣件'];
+    const right=formulaOperatorTokens();
+    const fieldBtn='h-9 w-full px-3 text-xs font-medium text-primary-700 bg-white border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer truncate';
+    const opBtn='h-9 w-full px-2 text-xs font-medium text-text-secondary bg-white border border-surface-200 rounded-lg hover:bg-surface-100 cursor-pointer truncate';
+    let html='<div class="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3">';
+    html+='<div class="rounded-lg border border-surface-200 bg-surface-50 p-3"><div class="text-xs font-semibold text-text-secondary mb-2">'+tr('字段')+'</div><div class="grid grid-cols-2 gap-2">';
+    left.forEach(function(t){html+='<button type="button" title="'+esc(tr(t))+'" onclick="appendFormulaToken(\''+targetId+'\',\''+t+'\')" class="'+fieldBtn+'">'+tr(t)+'</button>';});
+    html+='</div></div>';
+    html+='<div class="rounded-lg border border-surface-200 bg-surface-50 p-3"><div class="text-xs font-semibold text-text-secondary mb-2">'+tr('数字与符号')+'</div><div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">';
+    right.forEach(function(item){html+='<button type="button" title="'+esc(tr(item.label))+'" onclick="appendFormulaToken(\''+targetId+'\',\''+item.token+'\')" class="'+opBtn+'">'+esc(tr(item.label))+'</button>';});
+    html+='</div></div></div>';
+    return html;
+}
+
+function openSurchargeModal(mode,id,rowIdx,rowData){
+    const c=TC[id];
+    const L=_lang[_currentLang];
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const modeLabel=mode==='view'?L.view:mode==='add'?L.add:mode==='copy'?tr('复制新增'):L.edit;
+    titleEl.textContent=modeLabel+tr(c.t);
+    const isView=mode==='view';
+    const data=_listData[id]||expandData(id);
+    const lastCode=data.length&&data[data.length-1][0]?data[data.length-1][0]:'SC000';
+    const lm=lastCode.match(/^(.*?)(\d+)$/);
+    const autoCode=lm?lm[1]+String(parseInt(lm[2])+1).padStart(lm[2].length,'0'):'SC001';
+    const basic=[
+        {label:'附加费代码',value:mode==='add'?autoCode:mode==='copy'?'':(rowData?rowData[0]:''),readonly:mode==='edit'||isView},
+        {label:'附加费名称',value:rowData?rowData[1]:'报关费',required:true,readonly:isView},
+        {label:'品名大类',type:'select',options:['电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他'],value:rowData?rowData[2]:'电子产品',readonly:isView},
+        {label:'状态',type:'select',options:['启用','停用'],value:rowData?rowData[3]:'启用',readonly:isView},
+        {label:'开始时间',type:'date',value:rowData?rowData[4]:'2025-01-01',readonly:isView},
+        {label:'结束时间',type:'date',value:rowData?rowData[5]:'2025-12-31',readonly:isView},
+        {label:'备注',type:'textarea',rows:2,span:'md:col-span-2',value:rowData?rowData[6]:'',readonly:isView}
+    ];
+    let html='<div class="space-y-5">';
+    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基本信息')+'</div>'+renderFields(basic,'modal')+'</div>';
+    html+='<div class="border border-surface-200 rounded-xl overflow-hidden">';
+    html+='<div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between"><div class="text-sm font-semibold text-text-primary">'+tr('费用明细')+'</div>'+(isView?'':'<button type="button" onclick="addSurchargeDetailRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button>')+'</div>';
+    html+='<div class="overflow-x-auto"><table class="w-full text-xs min-w-[1260px]"><thead><tr class="bg-[#EFF6FF] text-text-secondary">'+
+        '<th class="text-left px-3 py-2">'+tr('附加费名称')+'</th><th class="text-left px-3 py-2">'+tr('费用类型')+'</th><th class="text-left px-3 py-2">'+tr('品名大类')+'</th><th class="text-left px-3 py-2">'+tr('币别')+'</th><th class="text-left px-3 py-2">'+tr('是否扣件')+'</th><th class="text-left px-3 py-2">'+tr('国家')+'</th><th class="text-left px-3 py-2">'+tr('条件表达式')+'</th><th class="text-left px-3 py-2">'+tr('计算公式')+'</th>'+(isView?'':'<th class="text-left px-3 py-2">'+tr('操作')+'</th>')+'</tr></thead><tbody id="surcharge-detail-tbody">'+surchargeDetailRowHtml(isView)+'</tbody></table></div></div>';
+    html+='</div>';
+    bodyEl.innerHTML=html;
+    if(isView){
+        footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
+    }else{
+        footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr('保存成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存配置')+'</button>';
+    }
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function surchargeDetailRowHtml(isView){
+    var roInput=isView?' readonly':'';
+    var roSelect=isView?' disabled':'';
+    return '<tr class="border-b border-surface-100 hover:bg-surface-50">'+
+        '<td class="px-3 py-2"><input class="w-full h-8 px-2 border border-surface-200 rounded bg-white" value="报关费"'+roInput+'></td>'+
+        '<td class="px-3 py-2"><select class="w-full h-8 px-2 border border-surface-200 rounded bg-white"'+roSelect+'>'+selectOptionsHtml(['报关','仓储','文件','其他'],'报关')+'</select></td>'+
+        '<td class="px-3 py-2"><select class="w-full h-8 px-2 border border-surface-200 rounded bg-white"'+roSelect+'>'+selectOptionsHtml(['电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他'],'电子产品')+'</select></td>'+
+        '<td class="px-3 py-2"><select class="w-full h-8 px-2 border border-surface-200 rounded bg-white"'+roSelect+'><option>USD</option><option>CNY</option><option>EUR</option></select></td>'+
+        '<td class="px-3 py-2"><select class="w-full h-8 px-2 border border-surface-200 rounded bg-white"'+roSelect+'>'+selectOptionsHtml(['否','是'],'否')+'</select></td>'+
+        '<td class="px-3 py-2"><select class="w-full h-8 px-2 border border-surface-200 rounded bg-white"'+roSelect+'>'+selectOptionsHtml(['全部','中国','尼日利亚','塞内加尔','加纳'],'全部')+'</select></td>'+
+        '<td class="px-3 py-2"><input data-surcharge-condition class="w-full h-8 px-2 border border-surface-200 rounded bg-white" value="总件数>0"'+roInput+'></td>'+
+        '<td class="px-3 py-2"><input data-surcharge-formula class="w-full h-8 px-2 border border-surface-200 rounded bg-white" value="总件数*5"'+roInput+'></td>'+
+        (isView?'':'<td class="px-3 py-2"><div class="flex items-center gap-2"><button type="button" onclick="openSurchargeExpressionModal(this)" class="text-primary-600 hover:text-primary-700 cursor-pointer">'+tr('编辑')+'</button><button type="button" onclick="this.closest(\'tr\').remove()" class="text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></div></td>')+
+        '</tr>';
+}
+
+function addSurchargeDetailRow(){
+    const tbody=document.getElementById('surcharge-detail-tbody');
+    if(!tbody)return;
+    tbody.insertAdjacentHTML('beforeend',surchargeDetailRowHtml());
+    applyRuntimeEnhancements(tbody.lastElementChild);
+}
+
+function openSurchargeExpressionModal(btn){
+    _activeSurchargeDetailRow=btn?btn.closest('tr'):null;
+    const conditionInput=_activeSurchargeDetailRow?_activeSurchargeDetailRow.querySelector('[data-surcharge-condition]'):null;
+    const formulaInput=_activeSurchargeDetailRow?_activeSurchargeDetailRow.querySelector('[data-surcharge-formula]'):null;
+    const conditionFields=['总件数','运单实际体积','运单计费重','品名个数','品名大类','到货围长','品名附加','国家','报关','合并报关','拆分报关','单件实际重','单件长'];
+    const formulaFields=['总件数','收货计费重','实际重量','实际体积','子单匹配件数'];
+    document.getElementById('expression-modal-title').textContent=tr('条件表达式信息');
+    let html='<div class="space-y-4">';
+    html+='<div class="rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-2">'+tr('条件表达式')+'</div><input id="surcharge-condition-builder" type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 mb-3" value="'+esc(conditionInput?conditionInput.value:'总件数>0')+'">'+formulaButtonGroup('surcharge-condition-builder',conditionFields)+'</div>';
+    html+='<div class="rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-2">'+tr('计算公式')+'</div><input id="surcharge-formula-builder" type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 mb-3" value="'+esc(formulaInput?formulaInput.value:'总件数*5')+'">'+formulaButtonGroup('surcharge-formula-builder',formulaFields)+'</div>';
+    html+='</div>';
+    document.getElementById('expression-modal-body').innerHTML=html;
+    document.getElementById('expression-modal-footer').innerHTML='<button onclick="closeExpressionModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="saveSurchargeExpression()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存')+'</button>';
+    document.getElementById('expression-modal').classList.add('show');
+    applyRuntimeEnhancements(document.getElementById('expression-modal-body'));
+}
+
+function saveSurchargeExpression(){
+    if(_activeSurchargeDetailRow){
+        const condition=_activeSurchargeDetailRow.querySelector('[data-surcharge-condition]');
+        const formula=_activeSurchargeDetailRow.querySelector('[data-surcharge-formula]');
+        const conditionBuilder=document.getElementById('surcharge-condition-builder');
+        const formulaBuilder=document.getElementById('surcharge-formula-builder');
+        if(condition&&conditionBuilder)condition.value=conditionBuilder.value;
+        if(formula&&formulaBuilder)formula.value=formulaBuilder.value;
+    }
+    closeExpressionModal();
+    showToast(tr('保存成功'));
+}
+
+function closeExpressionModal(){
+    document.getElementById('expression-modal').classList.remove('show');
+    _activeSurchargeDetailRow=null;
+}
+
+function buildRoleMenuTree(){
+    let html='';
+    menuData.forEach(function(l1){
+        const l1Label=langText(l1.langKey,l1.label);
+        const l1Id=l1.id;
+        html+='<div class="mb-1">';
+        html+='<div class="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-surface-50" onclick="toggleRoleTreeNode(this)">';
+        html+='<input type="checkbox" class="role-tree-cb" data-id="'+l1Id+'" onchange="onRoleTreeCheck(this)" onclick="event.stopPropagation()">';
+        html+='<svg class="w-3.5 h-3.5 text-text-muted transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+        html+='<span class="text-sm font-medium text-text-primary">'+esc(l1Label)+'</span>';
+        html+='</div>';
+        html+='<div class="role-tree-children pl-5" style="display:none">';
+        if(l1.children){
+            l1.children.forEach(function(l2){
+                const l2Label=langText(l2.langKey,l2.label);
+                const l2Id=l2.id;
+                if(l2.children&&l2.children.length>0){
+                    html+='<div class="mb-0.5">';
+                    html+='<div class="flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-surface-50" onclick="toggleRoleTreeNode(this)">';
+                    html+='<input type="checkbox" class="role-tree-cb" data-id="'+l2Id+'" data-pid="'+l1Id+'" onchange="onRoleTreeCheck(this)" onclick="event.stopPropagation()">';
+                    html+='<svg class="w-3 h-3 text-text-muted transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+                    html+='<span class="text-sm text-text-secondary">'+esc(l2Label)+'</span>';
+                    html+='</div>';
+                    html+='<div class="role-tree-children pl-5" style="display:none">';
+                    l2.children.forEach(function(l3){
+                        const l3Label=langText(l3.langKey,l3.label);
+                        html+='<div class="flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-surface-50" onclick="onRoleModuleClick(\''+l3.id+'\')">';
+                        html+='<input type="checkbox" class="role-tree-cb" data-id="'+l3.id+'" data-pid="'+l2Id+'" onchange="onRoleTreeCheck(this)" onclick="event.stopPropagation()">';
+                        html+='<span class="text-sm text-text-secondary">'+esc(l3Label)+'</span>';
+                        html+='</div>';
+                    });
+                    html+='</div></div>';
+                }else{
+                    html+='<div class="flex items-center gap-2 px-2 py-1 rounded cursor-pointer hover:bg-surface-50" onclick="onRoleModuleClick(\''+l2Id+'\')">';
+                    html+='<input type="checkbox" class="role-tree-cb" data-id="'+l2Id+'" data-pid="'+l1Id+'" onchange="onRoleTreeCheck(this)" onclick="event.stopPropagation()">';
+                    html+='<span class="text-sm text-text-secondary">'+esc(l2Label)+'</span>';
+                    html+='</div>';
+                }
+            });
+        }
+        html+='</div></div>';
+    });
+    return html;
+}
+
+function toggleRoleTreeNode(el){
+    const children=el.nextElementSibling;
+    if(!children||!children.classList.contains('role-tree-children'))return;
+    const arrow=el.querySelector('svg');
+    if(children.style.display==='none'){children.style.display='block';if(arrow)arrow.style.transform='rotate(90deg)';}
+    else{children.style.display='none';if(arrow)arrow.style.transform='';}
+}
+
+function onRoleTreeCheck(cb){
+    const parentId=cb.dataset.pid;
+    const nodeId=cb.dataset.id;
+    const checked=cb.checked;
+    const container=cb.closest('.role-tree-children')||cb.closest('#role-menu-tree');
+    if(checked){
+        if(parentId){
+            const parentCb=container.parentElement.querySelector('[data-id="'+parentId+'"]');
+            if(parentCb&&!parentCb.checked)parentCb.checked=true;
+        }
+        const childCbs=cb.parentElement.nextElementSibling?.querySelectorAll('.role-tree-cb');
+        if(childCbs){
+            childCbs.forEach(function(c){c.checked=true;});
+        }
+    }else{
+        const childCbs=cb.parentElement.nextElementSibling?.querySelectorAll('.role-tree-cb');
+        if(childCbs){
+            childCbs.forEach(function(c){c.checked=false;});
+        }
+        if(parentId){
+            const parentCb=container.parentElement.querySelector('[data-id="'+parentId+'"]');
+            if(parentCb){
+                const siblings=parentCb.parentElement.nextElementSibling?.querySelectorAll('.role-tree-cb');
+                if(siblings&&[...siblings].every(s=>!s.checked)){
+                    parentCb.checked=false;
+                }
+            }
+        }
+    }
+}
+
+function onRoleModuleClick(moduleId){
+    const fieldList=document.getElementById('role-field-list');
+    const queryList=document.getElementById('role-query-list');
+    const btnList=document.getElementById('role-btn-list');
+    const tc=TC[moduleId];
+    if(!tc){
+        fieldList.innerHTML='<div class="text-sm text-text-muted py-4 text-center">'+tr('该模块暂无字段配置')+'</div>';
+        queryList.innerHTML='<div class="text-sm text-text-muted py-4 text-center">'+tr('该模块暂无查询条件配置')+'</div>';
+        btnList.innerHTML='<div class="text-sm text-text-muted py-4 text-center">'+tr('该模块暂无按钮配置')+'</div>';
+        return;
+    }
+    const headers=tc.h.slice(0,-1).filter(function(hd){return hd!=='序号'&&!hd.endsWith('序号');});
+    let fHtml='<div class="space-y-1.5">';
+    headers.forEach(function(hd){
+        fHtml+='<label class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-50 cursor-pointer"><input type="checkbox" class="role-field-cb" checked><span class="text-sm text-text-secondary">'+esc(tr(hd))+'</span></label>';
+    });
+    fHtml+='</div>';
+    fieldList.innerHTML=fHtml;
+    if(tc.q&&tc.q.length>0){
+        let qHtml='<div class="space-y-1.5">';
+        tc.q.forEach(function(q){
+            qHtml+='<label class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-50 cursor-pointer"><input type="checkbox" class="role-query-cb" checked><span class="text-sm text-text-secondary">'+esc(tr(q.label))+'</span></label>';
+        });
+        qHtml+='</div>';
+        queryList.innerHTML=qHtml;
+    }else{
+        queryList.innerHTML='<div class="text-sm text-text-muted py-4 text-center">'+tr('该模块暂无查询条件')+'</div>';
+    }
+    var actions=getToolbarActions(moduleId);
+    if(actions&&actions.length>0){
+        let bHtml='<div class="space-y-1.5">';
+        actions.forEach(function(a){
+            bHtml+='<label class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface-50 cursor-pointer"><input type="checkbox" class="role-btn-cb" checked><span class="text-sm text-text-secondary">'+esc(tr(a.label))+'</span></label>';
+        });
+        bHtml+='</div>';
+        btnList.innerHTML=bHtml;
+    }else{
+        btnList.innerHTML='<div class="text-sm text-text-muted py-4 text-center">'+tr('该模块暂无按钮配置')+'</div>';
+    }
+}
+

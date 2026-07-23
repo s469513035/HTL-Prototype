@@ -21,6 +21,9 @@ id_ed25519*
 .claude/
 .idea/
 
+# ===== 拆分备份（大且与 git 历史冗余，勿入库）=====
+*.backup-split.html
+
 # ===== OS 杂项 =====
 Thumbs.db
 .DS_Store

@@ -8,5 +8,8 @@
   "dependencies": {
     "html-to-docx": "^1.8.0",
     "localtunnel": "^2.0.2"
+  },
+  "devDependencies": {
+    "acorn": "^8.17.0"
   }
 }

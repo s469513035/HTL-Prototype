@@ -7,9 +7,10 @@ const fs = require('fs');
 const path = require('path');
 const acorn = require('acorn');
 const DIR = __dirname;
+const APP = path.join(DIR, 'hlhResouce');   // 拆分产物在 hlhResouce/；备份/manifest 在根
 const m = JSON.parse(fs.readFileSync(path.join(DIR, 'split-manifest.json'), 'utf8'));
 const backup = fs.readFileSync(path.join(DIR, m.backup));
-const shell = fs.readFileSync(path.join(DIR, m.shell));
+const shell = fs.readFileSync(path.join(APP, m.shell));
 let fail = 0;
 const offset = [0, 0];
 for (let i = 0; i < backup.length; i++) if (backup[i] === 10) offset.push(i + 1);
@@ -20,7 +21,7 @@ const jsBody = backup.slice(offset[SS], offset[SE + 1]);
 const assembled = Buffer.alloc(jsBody.length);
 let filled = 0;
 for (const f of m.files) {
-  const fbuf = fs.readFileSync(path.join(DIR, 'js', f.name));
+  const fbuf = fs.readFileSync(path.join(APP, 'js', f.name));
   let p = 0;
   for (const [a, b] of f.ranges) {
     const L = offset[b + 1] - offset[a];
@@ -35,7 +36,7 @@ else { fail++; let i = 0; while (i < jsBody.length && assembled[i] === jsBody[i]
 
 // ---- 关(2) 全文件重建 == 备份 ----
 const b64 = s => Buffer.from(s, 'base64');
-const css = fs.readFileSync(path.join(DIR, m.css));
+const css = fs.readFileSync(path.join(APP, m.css));
 const head = shell.slice(0, m.headLen);
 const staticMid = shell.slice(m.headLen + m.linkLen, m.headLen + m.linkLen + m.staticLen);
 const tail = shell.slice(m.headLen + m.linkLen + m.staticLen + m.tagsLen);

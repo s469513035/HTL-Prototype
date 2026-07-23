@@ -1,26 +1,28 @@
 const fs = require('fs');
 const path = require('path');
 
+// 拆分后 app 代码在 hlhResouce/；部署镜像仍产出到 deploy/(server.js 服务 deploy/)
+const APP = path.join(__dirname, 'hlhResouce');
+
 function findSourceHtml() {
-    const files = fs.readdirSync(__dirname);
+    const files = fs.readdirSync(APP);
     const htmlFiles = files.filter((name) => name.toLowerCase().endsWith('.html'));
     if (htmlFiles.length === 0) {
-        throw new Error('No prototype HTML file found in ' + __dirname);
+        throw new Error('No prototype HTML file found in ' + APP);
     }
-    // 排除备份文件，取真正的原型 shell
     const prototypeFile = htmlFiles.find((name) => name.includes('原型图') && !name.includes('backup'));
-    return path.join(__dirname, prototypeFile || htmlFiles.find((name) => name.includes('原型图')) || htmlFiles[0]);
+    return path.join(APP, prototypeFile || htmlFiles.find((name) => name.includes('原型图')) || htmlFiles[0]);
 }
 
 const srcFile = findSourceHtml();
 const deployDir = path.join(__dirname, 'deploy');
 const destFile = path.join(deployDir, 'index.html');
-// 拆分后：shell + 这些同级资源目录/文件一并镜像到 deploy/
+// hlhResouce 下这些资源随 shell 一并镜像到 deploy/(保持 deploy/ 扁平结构不变)
 const assetDirs = ['css', 'js'];               // 递归镜像
 const assetFiles = ['inline-editor.js'];        // 单文件
 
 function mirrorDir(name) {
-    const from = path.join(__dirname, name);
+    const from = path.join(APP, name);
     if (!fs.existsSync(from)) return;
     const to = path.join(deployDir, name);
     fs.rmSync(to, { recursive: true, force: true });   // 清掉旧切片，防止改名后残留
@@ -32,14 +34,14 @@ function sync(reason) {
     fs.copyFileSync(srcFile, destFile);
     assetDirs.forEach(mirrorDir);
     assetFiles.forEach((f) => {
-        const from = path.join(__dirname, f);
+        const from = path.join(APP, f);
         if (fs.existsSync(from)) fs.copyFileSync(from, path.join(deployDir, f));
     });
     const now = new Date().toLocaleTimeString();
     console.log('[' + now + '] Auto deployed: ' + reason);
 }
 
-// 监听 shell + css/** + js/** 的合并最新 mtime，任一变更即重部署
+// 监听 shell + css/** + js/**(均在 hlhResouce/)的合并最新 mtime，任一变更即重部署
 function combinedMtime() {
     let latest = 0;
     const stamp = (p) => { try { const m = fs.statSync(p).mtimeMs; if (m > latest) latest = m; } catch (e) {} };
@@ -52,15 +54,15 @@ function combinedMtime() {
         }
     };
     stamp(srcFile);
-    assetDirs.forEach((d) => walk(path.join(__dirname, d)));
-    assetFiles.forEach((f) => stamp(path.join(__dirname, f)));
+    assetDirs.forEach((d) => walk(path.join(APP, d)));
+    assetFiles.forEach((f) => stamp(path.join(APP, f)));
     return latest;
 }
 
 sync('startup');
 let lastMtime = combinedMtime();
 
-console.log('[Auto Deploy] Watching for changes (shell + css/ + js/)...');
+console.log('[Auto Deploy] Watching for changes (hlhResouce: shell + css/ + js/)...');
 console.log('[Auto Deploy] Source: ' + srcFile);
 console.log('[Auto Deploy] Dest:   ' + destFile);
 

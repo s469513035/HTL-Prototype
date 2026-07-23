@@ -1,0 +1,15 @@
+{
+  "_comment": "复制本文件为 deploy-remote.config.json 再填真实值。deploy-remote.config.json 已被 .gitignore 忽略，切勿把密码提交到 git。字段可被命令行同名参数覆盖。",
+  "RemoteHost": "192.168.1.100",
+  "Username": "Administrator",
+  "Password": "在此填写远程管理员密码",
+  "UseSSL": false,
+  "RemotePublishPath": "C:\\inetpub\\hlh-prototype",
+  "SiteName": "HLH-Prototype",
+  "AppPoolName": "HLH-Prototype",
+  "Port": 8080,
+  "HostHeader": "",
+  "ConfigureIIS": true,
+  "CleanTarget": true,
+  "OpenFirewall": true
+}

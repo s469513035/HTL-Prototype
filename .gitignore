@@ -24,6 +24,10 @@ id_ed25519*
 # ===== 拆分备份（大且与 git 历史冗余，勿入库）=====
 *.backup-split.html
 
+# ===== 远程部署凭据（含密码，严禁入库）=====
+deploy-remote.config.json
+公网地址.txt
+
 # ===== OS 杂项 =====
 Thumbs.db
 .DS_Store

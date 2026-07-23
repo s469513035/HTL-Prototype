@@ -7,7 +7,7 @@ const localtunnel = require('localtunnel');
 const port = Number(process.env.PORT || 8090);
 const subdomain = process.env.PUBLIC_SUBDOMAIN || 'hlh-haolihang-clientdemo';
 const fixedUrl = 'https://' + subdomain + '.loca.lt';
-const addressFile = path.join(__dirname, '..', '公网地址.txt');
+const addressFile = path.join(__dirname, '公网地址.txt');
 
 let tunnel = null;
 let reconnectTimer = null;

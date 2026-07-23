@@ -7,8 +7,8 @@ const path = require('path');
 const acorn = require('acorn');
 
 const DIR = __dirname;
-const APP = path.join(DIR, 'hlhResouce');                 // 拆分产物落 hlhResouce/
-const BACKUP = path.join(DIR, '好利航国际物流_原型图.backup-split.html'); // 备份仍在根
+const APP = DIR;                                          // 拆分产物就在本目录(hlhResouce)
+const BACKUP = path.join(DIR, '好利航国际物流_原型图.backup-split.html'); // 备份同目录
 const SHELL_OUT = path.join(APP, '好利航国际物流_原型图.html');
 const CSS_DIR = path.join(APP, 'css');
 const JS_DIR = path.join(APP, 'js');

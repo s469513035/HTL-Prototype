@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// 拆分后 app 代码在 hlhResouce/；部署镜像仍产出到 deploy/(server.js 服务 deploy/)
-const APP = path.join(__dirname, 'hlhResouce');
+// 整个项目就在本目录(hlhResouce/)；app 代码(shell/css/js/inline-editor)与本脚本平级
+const APP = __dirname;
 
 function findSourceHtml() {
     const files = fs.readdirSync(APP);

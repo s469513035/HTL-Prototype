@@ -32,7 +32,8 @@ param(
   [string]$AppPoolName,
   [string]$HostHeader,
   [string]$LocalAppRoot,
-  [switch]$TestOnly
+  [switch]$TestOnly,
+  [switch]$SkipClientPrep
 )
 
 $ErrorActionPreference = 'Stop'
@@ -99,23 +100,20 @@ if ($Password) {
     $cred = Get-Credential -UserName $Username -Message "远程服务器 $RemoteHost 凭据"
 }
 
-# ---- 3.5 本机 WinRM 客户端前置（需管理员；HTTP + 非域/IP 直连要 TrustedHosts）----
-if (-not $UseSSL) {
+# ---- 3.5 本机 WinRM 客户端前置（尽力而为：启服务 + TrustedHosts）----
+# 这两步需管理员；若已由管理员提前配好，此处非管理员运行会告警并跳过，连接交给下一步判定。
+if (-not $UseSSL -and -not $SkipClientPrep) {
     try {
-        $winrm = Get-Service WinRM -ErrorAction Stop
-        if ($winrm.Status -ne 'Running') { Log '启动本机 WinRM 客户端服务…' Yellow; Start-Service WinRM -ErrorAction Stop }
+        $winrm = Get-Service WinRM -ErrorAction SilentlyContinue
+        if ($winrm -and $winrm.Status -ne 'Running') { Log '启动本机 WinRM 客户端服务…' Yellow; Start-Service WinRM -ErrorAction Stop }
+    } catch { Log "无法启动本机 WinRM 服务（需管理员；若已提前启用可忽略）：$($_.Exception.Message)" Yellow }
+    try {
         $th = (Get-Item WSMan:\localhost\Client\TrustedHosts -ErrorAction SilentlyContinue).Value
         if ($th -ne '*' -and ($th -notmatch [regex]::Escape($RemoteHost))) {
             Log "把 $RemoteHost 加入本机 TrustedHosts…" Yellow
             Set-Item WSMan:\localhost\Client\TrustedHosts -Value $RemoteHost -Concatenate -Force -ErrorAction Stop
         }
-    } catch {
-        Log "本机 WinRM 客户端前置未就绪：$($_.Exception.Message)" Red
-        Write-Host "  需以【管理员】运行本脚本；或先在管理员 PowerShell 手动执行一次：" -ForegroundColor Yellow
-        Write-Host "    Start-Service WinRM" -ForegroundColor White
-        Write-Host "    Set-Item WSMan:\localhost\Client\TrustedHosts -Value '$RemoteHost' -Concatenate -Force" -ForegroundColor White
-        throw
-    }
+    } catch { Log "无法设置 TrustedHosts（需管理员；若已提前配置可忽略）：$($_.Exception.Message)" Yellow }
 }
 
 # ---- 4. 连接 WinRM ----

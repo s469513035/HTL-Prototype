@@ -1,17 +1,18 @@
 /* ===== 应收账单管理 fin-ar-bill（账单列表 + 详情弹窗 + 未核销账单作废） ===== */
 /* 账单状态：待核销(已核销=0) / 部分核销 / 全部核销 / 作废。作废规则：仅「待核销」（未核销）账单可作废。 */
+/* 字段：bn 应收账单号 / batch 账单批次号 / cur 原币币别 / amt 金额(原币) / basecur 本位币币别 / rmb 金额(本位币) / cyc 结算周期 / due 账单到期时间 */
 var _arBillSeed=[
-{bn:'RB2607060003',name:'17：11',cust:'天地直客',cur:'人民币',amt:'240',rmb:'240',used:'0',unused:'240',st:'待核销',rk:'',src:'人工录入',ct:'2026-07-06 17:11:47',fees:[{wb:'H2607030002',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'240',cur:'人民币',rate:'1',rmb:'240'}]},
-{bn:'RB2607060002',name:'17：08',cust:'天地直客',cur:'人民币',amt:'6000',rmb:'6000',used:'0',unused:'6000',st:'待核销',rk:'测试',src:'人工录入',ct:'2026-07-06 17:09:07',fees:[{wb:'H2607060015',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'6000',cur:'人民币',rate:'1',rmb:'6000'}]},
-{bn:'RB2607060001',name:'生成账单1-6',cust:'天地直客',cur:'人民币',amt:'100',rmb:'100',used:'0',unused:'100',st:'待核销',rk:'z',src:'人工录入',ct:'2026-07-06 17:07:01',fees:[{wb:'H2607060001',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'100',cur:'人民币',rate:'1',rmb:'100'}]},
-{bn:'RB2606140002',name:'ces 111',cust:'梦幻直客客户',cur:'人民币',amt:'1200',rmb:'1200',used:'0',unused:'1200',st:'待核销',rk:'111',src:'人工录入',ct:'2026-06-14 11:53:19',fees:[{wb:'H2606140020',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'应收附加费',amt:'1200',cur:'人民币',rate:'1',rmb:'1200'}]},
-{bn:'RB2606140001',name:'20260614测试账单0001',cust:'梦幻直客客户',cur:'人民币',amt:'1200',rmb:'1200',used:'1200',unused:'0',st:'全部核销',rk:'备注222',src:'人工录入',ct:'2026-06-14 11:53:08',fees:[{wb:'H2606140001',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'运费',amt:'1200',cur:'人民币',rate:'1',rmb:'1200'}]},
-{bn:'RB2605240003',name:'E2E-BILL-1779556542',cust:'星星玩具电商',cur:'人民币',amt:'880',rmb:'880',used:'120',unused:'760',st:'部分核销',rk:'',src:'人工录入',ct:'2026-05-24 01:15:44',fees:[{wb:'H82605240003',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'880',cur:'人民币',rate:'1',rmb:'880'}]},
-{bn:'RB2605240002',name:'E2E-BILL-1779556381',cust:'星星玩具电商',cur:'人民币',amt:'880',rmb:'880',used:'880',unused:'0',st:'全部核销',rk:'',src:'人工录入',ct:'2026-05-24 01:13:03',fees:[{wb:'H82605240004',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'880',cur:'人民币',rate:'1',rmb:'880'}]},
-{bn:'RB2605240001',name:'E2E-BILL-1779556151',cust:'星星玩具电商',cur:'人民币',amt:'880',rmb:'880',used:'211.87',unused:'668.13',st:'部分核销',rk:'',src:'人工录入',ct:'2026-05-24 01:09:13',fees:[{wb:'H82605240005',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'680',cur:'人民币',rate:'1',rmb:'680'},{wb:'H82605240005',cust:'星星玩具电商',sales:'BTWOZCW',fee:'报关费',amt:'200',cur:'人民币',rate:'1',rmb:'200'}]},
-{bn:'RB2604110007',name:'cs账单名称',cust:'星星玩具电商',cur:'人民币',amt:'838',rmb:'838',used:'0',unused:'838',st:'待核销',rk:'备注',src:'人工录入',ct:'2026-04-11 17:40:00',fees:[{wb:'H2604110007',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'838',cur:'人民币',rate:'1',rmb:'838'}]},
-{bn:'RB2604110006',name:'测试账单0411',cust:'星星玩具电商',cur:'人民币',amt:'845.38',rmb:'845.38',used:'7.36',unused:'838',st:'部分核销',rk:'测试账单0411',src:'人工录入',ct:'2026-04-11 16:15:57',fees:[{wb:'H2604110006',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'845.38',cur:'人民币',rate:'1',rmb:'845.38'}]},
-{bn:'RB2604110005',name:'测试账单0411',cust:'星星玩具电商',cur:'人民币',amt:'845.38',rmb:'845.38',used:'7.36',unused:'838',st:'部分核销',rk:'测试账单0411',src:'人工录入',ct:'2026-04-11 16:14:58',fees:[{wb:'H2604110005',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'845.38',cur:'人民币',rate:'1',rmb:'845.38'}]}
+{bn:'RB2607060003',batch:'PC2607060003',cust:'天地直客',cur:'人民币',amt:'240',basecur:'人民币',rmb:'240',used:'0',unused:'240',cyc:'出货票结',due:'2026-07-31 23:59:59',st:'待核销',rk:'',src:'人工录入',ct:'2026-07-06 17:11:47',fees:[{wb:'H2607030002',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'240',cur:'人民币',rate:'1',rmb:'240'}]},
+{bn:'RB2607060002',batch:'PC2607060002',cust:'天地直客',cur:'人民币',amt:'6000',basecur:'人民币',rmb:'6000',used:'0',unused:'6000',cyc:'出货票结',due:'2026-07-31 23:59:59',st:'待核销',rk:'测试',src:'人工录入',ct:'2026-07-06 17:09:07',fees:[{wb:'H2607060015',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'6000',cur:'人民币',rate:'1',rmb:'6000'}]},
+{bn:'RB2607060001',batch:'PC2607060001',cust:'天地直客',cur:'人民币',amt:'100',basecur:'人民币',rmb:'100',used:'0',unused:'100',cyc:'出货票结',due:'2026-07-31 23:59:59',st:'待核销',rk:'z',src:'人工录入',ct:'2026-07-06 17:07:01',fees:[{wb:'H2607060001',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'100',cur:'人民币',rate:'1',rmb:'100'}]},
+{bn:'RB2606140002',batch:'PC2606140002',cust:'梦幻直客客户',cur:'人民币',amt:'1200',basecur:'人民币',rmb:'1200',used:'0',unused:'1200',cyc:'签收月结',due:'2026-06-30 23:59:59',st:'待核销',rk:'111',src:'人工录入',ct:'2026-06-14 11:53:19',fees:[{wb:'H2606140020',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'应收附加费',amt:'1200',cur:'人民币',rate:'1',rmb:'1200'}]},
+{bn:'RB2606140001',batch:'PC2606140001',cust:'梦幻直客客户',cur:'人民币',amt:'1200',basecur:'人民币',rmb:'1200',used:'1200',unused:'0',cyc:'签收月结',due:'2026-06-30 23:59:59',st:'全部核销',rk:'备注222',src:'人工录入',ct:'2026-06-14 11:53:08',fees:[{wb:'H2606140001',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'运费',amt:'1200',cur:'人民币',rate:'1',rmb:'1200'}]},
+{bn:'RB2605240003',batch:'PC2605240003',cust:'星星玩具电商',cur:'人民币',amt:'880',basecur:'人民币',rmb:'880',used:'120',unused:'760',cyc:'出货月结',due:'2026-05-31 23:59:59',st:'部分核销',rk:'',src:'人工录入',ct:'2026-05-24 01:15:44',fees:[{wb:'H82605240003',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'880',cur:'人民币',rate:'1',rmb:'880'}]},
+{bn:'RB2605240002',batch:'PC2605240002',cust:'星星玩具电商',cur:'人民币',amt:'880',basecur:'人民币',rmb:'880',used:'880',unused:'0',cyc:'出货月结',due:'2026-05-31 23:59:59',st:'全部核销',rk:'',src:'人工录入',ct:'2026-05-24 01:13:03',fees:[{wb:'H82605240004',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'880',cur:'人民币',rate:'1',rmb:'880'}]},
+{bn:'RB2605240001',batch:'PC2605240001',cust:'星星玩具电商',cur:'人民币',amt:'880',basecur:'人民币',rmb:'880',used:'211.87',unused:'668.13',cyc:'出货月结',due:'2026-05-31 23:59:59',st:'部分核销',rk:'',src:'人工录入',ct:'2026-05-24 01:09:13',fees:[{wb:'H82605240005',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'680',cur:'人民币',rate:'1',rmb:'680'},{wb:'H82605240005',cust:'星星玩具电商',sales:'BTWOZCW',fee:'报关费',amt:'200',cur:'人民币',rate:'1',rmb:'200'}]},
+{bn:'RB2604110007',batch:'PC2604110007',cust:'星星玩具电商',cur:'人民币',amt:'838',basecur:'人民币',rmb:'838',used:'0',unused:'838',cyc:'出货月结',due:'2026-04-30 23:59:59',st:'待核销',rk:'备注',src:'人工录入',ct:'2026-04-11 17:40:00',fees:[{wb:'H2604110007',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'838',cur:'人民币',rate:'1',rmb:'838'}]},
+{bn:'RB2604110006',batch:'PC2604110006',cust:'星星玩具电商',cur:'人民币',amt:'845.38',basecur:'人民币',rmb:'845.38',used:'7.36',unused:'838',cyc:'出货月结',due:'2026-04-30 23:59:59',st:'部分核销',rk:'测试账单0411',src:'人工录入',ct:'2026-04-11 16:15:57',fees:[{wb:'H2604110006',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'845.38',cur:'人民币',rate:'1',rmb:'845.38'}]},
+{bn:'RB2604110005',batch:'PC2604110005',cust:'星星玩具电商',cur:'人民币',amt:'845.38',basecur:'人民币',rmb:'845.38',used:'7.36',unused:'838',cyc:'出货月结',due:'2026-04-30 23:59:59',st:'部分核销',rk:'测试账单0411',src:'人工录入',ct:'2026-04-11 16:14:58',fees:[{wb:'H2604110005',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'845.38',cur:'人民币',rate:'1',rmb:'845.38'}]}
 ];
 var _arBillRows=_arBillSeed.slice();
 
@@ -20,23 +21,26 @@ function _arBillV(id){return ((document.getElementById(id)||{}).value||'').trim(
 function _arBillFind(bn){ for(var i=0;i<_arBillRows.length;i++){ if(_arBillRows[i].bn===bn)return _arBillRows[i]; } return null; }
 
 function renderArBillRows(){
-    var bn=_arBillV('arbill-q-bn'),nm=_arBillV('arbill-q-name'),cu=_arBillV('arbill-q-cust');
+    var bn=_arBillV('arbill-q-bn'),ba=_arBillV('arbill-q-batch'),cu=_arBillV('arbill-q-cust');
     var rows=_arBillRows.filter(function(b){
-        return (!bn||String(b.bn).indexOf(bn)>=0)&&(!nm||String(b.name).indexOf(nm)>=0)&&(!cu||String(b.cust).indexOf(cu)>=0);
+        return (!bn||String(b.bn).indexOf(bn)>=0)&&(!ba||String(b.batch).indexOf(ba)>=0)&&(!cu||String(b.cust).indexOf(cu)>=0);
     });
-    if(!rows.length)return '<tr><td colspan="14" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    if(!rows.length)return '<tr><td colspan="17" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
     return rows.map(function(b,i){
         var h='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
         h+='<td class="px-3 py-2.5 text-text-muted">'+(i+1)+'</td>';
         h+='<td class="px-3 py-2.5"><input type="checkbox" class="arbill-check" value="'+esc(b.bn)+'"></td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap"><a onclick="openArBillDetail(\''+esc(b.bn)+'\')" class="font-medium text-primary-700 hover:underline cursor-pointer">'+esc(b.bn)+'</a></td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.name)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.batch)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.cust)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.cur)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(b.amt)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.basecur)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(b.rmb)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-orange-600">'+esc(b.used)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-green-600">'+esc(b.unused)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.cyc)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.due)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap">'+arStatusBadge(b.st)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.rk||'')+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.src)+'</td>';
@@ -77,7 +81,7 @@ function arBillVoidSelected(){
 
 function arBillFeeTableHtml(b){
     var fees=b.fees||[];
-    var cols=['运单号','客户名称','业务员名称','费用名称','金额(原币)','币别','汇率','金额(人民币)'];
+    var cols=['运单号','客户名称','业务员名称','费用名称','金额(原币)','币别','汇率','金额(本位币)'];
     var h='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary"><th class="px-3 py-2.5 text-left font-semibold" style="width:48px">#</th>';
     cols.forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';
@@ -110,7 +114,10 @@ function openArBillDetail(bn){
     function fld(label,val){ return '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr(label)+'</label><input readonly value="'+esc(val)+'" class="'+ro+'"></div>'; }
     var h='<div class="space-y-5">';
     h+='<div>'+sec('基本信息')+'<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
-    h+=fld('应收账单号',b.bn)+fld('账单名称',b.name)+fld('客户名称',b.cust)+fld('金额（人民币）',b.rmb)+fld('账单创建时间',b.ct);
+    h+=fld('应收账单号',b.bn)+fld('账单批次号',b.batch)+fld('客户名称',b.cust);
+    h+=fld('币别',b.cur)+fld('金额（原币）',b.amt)+fld('本位币币别',b.basecur);
+    h+=fld('金额（本位币）',b.rmb)+fld('账单结算周期',b.cyc)+fld('账单到期时间',b.due);
+    h+=fld('账单创建时间',b.ct);
     h+='</div></div>';
     h+='<div>'+sec('费用明细')+arBillFeeTableHtml(b)+'</div>';
     h+='</div>';
@@ -126,7 +133,7 @@ function generateArBillPage(id){
     h+='<div class="flex-shrink-0 border-b border-surface-200 bg-white">';
     h+='<div class="px-4 pt-3 flex items-end gap-4 flex-wrap">';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('应收账单号')+'</label><input id="arbill-q-bn" class="'+inputCls+'" placeholder="'+tr('应收账单号')+'"></div>';
-    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('账单名称')+'</label><input id="arbill-q-name" class="'+inputCls+'" placeholder="'+tr('账单名称')+'"></div>';
+    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('账单批次号')+'</label><input id="arbill-q-batch" class="'+inputCls+'" placeholder="'+tr('账单批次号')+'"></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('客户名称')+'</label><input id="arbill-q-cust" class="'+inputCls+'" placeholder="'+tr('客户名称')+'"></div>';
     h+='</div>';
     h+='<div class="px-4 py-3 flex items-center gap-2 flex-wrap">';
@@ -134,9 +141,9 @@ function generateArBillPage(id){
     h+='<button onclick="arBillDetailSelected()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('详情')+'</button>';
     h+='<button onclick="arBillVoidSelected()" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('作废')+'</button>';
     h+='</div></div>';
-    h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto"><table class="w-full text-sm" style="min-width:1500px;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto"><table class="w-full text-sm" style="min-width:1900px;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     h+='<th class="px-3 py-3 text-left font-semibold" style="width:40px">#</th><th class="px-3 py-3 text-left font-semibold" style="width:40px"><input type="checkbox" onchange="document.querySelectorAll(\'.arbill-check\').forEach(function(c){c.checked=this.checked;}.bind(this))"></th>';
-    ['应收账单号','账单名称','客户名称','币别','金额(原币)','金额(人民币)','已核销金额','待核销金额','核销状态','备注','数据来源','创建时间'].forEach(function(c){h+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    ['应收账单号','账单批次号','客户名称','币别','金额(原币)','本位币币别','金额(本位币)','已核销金额','待核销金额','结算周期','账单到期时间','核销状态','备注','数据来源','创建时间'].forEach(function(c){h+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody id="arbill-tbody">'+renderArBillRows()+'</tbody></table></div></div>';
     h+='</div>';
     return h;

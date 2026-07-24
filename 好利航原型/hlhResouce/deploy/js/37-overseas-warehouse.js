@@ -68,16 +68,17 @@ TC['ow-arrival'].noAutoAudit=true;
 
 /* ---------- 需求4：海外仓出库(按提货单逐件扫描出库) ---------- */
 addPrototypeTable('ow-outbound','海外仓出库',
-    '出库单号|放货单DO号|Job号|客户|目的仓库|提货方式|应出件数|已出件数|出库进度|出库状态|操作',
+    '放货单DO号|预约提货单号|Job号|批次号|客户|目的仓库|提货方式|应出件数|已出件数|出库进度|出库状态|出库操作人|操作时间|操作网点|操作',
     ['待出库','出库中','已出库','已签收'],
     [
-        ['OUT-20260716-001','DO-NG-20260715-00023','HT-NG-20260715-00023','东莞市鑫海物流','拉各斯海外仓','上门提货','8','8','8/8','已签收'],
-        ['OUT-20260716-002','DO-NG-20260713-00040','HT-NG-20260713-00040','深圳市华运达国际货运','拉各斯海外仓','上门提货','20','12','12/20','出库中'],
-        ['OUT-20260716-003','DO-SN-20260715-00088','HT-SN-20260715-00088','上海锦程国际贸易','达喀尔海外仓','派送','12','0','0/12','待出库']
+        ['DO-NG-20260715-00023','DR-20260715-023','HT-NG-20260715-00023','B2607-01','东莞市鑫海物流','拉各斯海外仓','上门提货','8','8','8/8','已签收','李仓管','2026-07-16 09:20','拉各斯海外仓'],
+        ['DO-NG-20260713-00040','DR-20260713-011','HT-NG-20260713-00040','B2606-09','深圳市华运达国际货运','拉各斯海外仓','上门提货','20','12','12/20','出库中','王海波','2026-07-16 10:35','拉各斯海外仓'],
+        ['DO-SN-20260715-00088','DR-20260715-024','HT-SN-20260715-00088','B2607-02','上海锦程国际贸易','达喀尔海外仓','派送','12','0','0/12','待出库','—','—','达喀尔海外仓']
     ],
     [
-        {label:'出库单号',type:'text'},
         {label:'放货单DO号',type:'text'},
+        {label:'预约提货单号',type:'text'},
+        {label:'批次号',type:'text'},
         {label:'客户',type:'text'},
         {label:'目的仓库',type:'select',options:OW_WAREHOUSES},
         {label:'出库状态',type:'select',options:['待出库','出库中','已出库','已签收']}
@@ -678,13 +679,14 @@ function openOverseasOutboundDetail(id,rowIdx){
     var d=owRowData(id,rowIdx);
     var row=d.row,headers=(d.c.h||[]);
     if(!row){showToast(tr('未找到出库数据'));return;}
-    var outNo=owCell(row,headers,'出库单号');
+    var doNo=owCell(row,headers,'放货单DO号');
     var released=parseInt(owCell(row,headers,'已出件数')||'0',10);
     var total=parseInt(owCell(row,headers,'应出件数')||'0',10);
     var h='<div class="space-y-5">';
     h+='<section>'+owSectionTitle('放货单信息（凭提货单DO出库）')+owInfoGrid([
-        ['出库单号',outNo],['放货单DO号',owCell(row,headers,'放货单DO号')],['Job号',owCell(row,headers,'Job号')],['客户',owCell(row,headers,'客户')],
-        ['目的仓库',owCell(row,headers,'目的仓库')],['提货方式',owCell(row,headers,'提货方式')],['应出件数',String(total)],['出库状态',owCell(row,headers,'出库状态')]
+        ['放货单DO号',doNo],['预约提货单号',owCell(row,headers,'预约提货单号')],['Job号(提单号)',owCell(row,headers,'Job号')],['批次号',owCell(row,headers,'批次号')],
+        ['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')],['提货方式',owCell(row,headers,'提货方式')],['应出件数',String(total)],
+        ['出库状态',owCell(row,headers,'出库状态')],['出库操作人',owCell(row,headers,'出库操作人')],['操作时间',owCell(row,headers,'操作时间')],['操作网点',owCell(row,headers,'操作网点')]
     ])+'</section>';
     h+='<section>'+owSectionTitle('按件出库扫描进度（双扫码：放货码 + 货物标签）')+'<div class="rounded-lg border border-surface-200 bg-white p-4">'+owProgressBar(released,total)+'</div></section>';
     var subRows=[
@@ -705,23 +707,60 @@ function openOverseasOutboundDetail(id,rowIdx){
     h+='</div>';
     var footer='<button onclick="openOverseasQuickOutbound(\''+id+'\','+rowIdx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('快捷出库')+'</button>'+
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('关闭')+'</button>';
-    owOpenModal(tr('海外仓出库详情')+' - '+outNo,'74%',h,footer);
+    owOpenModal(tr('海外仓出库详情')+' - '+doNo,'74%',h,footer);
 }
 
-/* ---------- TMS 快捷出库（补充 App）：核验码+身份+双签字 → 出库 ---------- */
+/* 出库校验码（由放货单DO号推导，PDA/快捷出库/查看校验码保持一致） */
+function owOutboundCode(doNo){return '8'+String(doNo||'').replace(/\D/g,'').slice(-4)+'C';}
+function owCurrentOperator(){
+    try{
+        if(typeof DEMO_ACCOUNTS!=='undefined'&&typeof _currentAccount!=='undefined'){
+            var a=DEMO_ACCOUNTS.find(function(x){return x.id===_currentAccount;});
+            if(a&&a.name)return a.name;
+        }
+    }catch(e){}
+    return '当前操作员';
+}
+function owNowStr(){
+    var d=new Date();
+    var p=function(n){return (n<10?'0':'')+n;};
+    return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+
+/* ---------- 查看校验码：显示放货单二维码与对应一次性校验码 ---------- */
+function openOverseasOutboundCode(id,rowIdx){
+    var d=owRowData(id,rowIdx);
+    var row=d.row,headers=(d.c.h||[]);
+    if(!row){showToast(tr('未找到出库数据'));return;}
+    var doNo=owCell(row,headers,'放货单DO号');
+    var code=owOutboundCode(doNo);
+    var h='<div class="space-y-4">';
+    h+='<section>'+owSectionTitle('放货单信息')+owInfoGrid([
+        ['放货单DO号',doNo],['预约提货单号',owCell(row,headers,'预约提货单号')],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')]
+    ],4)+'</section>';
+    h+='<section>'+owSectionTitle('放货二维码 · 一次性校验码');
+    h+='<div class="flex flex-wrap items-center gap-6 rounded-lg border border-surface-200 bg-white p-4">';
+    h+='<div class="text-center">'+owQrBlock()+'<div class="text-[11px] text-text-muted mt-1">'+tr('仅可核销一次')+'</div></div>';
+    h+='<div class="flex-1 min-w-[200px]"><div class="text-xs text-text-muted mb-1">'+tr('一次性校验码')+'</div><div class="inline-block px-4 py-2 rounded-lg bg-primary-50 border border-primary-200 text-2xl font-bold tracking-widest text-primary-700">'+esc(code)+'</div><div class="mt-3 text-[11px] text-text-muted">'+tr('出库扫描/快捷出库时凭此二维码或校验码核验放货。')+'</div></div>';
+    h+='</div></section>';
+    h+='</div>';
+    owOpenModal(tr('查看校验码')+' - '+doNo,'56%',h);
+}
+
+/* ---------- TMS 快捷出库（补充 App）：校验码+身份+签字 → 出库 ---------- */
 function openOverseasQuickOutbound(id,rowIdx){
     var d=owRowData(id,rowIdx);
     var row=d.row,headers=(d.c.h||[]);
     if(!row){showToast(tr('未找到出库数据'));return;}
-    var outNo=owCell(row,headers,'出库单号');
     var doNo=owCell(row,headers,'放货单DO号');
     var total=owCell(row,headers,'应出件数');
-    var code='8'+String(doNo).slice(-5,-1)+'C';
+    var code=owOutboundCode(doNo);
     var h='<div class="space-y-4">';
-    h+='<div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">'+tr('快捷出库为 TMS 端对 App 的补充：出库仍以预约提货单/放货单DO为准，仅做查询与快捷放行，不新增出库单。')+'</div>';
+    h+='<div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">'+tr('快捷出库为 TMS 端对 App 的补充：出库仍以预约提货单/放货单DO为准，快捷放行全部件数。')+'</div>';
     h+='<section>'+owSectionTitle('放货单信息')+owInfoGrid([
-        ['出库单号',outNo],['放货单DO号',doNo],['Job号',owCell(row,headers,'Job号')],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')],['提货方式',owCell(row,headers,'提货方式')],['应出件数',total],['出库状态',owCell(row,headers,'出库状态')]
+        ['放货单DO号',doNo],['预约提货单号',owCell(row,headers,'预约提货单号')],['Job号(提单号)',owCell(row,headers,'Job号')],['批次号',owCell(row,headers,'批次号')],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')],['提货方式',owCell(row,headers,'提货方式')],['应出件数',total]
     ])+'</section>';
+    h+='<section>'+owSectionTitle('出库核验');
     h+='<section>'+owSectionTitle('出库核验');
     h+='<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
     h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('一次性验证码')+'<span class="text-red-500 ml-1">*</span></label><input id="ow-quick-code" type="text" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg" placeholder="'+tr('演示')+'：'+esc(code)+'"></div>';
@@ -737,7 +776,7 @@ function openOverseasQuickOutbound(id,rowIdx){
     var codeAttr=esc(code).replace(/'/g,"");
     var footer='<button onclick="submitOverseasQuickOutbound(\''+id+'\','+rowIdx+',\''+codeAttr+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认快捷出库')+'</button>'+
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('取消')+'</button>';
-    owOpenModal(tr('快捷出库')+' - '+outNo,'70%',h,footer);
+    owOpenModal(tr('快捷出库')+' - '+doNo,'70%',h,footer);
 }
 function submitOverseasQuickOutbound(id,rowIdx,code){
     var codeEl=document.getElementById('ow-quick-code');
@@ -746,21 +785,100 @@ function submitOverseasQuickOutbound(id,rowIdx,code){
     if(!document.getElementById('ow-quick-id').checked){showToast(tr('请先核验提货人身份'));return;}
     if(!document.getElementById('ow-quick-sign-cust').checked){showToast(tr('请客户验货电子签字'));return;}
     if(!document.getElementById('ow-quick-sign-wh').checked){showToast(tr('请仓管签字'));return;}
-    /* 更新对应行：已出=应出，进度满，状态已出库 */
+    /* 更新对应行：已出=应出，进度满，状态已出库，回填出库操作人/时间/网点 */
     var c=TC[id]||{};var d=owRowData(id,rowIdx);var row=d.row,headers=(c.h||[]);
-    var outNo=owCell(row,headers,'出库单号');
-    var srcRow=(c.d||[]).find(function(r){return r[0]===outNo;});
+    var iDo=headers.indexOf('放货单DO号');
+    var doNo=owCell(row,headers,'放货单DO号');
+    var srcRow=(c.d||[]).find(function(r){return r[iDo]===doNo;});
     if(srcRow){
         var iTotal=headers.indexOf('应出件数'),iDone=headers.indexOf('已出件数'),iProg=headers.indexOf('出库进度'),iSt=headers.indexOf('出库状态');
+        var iOp=headers.indexOf('出库操作人'),iTime=headers.indexOf('操作时间'),iSite=headers.indexOf('操作网点');
         var t=srcRow[iTotal];
         if(iDone>=0)srcRow[iDone]=t;
         if(iProg>=0)srcRow[iProg]=t+'/'+t;
         if(iSt>=0)srcRow[iSt]='已出库';
+        if(iOp>=0)srcRow[iOp]=owCurrentOperator();
+        if(iTime>=0)srcRow[iTime]=owNowStr();
+        if(iSite>=0&&(!srcRow[iSite]||srcRow[iSite]==='—'))srcRow[iSite]=owCell(row,headers,'目的仓库');
     }
     closeCrudModal();
     var mc=document.getElementById('main-content');
     if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,1,'');
-    showToast(tr('快捷出库完成：已核验放行并减库存生成POD')+'（'+outNo+'）');
+    showToast(tr('快捷出库完成：已核验放行并减库存生成POD')+'（'+doNo+'）');
+}
+
+/* ---------- 新增出库单（参照提货预约：选客户→自动带仓库→加载运单明细→勾选出库子单） ---------- */
+function openOverseasOutboundCreate(){
+    _owCreateSubSel={};
+    var h='<div class="space-y-5">';
+    /* 1. 出库条件 */
+    h+='<section>'+owSectionTitle('① 出库条件（选择客户后按提单号/批次号加载运单明细）');
+    h+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4">';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('客户')+'<span class="text-red-500 ml-1">*</span></label>'+
+        '<select id="ow-create-cust" onchange="owPickupOnCustomerChange()" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white focus:border-primary-400"><option value="">'+tr('请选择')+'</option>'+
+        OW_PICKUP_CUSTOMERS.map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join('')+'</select></div>';
+    h+=owCreateInput('提单号（Job号）','ow-create-bl','对应系统提单号');
+    h+=owCreateInput('批次号','ow-create-alloc','对应系统配舱单号/批次号');
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('目的仓库')+'<span class="text-red-500 ml-1">*</span></label>'+
+        '<input id="ow-create-wh" type="text" readonly class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary" placeholder="'+tr('随所选客户自动带出')+'"></div>';
+    h+='</div>';
+    h+='<div class="mt-3"><button type="button" onclick="owPickupLoadWaybills()" class="h-9 px-4 rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('加载运单明细')+'</button></div>';
+    h+='</section>';
+    /* 2. 出库明细（同提货预约选择设计） */
+    h+='<section id="ow-create-wb-section" class="hidden">'+owSectionTitle('② 出库明细（勾选运单默认全选子单，点“子单选择”调整出库子单）');
+    h+='<div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm">';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+
+        '<th class="px-3 py-2 w-10 text-center"><input type="checkbox" onclick="owPickupToggleAll(this)"></th>'+
+        ['运单号','品名','可出库件数','体积(CBM)','重量(KG)','已选件数','子单选择'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+
+        '</tr></thead><tbody>';
+    _owPickupWaybills.forEach(function(w,i){
+        h+='<tr class="border-t border-surface-100">'+
+            '<td class="px-3 py-2 text-center"><input type="checkbox" class="ow-create-wb-chk" data-idx="'+i+'" onchange="owPickupOnWbCheck('+i+')"></td>'+
+            '<td class="px-3 py-2 font-medium text-primary-700">'+esc(w.wb)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+tr(w.name)+'</td>'+
+            '<td class="px-3 py-2 font-medium">'+w.pcs+'</td>'+
+            '<td class="px-3 py-2">'+esc(w.vol)+'</td>'+
+            '<td class="px-3 py-2">'+esc(w.weight)+'</td>'+
+            '<td class="px-3 py-2"><span id="ow-selpcs-'+i+'" class="font-semibold text-primary-700">0</span></td>'+
+            '<td class="px-3 py-2"><a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="openOwSubSelectModal('+i+')">'+tr('子单选择')+'</a></td>'+
+        '</tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div class="mt-2 text-[11px] text-text-muted">'+tr('已选件数按所选子单实时统计；生成出库单以“已选件数”为应出件数。')+'</div>';
+    h+='</section>';
+    h+='</div>';
+    var footer='<button onclick="submitOverseasOutboundCreate()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('生成出库单')+'</button>'+
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('取消')+'</button>';
+    owOpenModal(tr('新增出库单'),'86%',h,footer);
+}
+function submitOverseasOutboundCreate(){
+    var custEl=document.getElementById('ow-create-cust');
+    var whEl=document.getElementById('ow-create-wh');
+    if(!custEl||!custEl.value){showToast(tr('请先选择客户'));return;}
+    var checked=Array.prototype.slice.call(document.querySelectorAll('.ow-create-wb-chk')).filter(function(c){return c.checked;});
+    if(checked.length===0){showToast(tr('请至少勾选一个运单'));return;}
+    var totalPcs=0;
+    checked.forEach(function(c){
+        var wi=parseInt(c.getAttribute('data-idx'),10);
+        var sel=_owCreateSubSel[wi]||[];
+        totalPcs+=sel.length;
+    });
+    if(totalPcs===0){showToast(tr('所选运单未选择子单，请点“子单选择”'));return;}
+    var seq=TC['ow-outbound'].d.length+1;
+    var blEl=document.getElementById('ow-create-bl');
+    var allocEl=document.getElementById('ow-create-alloc');
+    var job=(blEl&&blEl.value)?blEl.value:'HT-NEW-20260716-'+String(100+seq).slice(-3);
+    var batch=(allocEl&&allocEl.value)?allocEl.value:'B2607-NEW';
+    var doNo='DO-'+job.replace(/^HT-/,'');
+    var drNo='DR-20260716-'+String(200+seq).slice(-3);
+    var wh=(whEl&&whEl.value)||'拉各斯海外仓';
+    /* 列顺序须与表头一致：放货单DO号|预约提货单号|Job号|批次号|客户|目的仓库|提货方式|应出件数|已出件数|出库进度|出库状态|出库操作人|操作时间|操作网点 */
+    var newRow=[doNo,drNo,job,batch,custEl.value,wh,'上门提货',String(totalPcs),'0','0/'+totalPcs,'待出库','—','—',wh];
+    TC['ow-outbound'].d.unshift(newRow);
+    closeCrudModal();
+    var mc=document.getElementById('main-content');
+    if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage('ow-outbound',1,'');
+    showToast(tr('出库单已生成')+'：'+doNo+'（'+checked.length+tr('个运单')+' / '+totalPcs+tr('件')+'）');
 }
 
 /* ============================================================

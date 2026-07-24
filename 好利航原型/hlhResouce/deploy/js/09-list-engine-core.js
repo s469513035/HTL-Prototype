@@ -912,6 +912,7 @@ function renderToolbarAction(action,id){
     if(id==='fin-fee-mgmt'&&action.type==='add')click='openFeeMgmtFeeModal(\'add\',\''+id+'\',-1)';
     else if(id==='fin-fee-mgmt'&&action.type==='edit')click='openSelectedFeeMgmtEdit(\''+id+'\')';
     else if(id==='ow-pickup'&&action.type==='add')click='openOverseasPickupCreate()';
+    else if(id==='ow-outbound'&&action.type==='add')click='openOverseasOutboundCreate()';
     else if(action.type==='add')click='openCrudModal(\'add\',\''+id+'\',-1)';
     else if(action.type==='edit')click='openSelectedCrud(\'edit\',\''+id+'\')';
     else if(action.type==='view')click='openSelectedCrud(\'view\',\''+id+'\')';

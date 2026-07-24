@@ -553,6 +553,92 @@ function submitOverseasPickupCreate(){
     showToast(tr('提货单已生成')+'：'+apptNo+'（'+detail.length+tr('个运单')+' / '+totalPcs+tr('件')+'）');
 }
 
+/* ================= 需求1：编辑提货预约（只读锁创建期字段，仅改提货方式/派送费/预约时段/提货人） ================= */
+function owEditInput(label,id,value){
+    return '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr(label)+'</label>'+
+        '<input id="'+id+'" type="text" value="'+esc(value||'')+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white focus:border-primary-400"></div>';
+}
+function owEditToggleType(){
+    var radios=document.getElementsByName('ow-edit-pickup');
+    var val='上门提货';
+    for(var i=0;i<radios.length;i++){if(radios[i].checked)val=radios[i].value;}
+    var show=val==='派送';
+    var feeWrap=document.getElementById('ow-edit-fee-wrap');
+    var addrWrap=document.getElementById('ow-edit-addr-wrap');
+    if(feeWrap){feeWrap.classList.toggle('hidden',!show);feeWrap.classList.toggle('flex',show);}
+    if(addrWrap)addrWrap.classList.toggle('hidden',!show);
+}
+function openOverseasPickupEdit(id,rowIdx){
+    var d=owRowData(id,rowIdx);
+    var row=d.row,headers=(d.c.h||[]);
+    if(!row){showToast(tr('未找到提货预约数据'));return;}
+    var apptNo=owCell(row,headers,'提货申请号');
+    var status=owCell(row,headers,'状态');
+    var pickupType=owCell(row,headers,'提货方式')||'上门提货';
+    var isDelivery=pickupType==='派送';
+    var deliveryFee=owCell(row,headers,'派送费(USD)');
+    var slot=owCell(row,headers,'预约时段');
+    var slotTime=(slot&&slot.indexOf(' ')>=0)?slot.split(' ')[1]:'';
+    var h='<div class="space-y-5">';
+    h+='<div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">'+tr('客户/提单号/配舱单号/运单明细在创建时确定不可改；此处仅编辑提货方式、派送费、预约时段与提货人信息。费用与状态由系统控制。')+'</div>';
+    /* 只读信息 */
+    h+='<section>'+owSectionTitle('提货预约信息（只读）')+owInfoGrid([
+        ['提货申请号',apptNo],['客户',owCell(row,headers,'客户')],['提单号(Job号)',owCell(row,headers,'Job号')],['配舱单号(批次)',owCell(row,headers,'批次')],
+        ['目的仓库',owCell(row,headers,'目的仓库')],['可提货件数',owCell(row,headers,'件数')],['应收合计(USD)',owCell(row,headers,'应收合计(USD)')],['当前状态',status]
+    ])+'</section>';
+    /* 可编辑 */
+    h+='<section>'+owSectionTitle('提货单信息（可编辑）');
+    h+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4">';
+    h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary">'+tr('提货方式')+'<span class="text-red-500 ml-1">*</span></label>';
+    h+='<div class="flex items-center gap-6 h-9">'+
+        '<label class="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" name="ow-edit-pickup" value="上门提货"'+(!isDelivery?' checked':'')+' onchange="owEditToggleType()" class="accent-primary-600">'+tr('上门提货')+'</label>'+
+        '<label class="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" name="ow-edit-pickup" value="派送"'+(isDelivery?' checked':'')+' onchange="owEditToggleType()" class="accent-primary-600">'+tr('派送')+'</label>'+
+        '</div></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('预约时段')+'</label><select id="ow-edit-slot" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"><option value="">'+tr('请选择')+'</option>'+
+        ['09:00','10:00','11:00','14:00','15:00'].map(function(o){return '<option value="'+o+'"'+(slotTime===o?' selected':'')+'>'+o+'</option>';}).join('')+'</select></div>';
+    h+='<div id="ow-edit-fee-wrap" class="'+(isDelivery?'flex':'hidden')+' flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('派送费(USD)')+'<span class="text-red-500 ml-1">*</span></label><input id="ow-edit-fee" type="number" min="0" value="'+(isDelivery?esc(deliveryFee):'')+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+tr('派送方式必填')+'"></div>';
+    h+='</div>';
+    h+='<div id="ow-edit-addr-wrap" class="'+(isDelivery?'':'hidden')+' mt-3"><div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('派送地址')+'</label><input id="ow-edit-addr" type="text" value="Lagos, Ikeja GRA, 23 Isaac John St." class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div></div>';
+    h+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">';
+    h+=owEditInput('提货人姓名','ow-edit-picker','Mr. Okafor');
+    h+=owEditInput('提货人电话','ow-edit-phone','+234 802 000 111');
+    h+=owEditInput('证件号','ow-edit-id','ID·A1234567');
+    h+=owEditInput('车牌号','ow-edit-plate','LOS-882-KJA');
+    h+='</div>';
+    h+='</section>';
+    h+='</div>';
+    var footer='<button onclick="submitOverseasPickupEdit(\''+id+'\','+rowIdx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存')+'</button>'+
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('取消')+'</button>';
+    owOpenModal(tr('编辑提货预约')+' - '+apptNo,'72%',h,footer);
+}
+function submitOverseasPickupEdit(id,rowIdx){
+    var c=TC[id]||{};
+    var d=owRowData(id,rowIdx);var row=d.row,headers=(c.h||[]);
+    if(!row)return;
+    var radios=document.getElementsByName('ow-edit-pickup');
+    var pickup='上门提货';
+    for(var i=0;i<radios.length;i++){if(radios[i].checked)pickup=radios[i].value;}
+    var feeEl=document.getElementById('ow-edit-fee');
+    if(pickup==='派送'&&(!feeEl||!feeEl.value)){showToast(tr('派送方式请录入派送费'));return;}
+    var slotEl=document.getElementById('ow-edit-slot');
+    var slot=slotEl&&slotEl.value?('2026-07-17 '+slotEl.value):'—';
+    var fee=pickup==='派送'?parseFloat(feeEl.value||'0').toFixed(2):'—';
+    var apptNo=owCell(row,headers,'提货申请号');
+    var srcRow=(c.d||[]).find(function(r){return r[0]===apptNo;});
+    if(srcRow){
+        var iP=headers.indexOf('提货方式'),iF=headers.indexOf('派送费(USD)'),iS=headers.indexOf('预约时段');
+        if(iP>=0)srcRow[iP]=pickup;
+        if(iF>=0)srcRow[iF]=fee;
+        if(iS>=0)srcRow[iS]=slot;
+    }
+    closeCrudModal();
+    var mc=document.getElementById('main-content');
+    var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
+    var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
+    if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
+    showToast(tr('提货预约已更新')+'：'+apptNo);
+}
+
 /* ================= 需求3：海外仓到货详情（按配舱单逐件扫描进度） ================= */
 function openOverseasArrivalDetail(id,rowIdx){
     var d=owRowData(id,rowIdx);

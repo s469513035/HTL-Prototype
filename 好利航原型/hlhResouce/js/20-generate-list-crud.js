@@ -201,7 +201,7 @@ function generateListPage(id,page,statusFilter){
             } else {
                 actionHtml='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+viewClick+'">'+L.view+'</a>';
                 if(id==='ow-outbound')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openOverseasQuickOutbound(\''+id+'\','+gi+')">'+tr('快捷出库')+'</a>';
-                if(!hideEdit)actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':'openCrudModal(\'edit\',\''+id+'\','+gi+')')+'">'+L.edit+'</a>';
+                if(!hideEdit)actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='ow-pickup'?'openOverseasPickupEdit(\''+id+'\','+gi+')':'openCrudModal(\'edit\',\''+id+'\','+gi+')'))+'">'+L.edit+'</a>';
                 if(!hideDelete)actionHtml+='<a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="openActionModal(\''+deleteAction+'\',\''+id+'\','+gi+')">'+deleteLabel+'</a>';
             }
             h+='<td class="px-4 py-3 text-sm whitespace-nowrap" style="position:sticky;right:0;z-index:10;background:'+rowBg+';box-shadow:-4px 0 8px -4px rgba(0,0,0,0.1)">'+actionHtml+'</td>';

@@ -329,18 +329,28 @@ var OW_CUSTOMER_WAREHOUSE={
     '深圳市华运达国际货运':'拉各斯海外仓'
 };
 /* 运单明细（按客户+提单号/配舱单号条件加载）；子单字段对齐运单管理“子单信息”弹窗：长/宽/高/重量/体积 */
+/* 一个子单 = 一件，子单无件数(默认1)；运单“可提货件数”= 子单数 */
 var _owPickupWaybills=[
-    {wb:'WB-20260701002',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'服装配件',pcs:8,weight:'125.0',vol:'0.567',subs:[
-        {sub:'WB-20260701002-01',pcs:3,l:'55',w:'42',ht:'38',wt:'48.0',vol:'0.263'},
-        {sub:'WB-20260701002-02',pcs:3,l:'48',w:'36',ht:'30',wt:'45.0',vol:'0.194'},
-        {sub:'WB-20260701002-03',pcs:2,l:'40',w:'30',ht:'25',wt:'32.0',vol:'0.110'}]},
-    {wb:'WB-20260701012',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'手机配件',pcs:6,weight:'96.0',vol:'0.360',subs:[
-        {sub:'WB-20260701012-01',pcs:4,l:'50',w:'40',ht:'35',wt:'64.0',vol:'0.280'},
-        {sub:'WB-20260701012-02',pcs:2,l:'42',w:'32',ht:'28',wt:'32.0',vol:'0.080'}]},
-    {wb:'WB-20260701018',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'五金工具',pcs:5,weight:'72.0',vol:'0.300',subs:[
-        {sub:'WB-20260701018-01',pcs:3,l:'45',w:'35',ht:'30',wt:'44.0',vol:'0.180'},
-        {sub:'WB-20260701018-02',pcs:2,l:'38',w:'30',ht:'25',wt:'28.0',vol:'0.120'}]}
+    {wb:'WB-20260701002',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'服装配件',subs:[
+        {sub:'WB-20260701002-01',l:'55',w:'42',ht:'38',wt:'12.5',vol:'0.088'},
+        {sub:'WB-20260701002-02',l:'48',w:'36',ht:'30',wt:'11.0',vol:'0.052'},
+        {sub:'WB-20260701002-03',l:'40',w:'30',ht:'25',wt:'8.5',vol:'0.030'},
+        {sub:'WB-20260701002-04',l:'45',w:'35',ht:'28',wt:'9.5',vol:'0.044'}]},
+    {wb:'WB-20260701012',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'手机配件',subs:[
+        {sub:'WB-20260701012-01',l:'50',w:'40',ht:'35',wt:'16.5',vol:'0.070'},
+        {sub:'WB-20260701012-02',l:'42',w:'32',ht:'28',wt:'12.5',vol:'0.038'},
+        {sub:'WB-20260701012-03',l:'38',w:'30',ht:'25',wt:'10.0',vol:'0.029'}]},
+    {wb:'WB-20260701018',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'五金工具',subs:[
+        {sub:'WB-20260701018-01',l:'45',w:'35',ht:'30',wt:'15.0',vol:'0.047'},
+        {sub:'WB-20260701018-02',l:'38',w:'30',ht:'25',wt:'12.0',vol:'0.029'},
+        {sub:'WB-20260701018-03',l:'40',w:'32',ht:'28',wt:'13.0',vol:'0.036'}]}
 ];
+/* 运单件数/重量/体积由子单汇总（每子单1件） */
+_owPickupWaybills.forEach(function(w){
+    w.pcs=w.subs.length;
+    w.weight=w.subs.reduce(function(a,s){return a+(parseFloat(s.wt)||0);},0).toFixed(1);
+    w.vol=w.subs.reduce(function(a,s){return a+(parseFloat(s.vol)||0);},0).toFixed(3);
+});
 /* 新增提货预约的子单选择状态：waybill idx → 已选子单 idx 数组 */
 var _owCreateSubSel={};
 /* 已生成提货预约的提货明细：提货申请号 → [[运单号,品名,选中/总子单,已提件数,体积,重量],...] */
@@ -446,10 +456,8 @@ function owPickupOnWbCheck(i){
 }
 function owUpdateSelPcs(i){
     var sel=_owCreateSubSel[i]||[];
-    var pcs=0;
-    sel.forEach(function(si){var s=_owPickupWaybills[i].subs[si];if(s)pcs+=s.pcs;});
     var el=document.getElementById('ow-selpcs-'+i);
-    if(el)el.textContent=String(pcs);
+    if(el)el.textContent=String(sel.length);   /* 每子单1件，已选件数=已选子单数 */
 }
 /* 子单选择弹窗（字段对齐运单管理“子单信息”：#/子单号/长/宽/高/重量/体积） */
 function openOwSubSelectModal(i){
@@ -460,9 +468,9 @@ function openOwSubSelectModal(i){
     var m=document.createElement('div');
     m.id='ow-subsel-modal';
     m.className='fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4';
-    var html='<div class="w-full max-w-4xl rounded-2xl bg-white shadow-xl overflow-hidden">';
+    var html='<div class="w-full max-w-5xl rounded-2xl bg-white shadow-xl overflow-hidden">';
     html+='<div class="flex items-center justify-between px-5 py-3 border-b border-surface-200"><div class="text-sm font-semibold text-text-primary">'+tr('子单选择')+' - '+esc(w.wb)+'</div><button type="button" onclick="closeOwSubSelectModal()" class="w-8 h-8 rounded-full bg-surface-100 text-text-muted">×</button></div>';
-    html+='<div class="p-4 max-h-[72vh] overflow-auto"><div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    html+='<div class="p-4 max-h-[80vh] overflow-auto"><div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     html+='<th class="px-3 py-2 w-10 text-center"><input type="checkbox" id="ow-subsel-all" onclick="owSubSelToggleAll(this)"></th>';
     ['#','子单号','长(CM)','宽(CM)','高(CM)','重量(KG)','体积(CBM)'].forEach(function(c){html+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     html+='</tr></thead><tbody>';
@@ -520,7 +528,7 @@ function submitOverseasPickupCreate(){
         var sel=_owCreateSubSel[wi]||[];
         if(sel.length===0)return;
         var pcs=0,wt=0,vol=0;
-        sel.forEach(function(si){var s=w.subs[si];if(s){pcs+=s.pcs;wt+=parseFloat(s.wt)||0;vol+=parseFloat(s.vol)||0;}});
+        sel.forEach(function(si){var s=w.subs[si];if(s){pcs+=1;wt+=parseFloat(s.wt)||0;vol+=parseFloat(s.vol)||0;}});
         totalPcs+=pcs;totalWeight+=wt;totalVol+=vol;
         detail.push([w.wb,w.name,sel.length+'/'+w.subs.length,String(pcs),vol.toFixed(3),wt.toFixed(1)]);
     });

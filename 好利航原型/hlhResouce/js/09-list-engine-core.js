@@ -950,6 +950,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='genBill'&&id==='fin-fee-mgmt')click='openFeeMgmtGenBillModal(\''+id+'\')';
     else if(action.key==='trackMapping')click='showToast(\''+esc(tr('轨迹映射配置'))+'\')';
     else if(action.key==='subOrderInfo')click='openSubOrderInfoModal(\''+id+'\')';
+    else if(action.key==='owViewCode')click='openSelectedOverseasOutboundCode(\''+id+'\')';
     else if(action.key==='viewWaybillDetail')click='openSelectedWaybillDetail(\''+id+'\')';
     else if(action.key==='cancelWaybill')click='cancelSelectedWaybill(\''+id+'\')';
     else if(action.key==='voucherDetail')click='bankVoucherAction(\'detail\',\''+id+'\')';
@@ -1481,6 +1482,14 @@ function getToolbarActions(id){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
             {type:'add',label:'新增方案',variant:'primary'}
+        ];
+    }
+    if(id==='ow-outbound'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {type:'add',label:'新增出库单',variant:'primary'},
+            {key:'owViewCode',label:'查看校验码'},
+            {key:'export',label:'导出数据'}
         ];
     }
     const actions=[{key:'search',label:'查询数据',variant:'primary'},{type:'add',label:'新增数据',variant:'primary'},{key:'export',label:'导出数据'}];

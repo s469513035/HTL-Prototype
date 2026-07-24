@@ -727,6 +727,16 @@ function owNowStr(){
     return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
 }
 
+/* 工具栏“查看校验码”：作用于选中行（未选行则提示） */
+function openSelectedOverseasOutboundCode(id){
+    var idx=(typeof getSelectedRowIndex==='function')?getSelectedRowIndex():-1;
+    if(idx<0){
+        if(typeof openActionModal==='function')openActionModal('selectRequired',id,-1);
+        else showToast(tr('请先选择一行数据'));
+        return;
+    }
+    openOverseasOutboundCode(id,idx);
+}
 /* ---------- 查看校验码：显示放货单二维码与对应一次性校验码 ---------- */
 function openOverseasOutboundCode(id,rowIdx){
     var d=owRowData(id,rowIdx);

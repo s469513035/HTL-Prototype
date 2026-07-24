@@ -688,16 +688,16 @@ function openOverseasOutboundDetail(id,rowIdx){
         ['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')],['提货方式',owCell(row,headers,'提货方式')],['应出件数',String(total)],
         ['出库状态',owCell(row,headers,'出库状态')],['出库操作人',owCell(row,headers,'出库操作人')],['操作时间',owCell(row,headers,'操作时间')],['操作网点',owCell(row,headers,'操作网点')]
     ])+'</section>';
-    h+='<section>'+owSectionTitle('按件出库扫描进度（双扫码：放货码 + 货物标签）')+'<div class="rounded-lg border border-surface-200 bg-white p-4">'+owProgressBar(released,total)+'</div></section>';
+    h+='<section>'+owSectionTitle('按件出库扫描进度（双扫码：放货码 + 子单号）')+'<div class="rounded-lg border border-surface-200 bg-white p-4">'+owProgressBar(released,total)+'</div></section>';
     var subRows=[
-        ['DO-01','WB-20260701004','A区-A03','已出库'],
-        ['DO-02','WB-20260701004','A区-A03','已出库'],
-        ['DO-03','WB-20260701005','B区-B12', released>=total?'已出库':'待出库'],
-        ['DO-04','WB-20260701005','B区-B12', released>=total?'已出库':'待出库']
+        ['WB-20260701004-01','WB-20260701004','A区-A03','已出库'],
+        ['WB-20260701004-02','WB-20260701004','A区-A03','已出库'],
+        ['WB-20260701005-01','WB-20260701005','B区-B12', released>=total?'已出库':'待出库'],
+        ['WB-20260701005-02','WB-20260701005','B区-B12', released>=total?'已出库':'待出库']
     ];
     h+='<section>'+owSectionTitle('子件出库明细');
     h+='<div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm">';
-    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['货物标签','运单号','货区货位','出库状态'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['子单号','运单号','货区货位','出库状态'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
     subRows.forEach(function(r){
         var out=r[3]==='已出库';
         h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-medium text-primary-700">'+esc(r[0])+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r[1])+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r[2])+'</td><td class="px-3 py-2 '+(out?'text-green-600 font-semibold':'text-text-secondary')+'">'+tr(r[3])+'</td></tr>';
@@ -757,7 +757,19 @@ function openOverseasOutboundCode(id,rowIdx){
     owOpenModal(tr('查看校验码')+' - '+doNo,'56%',h);
 }
 
-/* ---------- TMS 快捷出库（补充 App）：校验码+身份+签字 → 出库 ---------- */
+/* 快捷出库单据附件上传瓦片（替代客户/仓管签字）：签收单/签字单 */
+function owQuickDocTile(key,label){
+    return '<button type="button" id="ow-quick-doc-'+key+'" data-uploaded="0" onclick="owQuickUploadDoc(\''+key+'\',\''+label+'\')" class="h-16 rounded-lg border border-dashed border-primary-200 bg-primary-50/40 text-primary-600 flex flex-col items-center justify-center gap-1 text-sm font-medium cursor-pointer"><span class="text-lg leading-none">＋</span><span>'+tr('上传')+tr(label)+'</span></button>';
+}
+function owQuickUploadDoc(key,label){
+    var btn=document.getElementById('ow-quick-doc-'+key);
+    if(!btn)return;
+    btn.dataset.uploaded='1';
+    btn.className='h-16 rounded-lg border border-green-300 bg-green-50 text-green-700 flex flex-col items-center justify-center gap-1 text-sm font-medium cursor-pointer';
+    btn.innerHTML='<span class="text-lg leading-none">✓</span><span>'+tr(label)+' '+tr('已上传')+'</span>';
+    showToast(tr(label)+' '+tr('已上传'));
+}
+/* ---------- TMS 快捷出库（补充 App）：校验码+身份+上传单据 → 出库 ---------- */
 function openOverseasQuickOutbound(id,rowIdx){
     var d=owRowData(id,rowIdx);
     var row=d.row,headers=(d.c.h||[]);
@@ -771,17 +783,14 @@ function openOverseasQuickOutbound(id,rowIdx){
         ['放货单DO号',doNo],['预约提货单号',owCell(row,headers,'预约提货单号')],['Job号(提单号)',owCell(row,headers,'Job号')],['批次号',owCell(row,headers,'批次号')],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')],['提货方式',owCell(row,headers,'提货方式')],['应出件数',total]
     ])+'</section>';
     h+='<section>'+owSectionTitle('出库核验');
-    h+='<section>'+owSectionTitle('出库核验');
     h+='<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
     h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('一次性验证码')+'<span class="text-red-500 ml-1">*</span></label><input id="ow-quick-code" type="text" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg" placeholder="'+tr('演示')+'：'+esc(code)+'"></div>';
     h+='<label class="flex items-end gap-2 text-sm text-text-secondary pb-2"><input type="checkbox" id="ow-quick-id" class="rounded border-surface-300 text-primary-600"><span>'+tr('身份核验一致（证件/电话/授权）')+'</span></label>';
     h+='<div class="flex items-end pb-1"><span class="text-[11px] text-text-muted">'+tr('二维码核销由现场扫描或此处校验码替代')+'</span></div>';
     h+='</div>';
-    h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">';
-    h+='<label class="flex items-center gap-2 text-sm text-text-secondary rounded-lg border border-surface-200 px-3 py-2"><input type="checkbox" id="ow-quick-sign-cust" class="rounded border-surface-300 text-primary-600"><span>'+tr('客户验货 · 电子签字')+'</span></label>';
-    h+='<label class="flex items-center gap-2 text-sm text-text-secondary rounded-lg border border-surface-200 px-3 py-2"><input type="checkbox" id="ow-quick-sign-wh" class="rounded border-surface-300 text-primary-600"><span>'+tr('仓管签字')+'</span></label>';
-    h+='</div></section>';
-    h+='<div class="rounded-lg bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">'+tr('校验码 + 客户签字 + 仓管签字 全部满足后方可快捷出库（按提货单一键放行全部件数）。')+'</div>';
+    h+='<div class="mt-3 mb-1 text-[11px] font-medium text-text-secondary">'+tr('出库单据上传（签收单 / 签字单，支持拍照或选择图片）')+'</div>';
+    h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-4">'+owQuickDocTile('pod','签收单')+owQuickDocTile('sign','签字单')+'</div></section>';
+    h+='<div class="rounded-lg bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">'+tr('校验码 + 身份核验 + 上传签收单/签字单 全部满足后方可快捷出库（一键放行全部件数）。')+'</div>';
     h+='</div>';
     var codeAttr=esc(code).replace(/'/g,"");
     var footer='<button onclick="submitOverseasQuickOutbound(\''+id+'\','+rowIdx+',\''+codeAttr+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认快捷出库')+'</button>'+
@@ -793,8 +802,10 @@ function submitOverseasQuickOutbound(id,rowIdx,code){
     if(!codeEl||!codeEl.value.trim()){showToast(tr('请输入一次性验证码'));return;}
     if(codeEl.value.trim()!==code){showToast(tr('验证码不正确，禁止放货'));codeEl.focus();return;}
     if(!document.getElementById('ow-quick-id').checked){showToast(tr('请先核验提货人身份'));return;}
-    if(!document.getElementById('ow-quick-sign-cust').checked){showToast(tr('请客户验货电子签字'));return;}
-    if(!document.getElementById('ow-quick-sign-wh').checked){showToast(tr('请仓管签字'));return;}
+    var podEl=document.getElementById('ow-quick-doc-pod');
+    var signEl=document.getElementById('ow-quick-doc-sign');
+    if(!podEl||podEl.dataset.uploaded!=='1'){showToast(tr('请上传签收单'));return;}
+    if(!signEl||signEl.dataset.uploaded!=='1'){showToast(tr('请上传签字单'));return;}
     /* 更新对应行：已出=应出，进度满，状态已出库，回填出库操作人/时间/网点 */
     var c=TC[id]||{};var d=owRowData(id,rowIdx);var row=d.row,headers=(c.h||[]);
     var iDo=headers.indexOf('放货单DO号');

@@ -701,7 +701,7 @@ function openOverseasOutboundDetail(id,rowIdx){
         h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-medium text-primary-700">'+esc(r[0])+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r[1])+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r[2])+'</td><td class="px-3 py-2 '+(out?'text-green-600 font-semibold':'text-text-secondary')+'">'+tr(r[3])+'</td></tr>';
     });
     h+='</tbody></table></div></section>';
-    h+='<div class="rounded-lg bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">'+tr('出库以【仓库PDA · 海外出库扫描】为主：扫DO二维码+验证码+核验身份 → 逐件扫码 → 客户签字+仓管签字 → 减库存生成POD。TMS 端可用“快捷出库”补充。')+'</div>';
+    h+='<div class="rounded-lg bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">'+tr('出库以【仓库PDA · 海外出库扫描】为主：扫二维码获取验证码+核验身份 → 逐件扫码 → 上传签收单/签字单 → 减库存生成POD。TMS 端可用“快捷出库”补充。')+'</div>';
     h+='</div>';
     var footer='<button onclick="openOverseasQuickOutbound(\''+id+'\','+rowIdx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('快捷出库')+'</button>'+
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('关闭')+'</button>';
@@ -775,19 +775,19 @@ var _owArrScanTab='pending';
 var _owArrScanList=[
     {no:'YPCD-20260625-001',bl:'TD-20260625-001',wh:'达喀尔海外仓',transport:'海运',
         pieces:[
-            {piece:'PB-25001-01',wb:'WB-20260701002',name:'服装配件'},
-            {piece:'PB-25001-02',wb:'WB-20260701002',name:'服装配件'},
-            {piece:'PB-25001-03',wb:'WB-20260701012',name:'手机配件'},
-            {piece:'PB-25001-04',wb:'WB-20260701012',name:'手机配件'},
-            {piece:'PB-25001-05',wb:'WB-20260701018',name:'五金工具'},
-            {piece:'PB-25001-06',wb:'WB-20260701018',name:'五金工具'}
+            {sub:'WB-20260701002-01',wb:'WB-20260701002',cust:'CUS-001',cargoType:'普货'},
+            {sub:'WB-20260701002-02',wb:'WB-20260701002',cust:'CUS-001',cargoType:'普货'},
+            {sub:'WB-20260701012-01',wb:'WB-20260701012',cust:'CUS-002',cargoType:'敏感货'},
+            {sub:'WB-20260701012-02',wb:'WB-20260701012',cust:'CUS-002',cargoType:'敏感货'},
+            {sub:'WB-20260701018-01',wb:'WB-20260701018',cust:'CUS-003',cargoType:'普货'},
+            {sub:'WB-20260701018-02',wb:'WB-20260701018',cust:'CUS-003',cargoType:'普货'}
         ]},
     {no:'YPCD-20260624-001',bl:'TD-20260624-001',wh:'阿比让海外仓',transport:'海运',
         pieces:[
-            {piece:'PB-24001-01',wb:'WB-20260702003',name:'家居用品'},
-            {piece:'PB-24001-02',wb:'WB-20260702003',name:'家居用品'},
-            {piece:'PB-24001-03',wb:'WB-20260702009',name:'日用百货'},
-            {piece:'PB-24001-04',wb:'WB-20260702009',name:'日用百货'}
+            {sub:'WB-20260702003-01',wb:'WB-20260702003',cust:'CUS-004',cargoType:'普货'},
+            {sub:'WB-20260702003-02',wb:'WB-20260702003',cust:'CUS-004',cargoType:'普货'},
+            {sub:'WB-20260702009-01',wb:'WB-20260702009',cust:'CUS-005',cargoType:'带电'},
+            {sub:'WB-20260702009-02',wb:'WB-20260702009',cust:'CUS-005',cargoType:'带电'}
         ]}
 ];
 
@@ -839,20 +839,20 @@ function applyOwArrScanPiece(){
     var val=(input.value||'').trim();
     if(!val)return;
     var item=_owArrScanList[_owArrScanCurrent];
-    var target=item.pieces.find(function(p){return p.piece===val;});
+    var target=item.pieces.find(function(p){return p.sub===val;});
     if(!target){
-        showToast(tr('该件号不在本配舱单内'));
+        showToast(tr('该子单号不在本配舱单内'));
         input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();
         return;
     }
     if(_owArrScanScanned[val]){
-        showToast(tr('该件已扫描'));
+        showToast(tr('该子单已扫描'));
         input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();
         return;
     }
     _owArrScanScanned[val]=true;
     _owArrScanTab='scanned';
-    var remaining=item.pieces.filter(function(p){return !_owArrScanScanned[p.piece];});
+    var remaining=item.pieces.filter(function(p){return !_owArrScanScanned[p.sub];});
     if(remaining.length===0)showToast(tr('已全部到货，可点击一键到货完成'));
     else showToast(tr('入库成功')+'：'+val);
     refreshWarehousePdaPrototype();
@@ -860,14 +860,14 @@ function applyOwArrScanPiece(){
 function finishOwArrScan(){
     var item=_owArrScanList[_owArrScanCurrent];
     if(!item)return;
-    item.pieces.forEach(function(p){_owArrScanScanned[p.piece]=true;});
+    item.pieces.forEach(function(p){_owArrScanScanned[p.sub]=true;});
     showToast(tr('一键到货完成，配舱单已全部入库'));
     refreshWarehousePdaPrototype();
 }
 function generateOwArrivalScanOperate(){
     var item=_owArrScanList[_owArrScanCurrent];
-    var pending=item.pieces.filter(function(p){return !_owArrScanScanned[p.piece];});
-    var scanned=item.pieces.filter(function(p){return _owArrScanScanned[p.piece];});
+    var pending=item.pieces.filter(function(p){return !_owArrScanScanned[p.sub];});
+    var scanned=item.pieces.filter(function(p){return _owArrScanScanned[p.sub];});
     var active=_owArrScanTab==='scanned'?scanned:pending;
     var tabBtn=function(key,label,n){
         var on=_owArrScanTab===key;
@@ -875,16 +875,17 @@ function generateOwArrivalScanOperate(){
     };
     var h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
     h+='<section class="rounded-xl border border-primary-100 bg-primary-50 p-3"><div class="text-sm font-semibold text-primary-700 mb-2">'+tr('配舱单信息')+'</div><div class="grid grid-cols-2 gap-2 text-xs text-primary-700"><div class="break-all">'+tr('配舱单号')+'：'+esc(item.no)+'</div><div class="break-all">'+tr('提单号')+'：'+esc(item.bl)+'</div><div class="break-all">'+tr('目的仓库')+'：'+tr(item.wh)+'</div><div class="break-all">'+tr('应到件数')+'：'+item.pieces.length+'</div></div></section>';
-    h+=pdaScanInput('ow-arr-piece','请扫描货物件号/子单号','applyOwArrScanPiece',pending[0]?pending[0].piece:'');
+    h+=pdaScanInput('ow-arr-piece','请扫描子单号','applyOwArrScanPiece',pending[0]?pending[0].sub:'');
     h+='<div class="grid grid-cols-2 gap-2">'+tabBtn('pending','待到货',pending.length)+tabBtn('scanned','已到货',scanned.length)+'</div>';
     if(active.length===0){
         h+='<div class="rounded-xl border border-surface-200 bg-white py-8 text-center text-xs text-text-muted">'+tr(_owArrScanTab==='scanned'?'暂无已到货件':'已全部扫描完毕')+'</div>';
     }else{
         active.forEach(function(p){
             h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="grid grid-cols-2 gap-y-1 text-xs">';
-            h+='<div><div class="text-text-secondary">'+tr('货物件号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(p.piece)+'</div></div>';
+            h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('子单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(p.sub)+'</div></div>';
             h+='<div><div class="text-text-secondary">'+tr('运单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(p.wb)+'</div></div>';
-            h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('品名')+'</div><div class="font-medium text-text-primary mt-0.5">'+tr(p.name)+'</div></div>';
+            h+='<div><div class="text-text-secondary">'+tr('客户代码')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(p.cust)+'</div></div>';
+            h+='<div><div class="text-text-secondary">'+tr('货物类型')+'</div><div class="font-medium text-text-primary mt-0.5">'+tr(p.cargoType)+'</div></div>';
             h+='</div></div>';
         });
     }
@@ -901,7 +902,8 @@ var _owOutScanScanned={};
 var _owOutScanTab='pending';
 var _owOutScanPhase='verify';   /* verify=出库核验 / scan=逐件扫描 */
 var _owOutVerified=false;
-var _owOutSigned={cust:false,wh:false};
+var _owOutCodeGot=false;              /* 是否已扫码获取验证码（核验①②合并） */
+var _owOutDocs={pod:false,sign:false};/* 出库单据附件：签收单/签字单（替代客户/仓管签字） */
 var _owOutScanList=[
     {do:'DO-NG-20260713-00040',job:'HT-NG-20260713-00040',cust:'深圳市华运达国际货运',wh:'拉各斯海外仓',pickup:'上门提货',picker:'Mr. Okafor',phone:'+234 802 000 111',idNo:'ID·A1234567',code:'80040C',
         pieces:[
@@ -961,18 +963,25 @@ function pickOwOutScanCard(i){
     _owOutScanTab='pending';
     _owOutScanPhase='verify';
     _owOutVerified=false;
-    _owOutSigned={cust:false,wh:false};
+    _owOutCodeGot=false;
+    _owOutDocs={pod:false,sign:false};
     _owOutScanView='operate';
     refreshWarehousePdaPrototype();
 }
-/* 出库核验：扫DO二维码 + 一次性验证码 + 核验身份 → 通过后进入逐件扫描 */
+/* 扫描二维码获取验证码（核验①②合并）：扫码即核销并自动带出一次性验证码 */
+function owOutScanCode(){
+    _owOutCodeGot=true;
+    var item=_owOutScanList[_owOutScanCurrent];
+    refreshWarehousePdaPrototype();
+    showToast(tr('二维码已核销，验证码已获取')+'：'+(item?item.code:''));
+}
+/* 出库核验：扫码获取验证码 + 核验身份 → 通过后进入逐件扫描 */
 function confirmOwOutVerify(){
     var item=_owOutScanList[_owOutScanCurrent];
     if(!item)return;
-    var codeEl=document.getElementById('ow-out-code');
-    var code=codeEl?(codeEl.value||'').trim():'';
-    if(!code){showToast(tr('请输入一次性验证码'));if(codeEl)codeEl.focus();return;}
-    if(code!==item.code){showToast(tr('验证码不正确，禁止放货'));if(codeEl){codeEl.focus();codeEl.select();}return;}
+    if(!_owOutCodeGot){showToast(tr('请先扫描二维码获取验证码'));return;}
+    var idOk=document.getElementById('ow-out-id-ok');
+    if(!idOk||!idOk.checked){showToast(tr('请核验提货人身份并勾选一致'));return;}
     _owOutVerified=true;
     _owOutScanPhase='scan';
     showToast(tr('核验通过，二维码已核销，开始逐件扫描出库'));
@@ -982,29 +991,28 @@ function backOwOutVerify(){
     _owOutScanPhase='verify';
     refreshWarehousePdaPrototype();
 }
-function signOwOut(who){
-    _owOutSigned[who]=true;
-    showToast(who==='cust'?tr('客户已电子签字'):tr('仓管已签字'));
+/* 出库单据附件上传（替代客户/仓管签字）：签收单/签字单等 */
+function owOutUploadDoc(key,label){
+    _owOutDocs[key]=true;
+    showToast(tr(label)+' '+tr('已上传'));
     refreshWarehousePdaPrototype();
 }
 function generateOwOutVerify(){
     var item=_owOutScanList[_owOutScanCurrent];
     var h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
     h+='<section class="rounded-xl border border-primary-100 bg-primary-50 p-3"><div class="text-sm font-semibold text-primary-700 mb-2">'+tr('放货单信息')+'</div><div class="grid grid-cols-2 gap-2 text-xs text-primary-700"><div class="break-all">'+tr('放货单DO号')+'：'+esc(item.do)+'</div><div class="break-all">'+tr('Job号')+'：'+esc(item.job)+'</div><div class="break-all">'+tr('客户')+'：'+tr(item.cust)+'</div><div class="break-all">'+tr('提货方式')+'：'+tr(item.pickup)+'</div></div></section>';
-    /* 扫二维码核验 */
-    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('① 扫码核验放货单二维码')+'</div>';
-    h+='<div class="flex items-center gap-3">'+owQrBlock()+'<div class="flex-1"><div class="text-[11px] text-text-muted mb-2">'+tr('对准客户出示的 DO 二维码扫码核销（仅可核销一次）')+'</div><button type="button" onclick="showToast(\''+esc(tr('二维码核销成功'))+'\')" class="h-9 w-full rounded-lg bg-primary-600 text-white text-xs font-medium">'+tr('扫码核销')+'</button></div></div></section>';
-    /* 验证码 */
-    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-sm font-semibold text-text-primary mb-2">'+tr('② 输入一次性验证码')+'</div>';
-    h+='<input id="ow-out-code" type="text" class="w-full h-10 px-3 text-sm rounded-lg border border-surface-200" placeholder="'+tr('请输入客户提供的验证码')+'"><div class="mt-1 text-[11px] text-text-muted">'+tr('演示验证码')+'：'+esc(item.code)+'</div></section>';
-    /* 身份核验 */
-    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-sm font-semibold text-text-primary mb-2">'+tr('③ 核验提货人身份')+'</div>';
+    /* ① 扫描二维码获取验证码（原“扫码核销”与“输入验证码”合并） */
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('① 扫描二维码获取验证码')+'</div>';
+    h+='<div class="flex items-center gap-3">'+owQrBlock()+'<div class="flex-1"><div class="text-[11px] text-text-muted mb-2">'+tr('扫描客户出示的 DO 二维码，系统自动核销并带出一次性验证码')+'</div>';
+    h+='<button type="button" onclick="owOutScanCode()" class="h-9 w-full rounded-lg '+(_owOutCodeGot?'bg-green-600':'bg-primary-600')+' text-white text-xs font-medium">'+(_owOutCodeGot?('✓ '+tr('已获取验证码')):tr('扫码获取验证码'))+'</button></div></div>';
+    h+='<div class="mt-3"><label class="text-[11px] text-text-muted">'+tr('一次性验证码')+'</label><input id="ow-out-code" type="text" readonly value="'+(_owOutCodeGot?esc(item.code):'')+'" class="w-full h-10 px-3 text-sm rounded-lg border border-surface-200 bg-surface-100 mt-1" placeholder="'+tr('扫码后自动获取')+'"></div></section>';
+    /* ② 身份核验 */
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-sm font-semibold text-text-primary mb-2">'+tr('② 核验提货人身份')+'</div>';
     h+='<div class="grid grid-cols-2 gap-2 text-xs"><div><div class="text-text-secondary">'+tr('提货人')+'</div><div class="font-medium text-text-primary mt-0.5">'+tr(item.picker)+'</div></div><div><div class="text-text-secondary">'+tr('联系电话')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.phone)+'</div></div><div class="col-span-2"><div class="text-text-secondary">'+tr('证件号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.idNo)+'</div></div></div>';
     h+='<label class="mt-2 flex items-center gap-2 text-xs text-text-secondary"><input type="checkbox" id="ow-out-id-ok" class="rounded border-surface-300 text-primary-600"><span>'+tr('已核对提货人证件、电话与授权，信息一致')+'</span></label></section>';
-    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] text-amber-700">'+tr('硬闸：二维码 + 验证码 + 身份核验缺一不可，通过后方可出库。')+'</div>';
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] text-amber-700">'+tr('硬闸：扫码获取验证码 + 身份核验，通过后方可出库。')+'</div>';
     h+='</div>';
     h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><button type="button" onclick="confirmOwOutVerify()" class="h-11 w-full rounded-xl bg-primary-600 text-white text-sm font-semibold">'+tr('核验通过 · 开始出库扫描')+'</button></div>';
-    setTimeout(function(){var el=document.getElementById('ow-out-code');if(el)el.focus();},50);
     return h;
 }
 function switchOwOutScanTab(t){_owOutScanTab=t;refreshWarehousePdaPrototype();}
@@ -1028,16 +1036,16 @@ function applyOwOutScanPiece(){
     _owOutScanScanned[val]=true;
     _owOutScanTab='scanned';
     var remaining=item.pieces.filter(function(p){return !_owOutScanScanned[p.piece];});
-    if(remaining.length===0)showToast(tr('已全部出库，请客户验货电子签名'));
+    if(remaining.length===0)showToast(tr('已全部出库，请上传签收单/签字单'));
     else showToast(tr('出库成功')+'：'+val);
     refreshWarehousePdaPrototype();
 }
 function finishOwOutScan(){
     var item=_owOutScanList[_owOutScanCurrent];
     if(!item)return;
-    if(!_owOutSigned.cust||!_owOutSigned.wh){showToast(tr('需客户签字 + 仓管签字后方可出库'));return;}
+    if(!_owOutDocs.pod||!_owOutDocs.sign){showToast(tr('请上传签收单和签字单后方可出库'));return;}
     item.pieces.forEach(function(p){_owOutScanScanned[p.piece]=true;});
-    showToast(tr('出库完成：验证码+双签字已确认，释放减库存并生成POD'));
+    showToast(tr('出库完成：验证码核验 + 单据上传已确认，释放减库存并生成POD'));
     refreshWarehousePdaPrototype();
 }
 function generateOwOutScanOperate(){
@@ -1068,13 +1076,15 @@ function generateOwOutScanOperate(){
         });
     }
     h+='</div>';
-    var signBtn=function(who,label){
-        var on=_owOutSigned[who];
-        return '<button type="button" onclick="signOwOut(\''+who+'\')" class="h-9 rounded-lg text-xs font-medium '+(on?'bg-green-600 text-white':'border border-primary-200 text-primary-700 bg-white')+'">'+(on?'✓ ':'')+tr(label)+'</button>';
+    var docTile=function(key,label){
+        var on=_owOutDocs[key];
+        return '<button type="button" onclick="owOutUploadDoc(\''+key+'\',\''+label+'\')" class="h-16 rounded-lg border flex flex-col items-center justify-center gap-1 text-xs font-medium '+(on?'border-green-300 bg-green-50 text-green-700':'border-dashed border-primary-200 bg-primary-50/40 text-primary-600')+'"><span class="text-base leading-none">'+(on?'✓':'＋')+'</span><span>'+tr(label)+(on?' '+tr('已上传'):'')+'</span></button>';
     };
+    var docsOk=_owOutDocs.pod&&_owOutDocs.sign;
     h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3 space-y-2">';
-    h+='<div class="grid grid-cols-2 gap-2">'+signBtn('cust','客户验货·电子签字')+signBtn('wh','仓管签字')+'</div>';
-    h+='<button type="button" onclick="finishOwOutScan()" class="h-10 w-full rounded-lg '+((_owOutSigned.cust&&_owOutSigned.wh)?'bg-primary-600':'bg-surface-300')+' text-white text-sm font-medium">'+tr('确认出库 · 减库存生成POD')+'</button>';
+    h+='<div class="text-[11px] font-medium text-text-secondary">'+tr('出库单据上传（签收单 / 签字单，支持拍照或选择图片）')+'</div>';
+    h+='<div class="grid grid-cols-2 gap-2">'+docTile('pod','签收单')+docTile('sign','签字单')+'</div>';
+    h+='<button type="button" onclick="finishOwOutScan()" class="h-10 w-full rounded-lg '+(docsOk?'bg-primary-600':'bg-surface-300')+' text-white text-sm font-medium">'+tr('确认出库 · 减库存生成POD')+'</button>';
     h+='</div>';
     setTimeout(function(){var el=document.getElementById('ow-out-piece');if(el)el.focus();},50);
     return h;

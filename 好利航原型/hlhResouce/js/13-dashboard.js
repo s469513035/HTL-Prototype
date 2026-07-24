@@ -66,9 +66,9 @@ function generateRoleDashboard(id){
             ],
             todoTitle:'审批 / 复核 / 出账待办',
             todos:[
-                {t:'审批待办',n:7,tag:'审批',tab:'fin-fee-mgmt'},
-                {t:'应收价格复核',n:24,tag:'复核',tab:'fin-fee-mgmt'},
-                {t:'待出账账单',n:16,tag:'出账',tab:'fin-bill-mgmt'},
+                {t:'审批待办',n:7,tag:'审批',tab:'fin-ar-detail'},
+                {t:'应收价格复核',n:24,tag:'复核',tab:'fin-ar-detail'},
+                {t:'待出账账单',n:16,tag:'出账',tab:'fin-ar-bill'},
                 {t:'异常件待处理',n:5,tag:'异常',tab:'wh-in-one'}
             ],
             msgs:[
@@ -78,7 +78,7 @@ function generateRoleDashboard(id){
                 {t:'库内可装柜货量已达 82CBM，可配舱排柜',time:'今天 09:05'}
             ],
             actions:[
-                {l:'价格维护',tab:'prod-price-lcl'},{l:'费用确认',tab:'fin-fee-mgmt'},{l:'配舱计划',tab:'wh-final-alloc'},{l:'出账账单',tab:'fin-bill-mgmt'},
+                {l:'价格维护',tab:'prod-price-lcl'},{l:'费用确认',tab:'fin-ar-detail'},{l:'配舱计划',tab:'wh-final-alloc'},{l:'出账账单',tab:'fin-ar-bill'},
                 {l:'入仓操作',tab:'wh-in-one'},{l:'银行凭证',tab:'fin-bank-voucher'},{l:'汇率管理',tab:'fin-rate'}
             ]
         }

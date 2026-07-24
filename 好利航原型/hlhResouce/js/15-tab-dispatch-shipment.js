@@ -16,6 +16,7 @@ function renderTabContent(id){
     if(c&&c.pageMode==='trackMaintain')return generateTrackMaintainPage(id);
     if(c&&c.pageMode==='roleDashboard')return generateRoleDashboard(id);
     if(c&&c.pageMode==='arDetail')return generateArDetailPage(id);
+    if(c&&c.pageMode==='arBill')return generateArBillPage(id);
     if(c&&c.pageMode==='receiptWriteoff')return generateReceiptPage(id);
     if(id==='cfg-dict')return generateDictPage(_listPage[id]||1);
     return generateListPage(id,_listPage[id]||1);

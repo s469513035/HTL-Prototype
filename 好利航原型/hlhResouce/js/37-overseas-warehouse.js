@@ -377,15 +377,14 @@ function openOverseasPickupCreate(){
     h+='<div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm">';
     h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+
         '<th class="px-3 py-2 w-10 text-center"><input type="checkbox" onclick="owPickupToggleAll(this)"></th>'+
-        ['运单号','品名','子单数','件数','体积(CBM)','重量(KG)','已选件数','子单选择'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+
+        ['运单号','品名','可提货件数','体积(CBM)','重量(KG)','已选件数','子单选择'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+
         '</tr></thead><tbody>';
     _owPickupWaybills.forEach(function(w,i){
         h+='<tr class="border-t border-surface-100">'+
             '<td class="px-3 py-2 text-center"><input type="checkbox" class="ow-create-wb-chk" data-idx="'+i+'" onchange="owPickupOnWbCheck('+i+')"></td>'+
             '<td class="px-3 py-2 font-medium text-primary-700">'+esc(w.wb)+'</td>'+
             '<td class="px-3 py-2 text-text-secondary">'+tr(w.name)+'</td>'+
-            '<td class="px-3 py-2">'+w.subs.length+'</td>'+
-            '<td class="px-3 py-2">'+w.pcs+'</td>'+
+            '<td class="px-3 py-2 font-medium">'+w.pcs+'</td>'+
             '<td class="px-3 py-2">'+esc(w.vol)+'</td>'+
             '<td class="px-3 py-2">'+esc(w.weight)+'</td>'+
             '<td class="px-3 py-2"><span id="ow-selpcs-'+i+'" class="font-semibold text-primary-700">0</span></td>'+
@@ -461,11 +460,11 @@ function openOwSubSelectModal(i){
     var m=document.createElement('div');
     m.id='ow-subsel-modal';
     m.className='fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4';
-    var html='<div class="w-full max-w-3xl rounded-2xl bg-white shadow-xl overflow-hidden">';
+    var html='<div class="w-full max-w-4xl rounded-2xl bg-white shadow-xl overflow-hidden">';
     html+='<div class="flex items-center justify-between px-5 py-3 border-b border-surface-200"><div class="text-sm font-semibold text-text-primary">'+tr('子单选择')+' - '+esc(w.wb)+'</div><button type="button" onclick="closeOwSubSelectModal()" class="w-8 h-8 rounded-full bg-surface-100 text-text-muted">×</button></div>';
-    html+='<div class="p-4 max-h-[60vh] overflow-auto"><div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    html+='<div class="p-4 max-h-[72vh] overflow-auto"><div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     html+='<th class="px-3 py-2 w-10 text-center"><input type="checkbox" id="ow-subsel-all" onclick="owSubSelToggleAll(this)"></th>';
-    ['#','子单号','长(CM)','宽(CM)','高(CM)','重量(KG)','体积(CBM)','件数'].forEach(function(c){html+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    ['#','子单号','长(CM)','宽(CM)','高(CM)','重量(KG)','体积(CBM)'].forEach(function(c){html+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     html+='</tr></thead><tbody>';
     w.subs.forEach(function(s,si){
         var on=sel.indexOf(si)>=0;
@@ -473,7 +472,7 @@ function openOwSubSelectModal(i){
             '<td class="px-3 py-2 text-text-muted">'+(si+1)+'</td>'+
             '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(s.sub)+'</td>'+
             '<td class="px-3 py-2">'+esc(s.l)+'</td><td class="px-3 py-2">'+esc(s.w)+'</td><td class="px-3 py-2">'+esc(s.ht)+'</td>'+
-            '<td class="px-3 py-2">'+esc(s.wt)+'</td><td class="px-3 py-2">'+esc(s.vol)+'</td><td class="px-3 py-2 font-medium">'+s.pcs+'</td></tr>';
+            '<td class="px-3 py-2">'+esc(s.wt)+'</td><td class="px-3 py-2">'+esc(s.vol)+'</td></tr>';
     });
     html+='</tbody></table></div></div>';
     html+='<div class="flex justify-end gap-2 px-5 py-3 border-t border-surface-200"><button type="button" onclick="closeOwSubSelectModal()" class="px-4 py-2 text-sm text-text-secondary border border-surface-200 rounded-lg">'+tr('取消')+'</button><button type="button" onclick="confirmOwSubSelect('+i+')" class="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg">'+tr('确定')+'</button></div>';

@@ -60,6 +60,13 @@ const menuData=[
 ]}
 ]},
 
+{id:'overseas-wh',label:'海外仓',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',children:[
+{id:'ow-pickup',label:'提货预约管理',page:'overseas-wh',tab:'ow-pickup'},
+{id:'ow-arrival',label:'海外仓到货',page:'overseas-wh',tab:'ow-arrival'},
+{id:'ow-outbound',label:'海外仓出库',page:'overseas-wh',tab:'ow-outbound'},
+{id:'ow-inventory',label:'海外仓库存',page:'overseas-wh',tab:'ow-inventory'}
+]},
+
 {id:'cs',label:'客服',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"/></svg>',children:[
 {id:'cs-issue-track',label:'问题件跟踪',page:'cs',tab:'cs-issue-track'},
 {id:'cs-issue-type',label:'问题件类型',page:'cs',tab:'cs-issue-type'},

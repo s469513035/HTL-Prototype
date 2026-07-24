@@ -1,7 +1,7 @@
 // ========== 角色权限系统 ==========
 // 定义角色：每个角色有对应的菜单ID列表（允许访问的菜单）
 var ROLE_MENUS={
-    'role-admin':['workspace','customer-mgmt','waybill-mgmt','fcl','warehouse','cs','finance','biz-config','perm'],
+    'role-admin':['workspace','customer-mgmt','waybill-mgmt','fcl','warehouse','overseas-wh','cs','finance','biz-config','perm'],
     'role-sales':['workspace','customer-mgmt','waybill-mgmt','fcl','biz-config'],
     'role-quote':['workspace','biz-config'],
     'role-finance':['workspace','fcl','finance'],
@@ -14,7 +14,7 @@ var ROLE_MENUS={
 // 每个端只能看到自己的 L1 集合；PDA 端走特殊渲染（直达工作台）所以列表为空
 var TERMINAL_MENUS={
     'oms':['oms-client'],
-    'tms':['workspace','customer-mgmt','waybill-mgmt','fcl','warehouse','cs','finance','biz-config','perm'],
+    'tms':['workspace','customer-mgmt','waybill-mgmt','fcl','warehouse','overseas-wh','cs','finance','biz-config','perm'],
     'pda':[]
 };
 var TERMINAL_LABELS={'oms':'OMS 客户端','tms':'TMS 管理端','pda':'PDA 仓库端'};

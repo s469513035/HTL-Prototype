@@ -200,6 +200,7 @@ function generateListPage(id,page,statusFilter){
                     '<a class="text-orange-500 hover:text-orange-600 cursor-pointer" onclick="downloadLabelTemplateRow(\''+id+'\','+gi+')">'+tr('下载')+'</a>';
             } else {
                 actionHtml='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+viewClick+'">'+L.view+'</a>';
+                if(id==='ow-outbound')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openOverseasQuickOutbound(\''+id+'\','+gi+')">'+tr('快捷出库')+'</a>';
                 if(!hideEdit)actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':'openCrudModal(\'edit\',\''+id+'\','+gi+')')+'">'+L.edit+'</a>';
                 if(!hideDelete)actionHtml+='<a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="openActionModal(\''+deleteAction+'\',\''+id+'\','+gi+')">'+deleteLabel+'</a>';
             }

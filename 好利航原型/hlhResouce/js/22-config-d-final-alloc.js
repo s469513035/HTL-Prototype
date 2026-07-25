@@ -50,7 +50,7 @@ var _finalAllocUnselectedSeed=[
     {no:'YPC-20260626003',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004',sub:[{no:'H-YPC-20260626003-001',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004'}]},
     {no:'YPC-TY',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014',sub:[{no:'H-YPC-TY-001',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014'}]}
 ];
-var _finalAllocState={mode:'add',unselected:[],selected:[],expanded:{},header:{no:'',transport:'海运',bl:'',country:'',containerNo:''}};
+var _finalAllocState={mode:'add',unselected:[],selected:[],expanded:{},header:{no:'',transport:'海运',bl:'',country:'',containerNo:'',label:''}};
 
 function _finalAllocClone(arr){return JSON.parse(JSON.stringify(arr));}
 
@@ -59,7 +59,7 @@ function _finalAllocResetState(mode,headerInit,selectedInit){
     _finalAllocState.unselected=_finalAllocClone(_finalAllocUnselectedSeed);
     _finalAllocState.selected=selectedInit?_finalAllocClone(selectedInit):[];
     _finalAllocState.expanded={};
-    _finalAllocState.header=Object.assign({no:'',transport:'海运',bl:'',country:'',containerNo:''},headerInit||{});
+    _finalAllocState.header=Object.assign({no:'',transport:'海运',bl:'',country:'',containerNo:'',label:''},headerInit||{});
 }
 
 function _finalAllocPanelTable(side){
@@ -165,6 +165,7 @@ function _finalAllocRightPanel(showHeader){
         const countries=['塞内加尔','尼日利亚','加纳','科特迪瓦','喀麦隆','多哥'];
         h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3"><div class="grid grid-cols-3 gap-3">';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary"><span class="text-red-500">*</span> '+tr('配舱单号')+'</label><input type="text" value="'+esc(hd.no)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-no"></div>';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('标签编号')+'</label><input type="text" value="'+esc(hd.label||'')+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-label" placeholder="'+esc(tr('请输入标签编号'))+'"></div>';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('国家')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-country"><option value="">'+tr('请选择')+'</option>';
         countries.forEach(function(o){h+='<option'+(o===hd.country?' selected':'')+'>'+o+'</option>';});
         h+='</select></div>';
@@ -172,7 +173,7 @@ function _finalAllocRightPanel(showHeader){
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-transport">';
         ['海运','空运','卡航','快递'].forEach(function(o){h+='<option'+(o===hd.transport?' selected':'')+'>'+o+'</option>';});
         h+='</select></div>';
-        h+='<div class="flex flex-col gap-0.5 col-span-2"><label class="text-xs text-text-secondary">'+tr('关联提单')+'</label><input type="text" value="'+esc(hd.bl)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-bl"></div>';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('关联提单')+'</label><input type="text" value="'+esc(hd.bl)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-bl"></div>';
         h+='</div></div>';
     }
     h+=_finalAllocPanelTable('selected');
@@ -277,12 +278,13 @@ function openFinalAllocAdjustModal(id,rowIdx){
     if(idx<0){openActionModal('selectRequired',id,-1);return;}
     const row=(_listData[id]||TC[id].d)[idx]||[];
     const presetNo=row[0]||'';
+    const presetLabel=row[1]||'';
     const presetBL=row[2]||'';
     const presetCountry=row[3]||'';
     const presetContainer=row[4]||'';
     const presetTransport=row[8]||'海运';
     const presetSelected=[{no:presetNo.replace(/-终配/,'-预配').replace(/^ZPCD-/,'YPC-'),pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002',sub:[{no:'H82606240002',pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002'}]}];
-    _finalAllocResetState('edit',{no:presetNo,transport:presetTransport,bl:presetBL,country:presetCountry,containerNo:presetContainer},presetSelected);
+    _finalAllocResetState('edit',{no:presetNo,label:presetLabel,transport:presetTransport,bl:presetBL,country:presetCountry,containerNo:presetContainer},presetSelected);
     _finalAllocState.expanded['selected-0']=true;
     const titleEl=document.getElementById('crud-modal-title');
     const bodyEl=document.getElementById('crud-modal-body');
@@ -303,14 +305,38 @@ function finalAllocSubmit(mode,id){
     const trEl=document.getElementById('final-alloc-transport');
     const countryEl=document.getElementById('final-alloc-country');
     const containerEl=document.getElementById('final-alloc-container');
+    const labelEl=document.getElementById('final-alloc-label');
     if(noEl)_finalAllocState.header.no=noEl.value;
     if(blEl)_finalAllocState.header.bl=blEl.value;
     if(trEl)_finalAllocState.header.transport=trEl.value;
     if(countryEl)_finalAllocState.header.country=countryEl.value;
     if(containerEl)_finalAllocState.header.containerNo=containerEl.value;
+    if(labelEl)_finalAllocState.header.label=labelEl.value;
     if(!_finalAllocState.header.no){showToast(tr('配舱单号必填'));return;}
     closeCrudModal();
     showToast(tr(mode==='add'?'终配舱登记成功':'终配舱调整成功'));
+}
+
+/* 批量删除配舱单：仅允许删除「配舱状态=待出仓」的配舱单，非待出仓的自动跳过 */
+function deleteFinalAllocSelected(id){
+    const indices=getSelectedRowIndices();
+    if(indices.length===0){showToast(tr('请先勾选要删除的配舱单'));return;}
+    const c=TC[id];if(!c)return;
+    const data=_listData[id]||c.d||[];
+    const si=c.h.indexOf('配舱状态');
+    const eligible=indices.filter(function(i){return data[i]&&String(data[i][si])==='待出仓';});
+    const blocked=indices.length-eligible.length;
+    if(!eligible.length){showToast(tr('仅可删除「待出仓」状态的配舱单，所选均不可删除'));return;}
+    let msg='本次将删除 '+eligible.length+' 条「待出仓」配舱单';
+    if(blocked>0)msg+='；另有 '+blocked+' 条非待出仓状态将跳过';
+    msg+='，删除后不可恢复，确认删除？';
+    openConfirmTip(msg,function(){
+        if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
+        const sorted=eligible.slice().sort(function(a,b){return b-a;});
+        sorted.forEach(function(i){_listData[id].splice(i,1);});
+        document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal);
+        showToast(tr('已删除')+' '+eligible.length+' '+tr('条'));
+    });
 }
 
 function openFinalAllocLinkBLModal(id){

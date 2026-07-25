@@ -1502,8 +1502,26 @@ function getToolbarActions(id){
     return actions;
 }
 
+// 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
+// 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
+var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template'];
+var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template'];
+function listRowCanEdit(id){return _rowNoEditIds.indexOf(id)<0;}
+function listRowCanDelete(id){return _rowNoDeleteIds.indexOf(id)<0;}
+
 function renderToolbarActions(id){
-    return getToolbarActions(id).map(function(action){return renderToolbarAction(action,id);}).join('');
+    var actions=getToolbarActions(id).slice();
+    var hasEdit=actions.some(function(a){return a.type==='edit'||a.key==='edit'||(a.key&&/edit/i.test(a.key))||(a.label&&(a.label.indexOf('编辑')>=0||a.label.indexOf('修改')>=0));});
+    var hasDelete=actions.some(function(a){return a.type==='delete'||a.key==='delete'||a.key==='batchDelete'||(a.label&&a.label.indexOf('删除')>=0);});
+    if(listRowCanEdit(id)&&!hasEdit){
+        var addIdx=-1;
+        for(var i=0;i<actions.length;i++){if(actions[i].type==='add'){addIdx=i;break;}}
+        actions.splice(addIdx>=0?addIdx+1:actions.length,0,{type:'edit',label:'编辑数据'});
+    }
+    if(listRowCanDelete(id)&&!hasDelete){
+        actions.push({key:'batchDelete',label:'删除',variant:'danger'});
+    }
+    return actions.map(function(action){return renderToolbarAction(action,id);}).join('');
 }
 
 function openQueryTextModal(input,tabId){

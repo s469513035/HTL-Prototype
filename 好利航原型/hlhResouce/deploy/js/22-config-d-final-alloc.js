@@ -65,7 +65,11 @@ function _finalAllocResetState(mode,headerInit,selectedInit){
 function _finalAllocPanelTable(side){
     const isLeft=side==='unselected';
     const rows=isLeft?_finalAllocState.unselected:_finalAllocState.selected;
-    const cols=['运单号','件数','可配件数','可配实重','可配体积','出货实重','出货体积'];
+    // 左侧(未选)：运单号|件数|可配件数|可配实重|可配体积|实际重量|实际体积
+    // 右侧(已选)：运单号|件数|实际重量|实际体积（去掉可配实重/可配体积；可配件数→件数）
+    const cols=isLeft?['运单号','件数','可配件数','可配实重','可配体积','实际重量','实际体积']
+                     :['运单号','件数','实际重量','实际体积'];
+    const colspan=cols.length+2;
     let h='<div class="border border-surface-200 rounded-lg overflow-hidden bg-white"><div class="overflow-auto" style="max-height:520px"><table class="w-full text-xs" style="border-collapse:separate;border-spacing:0">';
     h+='<thead class="bg-[#EFF6FF] sticky top-0 z-10"><tr>';
     h+='<th class="px-2 py-2 text-left font-semibold text-text-secondary" style="width:36px">#</th>';
@@ -73,7 +77,7 @@ function _finalAllocPanelTable(side){
     cols.forEach(function(c){h+='<th class="px-2 py-2 text-left font-semibold text-text-secondary whitespace-nowrap">'+c+'</th>';});
     h+='</tr></thead><tbody>';
     if(!rows.length){
-        h+='<tr><td colspan="9" class="px-3 py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+        h+='<tr><td colspan="'+colspan+'" class="px-3 py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
     }
     rows.forEach(function(r,i){
         const expKey=side+'-'+i;
@@ -82,23 +86,35 @@ function _finalAllocPanelTable(side){
         h+='<tr class="hover:bg-primary-50/30 border-b border-surface-100"><td class="px-2 py-2 text-text-muted">'+(i+1)+'</td>';
         h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-check final-alloc-check-parent" data-side="'+side+'" data-idx="'+i+'" onchange="finalAllocSyncSub(this)"></td>';
         h+='<td class="px-2 py-2 font-medium text-primary-700 whitespace-nowrap"><span class="cursor-pointer mr-1 text-text-muted" onclick="finalAllocToggleRow(\''+side+'\','+i+')">'+arrow+'</span>'+esc(r.no)+'</td>';
-        h+='<td class="px-2 py-2 text-right">'+r.pcs+'</td>';
-        h+='<td class="px-2 py-2 text-right">'+r.canPcs+'</td>';
-        h+='<td class="px-2 py-2 text-right">'+r.canWt+'</td>';
-        h+='<td class="px-2 py-2 text-right">'+r.canVol+'</td>';
-        h+='<td class="px-2 py-2 text-right">'+r.outWt+'</td>';
-        h+='<td class="px-2 py-2 text-right">'+r.outVol+'</td></tr>';
+        if(isLeft){
+            h+='<td class="px-2 py-2 text-right">'+r.pcs+'</td>';
+            h+='<td class="px-2 py-2 text-right">'+r.canPcs+'</td>';
+            h+='<td class="px-2 py-2 text-right">'+r.canWt+'</td>';
+            h+='<td class="px-2 py-2 text-right">'+r.canVol+'</td>';
+            h+='<td class="px-2 py-2 text-right">'+r.outWt+'</td>';
+            h+='<td class="px-2 py-2 text-right">'+r.outVol+'</td></tr>';
+        }else{
+            h+='<td class="px-2 py-2 text-right">'+r.pcs+'</td>';
+            h+='<td class="px-2 py-2 text-right">'+r.outWt+'</td>';
+            h+='<td class="px-2 py-2 text-right">'+r.outVol+'</td></tr>';
+        }
         if(expanded&&r.sub){
             r.sub.forEach(function(s,si){
                 h+='<tr class="bg-surface-50/60 border-b border-surface-100"><td class="px-2 py-2 text-text-muted">'+(i+1)+'.'+(si+1)+'</td>';
                 h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-sub-check" data-side="'+side+'" data-pidx="'+i+'" data-sidx="'+si+'" onchange="finalAllocSyncParent(this)"></td>';
                 h+='<td class="px-2 py-2 pl-6 text-text-secondary whitespace-nowrap">'+esc(s.no)+'</td>';
-                h+='<td class="px-2 py-2 text-right">'+s.pcs+'</td>';
-                h+='<td class="px-2 py-2 text-right">'+s.canPcs+'</td>';
-                h+='<td class="px-2 py-2 text-right">'+s.canWt+'</td>';
-                h+='<td class="px-2 py-2 text-right">'+s.canVol+'</td>';
-                h+='<td class="px-2 py-2 text-right">'+s.outWt+'</td>';
-                h+='<td class="px-2 py-2 text-right">'+s.outVol+'</td></tr>';
+                if(isLeft){
+                    h+='<td class="px-2 py-2 text-right">'+s.pcs+'</td>';
+                    h+='<td class="px-2 py-2 text-right">'+s.canPcs+'</td>';
+                    h+='<td class="px-2 py-2 text-right">'+s.canWt+'</td>';
+                    h+='<td class="px-2 py-2 text-right">'+s.canVol+'</td>';
+                    h+='<td class="px-2 py-2 text-right">'+s.outWt+'</td>';
+                    h+='<td class="px-2 py-2 text-right">'+s.outVol+'</td></tr>';
+                }else{
+                    h+='<td class="px-2 py-2 text-right">'+s.pcs+'</td>';
+                    h+='<td class="px-2 py-2 text-right">'+s.outWt+'</td>';
+                    h+='<td class="px-2 py-2 text-right">'+s.outVol+'</td></tr>';
+                }
             });
         }
     });
@@ -110,17 +126,22 @@ function _finalAllocPanelTable(side){
     const totalOutVol=rows.reduce(function(a,b){return a+(parseFloat(b.outVol)||0);},0);
     h+='<div class="flex items-center gap-4 px-3 py-2 border-t border-surface-200 bg-surface-50/40 text-xs text-text-secondary">';
     h+='<span class="font-medium text-text-primary">'+tr('总合计')+'：</span>';
-    h+='<span>'+tr('总票数')+': '+totalPcs+'</span>';
-    h+='<span>'+tr('可配件数')+': '+totalCan+'</span>';
-    h+='<span>'+tr('出货实重')+': '+totalOutWt+'</span>';
-    h+='<span>'+tr('出货方数')+': '+totalOutVol.toFixed(6)+'</span>';
-    h+='<span>'+tr('出货计费重')+': '+(totalOutWt*6)+'</span>';
+    if(isLeft){
+        h+='<span>'+tr('总票数')+': '+totalPcs+'</span>';
+        h+='<span>'+tr('可配件数')+': '+totalCan+'</span>';
+        h+='<span>'+tr('实际重量')+': '+totalOutWt+'</span>';
+        h+='<span>'+tr('实际方数')+': '+totalOutVol.toFixed(6)+'</span>';
+    }else{
+        h+='<span>'+tr('总件数')+': '+totalPcs+'</span>';
+        h+='<span>'+tr('实际重量')+': '+totalOutWt+'</span>';
+        h+='<span>'+tr('实际方数')+': '+totalOutVol.toFixed(6)+'</span>';
+    }
     h+='</div></div>';
     return h;
 }
 
 function _finalAllocLeftPanel(showAdvanced){
-    let h='<div class="flex-1 min-w-0">';
+    let h='';
     h+='<div class="text-sm font-semibold text-orange-600 mb-2">'+tr('未选数据')+'</div>';
     /* 查询行 */
     h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3">';
@@ -152,13 +173,11 @@ function _finalAllocLeftPanel(showAdvanced){
     h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(true)">'+tr('全部展开')+'</button>';
     h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(false)">'+tr('全部收起')+'</button>';
     h+='</div>';
-    h+=_finalAllocPanelTable('unselected');
-    h+='</div>';
     return h;
 }
 
 function _finalAllocRightPanel(showHeader){
-    let h='<div class="flex-1 min-w-0">';
+    let h='';
     h+='<div class="text-sm font-semibold text-orange-600 mb-2">'+tr('已选数据')+'</div>';
     if(showHeader){
         const hd=_finalAllocState.header;
@@ -176,16 +195,24 @@ function _finalAllocRightPanel(showHeader){
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('关联提单')+'</label><input type="text" value="'+esc(hd.bl)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-bl"></div>';
         h+='</div></div>';
     }
-    h+=_finalAllocPanelTable('selected');
-    h+='</div>';
     return h;
 }
 
 function _finalAllocBodyHtml(mode){
-    let h='<div class="flex gap-4 items-stretch">';
-    h+=_finalAllocLeftPanel(mode==='add');
-    h+='<div class="flex flex-col justify-center gap-3 px-1"><button class="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-base cursor-pointer" onclick="finalAllocMove(\'right\')" title="'+tr('选入')+'">›</button><button class="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-base cursor-pointer" onclick="finalAllocMove(\'left\')" title="'+tr('移除')+'">‹</button></div>';
-    h+=_finalAllocRightPanel(true);
+    const arrows='<div class="flex flex-col justify-center gap-3 px-1"><button class="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-base cursor-pointer" onclick="finalAllocMove(\'right\')" title="'+tr('选入')+'">›</button><button class="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-base cursor-pointer" onclick="finalAllocMove(\'left\')" title="'+tr('移除')+'">‹</button></div>';
+    let h='<div class="flex flex-col gap-3">';
+    /* 控件行：左(查询+按钮) 与 右(表头) 顶部对齐（高度可不同） */
+    h+='<div class="flex gap-4 items-start">';
+    h+='<div class="flex-1 min-w-0">'+_finalAllocLeftPanel(mode==='add')+'</div>';
+    h+='<div class="flex-shrink-0" style="width:40px"></div>';
+    h+='<div class="flex-1 min-w-0">'+_finalAllocRightPanel(true)+'</div>';
+    h+='</div>';
+    /* 表格行：左右两表顶部对齐 */
+    h+='<div class="flex gap-4 items-start">';
+    h+='<div class="flex-1 min-w-0">'+_finalAllocPanelTable('unselected')+'</div>';
+    h+=arrows;
+    h+='<div class="flex-1 min-w-0">'+_finalAllocPanelTable('selected')+'</div>';
+    h+='</div>';
     h+='</div>';
     return h;
 }

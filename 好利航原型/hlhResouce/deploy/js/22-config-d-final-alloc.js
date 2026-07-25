@@ -68,7 +68,7 @@ function _finalAllocPanelTable(side){
     // 左侧(未选)：运单号|件数|可配件数|可配实重|可配体积|实际重量|实际体积
     // 右侧(已选)：运单号|件数|实际重量|实际体积（去掉可配实重/可配体积；可配件数→件数）
     const cols=isLeft?['运单号','件数','可配件数','可配实重','可配体积','实际重量','实际体积']
-                     :['运单号','件数','实际重量','实际体积'];
+                     :['运单号','件数','出货重量','出货体积'];
     const colspan=cols.length+2;
     let h='<div class="border border-surface-200 rounded-lg overflow-hidden bg-white"><div class="overflow-auto" style="max-height:520px"><table class="w-full text-xs" style="border-collapse:separate;border-spacing:0">';
     h+='<thead class="bg-[#EFF6FF] sticky top-0 z-10"><tr>';
@@ -132,9 +132,10 @@ function _finalAllocPanelTable(side){
         h+='<span>'+tr('实际重量')+': '+totalOutWt+'</span>';
         h+='<span>'+tr('实际方数')+': '+totalOutVol.toFixed(6)+'</span>';
     }else{
+        h+='<span>'+tr('总票数')+': '+rows.length+'</span>';
         h+='<span>'+tr('总件数')+': '+totalPcs+'</span>';
-        h+='<span>'+tr('实际重量')+': '+totalOutWt+'</span>';
-        h+='<span>'+tr('实际方数')+': '+totalOutVol.toFixed(6)+'</span>';
+        h+='<span>'+tr('出货重量')+': '+totalOutWt+'</span>';
+        h+='<span>'+tr('出货体积')+': '+totalOutVol.toFixed(6)+'</span>';
     }
     h+='</div></div>';
     return h;

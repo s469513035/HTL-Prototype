@@ -336,7 +336,7 @@ function openEmployeeModal(mode,id,rowIdx,rowData){
     html+='</div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('所属大区')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(region)+'</div>';}
-    else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['华南大区','华东大区','海外大区'],region)+'</select>';}
+    else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['中国区域管理中心','非洲海外区域中心'],region)+'</select>';}
     html+='</div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('所属分公司')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(branch)+'</div>';}

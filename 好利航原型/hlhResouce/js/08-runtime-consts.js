@@ -65,11 +65,11 @@ if(TC['perm-team']){
     if(codeIdx>=0)TC['perm-team'].h[codeIdx]='小组编码';
     if(nameIdx>=0)TC['perm-team'].h[nameIdx]='小组名称';
 }
-TC['perm-region'].q=[{label:'大区编码',type:'text',field:'code'},{label:'大区名称',type:'text',field:'name'},{label:'所属总部',type:'select',field:'hq',options:['集团总部','华南总部','华东总部','海外总部']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}];
-TC['perm-branch'].q=[{label:'分公司编码',type:'text',field:'code'},{label:'分公司名称',type:'text',field:'name'},{label:'所属大区',type:'select',field:'region',options:['华南大区','华东大区','华北大区','西南大区','海外大区']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}];
-TC['perm-wh'].q=[{label:'仓库编码',type:'text',field:'code'},{label:'所属总部',type:'select',field:'hq',options:['集团总部','华南总部','华东总部','海外总部']},{label:'所属分公司',type:'select',field:'branch',options:['深圳分公司','广州分公司','上海分公司','海外分公司']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}];
-TC['perm-dept'].q=[{label:'部门编码',type:'text',field:'code'},{label:'部门名称',type:'text',field:'name'},{label:'所属总部',type:'select',field:'hq',options:['集团总部','华南总部','华东总部','海外总部']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}];
-TC['perm-team'].q=[{label:'小组编码',type:'text',field:'code'},{label:'小组名称',type:'text',field:'name'},{label:'所属部门',type:'select',field:'dept',options:['销售部','操作部','财务部','客服部','行政部','IT部']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}];
+TC['perm-region'].q=[{label:'大区编码',type:'text',field:'code'},{label:'大区名称',type:'text',field:'name'},{label:'所属总部',type:'select',field:'hq',options:['集团总部']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}];
+TC['perm-branch'].q=[{label:'分公司编码',type:'text',field:'code'},{label:'分公司名称',type:'text',field:'name'},{label:'所属大区',type:'select',field:'region',options:['中国区域管理中心','非洲海外区域中心']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}];
+TC['perm-wh'].q=[{label:'仓库编码',type:'text',field:'code'},{label:'所属总部',type:'select',field:'hq',options:['集团总部']},{label:'所属分公司',type:'select',field:'branch',options:['武汉分部','广州业务分部','广州散货操作分部','义乌分部','宁波分部','深圳总部业务客服部']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}];
+TC['perm-dept'].q=[{label:'部门编码',type:'text',field:'code'},{label:'部门名称',type:'text',field:'name'},{label:'所属总部',type:'select',field:'hq',options:['集团总部']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}];
+TC['perm-team'].q=[{label:'小组编码',type:'text',field:'code'},{label:'小组名称',type:'text',field:'name'},{label:'所属部门',type:'select',field:'dept',options:['财务部','人事行政部','商务部','操作部','订舱部','散货客服部','客服部','业务部']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}];
 TC['cfg-rate'].forceLocalHeader=true;
 TC['cfg-rate'].h='币别编号|汇率|汇损|状态|生效开始时间|生效结束时间|操作'.split('|');
 TC['cfg-rate'].s=['启用','停用'];

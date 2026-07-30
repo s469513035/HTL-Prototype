@@ -210,6 +210,99 @@ function removeSortBagScanItem(idx){
     renderSortBagScanScreen();
 }
 
+/* ===== 调整明细：查看/增删袋内订单（列表字段同「新增分拣」扫描列表） ===== */
+var _sortBagAdjustState={id:'',idx:-1,bagNo:'',warehouse:'',items:[]};
+
+function openSortBagAdjustModal(id,idx){
+    const row=(TC[id]&&TC[id].d[idx])||[];
+    const headers=(TC[id]&&TC[id].h)||[];
+    const get=function(name){const i=headers.indexOf(name);return i>=0?(row[i]||''):'';};
+    const bagNo=get('袋号');
+    const warehouse=get('目的仓库');
+    // 初始化袋内订单：按目的仓库从候选池累加到该袋件数（与查看明细一致）
+    const candidates=sortBagCandidateOrders().filter(function(o){return o.warehouse===warehouse;});
+    const targetQty=parseInt(get('件数'))||0;
+    const items=[];let qtyAcc=0;
+    for(let i=0;i<candidates.length&&qtyAcc<targetQty;i++){items.push(candidates[i]);qtyAcc+=candidates[i].qty;}
+    _sortBagAdjustState={id:id,idx:idx,bagNo:bagNo,warehouse:warehouse,items:items};
+    renderSortBagAdjustModal();
+}
+
+function renderSortBagAdjustModal(){
+    const st=_sortBagAdjustState;
+    const totalQty=st.items.reduce(function(a,o){return a+o.qty;},0);
+    const totalWeight=st.items.reduce(function(a,o){return a+o.weight;},0);
+    const totalVol=st.items.reduce(function(a,o){return a+(o.vol||0);},0);
+    let h='';
+    /* 袋信息 */
+    h+='<div class="mb-3 rounded-xl border border-primary-100 bg-primary-50/60 p-3"><div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">';
+    [['袋号',st.bagNo],['目的仓库',st.warehouse],['合计件数',totalQty],['合计重量(KG)',totalWeight.toFixed(2)],['合计体积(CBM)',totalVol.toFixed(3)]].forEach(function(p){
+        h+='<div><span class="text-text-muted">'+tr(p[0])+'：</span><span class="font-medium text-text-primary">'+esc(String(p[1]))+'</span></div>';
+    });
+    h+='</div></div>';
+    /* 添加栏（扫描/输入运单号） */
+    h+='<section class="mb-3 rounded-xl border border-primary-200 bg-white p-3"><div class="text-xs font-semibold text-text-secondary mb-2">'+tr('添加订单')+'</div><div class="flex items-center gap-2">';
+    h+='<input id="sb-adjust-input" type="text" class="flex-1 h-10 px-3 text-sm border border-surface-200 rounded-lg" placeholder="'+esc(tr('扫描或输入运单号，回车添加'))+'" onkeydown="if(event.key===\'Enter\')addSortBagAdjustItem(false)">';
+    h+='<button onclick="addSortBagAdjustItem(false)" class="h-10 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('添加')+'</button>';
+    h+='<button onclick="addSortBagAdjustItem(true)" class="h-10 px-4 text-sm font-medium text-primary-700 bg-primary-50 border border-primary-200 rounded-lg hover:bg-primary-100 cursor-pointer">'+tr('模拟添加一票')+'</button>';
+    h+='</div></section>';
+    /* 订单明细列表（字段同「新增分拣」扫描列表） */
+    h+='<section class="rounded-xl border border-surface-200 bg-white"><div class="px-3 py-2 bg-surface-50 text-xs font-semibold text-text-secondary">'+tr('订单明细')+'（'+st.items.length+' '+tr('票')+'）</div>';
+    h+='<div class="overflow-auto" style="max-height:320px"><table class="w-full text-xs"><thead class="bg-surface-50 text-text-secondary sticky top-0"><tr>';
+    ['序号','运单号','客户名称','件数','尺寸','重量(KG)','体积(CBM)','操作'].forEach(function(hd){h+='<th class="px-3 py-2 text-left whitespace-nowrap">'+tr(hd)+'</th>';});
+    h+='</tr></thead><tbody>';
+    if(!st.items.length){h+='<tr><td colspan="8" class="px-3 py-6 text-center text-text-muted">'+tr('暂无订单明细，请添加')+'</td></tr>';}
+    st.items.forEach(function(o,i){
+        h+='<tr class="border-t border-surface-100">';
+        h+='<td class="px-3 py-2 text-text-muted">'+(i+1)+'</td>';
+        h+='<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(o.wb)+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.cust)+'</td>';
+        h+='<td class="px-3 py-2 text-right text-text-secondary">'+o.qty+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(o.size)+'</td>';
+        h+='<td class="px-3 py-2 text-right text-text-secondary">'+o.weight.toFixed(1)+'</td>';
+        h+='<td class="px-3 py-2 text-right text-text-secondary">'+(o.vol||0).toFixed(3)+'</td>';
+        h+='<td class="px-3 py-2"><a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="removeSortBagAdjustItem('+i+')">'+tr('移出')+'</a></td>';
+        h+='</tr>';
+    });
+    h+='</tbody></table></div></section>';
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='80%';
+    document.getElementById('crud-modal-title').textContent=tr('调整明细')+' - '+esc(st.bagNo);
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button><button onclick="closeCrudModal();showToast(tr(\'袋内订单明细已保存\'))" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+function addSortBagAdjustItem(mock){
+    const st=_sortBagAdjustState;
+    if(!st)return;
+    // 候选池：同目的仓库、未在袋中的订单
+    const pool=sortBagCandidateOrders().filter(function(o){return o.warehouse===st.warehouse;});
+    const used=st.items.map(function(o){return o.wb;});
+    let chosen=null;
+    if(mock){
+        const remaining=pool.filter(function(o){return used.indexOf(o.wb)<0;});
+        if(!remaining.length){showToast(tr('该仓库下已无可添加订单'));return;}
+        chosen=remaining[0];
+    }else{
+        const input=document.getElementById('sb-adjust-input');
+        const v=input?input.value.trim():'';
+        if(!v){showToast(tr('请输入运单号'));return;}
+        const found=pool.find(function(o){return o.wb===v;});
+        if(!found){showToast(tr('该运单不属于本袋目的仓库或不存在'));if(input){input.value='';input.focus();}return;}
+        if(used.indexOf(found.wb)>=0){showToast(tr('该运单已在袋中'));if(input){input.value='';input.focus();}return;}
+        chosen=found;
+    }
+    st.items.push(chosen);
+    renderSortBagAdjustModal();
+}
+
+function removeSortBagAdjustItem(idx){
+    if(!_sortBagAdjustState||!_sortBagAdjustState.items)return;
+    _sortBagAdjustState.items.splice(idx,1);
+    renderSortBagAdjustModal();
+}
+
 function finishSortBag(){
     const st=_sortBagState;
     if(!st||!st.rule||!st.items.length){showToast(tr('扫描列表为空，无法完成装袋'));return;}

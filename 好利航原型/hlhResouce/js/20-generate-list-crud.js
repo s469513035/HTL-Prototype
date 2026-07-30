@@ -201,6 +201,7 @@ function generateListPage(id,page,statusFilter){
             } else {
                 actionHtml='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+viewClick+'">'+L.view+'</a>';
                 if(id==='ow-outbound')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openOverseasQuickOutbound(\''+id+'\','+gi+')">'+tr('快捷出库')+'</a>';
+                if(id==='wh-sort-bag')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openSortBagAdjustModal(\''+id+'\','+gi+')">'+tr('调整明细')+'</a>';
                 /* 统一规则：行内操作列仅保留“查看”，编辑/删除已迁至工具栏操作按钮区（见 renderToolbarActions） */
             }
             h+='<td class="px-4 py-3 text-sm whitespace-nowrap" style="position:sticky;right:0;z-index:10;background:'+rowBg+';box-shadow:-4px 0 8px -4px rgba(0,0,0,0.1)">'+actionHtml+'</td>';

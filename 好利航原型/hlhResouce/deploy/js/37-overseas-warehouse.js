@@ -818,17 +818,17 @@ function openOverseasOutboundDetail(id,rowIdx){
     ])+'</section>';
     h+='<section>'+owSectionTitle('按件出库扫描进度（双扫码：放货码 + 子单号）')+'<div class="rounded-lg border border-surface-200 bg-white p-4">'+owProgressBar(released,total)+'</div></section>';
     var subRows=[
-        ['WB-20260701004-01','WB-20260701004','A区-A03','已出库'],
-        ['WB-20260701004-02','WB-20260701004','A区-A03','已出库'],
-        ['WB-20260701005-01','WB-20260701005','B区-B12', released>=total?'已出库':'待出库'],
-        ['WB-20260701005-02','WB-20260701005','B区-B12', released>=total?'已出库':'待出库']
+        ['WB-20260701004-01','WB-20260701004','A区-A03','已出库','David','2026-07-16 10:12'],
+        ['WB-20260701004-02','WB-20260701004','A区-A03','已出库','David','2026-07-16 10:13'],
+        ['WB-20260701005-01','WB-20260701005','B区-B12', released>=total?'已出库':'待出库', released>=total?'Maria':'—', released>=total?'2026-07-16 10:20':'—'],
+        ['WB-20260701005-02','WB-20260701005','B区-B12', released>=total?'已出库':'待出库', released>=total?'Maria':'—', released>=total?'2026-07-16 10:21':'—']
     ];
-    h+='<section>'+owSectionTitle('子件出库明细');
-    h+='<div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm">';
-    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['子单号','运单号','货区货位','出库状态'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
+    h+='<section>'+owSectionTitle('子单出库明细');
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm">';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['子单号','运单号','货区货位','出库状态','扫描操作人','操作时间'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
     subRows.forEach(function(r){
         var out=r[3]==='已出库';
-        h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-medium text-primary-700">'+esc(r[0])+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r[1])+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r[2])+'</td><td class="px-3 py-2 '+(out?'text-green-600 font-semibold':'text-text-secondary')+'">'+tr(r[3])+'</td></tr>';
+        h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(r[0])+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r[1])+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r[2])+'</td><td class="px-3 py-2 '+(out?'text-green-600 font-semibold':'text-text-secondary')+' whitespace-nowrap">'+tr(r[3])+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r[4])+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r[5])+'</td></tr>';
     });
     h+='</tbody></table></div></section>';
     h+='<div class="rounded-lg bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">'+tr('出库以【仓库PDA · 海外出库扫描】为主：扫二维码获取验证码+核验身份 → 逐件扫码 → 上传签收单/签字单 → 减库存生成POD。TMS 端可用“快捷出库”补充。')+'</div>';
@@ -854,6 +854,11 @@ function owNowStr(){
     var p=function(n){return (n<10?'0':'')+n;};
     return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
 }
+function owExpiryStr(mins){
+    var d=new Date(new Date().getTime()+(mins||30)*60000);
+    var p=function(n){return (n<10?'0':'')+n;};
+    return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
 
 /* 工具栏“查看校验码”：作用于选中行（未选行则提示） */
 function openSelectedOverseasOutboundCode(id){
@@ -872,6 +877,7 @@ function openOverseasOutboundCode(id,rowIdx){
     if(!row){showToast(tr('未找到出库数据'));return;}
     var doNo=owCell(row,headers,'放货单DO号');
     var code=owOutboundCode(doNo);
+    var expiry=owExpiryStr(30);
     var h='<div class="space-y-4">';
     h+='<section>'+owSectionTitle('放货单信息')+owInfoGrid([
         ['放货单DO号',doNo],['预约提货单号',owCell(row,headers,'预约提货单号')],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')]
@@ -879,7 +885,9 @@ function openOverseasOutboundCode(id,rowIdx){
     h+='<section>'+owSectionTitle('放货二维码 · 一次性校验码');
     h+='<div class="flex flex-wrap items-center gap-6 rounded-lg border border-surface-200 bg-white p-4">';
     h+='<div class="text-center">'+owQrBlock()+'<div class="text-[11px] text-text-muted mt-1">'+tr('仅可核销一次')+'</div></div>';
-    h+='<div class="flex-1 min-w-[200px]"><div class="text-xs text-text-muted mb-1">'+tr('一次性校验码')+'</div><div class="inline-block px-4 py-2 rounded-lg bg-primary-50 border border-primary-200 text-2xl font-bold tracking-widest text-primary-700">'+esc(code)+'</div><div class="mt-3 text-[11px] text-text-muted">'+tr('出库扫描/快捷出库时凭此二维码或校验码核验放货。')+'</div></div>';
+    h+='<div class="flex-1 min-w-[200px]"><div class="text-xs text-text-muted mb-1">'+tr('一次性校验码')+'</div><div class="inline-block px-4 py-2 rounded-lg bg-primary-50 border border-primary-200 text-2xl font-bold tracking-widest text-primary-700">'+esc(code)+'</div>';
+    h+='<div class="mt-2 text-xs"><span class="text-text-muted">'+tr('校验码到期时间')+'：</span><span class="font-semibold text-amber-600">'+esc(expiry)+'</span><span class="text-text-muted ml-1">'+tr('（有效 30 分钟，逾期请重新获取）')+'</span></div>';
+    h+='<div class="mt-3 text-[11px] text-text-muted">'+tr('出库扫描/快捷出库时凭此二维码或校验码核验放货。')+'</div></div>';
     h+='</div></section>';
     h+='</div>';
     owOpenModal(tr('查看校验码')+' - '+doNo,'56%',h);

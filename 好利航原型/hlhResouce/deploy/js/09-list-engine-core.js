@@ -1491,7 +1491,6 @@ function getToolbarActions(id){
     if(id==='ow-outbound'){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
-            {type:'add',label:'新增出库单',variant:'primary'},
             {key:'owViewCode',label:'查看校验码'},
             {key:'export',label:'导出数据'}
         ];

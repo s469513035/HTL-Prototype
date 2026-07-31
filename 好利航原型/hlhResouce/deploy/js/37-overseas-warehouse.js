@@ -707,37 +707,78 @@ function openOverseasPickupEdit(id,rowIdx){
     var deliveryFee=owCell(row,headers,'派送费(USD)');
     var slot=owCell(row,headers,'预约时段');
     var slotTime=(slot&&slot.indexOf(' ')>=0)?slot.split(' ')[1]:'';
+    var releaseStatus=owCell(row,headers,'放货状态');
+    var released=releaseStatus==='已放行';
+    /* 放行前可编辑：初始化提货明细子单选择（默认全选，可调整） */
+    if(!released){ _owCreateSubSel={}; _owPickupWaybills.forEach(function(w,i){_owCreateSubSel[i]=owAllSubIdx(i);}); }
     var h='<div class="space-y-5">';
-    h+='<div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">'+tr('客户/提单号/配舱单号/运单明细在创建时确定不可改；此处仅编辑提货方式、派送费、预约时段与提货人信息。费用与状态由系统控制。')+'</div>';
+    if(released){
+        h+='<div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">'+tr('该提货预约已放行，仅可查看，不可编辑。')+'</div>';
+    }else{
+        h+='<div class="rounded-lg border border-primary-100 bg-primary-50 px-3 py-2 text-[11px] text-primary-700">'+tr('放行前可编辑：可调整提货明细（运单/子单）、提货方式、派送费、预约时段与提货人信息；客户/提单号/配舱单号创建时确定不可改。')+'</div>';
+    }
     /* ① 提货条件（创建时确定·只读，布局参照新增） */
     h+='<section>'+owSectionTitle('① 提货条件（创建时确定·只读）')+owInfoGrid([
         ['客户',owCell(row,headers,'客户')],['提单号（Job号）',owCell(row,headers,'Job号')],['配舱单号（批次）',owCell(row,headers,'批次')],['目的仓库',owCell(row,headers,'目的仓库')],
-        ['提货申请号',apptNo],['可提货件数',owCell(row,headers,'件数')],['应收合计(USD)',owCell(row,headers,'应收合计(USD)')],['当前状态',status]
+        ['提货申请号',apptNo],['放货状态',releaseStatus],['应收合计(USD)',owCell(row,headers,'应收合计(USD)')],['当前状态',status]
     ])+'</section>';
-    /* ② 运单明细（创建时确定·只读，复用查看页提货明细） */
-    h+=owPickupDetailPanel(apptNo,row,headers);
-    /* ③ 提货单信息（可编辑） */
-    h+='<section>'+owSectionTitle('③ 提货单信息（可编辑）');
-    h+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4">';
-    h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary">'+tr('提货方式')+'<span class="text-red-500 ml-1">*</span></label>';
-    h+='<div class="flex items-center gap-6 h-9">'+
-        '<label class="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" name="ow-edit-pickup" value="上门提货"'+(!isDelivery?' checked':'')+' onchange="owEditToggleType()" class="accent-primary-600">'+tr('上门提货')+'</label>'+
-        '<label class="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" name="ow-edit-pickup" value="派送"'+(isDelivery?' checked':'')+' onchange="owEditToggleType()" class="accent-primary-600">'+tr('派送')+'</label>'+
-        '</div></div>';
-    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('预约时段')+'</label><select id="ow-edit-slot" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"><option value="">'+tr('请选择')+'</option>'+
-        ['09:00','10:00','11:00','14:00','15:00'].map(function(o){return '<option value="'+o+'"'+(slotTime===o?' selected':'')+'>'+o+'</option>';}).join('')+'</select></div>';
-    h+='<div id="ow-edit-fee-wrap" class="'+(isDelivery?'flex':'hidden')+' flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('派送费(USD)')+'<span class="text-red-500 ml-1">*</span></label><input id="ow-edit-fee" type="number" min="0" value="'+(isDelivery?esc(deliveryFee):'')+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+tr('派送方式必填')+'"></div>';
+    /* ② 提货明细：放行前可编辑调整（运单/子单），放行后只读 */
+    if(released){
+        h+=owPickupDetailPanel(apptNo,row,headers);
+    }else{
+        h+='<section>'+owSectionTitle('② 提货明细（放行前可调整：勾选运单默认全选子单，点“子单选择”调整提货子单）');
+        h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm">';
+        h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+
+            '<th class="px-3 py-2 w-10 text-center"><input type="checkbox" checked onclick="owPickupToggleAll(this)"></th>'+
+            ['运单号','品名','可提货件数','体积(CBM)','重量(KG)','已选件数','子单选择'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+
+            '</tr></thead><tbody>';
+        _owPickupWaybills.forEach(function(w,i){
+            h+='<tr class="border-t border-surface-100">'+
+                '<td class="px-3 py-2 text-center"><input type="checkbox" class="ow-create-wb-chk" data-idx="'+i+'" checked onchange="owPickupOnWbCheck('+i+')"></td>'+
+                '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(w.wb)+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+tr(w.name)+'</td>'+
+                '<td class="px-3 py-2 font-medium">'+w.pcs+'</td>'+
+                '<td class="px-3 py-2">'+esc(w.vol)+'</td>'+
+                '<td class="px-3 py-2">'+esc(w.weight)+'</td>'+
+                '<td class="px-3 py-2"><span id="ow-selpcs-'+i+'" class="font-semibold text-primary-700">'+((_owCreateSubSel[i]||[]).length)+'</span></td>'+
+                '<td class="px-3 py-2"><a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="openOwSubSelectModal('+i+')">'+tr('子单选择')+'</a></td>'+
+            '</tr>';
+        });
+        h+='</tbody></table></div>';
+        h+='<div class="mt-2 text-[11px] text-text-muted">'+tr('已选件数按所选子单实时统计；保存后按“已选件数”更新提货明细与应收合计。')+'</div>';
+        h+='</section>';
+    }
+    /* ③ 提货单信息：放行前可编辑，放行后只读 */
+    if(released){
+        h+='<section>'+owSectionTitle('③ 提货单信息（只读）')+owInfoGrid([
+            ['提货方式',pickupType],['预约时段',slot],['派送费(USD)',isDelivery?deliveryFee:'—'],['派送地址',isDelivery?'Lagos, Ikeja GRA, 23 Isaac John St.':'—'],
+            ['提货人姓名','Mr. Okafor'],['提货人电话','+234 802 000 111'],['证件号','ID·A1234567'],['车牌号','LOS-882-KJA']
+        ])+'</section>';
+    }else{
+        h+='<section>'+owSectionTitle('③ 提货单信息（可编辑）');
+        h+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4">';
+        h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary">'+tr('提货方式')+'<span class="text-red-500 ml-1">*</span></label>';
+        h+='<div class="flex items-center gap-6 h-9">'+
+            '<label class="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" name="ow-edit-pickup" value="上门提货"'+(!isDelivery?' checked':'')+' onchange="owEditToggleType()" class="accent-primary-600">'+tr('上门提货')+'</label>'+
+            '<label class="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" name="ow-edit-pickup" value="派送"'+(isDelivery?' checked':'')+' onchange="owEditToggleType()" class="accent-primary-600">'+tr('派送')+'</label>'+
+            '</div></div>';
+        h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('预约时段')+'</label><select id="ow-edit-slot" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"><option value="">'+tr('请选择')+'</option>'+
+            ['09:00','10:00','11:00','14:00','15:00'].map(function(o){return '<option value="'+o+'"'+(slotTime===o?' selected':'')+'>'+o+'</option>';}).join('')+'</select></div>';
+        h+='<div id="ow-edit-fee-wrap" class="'+(isDelivery?'flex':'hidden')+' flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('派送费(USD)')+'<span class="text-red-500 ml-1">*</span></label><input id="ow-edit-fee" type="number" min="0" value="'+(isDelivery?esc(deliveryFee):'')+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+tr('派送方式必填')+'"></div>';
+        h+='</div>';
+        h+='<div id="ow-edit-addr-wrap" class="'+(isDelivery?'':'hidden')+' mt-3"><div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('派送地址')+'</label><input id="ow-edit-addr" type="text" value="Lagos, Ikeja GRA, 23 Isaac John St." class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div></div>';
+        h+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">';
+        h+=owEditInput('提货人姓名','ow-edit-picker','Mr. Okafor');
+        h+=owEditInput('提货人电话','ow-edit-phone','+234 802 000 111');
+        h+=owEditInput('证件号','ow-edit-id','ID·A1234567');
+        h+=owEditInput('车牌号','ow-edit-plate','LOS-882-KJA');
+        h+='</div>';
+        h+='</section>';
+    }
     h+='</div>';
-    h+='<div id="ow-edit-addr-wrap" class="'+(isDelivery?'':'hidden')+' mt-3"><div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('派送地址')+'</label><input id="ow-edit-addr" type="text" value="Lagos, Ikeja GRA, 23 Isaac John St." class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div></div>';
-    h+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">';
-    h+=owEditInput('提货人姓名','ow-edit-picker','Mr. Okafor');
-    h+=owEditInput('提货人电话','ow-edit-phone','+234 802 000 111');
-    h+=owEditInput('证件号','ow-edit-id','ID·A1234567');
-    h+=owEditInput('车牌号','ow-edit-plate','LOS-882-KJA');
-    h+='</div>';
-    h+='</section>';
-    h+='</div>';
-    var footer='<button onclick="submitOverseasPickupEdit(\''+id+'\','+rowIdx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存')+'</button>'+
+    var footer=released
+        ?'<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>'
+        :'<button onclick="submitOverseasPickupEdit(\''+id+'\','+rowIdx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存')+'</button>'+
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('取消')+'</button>';
     owOpenModal(tr('编辑提货预约')+' - '+apptNo,'82%',h,footer);
 }
@@ -745,6 +786,22 @@ function submitOverseasPickupEdit(id,rowIdx){
     var c=TC[id]||{};
     var d=owRowData(id,rowIdx);var row=d.row,headers=(c.h||[]);
     if(!row)return;
+    var apptNo=owCell(row,headers,'提货申请号');
+    /* 提货明细（放行前可调整）：从子单选择重建 */
+    var wbChks=Array.prototype.slice.call(document.querySelectorAll('.ow-create-wb-chk')).filter(function(x){return x.checked;});
+    var totalPcs=0,totalWeight=0,totalVol=0,detail=[];
+    wbChks.forEach(function(cb){
+        var wi=parseInt(cb.getAttribute('data-idx'),10);
+        var w=_owPickupWaybills[wi];if(!w)return;
+        var sel=_owCreateSubSel[wi]||[];
+        if(sel.length===0)return;
+        var pcs=0,wt=0,vol=0;
+        sel.forEach(function(si){var s=w.subs[si];if(s){pcs+=1;wt+=parseFloat(s.wt)||0;vol+=parseFloat(s.vol)||0;}});
+        totalPcs+=pcs;totalWeight+=wt;totalVol+=vol;
+        detail.push([w.wb,w.name,sel.length+'/'+w.subs.length,String(pcs),vol.toFixed(3),wt.toFixed(1)]);
+    });
+    if(totalPcs===0){showToast(tr('请至少选择一个运单的子单'));return;}
+    /* ③ 提货单信息 */
     var radios=document.getElementsByName('ow-edit-pickup');
     var pickup='上门提货';
     for(var i=0;i<radios.length;i++){if(radios[i].checked)pickup=radios[i].value;}
@@ -753,20 +810,23 @@ function submitOverseasPickupEdit(id,rowIdx){
     var slotEl=document.getElementById('ow-edit-slot');
     var slot=slotEl&&slotEl.value?('2026-07-17 '+slotEl.value):'—';
     var fee=pickup==='派送'?parseFloat(feeEl.value||'0').toFixed(2):'—';
-    var apptNo=owCell(row,headers,'提货申请号');
     var srcRow=(c.d||[]).find(function(r){return r[0]===apptNo;});
     if(srcRow){
-        var iP=headers.indexOf('提货方式'),iF=headers.indexOf('派送费(USD)'),iS=headers.indexOf('预约时段');
+        var iP=headers.indexOf('提货方式'),iF=headers.indexOf('派送费(USD)'),iS=headers.indexOf('预约时段'),iPcs=headers.indexOf('件数'),iWt=headers.indexOf('重量(KG)'),iDue=headers.indexOf('应收合计(USD)');
         if(iP>=0)srcRow[iP]=pickup;
         if(iF>=0)srcRow[iF]=fee;
         if(iS>=0)srcRow[iS]=slot;
+        if(iPcs>=0)srcRow[iPcs]=String(totalPcs);
+        if(iWt>=0)srcRow[iWt]=totalWeight.toFixed(1);
+        if(iDue>=0)srcRow[iDue]=(totalPcs*150).toFixed(2);
     }
+    _owPickupDetailByAppt[apptNo]=detail;
     closeCrudModal();
     var mc=document.getElementById('main-content');
     var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
     var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
     if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
-    showToast(tr('提货预约已更新')+'：'+apptNo);
+    showToast(tr('提货预约已更新')+'：'+apptNo+'（'+detail.length+tr('个运单')+' / '+totalPcs+tr('件')+'）');
 }
 
 /* ================= 手动放货（提货明细+金额，补充原因→自动生成放货单DO） ================= */

@@ -914,6 +914,7 @@ function renderToolbarAction(action,id){
     else if(id==='ow-pickup'&&action.type==='add')click='openOverseasPickupCreate()';
     else if(action.key==='pickupEdit')click='openSelectedPickupEdit(\''+id+'\')';
     else if(action.key==='pickupManualRelease')click='openOverseasPickupManualRelease(\''+id+'\')';
+    else if(action.key==='invManualCount')click='openOverseasInventoryManualCount(\''+id+'\')';
     else if(id==='ow-outbound'&&action.type==='add')click='openOverseasOutboundCreate()';
     else if(action.type==='add')click='openCrudModal(\'add\',\''+id+'\',-1)';
     else if(action.type==='edit')click='openSelectedCrud(\'edit\',\''+id+'\')';
@@ -1507,6 +1508,13 @@ function getToolbarActions(id){
     if(id==='ow-arrival'){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
+    if(id==='ow-inventory'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'invManualCount',label:'手动盘点',variant:'primary'},
             {key:'export',label:'导出数据'}
         ];
     }

@@ -193,7 +193,7 @@ function generateListPage(id,page,statusFilter){
             const airScanIds=['wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan'];
             const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc'].concat(airScanIds).includes(id);
             const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc'].concat(airScanIds).includes(id);
-            const viewClick=(id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':(id==='wh-pallet-info'?'openPalletInfoDetailModal(\''+id+'\','+gi+')':(id==='ow-pickup'?'openOverseasPickupDetail(\''+id+'\','+gi+')':(id==='ow-arrival'?'openOverseasArrivalDetail(\''+id+'\','+gi+')':(id==='ow-outbound'?'openOverseasOutboundDetail(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')')))))));
+            const viewClick=(id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':(id==='wh-pallet-info'?'openPalletInfoDetailModal(\''+id+'\','+gi+')':(id==='ow-pickup'?'openOverseasPickupDetail(\''+id+'\','+gi+')':(id==='ow-arrival'?'openOverseasArrivalDetail(\''+id+'\','+gi+')':(id==='ow-outbound'?'openOverseasOutboundDetail(\''+id+'\','+gi+')':(id==='ow-inventory'?'openOverseasInventoryDetail(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')'))))))));
             let actionHtml='';
             if(id==='cfg-label-template'){
                 actionHtml='<a class="text-orange-500 hover:text-orange-600 cursor-pointer mr-3" onclick="openLabelTemplateModal(\'edit\',\''+id+'\','+gi+')">'+tr('修改')+'</a>'+
@@ -202,6 +202,7 @@ function generateListPage(id,page,statusFilter){
                 actionHtml='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+viewClick+'">'+L.view+'</a>';
                 if(id==='ow-outbound')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openOverseasQuickOutbound(\''+id+'\','+gi+')">'+tr('快捷出库')+'</a>';
                 if(id==='wh-sort-bag')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openSortBagAdjustModal(\''+id+'\','+gi+')">'+tr('调整明细')+'</a>';
+                if(id==='ow-inventory')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openOverseasInventoryCountRecords(\''+id+'\','+gi+')">'+tr('盘点记录')+'</a>';
                 /* 统一规则：行内操作列仅保留“查看”，编辑/删除已迁至工具栏操作按钮区（见 renderToolbarActions） */
             }
             h+='<td class="px-4 py-3 text-sm whitespace-nowrap" style="position:sticky;right:0;z-index:10;background:'+rowBg+';box-shadow:-4px 0 8px -4px rgba(0,0,0,0.1)">'+actionHtml+'</td>';

@@ -89,13 +89,13 @@ TC['ow-outbound'].noAutoAudit=true;
 
 /* ---------- 海外仓库存(在库 / 部分提货Remaining / 异常隔离) ---------- */
 addPrototypeTable('ow-inventory','海外仓库存',
-    '运单号|客户|目的仓库|品名|货区货位|在库件数|已提件数|剩余件数|入库时间|库存状态|操作',
+    '运单号|客户|目的仓库|品名|货物类型|货区货位|到库件数|已出件数|在库件数|盘点件数|入库时间|库存状态|操作',
     ['在库','部分提货','已提清','异常隔离'],
     [
-        ['WB-20260701001','东莞市鑫海物流','拉各斯海外仓','服装配件','A区-A03','8','8','0','2026-07-05 14:20','已提清'],
-        ['WB-20260701002','上海锦程国际贸易','拉各斯海外仓','手机配件','B区-B12','15','9','6','2026-07-05 15:10','部分提货'],
-        ['WB-20260701003','广州远航贸易','阿比让海外仓','五金工具','C区-C09','5','0','5','2026-07-04 10:30','在库'],
-        ['WB-20260630008','深圳市华运达国际货运','达喀尔海外仓','家居用品','A区-A07','12','0','12','2026-07-03 09:00','异常隔离']
+        ['WB-20260701001','东莞市鑫海物流','拉各斯海外仓','服装配件','普货','A区-A03','8','8','0','0','2026-07-05 14:20','已提清'],
+        ['WB-20260701002','上海锦程国际贸易','拉各斯海外仓','手机配件','敏感货','B区-B12','15','9','6','6','2026-07-05 15:10','部分提货'],
+        ['WB-20260701003','广州远航贸易','阿比让海外仓','五金工具','普货','C区-C09','5','0','5','5','2026-07-04 10:30','在库'],
+        ['WB-20260630008','深圳市华运达国际货运','达喀尔海外仓','家居用品','普货','A区-A07','12','0','12','11','2026-07-03 09:00','异常隔离']
     ],
     [
         {label:'运单号',type:'text'},
@@ -106,6 +106,124 @@ addPrototypeTable('ow-inventory','海外仓库存',
 );
 TC['ow-inventory'].noExpand=true;
 TC['ow-inventory'].noAutoAudit=true;
+/* 历史盘点记录：运单号 → [{盘点件数,盘点人,盘点时间,盘点说明,盘点附件}] */
+var _owInvCountRecords={
+    'WB-20260701002':[
+        {qty:'6',by:'David',time:'2026-07-10 09:20',note:'月度盘点，账实相符',file:'盘点单-0710.pdf'},
+        {qty:'6',by:'Maria',time:'2026-07-15 16:40',note:'抽盘复核，无差异',file:'盘点照片-0715.jpg'}
+    ],
+    'WB-20260630008':[
+        {qty:'11',by:'Okafor',time:'2026-07-12 11:05',note:'发现少 1 件，转异常隔离核查',file:'异常盘点-0712.pdf'}
+    ]
+};
+/* ===== 需求3：海外仓库存详情（运单主信息 + 到库/出库 双插页明细） ===== */
+function openOverseasInventoryDetail(id,rowIdx){
+    var d=owRowData(id,rowIdx);var row=d.row,headers=(d.c.h||[]);
+    if(!row){showToast(tr('未找到库存数据'));return;}
+    var wb=owCell(row,headers,'运单号');
+    var loc=owCell(row,headers,'货区货位');
+    var arrived=parseInt(owCell(row,headers,'到库件数')||'0',10);
+    var shipped=parseInt(owCell(row,headers,'已出件数')||'0',10);
+    var ops=['David','Maria','Okafor','Amadou'];
+    var p2=function(n){return (n<10?'0':'')+n;};
+    var arrRows='';
+    for(var i=0;i<arrived;i++){
+        arrRows+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(wb+'-'+p2(i+1))+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(loc)+'</td><td class="px-3 py-2 text-green-600 whitespace-nowrap">'+tr('已到库')+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(ops[i%ops.length])+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">2026-07-05 '+p2(9+i%8)+':'+p2((i*7)%60)+'</td></tr>';
+    }
+    var outRows='';
+    for(var j=0;j<shipped;j++){
+        outRows+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(wb+'-'+p2(j+1))+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(loc)+'</td><td class="px-3 py-2 text-green-600 whitespace-nowrap">'+tr('已出库')+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(ops[j%ops.length])+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">2026-07-16 '+p2(10+j%6)+':'+p2((j*11)%60)+'</td></tr>';
+    }
+    var h='<div class="space-y-5">';
+    h+='<section>'+owSectionTitle('运单主信息')+owInfoGrid([
+        ['运单号',wb],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')],['品名',owCell(row,headers,'品名')],
+        ['货物类型',owCell(row,headers,'货物类型')],['货区货位',loc],['到库件数',String(arrived)],['已出件数',String(shipped)],
+        ['在库件数',owCell(row,headers,'在库件数')],['盘点件数',owCell(row,headers,'盘点件数')],['入库时间',owCell(row,headers,'入库时间')],['库存状态',owCell(row,headers,'库存状态')]
+    ])+'</section>';
+    h+='<div class="flex gap-2 border-b border-surface-200">'+
+        '<button type="button" id="ow-inv-tabbtn-arrival" onclick="owSwitchInvTab(\'arrival\')" class="px-3 py-2 text-sm font-semibold text-primary-600 border-b-2 border-primary-600">'+tr('到库明细')+'（'+arrived+'）</button>'+
+        '<button type="button" id="ow-inv-tabbtn-outbound" onclick="owSwitchInvTab(\'outbound\')" class="px-3 py-2 text-sm font-medium text-text-secondary border-b-2 border-transparent">'+tr('出库明细')+'（'+shipped+'）</button>'+
+        '</div>';
+    h+='<div id="ow-inv-tab-arrival"><div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+['子单号','货区货位','到库状态','扫描操作人','到库时间'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>'+(arrRows||'<tr><td colspan="5" class="px-3 py-8 text-center text-text-muted">'+tr('暂无到库明细')+'</td></tr>')+'</tbody></table></div></div>';
+    h+='<div id="ow-inv-tab-outbound" class="hidden"><div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+['子单号','货区货位','出库状态','扫描操作人','出库时间'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>'+(outRows||'<tr><td colspan="5" class="px-3 py-8 text-center text-text-muted">'+tr('暂无出库明细')+'</td></tr>')+'</tbody></table></div></div>';
+    h+='</div>';
+    owOpenModal(tr('海外仓库存详情')+' - '+wb,'78%',h);
+}
+function owSwitchInvTab(tab){
+    var a=document.getElementById('ow-inv-tab-arrival'),o=document.getElementById('ow-inv-tab-outbound');
+    var ba=document.getElementById('ow-inv-tabbtn-arrival'),bo=document.getElementById('ow-inv-tabbtn-outbound');
+    var on='px-3 py-2 text-sm font-semibold text-primary-600 border-b-2 border-primary-600';
+    var off='px-3 py-2 text-sm font-medium text-text-secondary border-b-2 border-transparent';
+    if(tab==='outbound'){if(a)a.classList.add('hidden');if(o)o.classList.remove('hidden');if(ba)ba.className=off;if(bo)bo.className=on;}
+    else{if(o)o.classList.add('hidden');if(a)a.classList.remove('hidden');if(bo)bo.className=off;if(ba)ba.className=on;}
+}
+/* ===== 需求4：手动盘点（盘点件数/盘点说明/上传附件） ===== */
+function openOverseasInventoryManualCount(id){
+    var idx=(typeof getSelectedRowIndex==='function')?getSelectedRowIndex():-1;
+    if(idx<0){showToast(tr('请先选择一条库存记录'));return;}
+    var d=owRowData(id,idx);var row=d.row,headers=(d.c.h||[]);
+    if(!row){showToast(tr('未找到库存数据'));return;}
+    var wb=owCell(row,headers,'运单号');
+    var inStock=owCell(row,headers,'在库件数');
+    var h='<div class="space-y-5">';
+    h+='<section>'+owSectionTitle('库存信息')+owInfoGrid([
+        ['运单号',wb],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')],['货区货位',owCell(row,headers,'货区货位')],
+        ['到库件数',owCell(row,headers,'到库件数')],['已出件数',owCell(row,headers,'已出件数')],['在库件数',inStock],['当前盘点件数',owCell(row,headers,'盘点件数')]
+    ])+'</section>';
+    h+='<section>'+owSectionTitle('手动盘点');
+    h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('盘点件数')+'<span class="text-red-500 ml-1">*</span></label><input id="ow-inv-count-qty" type="number" min="0" value="'+esc(inStock)+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('盘点附件')+'</label><input id="ow-inv-count-file" type="file" class="w-full text-sm text-text-secondary file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-primary-50 file:text-primary-700 file:text-sm file:cursor-pointer"></div>';
+    h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary">'+tr('盘点说明')+'</label><textarea id="ow-inv-count-note" rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-white resize-y" placeholder="'+esc(tr('请填写盘点说明，例如：月度盘点账实相符 / 发现差异并说明原因'))+'"></textarea></div>';
+    h+='</div></section>';
+    h+='</div>';
+    var footer='<button onclick="submitOverseasInventoryManualCount(\''+id+'\','+idx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('提交盘点')+'</button>'+
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('取消')+'</button>';
+    owOpenModal(tr('手动盘点')+' - '+wb,'62%',h,footer);
+}
+function submitOverseasInventoryManualCount(id,idx){
+    var qtyEl=document.getElementById('ow-inv-count-qty');
+    var noteEl=document.getElementById('ow-inv-count-note');
+    var fileEl=document.getElementById('ow-inv-count-file');
+    var qty=qtyEl?String(qtyEl.value).trim():'';
+    if(qty===''){showToast(tr('请填写盘点件数'));if(qtyEl)qtyEl.focus();return;}
+    var note=noteEl?noteEl.value.trim():'';
+    var fileName=(fileEl&&fileEl.files&&fileEl.files.length)?fileEl.files[0].name:'—';
+    var c=TC[id]||{};
+    var d=owRowData(id,idx);var row=d.row,headers=(c.h||[]);
+    if(!row)return;
+    var wb=owCell(row,headers,'运单号');
+    var srcRow=(c.d||[]).find(function(r){return r[0]===wb;});
+    if(srcRow){var iC=headers.indexOf('盘点件数');if(iC>=0)srcRow[iC]=String(qty);}
+    if(!_owInvCountRecords[wb])_owInvCountRecords[wb]=[];
+    _owInvCountRecords[wb].unshift({qty:String(qty),by:owCurrentOperator(),time:owNowStr(),note:note||'—',file:fileName});
+    closeCrudModal();
+    var mc=document.getElementById('main-content');
+    var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
+    var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
+    if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
+    showToast(tr('盘点已提交')+'：'+wb+'（'+tr('盘点件数')+' '+qty+'）');
+}
+/* ===== 需求5：盘点记录（历史盘点列表） ===== */
+function openOverseasInventoryCountRecords(id,rowIdx){
+    var d=owRowData(id,rowIdx);var row=d.row,headers=(d.c.h||[]);
+    if(!row){showToast(tr('未找到库存数据'));return;}
+    var wb=owCell(row,headers,'运单号');
+    var recs=_owInvCountRecords[wb]||[];
+    var h='<div class="space-y-4">';
+    h+='<section>'+owSectionTitle('库存信息')+owInfoGrid([
+        ['运单号',wb],['客户',owCell(row,headers,'客户')],['货区货位',owCell(row,headers,'货区货位')],['在库件数',owCell(row,headers,'在库件数')]
+    ],4)+'</section>';
+    h+='<section>'+owSectionTitle('历史盘点记录（'+recs.length+' 条）');
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+['盘点件数','盘点人','盘点时间','盘点说明','盘点附件'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
+    if(!recs.length){h+='<tr><td colspan="5" class="px-3 py-8 text-center text-text-muted">'+tr('暂无盘点记录')+'</td></tr>';}
+    recs.forEach(function(r){
+        h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-semibold text-primary-700">'+esc(r.qty)+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.by)+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.time)+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r.note)+'</td><td class="px-3 py-2 whitespace-nowrap">'+((r.file&&r.file!=='—')?'<a class="text-primary-600 hover:underline cursor-pointer" onclick="showToast(tr(\'附件预览（原型示意）\'))">'+esc(r.file)+'</a>':'—')+'</td></tr>';
+    });
+    h+='</tbody></table></div></section>';
+    h+='</div>';
+    owOpenModal(tr('盘点记录')+' - '+wb,'70%',h);
+}
 
 /* ================= 桌面详情弹窗公共小工具 ================= */
 function owCell(rowData,headers,name){

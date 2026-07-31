@@ -912,6 +912,8 @@ function renderToolbarAction(action,id){
     if(id==='fin-fee-mgmt'&&action.type==='add')click='openFeeMgmtFeeModal(\'add\',\''+id+'\',-1)';
     else if(id==='fin-fee-mgmt'&&action.type==='edit')click='openSelectedFeeMgmtEdit(\''+id+'\')';
     else if(id==='ow-pickup'&&action.type==='add')click='openOverseasPickupCreate()';
+    else if(action.key==='pickupEdit')click='openSelectedPickupEdit(\''+id+'\')';
+    else if(action.key==='pickupManualRelease')click='openOverseasPickupManualRelease(\''+id+'\')';
     else if(id==='ow-outbound'&&action.type==='add')click='openOverseasOutboundCreate()';
     else if(action.type==='add')click='openCrudModal(\'add\',\''+id+'\',-1)';
     else if(action.type==='edit')click='openSelectedCrud(\'edit\',\''+id+'\')';
@@ -1491,6 +1493,15 @@ function getToolbarActions(id){
             {key:'search',label:'查询数据',variant:'primary'},
             {type:'add',label:'新增出库单',variant:'primary'},
             {key:'owViewCode',label:'查看校验码'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
+    if(id==='ow-pickup'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {type:'add',label:'新增数据',variant:'primary'},
+            {key:'pickupEdit',label:'编辑数据'},
+            {key:'pickupManualRelease',label:'手动放货',variant:'primary'},
             {key:'export',label:'导出数据'}
         ];
     }

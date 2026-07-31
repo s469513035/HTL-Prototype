@@ -249,6 +249,7 @@ function openOverseasPickupDetail(id,rowIdx){
     var pickupType=owCell(row,headers,'提货方式');
     var deliveryFee=owCell(row,headers,'派送费(USD)');
     var status=owCell(row,headers,'状态');
+    var releaseStatus=owCell(row,headers,'放货状态');
     var isDelivery=pickupType==='派送';
     var totalDue=owCell(row,headers,'应收合计(USD)');
     /* 费用明细：其余项 mock，派送费取行值 */
@@ -299,12 +300,15 @@ function openOverseasPickupDetail(id,rowIdx){
             ['身份证/证件','ID·A1234567'],['车牌号','LOS-882-KJA'],['预约时段',owCell(row,headers,'预约时段')]
         ])+'</section>';
     }
-    /* 电子放货单 DO（不展示二维码；二维码+验证码在出库扫描时核验） */
-    h+='<section>'+owSectionTitle('电子放货单 DO');
-    h+='<div class="rounded-lg border border-surface-200 bg-white p-3">'+owInfoGrid([
-        ['DO号','DO-'+job.replace('HT-','')],['有效时间','2026-07-16 08:00~18:00'],['授权状态',(status==='待付款'||status==='待审批')?'未授权':'已授权放货']
-    ],3);
-    h+='<div class="mt-2 text-[11px] text-text-muted">'+tr('说明：DO 二维码与一次性验证码在【海外仓出库 · 出库扫描】环节由仓库扫码核验，此处不展示。')+'</div></div></section>';
+    /* 电子放货单 DO：仅“已放行”状态显示（不展示二维码；二维码+验证码在出库扫描时核验） */
+    if(releaseStatus==='已放行'){
+        var outStatus=status==='已完成'?'已出库':(status==='部分提货'?'部分出库':'待出库');
+        h+='<section>'+owSectionTitle('电子放货单 DO');
+        h+='<div class="rounded-lg border border-surface-200 bg-white p-3">'+owInfoGrid([
+            ['DO号','DO-'+job.replace('HT-','')],['有效时间','2026-07-16 08:00~18:00'],['出库状态',outStatus]
+        ],3);
+        h+='<div class="mt-2 text-[11px] text-text-muted">'+tr('说明：DO 二维码与一次性验证码在【海外仓出库 · 出库扫描】环节由仓库扫码核验，此处不展示。')+'</div></div></section>';
+    }
     /* 放货前置校验（付款/审批/DO）；身份核验+验证码+客户签字+仓管签字在出库环节 */
     h+='<section>'+owSectionTitle('放货前置校验（身份核验/验证码/签字在出库环节）')+owReleasePreGates(row,headers)+'</section>';
     h+='</div>';/* /提货信息插页 */
@@ -569,6 +573,11 @@ function owEditToggleType(){
     if(feeWrap){feeWrap.classList.toggle('hidden',!show);feeWrap.classList.toggle('flex',show);}
     if(addrWrap)addrWrap.classList.toggle('hidden',!show);
 }
+function openSelectedPickupEdit(id){
+    var idx=(typeof getSelectedRowIndex==='function')?getSelectedRowIndex():-1;
+    if(idx<0){showToast(tr('请先选择一条提货预约'));return;}
+    openOverseasPickupEdit(id,idx);
+}
 function openOverseasPickupEdit(id,rowIdx){
     var d=owRowData(id,rowIdx);
     var row=d.row,headers=(d.c.h||[]);
@@ -582,13 +591,15 @@ function openOverseasPickupEdit(id,rowIdx){
     var slotTime=(slot&&slot.indexOf(' ')>=0)?slot.split(' ')[1]:'';
     var h='<div class="space-y-5">';
     h+='<div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">'+tr('客户/提单号/配舱单号/运单明细在创建时确定不可改；此处仅编辑提货方式、派送费、预约时段与提货人信息。费用与状态由系统控制。')+'</div>';
-    /* 只读信息 */
-    h+='<section>'+owSectionTitle('提货预约信息（只读）')+owInfoGrid([
-        ['提货申请号',apptNo],['客户',owCell(row,headers,'客户')],['提单号(Job号)',owCell(row,headers,'Job号')],['配舱单号(批次)',owCell(row,headers,'批次')],
-        ['目的仓库',owCell(row,headers,'目的仓库')],['可提货件数',owCell(row,headers,'件数')],['应收合计(USD)',owCell(row,headers,'应收合计(USD)')],['当前状态',status]
+    /* ① 提货条件（创建时确定·只读，布局参照新增） */
+    h+='<section>'+owSectionTitle('① 提货条件（创建时确定·只读）')+owInfoGrid([
+        ['客户',owCell(row,headers,'客户')],['提单号（Job号）',owCell(row,headers,'Job号')],['配舱单号（批次）',owCell(row,headers,'批次')],['目的仓库',owCell(row,headers,'目的仓库')],
+        ['提货申请号',apptNo],['可提货件数',owCell(row,headers,'件数')],['应收合计(USD)',owCell(row,headers,'应收合计(USD)')],['当前状态',status]
     ])+'</section>';
-    /* 可编辑 */
-    h+='<section>'+owSectionTitle('提货单信息（可编辑）');
+    /* ② 运单明细（创建时确定·只读，复用查看页提货明细） */
+    h+=owPickupDetailPanel(apptNo,row,headers);
+    /* ③ 提货单信息（可编辑） */
+    h+='<section>'+owSectionTitle('③ 提货单信息（可编辑）');
     h+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4">';
     h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary">'+tr('提货方式')+'<span class="text-red-500 ml-1">*</span></label>';
     h+='<div class="flex items-center gap-6 h-9">'+
@@ -610,7 +621,7 @@ function openOverseasPickupEdit(id,rowIdx){
     h+='</div>';
     var footer='<button onclick="submitOverseasPickupEdit(\''+id+'\','+rowIdx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存')+'</button>'+
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('取消')+'</button>';
-    owOpenModal(tr('编辑提货预约')+' - '+apptNo,'72%',h,footer);
+    owOpenModal(tr('编辑提货预约')+' - '+apptNo,'82%',h,footer);
 }
 function submitOverseasPickupEdit(id,rowIdx){
     var c=TC[id]||{};
@@ -638,6 +649,70 @@ function submitOverseasPickupEdit(id,rowIdx){
     var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
     if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
     showToast(tr('提货预约已更新')+'：'+apptNo);
+}
+
+/* ================= 手动放货（提货明细+金额，补充原因→自动生成放货单DO） ================= */
+function openOverseasPickupManualRelease(id){
+    var idx=(typeof getSelectedRowIndex==='function')?getSelectedRowIndex():-1;
+    if(idx<0){showToast(tr('请先选择一条提货预约'));return;}
+    var d=owRowData(id,idx);var row=d.row,headers=(d.c.h||[]);
+    if(!row){showToast(tr('未找到提货预约数据'));return;}
+    var apptNo=owCell(row,headers,'提货申请号');
+    var releaseStatus=owCell(row,headers,'放货状态');
+    if(releaseStatus==='已放行'){showToast(tr('该提货预约已放行，无需手动放货'));return;}
+    var isDelivery=owCell(row,headers,'提货方式')==='派送';
+    var deliveryFee=owCell(row,headers,'派送费(USD)');
+    var totalDue=owCell(row,headers,'应收合计(USD)');
+    var feeRows=[
+        ['运输费','USD 1,200.00'],['仓租','USD 180.00'],
+        ['派送费', isDelivery?('USD '+(deliveryFee||'0.00')):'USD 0.00（上门提货免派送）'],
+        ['改单费','USD 20.00'],['其他费用','USD 0.00']
+    ];
+    var h='<div class="space-y-5">';
+    h+='<div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">'+tr('手动放货用于付款未到账/审批未完成等场景的人工放行，需补充放货原因；放行后自动生成放货单DO并下发仓库。')+'</div>';
+    /* 基本信息 */
+    h+='<section>'+owSectionTitle('提货基本信息')+owInfoGrid([
+        ['提货申请号',apptNo],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')],['提货方式',owCell(row,headers,'提货方式')],
+        ['件数',owCell(row,headers,'件数')],['重量(KG)',owCell(row,headers,'重量(KG)')],['付款状态',owCell(row,headers,'付款状态')],['放货状态',releaseStatus]
+    ])+'</section>';
+    /* 提货明细 */
+    h+=owPickupDetailPanel(apptNo,row,headers);
+    /* 费用与金额 */
+    h+='<section>'+owSectionTitle('费用与金额');
+    h+='<div class="rounded-lg border border-surface-200 bg-surface-50 px-3 py-2"><div class="grid grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-1 text-xs">';
+    feeRows.forEach(function(f){h+='<div class="flex items-baseline justify-between gap-2 border-b border-surface-100 py-1"><span class="text-text-muted shrink-0">'+tr(f[0])+'</span><span class="font-medium text-text-primary text-right break-all">'+esc(f[1])+'</span></div>';});
+    h+='<div class="flex items-baseline justify-between gap-2 md:col-span-3 border-t border-surface-200 mt-0.5 pt-1.5"><span class="text-sm font-semibold text-primary-700">'+tr('应收合计')+'</span><span class="text-sm font-bold text-primary-700">USD '+esc(totalDue)+'</span></div>';
+    h+='</div></div></section>';
+    /* 手动放货原因 */
+    h+='<section>'+owSectionTitle('手动放货原因（必填）');
+    h+='<textarea id="ow-mr-reason" rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-white resize-y" placeholder="'+esc(tr('请填写手动放货原因，例如：客户已线下确认付款、总部授权先行放货等'))+'"></textarea>';
+    h+='</section>';
+    h+='</div>';
+    var footer='<button onclick="submitOverseasPickupManualRelease(\''+id+'\','+idx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('生成放货单')+'</button>'+
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('取消')+'</button>';
+    owOpenModal(tr('手动放货')+' - '+apptNo,'76%',h,footer);
+}
+function submitOverseasPickupManualRelease(id,idx){
+    var reasonEl=document.getElementById('ow-mr-reason');
+    var reason=reasonEl?reasonEl.value.trim():'';
+    if(!reason){showToast(tr('请填写手动放货原因'));if(reasonEl)reasonEl.focus();return;}
+    var c=TC[id]||{};
+    var d=owRowData(id,idx);var row=d.row,headers=(c.h||[]);
+    if(!row)return;
+    var apptNo=owCell(row,headers,'提货申请号');
+    var srcRow=(c.d||[]).find(function(r){return r[0]===apptNo;});
+    if(srcRow){
+        var iRel=headers.indexOf('放货状态'),iSt=headers.indexOf('状态');
+        if(iRel>=0)srcRow[iRel]='已放行';
+        if(iSt>=0)srcRow[iSt]='待提货';
+    }
+    var doNo='DO-'+(owCell(row,headers,'Job号')||'').replace('HT-','');
+    closeCrudModal();
+    var mc=document.getElementById('main-content');
+    var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
+    var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
+    if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
+    showToast(tr('已手动放货，放货单已生成')+'：'+doNo);
 }
 
 /* ================= 需求3：海外仓到货详情（按配舱单逐件扫描进度） ================= */

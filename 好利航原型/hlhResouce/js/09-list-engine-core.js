@@ -1505,6 +1505,12 @@ function getToolbarActions(id){
             {key:'export',label:'导出数据'}
         ];
     }
+    if(id==='ow-arrival'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
     const actions=[{key:'search',label:'查询数据',variant:'primary'},{type:'add',label:'新增数据',variant:'primary'},{key:'export',label:'导出数据'}];
     if(id.indexOf('wh-')===0){actions.push({key:'printLabel',label:'打印标签'},{key:'exception',label:'异常登记'},{key:'sync',label:'同步数据'});}
     else if(id.indexOf('prod-')===0||id.indexOf('cfg-')===0){actions.push({key:'enable',label:'启用/禁用'},{key:'copy',label:'复制新增'});}

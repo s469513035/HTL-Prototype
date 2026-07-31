@@ -729,25 +729,78 @@ function openOverseasArrivalDetail(id,rowIdx){
         ['柜号',owCell(row,headers,'柜号')],['总票数',owCell(row,headers,'总票数')],['应到件数',String(total)],['到货状态',owCell(row,headers,'到货状态')]
     ])+'</section>';
     h+='<section>'+owSectionTitle('按件到货扫描进度')+'<div class="rounded-lg border border-surface-200 bg-white p-4">'+owProgressBar(arrived,total)+'</div></section>';
-    /* 运单明细：按票 */
+    /* 运单明细：按票（增列 客户代码/货物类型/未扫件数/库位库区；已扫/未扫可点开子单二级弹窗） */
     var subRows=[
-        ['WB-20260701002','SF10086523','服装配件','8','8','已到齐'],
-        ['WB-20260701012','YT98876543','手机配件','6','4','到货中'],
-        ['WB-20260701018','JD30088991','五金工具','6','4','到货中'],
-        ['WB-20260701020','EMS99005566','家居用品','6','2','到货中']
+        {wb:'WB-20260701002',lo:'SF10086523',cust:'C10004',name:'服装配件',cargo:'普货',due:8,scanned:8,loc:'A区-01',status:'已到齐'},
+        {wb:'WB-20260701012',lo:'YT98876543',cust:'C10002',name:'手机配件',cargo:'敏感货',due:6,scanned:4,loc:'A区-02',status:'到货中'},
+        {wb:'WB-20260701018',lo:'JD30088991',cust:'C10003',name:'五金工具',cargo:'普货',due:6,scanned:4,loc:'B区-03',status:'到货中'},
+        {wb:'WB-20260701020',lo:'EMS99005566',cust:'CUS-004',name:'家居用品',cargo:'普货',due:6,scanned:2,loc:'B区-05',status:'到货中'}
     ];
-    h+='<section>'+owSectionTitle('运单到货明细');
-    h+='<div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm">';
-    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['运单号','物流单号','品名','应到件','已扫件','状态'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
+    h+='<section>'+owSectionTitle('运单到货明细（点“已扫件/未扫件”查看子单扫描明细）');
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm">';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['运单号','物流单号','客户代码','品名','货物类型','应到件','已扫件','未扫件数','库位库区','状态'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
     subRows.forEach(function(r){
-        var doneAll=r[3]===r[4];
-        h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-medium text-primary-700">'+esc(r[0])+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r[1])+'</td><td class="px-3 py-2 text-text-secondary">'+tr(r[2])+'</td><td class="px-3 py-2">'+r[3]+'</td><td class="px-3 py-2 font-semibold '+(doneAll?'text-green-600':'text-amber-600')+'">'+r[4]+'</td><td class="px-3 py-2 '+(doneAll?'text-green-600':'text-text-secondary')+'">'+tr(r[5])+'</td></tr>';
+        var unscanned=r.due-r.scanned;
+        var doneAll=unscanned<=0;
+        h+='<tr class="border-t border-surface-100">'+
+            '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(r.wb)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.lo)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.cust)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+tr(r.name)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+tr(r.cargo)+'</td>'+
+            '<td class="px-3 py-2">'+r.due+'</td>'+
+            '<td class="px-3 py-2 font-semibold text-green-600"><a class="cursor-pointer hover:underline" onclick="owArrivalScanSubModal(\''+esc(r.wb)+'\','+r.due+','+r.scanned+',\'scanned\')">'+r.scanned+'</a></td>'+
+            '<td class="px-3 py-2 font-semibold '+(unscanned>0?'text-amber-600':'text-text-muted')+'">'+(unscanned>0?('<a class="cursor-pointer hover:underline" onclick="owArrivalScanSubModal(\''+esc(r.wb)+'\','+r.due+','+r.scanned+',\'unscanned\')">'+unscanned+'</a>'):'0')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.loc)+'</td>'+
+            '<td class="px-3 py-2 '+(doneAll?'text-green-600':'text-text-secondary')+' whitespace-nowrap">'+tr(r.status)+'</td>'+
+        '</tr>';
     });
     h+='</tbody></table></div></section>';
     h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('到货入库由【仓库PDA · 海外到货扫描】按件扫描完成：选择本配舱单 → 逐件扫码 → 自动入库。')+'</div>';
     h+='</div>';
-    owOpenModal(tr('海外仓到货详情')+' - '+allocNo,'74%',h);
+    owOpenModal(tr('海外仓到货详情')+' - '+allocNo,'82%',h);
 }
+/* 到货明细·子单扫描二级弹窗（点“已扫件/未扫件”弹出）：子单号 / 扫描操作人 / 扫描操作时间 */
+function owArrivalScanSubModal(wb,due,scanned,mode){
+    due=parseInt(due,10)||0;scanned=parseInt(scanned,10)||0;
+    var isScanned=mode==='scanned';
+    var ops=['David','Maria','Okafor','Amadou'];
+    var list=[];
+    for(var i=0;i<due;i++){
+        var done=i<scanned;
+        if(isScanned&&!done)continue;
+        if(!isScanned&&done)continue;
+        list.push({
+            sub:wb+'-'+String(i+1).padStart(2,'0'),
+            op:done?ops[i%ops.length]:'—',
+            time:done?('2026-07-14 '+String(9+(i%8)).padStart(2,'0')+':'+String((i*7)%60).padStart(2,'0')+':00'):'—'
+        });
+    }
+    var old=document.getElementById('ow-arrival-sub-modal');if(old)old.remove();
+    var m=document.createElement('div');
+    m.id='ow-arrival-sub-modal';
+    m.className='fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4';
+    var title=(isScanned?tr('已扫件明细'):tr('未扫件明细'))+' - '+wb+'（'+list.length+' '+tr('件')+'）';
+    var html='<div class="w-full max-w-3xl rounded-2xl bg-white shadow-xl overflow-hidden">';
+    html+='<div class="flex items-center justify-between px-5 py-3 border-b border-surface-200"><div class="text-sm font-semibold text-text-primary">'+esc(title)+'</div><button type="button" onclick="closeOwArrivalScanSubModal()" class="w-8 h-8 rounded-full bg-surface-100 text-text-muted">×</button></div>';
+    html+='<div class="p-4 max-h-[70vh] overflow-auto"><div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    html+='<th class="px-3 py-2 text-left font-semibold" style="width:56px">#</th>';
+    ['子单号','扫描操作人','扫描操作时间'].forEach(function(c){html+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    html+='</tr></thead><tbody>';
+    if(!list.length){html+='<tr><td colspan="4" class="px-3 py-8 text-center text-text-muted">'+tr('暂无子单')+'</td></tr>';}
+    list.forEach(function(s,i){
+        html+='<tr class="border-t border-surface-100"><td class="px-3 py-2 text-text-muted">'+(i+1)+'</td>'+
+            '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(s.sub)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(s.op)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(s.time)+'</td></tr>';
+    });
+    html+='</tbody></table></div></div>';
+    html+='<div class="flex justify-end px-5 py-3 border-t border-surface-200"><button type="button" onclick="closeOwArrivalScanSubModal()" class="px-4 py-2 text-sm text-text-secondary border border-surface-200 rounded-lg">'+tr('关闭')+'</button></div>';
+    html+='</div>';
+    m.innerHTML=html;
+    document.body.appendChild(m);
+}
+function closeOwArrivalScanSubModal(){var m=document.getElementById('ow-arrival-sub-modal');if(m)m.remove();}
 
 /* ================= 需求4：海外仓出库详情（按提货单双扫码逐件出库） ================= */
 function openOverseasOutboundDetail(id,rowIdx){

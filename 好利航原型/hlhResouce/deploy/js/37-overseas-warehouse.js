@@ -988,14 +988,40 @@ function openSelectedOverseasOutboundCode(id){
     }
     openOverseasOutboundCode(id,idx);
 }
+/* 重新获取后的校验码覆盖：放货单DO号 -> {code,expiry,gen} */
+var _owOutCode={};
+function owRegenOutCode(id,rowIdx){
+    var d=owRowData(id,rowIdx);var row=d.row,headers=(d.c.h||[]);
+    if(!row)return;
+    var released=parseInt(owCell(row,headers,'已出件数')||'0',10);
+    if(released>0){showToast(tr('已核验的校验码不可重新获取'));return;}
+    var doNo=owCell(row,headers,'放货单DO号');
+    var base=parseInt(String(doNo).replace(/\D/g,'').slice(-4),10)||0;
+    var st=_owOutCode[doNo]||{gen:0};
+    st.gen=(st.gen||0)+1;
+    st.code='8'+String((base+st.gen*137)%10000).padStart(4,'0')+'C';
+    st.expiry=owExpiryStr(30);
+    _owOutCode[doNo]=st;
+    openOverseasOutboundCode(id,rowIdx);
+    showToast(tr('校验码已重新生成，到期时间已重置'));
+}
 /* ---------- 查看校验码：显示放货单二维码与对应一次性校验码 ---------- */
 function openOverseasOutboundCode(id,rowIdx){
     var d=owRowData(id,rowIdx);
     var row=d.row,headers=(d.c.h||[]);
     if(!row){showToast(tr('未找到出库数据'));return;}
     var doNo=owCell(row,headers,'放货单DO号');
-    var code=owOutboundCode(doNo);
-    var expiry=owExpiryStr(30);
+    var released=parseInt(owCell(row,headers,'已出件数')||'0',10);
+    var verified=released>0;
+    var st=_owOutCode[doNo];
+    var code=(st&&st.code)?st.code:owOutboundCode(doNo);
+    var expiry=(st&&st.expiry)?st.expiry:owExpiryStr(30);
+    var verifyBadge=verified
+        ?'<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-50 text-green-700 border border-green-200">'+tr('已核验')+'</span>'
+        :'<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">'+tr('未核验')+'</span>';
+    var regenBtn=verified
+        ?'<button type="button" disabled class="h-8 px-3 text-xs font-medium text-text-muted bg-surface-100 border border-surface-200 rounded-lg cursor-not-allowed">'+tr('重新获取')+'</button><span class="text-[11px] text-text-muted">'+tr('已核验的校验码不可重新获取')+'</span>'
+        :'<button type="button" onclick="owRegenOutCode(\''+id+'\','+rowIdx+')" class="h-8 px-3 text-xs font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('重新获取')+'</button><span class="text-[11px] text-text-muted">'+tr('未核验可重新生成校验码并重置到期时间')+'</span>';
     var h='<div class="space-y-4">';
     h+='<section>'+owSectionTitle('放货单信息')+owInfoGrid([
         ['放货单DO号',doNo],['预约提货单号',owCell(row,headers,'预约提货单号')],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')]
@@ -1003,9 +1029,11 @@ function openOverseasOutboundCode(id,rowIdx){
     h+='<section>'+owSectionTitle('放货二维码 · 一次性校验码');
     h+='<div class="flex flex-wrap items-center gap-6 rounded-lg border border-surface-200 bg-white p-4">';
     h+='<div class="text-center">'+owQrBlock()+'<div class="text-[11px] text-text-muted mt-1">'+tr('仅可核销一次')+'</div></div>';
-    h+='<div class="flex-1 min-w-[200px]"><div class="text-xs text-text-muted mb-1">'+tr('一次性校验码')+'</div><div class="inline-block px-4 py-2 rounded-lg bg-primary-50 border border-primary-200 text-2xl font-bold tracking-widest text-primary-700">'+esc(code)+'</div>';
+    h+='<div class="flex-1 min-w-[220px]"><div class="flex items-center gap-2 mb-1 flex-wrap"><span class="text-xs text-text-muted">'+tr('一次性校验码')+'</span><span class="text-xs text-text-muted">'+tr('核验状态')+'：</span>'+verifyBadge+'</div>';
+    h+='<div class="inline-block px-4 py-2 rounded-lg bg-primary-50 border border-primary-200 text-2xl font-bold tracking-widest text-primary-700">'+esc(code)+'</div>';
     h+='<div class="mt-2 text-xs"><span class="text-text-muted">'+tr('校验码到期时间')+'：</span><span class="font-semibold text-amber-600">'+esc(expiry)+'</span><span class="text-text-muted ml-1">'+tr('（有效 30 分钟，逾期请重新获取）')+'</span></div>';
-    h+='<div class="mt-3 text-[11px] text-text-muted">'+tr('出库扫描/快捷出库时凭此二维码或校验码核验放货。')+'</div></div>';
+    h+='<div class="mt-3 flex items-center gap-3 flex-wrap">'+regenBtn+'</div>';
+    h+='<div class="mt-2 text-[11px] text-text-muted">'+tr('出库扫描/快捷出库时凭此二维码或校验码核验放货。')+'</div></div>';
     h+='</div></section>';
     h+='</div>';
     owOpenModal(tr('查看校验码')+' - '+doNo,'56%',h);

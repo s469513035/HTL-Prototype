@@ -1501,7 +1501,7 @@ function getToolbarActions(id){
             {key:'search',label:'查询数据',variant:'primary'},
             {type:'add',label:'新增数据',variant:'primary'},
             {key:'pickupEdit',label:'编辑数据'},
-            {key:'pickupManualRelease',label:'手动放货',variant:'primary'},
+            {key:'pickupManualRelease',label:'手动放行',variant:'primary'},
             {key:'export',label:'导出数据'}
         ];
     }

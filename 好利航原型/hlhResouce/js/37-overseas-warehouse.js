@@ -1569,3 +1569,27 @@ function generateOwOutScanOperate(){
     setTimeout(function(){var el=document.getElementById('ow-out-piece');if(el)el.focus();},50);
     return h;
 }
+
+/* ---------- 卸柜完成 ow-unload-finish（参照装柜完成：扫柜→信息→四类照片→提交） ---------- */
+function generateOwUnloadFinishScreen(){
+    var h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+=pdaScanInput('ow-unload-finish-key','请扫描配舱单号/柜号','showToast','YPCD-20260625-001');
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="grid grid-cols-2 gap-y-3 text-xs">';
+    h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('配舱单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">YPCD-20260625-001</div></div>';
+    h+='<div><div class="text-text-secondary">'+tr('提单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">TD-20260625-001</div></div>';
+    h+='<div><div class="text-text-secondary">'+tr('柜号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">COSU7654321</div></div>';
+    h+='<div><div class="text-text-secondary">'+tr('目的仓库')+'</div><div class="font-medium text-text-primary mt-0.5">'+tr('达喀尔海外仓')+'</div></div>';
+    h+='<div><div class="text-text-secondary">'+tr('到货件数')+'</div><div class="font-medium text-text-primary mt-0.5">26</div></div>';
+    h+='<div><div class="text-text-secondary">'+tr('卸货件数')+'</div><div class="font-medium text-text-primary mt-0.5">26</div></div>';
+    h+='</div></section>';
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-xs text-rose-500 mb-2">'+tr('上传照片(最多上传20张，支持调用摄像头)')+'</div><div class="grid grid-cols-2 gap-2">';
+    ['封签照','开门照','卸货照','空柜照'].forEach(function(label){
+        h+='<button type="button" onclick="showToast(\''+tr('打开相机')+'\')" class="aspect-square rounded-lg border border-dashed border-surface-300 bg-surface-50 flex flex-col items-center justify-center gap-1 text-text-muted"><span class="text-2xl leading-none">+</span><span class="text-[11px]">'+tr(label)+'</span></button>';
+    });
+    h+='</div><div class="text-right text-xs text-text-muted mt-2">0/20</div></section>';
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：卸柜完成需上传封签照、开门照、卸货照、空柜照。')+'</div>';
+    h+='</div>';
+    h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><button type="button" onclick="showToast(\''+tr('卸柜完成提交成功')+'\')" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('卸柜完成')+'</button></div>';
+    setTimeout(function(){var el=document.getElementById('ow-unload-finish-key');if(el)el.focus();},50);
+    return h;
+}

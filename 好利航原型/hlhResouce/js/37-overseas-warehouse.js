@@ -1387,19 +1387,19 @@ var _owOutDocs={pod:false,sign:false};/* 出库单据附件：签收单/签字�
 var _owOutScanList=[
     {do:'DO-NG-20260713-00040',job:'HT-NG-20260713-00040',cust:'深圳市华运达国际货运',wh:'拉各斯海外仓',pickup:'上门提货',picker:'Mr. Okafor',phone:'+234 802 000 111',idNo:'ID·A1234567',code:'80040C',
         pieces:[
-            {piece:'GL-40-01',wb:'WB-20260701004',loc:'A区-A03'},
-            {piece:'GL-40-02',wb:'WB-20260701004',loc:'A区-A03'},
-            {piece:'GL-40-03',wb:'WB-20260701005',loc:'B区-B12'},
-            {piece:'GL-40-04',wb:'WB-20260701005',loc:'B区-B12'},
-            {piece:'GL-40-05',wb:'WB-20260701006',loc:'C区-C09'},
-            {piece:'GL-40-06',wb:'WB-20260701006',loc:'C区-C09'}
+            {piece:'WB-20260701004-01',wb:'WB-20260701004',loc:'A区-A03'},
+            {piece:'WB-20260701004-02',wb:'WB-20260701004',loc:'A区-A03'},
+            {piece:'WB-20260701005-01',wb:'WB-20260701005',loc:'B区-B12'},
+            {piece:'WB-20260701005-02',wb:'WB-20260701005',loc:'B区-B12'},
+            {piece:'WB-20260701006-01',wb:'WB-20260701006',loc:'C区-C09'},
+            {piece:'WB-20260701006-02',wb:'WB-20260701006',loc:'C区-C09'}
         ]},
     {do:'DO-SN-20260715-00088',job:'HT-SN-20260715-00088',cust:'上海锦程国际贸易',wh:'达喀尔海外仓',pickup:'派送',picker:'派送员-王师傅',phone:'+221 77 555 8899',idNo:'ID·S9988776',code:'80088C',
         pieces:[
-            {piece:'GL-88-01',wb:'WB-20260703001',loc:'A区-A01'},
-            {piece:'GL-88-02',wb:'WB-20260703001',loc:'A区-A01'},
-            {piece:'GL-88-03',wb:'WB-20260703002',loc:'A区-A02'},
-            {piece:'GL-88-04',wb:'WB-20260703002',loc:'A区-A02'}
+            {piece:'WB-20260703001-01',wb:'WB-20260703001',loc:'A区-A01'},
+            {piece:'WB-20260703001-02',wb:'WB-20260703001',loc:'A区-A01'},
+            {piece:'WB-20260703002-01',wb:'WB-20260703002',loc:'A区-A02'},
+            {piece:'WB-20260703002-02',wb:'WB-20260703002',loc:'A区-A02'}
         ]}
 ];
 
@@ -1422,7 +1422,7 @@ function generateOwOutScanList(){
         h+='<div><div class="text-text-secondary">'+tr('应出件数')+'</div><div class="font-medium text-primary-700 mt-0.5">'+item.pieces.length+'</div></div>';
         h+='</div></button>';
     });
-    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('提示：核验二维码放货单后，按提货单逐件扫描出库（扫放货码+货物标签）。')+'</div>';
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('提示：核验二维码放货单后，按提货单逐件扫描出库（扫放货码+子单号）。')+'</div>';
     h+='</div>';
     setTimeout(function(){var el=document.getElementById('ow-out-order');if(el)el.focus();},50);
     return h;
@@ -1504,7 +1504,7 @@ function applyOwOutScanPiece(){
     var item=_owOutScanList[_owOutScanCurrent];
     var target=item.pieces.find(function(p){return p.piece===val;});
     if(!target){
-        showToast(tr('该货物标签不在本提货单内'));
+        showToast(tr('该子单号不在本提货单内'));
         input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();
         return;
     }
@@ -1541,15 +1541,15 @@ function generateOwOutScanOperate(){
     var h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
     h+='<section class="rounded-xl border border-primary-100 bg-primary-50 p-3"><div class="text-sm font-semibold text-primary-700 mb-2">'+tr('放货单信息')+'</div><div class="grid grid-cols-2 gap-2 text-xs text-primary-700"><div class="break-all">'+tr('放货单DO号')+'：'+esc(item.do)+'</div><div class="break-all">'+tr('提单号')+'：'+esc(item.job)+'</div><div class="break-all">'+tr('客户')+'：'+tr(item.cust)+'</div><div class="break-all">'+tr('提货方式')+'：'+tr(item.pickup)+'</div></div></section>';
     h+='<div class="flex items-center justify-between rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-[11px] text-green-700"><span>'+tr('✓ 出库核验已通过（二维码+验证码+身份）')+'</span><button type="button" onclick="backOwOutVerify()" class="text-primary-600 font-medium">'+tr('返回核验')+'</button></div>';
-    h+='<div class="rounded-lg bg-teal-50 border border-teal-200 px-3 py-2 text-[11px] text-teal-700">'+tr('双扫码：逐件扫货物标签核对（放货码已核销），系统自动扣减库存。')+'</div>';
-    h+=pdaScanInput('ow-out-piece','请扫描货物标签','applyOwOutScanPiece',pending[0]?pending[0].piece:'');
+    h+='<div class="rounded-lg bg-teal-50 border border-teal-200 px-3 py-2 text-[11px] text-teal-700">'+tr('双扫码：逐件扫子单号核对（放货码已核销），系统自动扣减库存。')+'</div>';
+    h+=pdaScanInput('ow-out-piece','请扫描子单号','applyOwOutScanPiece',pending[0]?pending[0].piece:'');
     h+='<div class="grid grid-cols-2 gap-2">'+tabBtn('pending','待出库',pending.length)+tabBtn('scanned','已出库',scanned.length)+'</div>';
     if(active.length===0){
         h+='<div class="rounded-xl border border-surface-200 bg-white py-8 text-center text-xs text-text-muted">'+tr(_owOutScanTab==='scanned'?'暂无已出库件':'已全部扫描完毕')+'</div>';
     }else{
         active.forEach(function(p){
             h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="grid grid-cols-2 gap-y-1 text-xs">';
-            h+='<div><div class="text-text-secondary">'+tr('货物标签')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(p.piece)+'</div></div>';
+            h+='<div><div class="text-text-secondary">'+tr('子单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(p.piece)+'</div></div>';
             h+='<div><div class="text-text-secondary">'+tr('运单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(p.wb)+'</div></div>';
             h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('货区货位')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(p.loc)+'</div></div>';
             h+='</div></div>';
@@ -1564,7 +1564,7 @@ function generateOwOutScanOperate(){
     h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3 space-y-2">';
     h+='<div class="text-[11px] font-medium text-text-secondary">'+tr('出库单据上传（签收单 / 签字单，支持拍照或选择图片）')+'</div>';
     h+='<div class="grid grid-cols-2 gap-2">'+docTile('pod','签收单')+docTile('sign','签字单')+'</div>';
-    h+='<button type="button" onclick="finishOwOutScan()" class="h-10 w-full rounded-lg '+(docsOk?'bg-primary-600':'bg-surface-300')+' text-white text-sm font-medium">'+tr('确认出库 · 减库存生成POD')+'</button>';
+    h+='<button type="button" onclick="finishOwOutScan()" class="h-10 w-full rounded-lg '+(docsOk?'bg-primary-600':'bg-surface-300')+' text-white text-sm font-medium">'+tr('确认出库')+'</button>';
     h+='</div>';
     setTimeout(function(){var el=document.getElementById('ow-out-piece');if(el)el.focus();},50);
     return h;

@@ -1593,3 +1593,84 @@ function generateOwUnloadFinishScreen(){
     setTimeout(function(){var el=document.getElementById('ow-unload-finish-key');if(el)el.focus();},50);
     return h;
 }
+
+/* ---------- 库存盘点 pda-stock-count（按票：扫运单→加载托盘/库位→录盘点件数→上传图片→完成） ---------- */
+var _owStockCountView='list';
+var _owStockCountCurrent=null;
+var _owStockCountList=[
+    {wb:'H82512230001',cmdType:'库存盘点',cmdContent:'测试指令内容测试指令内容测试指令内容',recvQty:10,pallets:[{pallet:'TP20260404002',zone:'A4'},{pallet:'TP20260404003',zone:'A4'}]},
+    {wb:'H82512230002',cmdType:'库存盘点',cmdContent:'测试指令内容测试指令内容测试指令内容',recvQty:8,pallets:[{pallet:'TP20260404005',zone:'B2'}]},
+    {wb:'H82512230003',cmdType:'库存盘点',cmdContent:'测试指令内容测试指令内容测试指令内容',recvQty:15,pallets:[{pallet:'TP20260404008',zone:'C1'},{pallet:'TP20260404009',zone:'C1'}]}
+];
+function generateOwStockCountScreen(){
+    if(_owStockCountView==='operate'&&_owStockCountCurrent!==null&&_owStockCountList[_owStockCountCurrent]){
+        return generateOwStockCountOperate();
+    }
+    return generateOwStockCountList();
+}
+function generateOwStockCountList(){
+    var h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+=pdaScanInput('ow-stock-count-key','请扫描运单子单号','applyOwStockCountKey','H82512230001');
+    _owStockCountList.forEach(function(item,i){
+        h+='<button type="button" onclick="pickOwStockCountCard('+i+')" class="block w-full text-left rounded-xl border border-surface-200 bg-white p-3 shadow-sm">';
+        h+='<div class="grid grid-cols-2 gap-y-2 text-xs">';
+        h+='<div><div class="text-text-secondary">'+tr('运单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.wb)+'</div></div>';
+        h+='<div><div class="text-text-secondary">'+tr('指令类型')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(item.cmdType)+'</div></div>';
+        h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('指令内容')+'</div><div class="text-text-muted mt-0.5 break-all">'+esc(item.cmdContent)+'</div></div>';
+        h+='</div></button>';
+    });
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：请您查阅"逻辑需求描述-库存盘点"，了解详细逻辑。')+'</div>';
+    h+='</div>';
+    setTimeout(function(){var el=document.getElementById('ow-stock-count-key');if(el)el.focus();},50);
+    return h;
+}
+function applyOwStockCountKey(){
+    var input=document.getElementById('ow-stock-count-key');
+    if(!input)return;
+    var val=(input.value||'').trim();
+    var idx=-1;
+    if(val)idx=_owStockCountList.findIndex(function(it){return it.wb===val;});
+    if(idx<0)idx=0;
+    pickOwStockCountCard(idx);
+}
+function pickOwStockCountCard(i){
+    if(!_owStockCountList[i])return;
+    _owStockCountCurrent=i;
+    _owStockCountView='operate';
+    refreshWarehousePdaPrototype();
+}
+function finishOwStockCount(){
+    var qtyEl=document.getElementById('ow-stock-count-qty');
+    var qty=qtyEl?String(qtyEl.value||'').trim():'';
+    if(!qty){showToast(tr('请录入盘点件数'));if(qtyEl)qtyEl.focus();return;}
+    showToast(tr('盘点完成，已提交'));
+    _owStockCountView='list';
+    _owStockCountCurrent=null;
+    refreshWarehousePdaPrototype();
+}
+function generateOwStockCountOperate(){
+    var item=_owStockCountList[_owStockCountCurrent];
+    var h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+=pdaScanInput('ow-stock-count-key','请扫描运单子单号','applyOwStockCountKey','');
+    /* 盘点运单信息 */
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="grid grid-cols-2 gap-y-2 text-xs">';
+    h+='<div><div class="text-text-secondary">'+tr('盘点运单号')+'</div><div class="font-semibold text-primary-700 mt-0.5 break-all">'+esc(item.wb)+'</div></div>';
+    h+='<div><div class="text-text-secondary">'+tr('收货件数')+'</div><div class="font-semibold text-text-primary mt-0.5">'+item.recvQty+'</div></div>';
+    h+='</div></section>';
+    /* 托盘信息 + 库位信息（按票直接加载，只读） */
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-sm font-semibold text-text-primary mb-2">'+tr('托盘信息 · 库位信息')+'</div>';
+    h+='<div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-xs"><thead class="bg-surface-50 text-text-secondary"><tr><th class="px-3 py-2 text-left font-medium">'+tr('托盘号')+'</th><th class="px-3 py-2 text-left font-medium">'+tr('库位库区')+'</th></tr></thead><tbody>';
+    item.pallets.forEach(function(p){
+        h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-medium text-primary-700 break-all">'+esc(p.pallet)+'</td><td class="px-3 py-2 text-text-secondary">'+esc(p.zone)+'</td></tr>';
+    });
+    h+='</tbody></table></div></section>';
+    /* 盘点件数（录入） */
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><label class="text-sm font-semibold text-text-primary mb-2 block">'+tr('盘点件数')+'<span class="text-red-500 ml-1">*</span></label><input id="ow-stock-count-qty" type="number" inputmode="numeric" min="0" value="'+item.recvQty+'" class="w-full h-10 px-3 text-sm rounded-lg border border-surface-200"></section>';
+    /* 上传图片 */
+    h+='<section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-xs text-rose-500 mb-2">'+tr('上传照片(最多上传20张，支持调用摄像头)')+'</div><div class="flex"><button type="button" onclick="showToast(\''+tr('打开相机')+'\')" class="w-20 h-20 rounded-lg border border-dashed border-surface-300 bg-surface-50 flex items-center justify-center text-2xl text-text-muted">+</button></div><div class="text-right text-xs text-text-muted mt-2">0/20</div></section>';
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：库存盘点按票盘点，扫描运单加载托盘与库位信息，录入盘点件数并可上传图片。')+'</div>';
+    h+='</div>';
+    h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><button type="button" onclick="finishOwStockCount()" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('盘点完成')+'</button></div>';
+    setTimeout(function(){var el=document.getElementById('ow-stock-count-key');if(el)el.focus();},50);
+    return h;
+}

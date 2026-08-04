@@ -52,6 +52,8 @@ function warehousePdaTaskItems(){
     items.push(['ow-arrival-scan','海外到货扫描','按国内配舱单逐件扫描到货入库']);
     items.push(['ow-unload-finish','卸柜完成','卸柜完成后上传封签/开门/卸货/空柜照并提交']);
     items.push(['ow-out-scan-os','海外出库扫描','按提货单逐件扫描出库放行']);
+    items.push(['ow-pallet-bind','仓库上托','运单子单号扫码绑定托盘和库位库区']);
+    items.push(['pda-stock-count','库存盘点','按票扫描加载托盘/库位，录盘点件数并上传图片']);
     return items;
 }
 
@@ -109,6 +111,12 @@ function closeWarehousePdaTask(){
     if(_warehousePdaTaskId==='ow-out-scan-os'&&_owOutScanView==='operate'){
         _owOutScanView='list';
         _owOutScanCurrent=null;
+        refreshWarehousePdaPrototype();
+        return;
+    }
+    if(_warehousePdaTaskId==='pda-stock-count'&&_owStockCountView==='operate'){
+        _owStockCountView='list';
+        _owStockCountCurrent=null;
         refreshWarehousePdaPrototype();
         return;
     }
@@ -525,10 +533,10 @@ function pdaBottomActions(config){
 function pdaGroupedTasks(tasks){
     const groups=[
         {title:'收货',ids:['pda-waybill-query','wh-in-one','wh-headless','pda-pallet-bind','pda-receive-check']},
-        {title:'在库管理',ids:['wh-cargo-search','pda-pallet-adjust','pda-bag-adjust','pda-find-scan','pda-sort-scan']},
+        {title:'在库管理',ids:['wh-cargo-search','pda-pallet-adjust','pda-bag-adjust','pda-find-scan','pda-sort-scan','pda-stock-count']},
         {title:'出库',ids:['wh-out-scan','wh-air-bag','wh-replenish-drop','pda-load-scan','pda-load-finish']},
         {title:'调拨',ids:['wh-transfer-out','wh-transfer-in']},
-        {title:'海外仓',ids:['ow-arrival-scan','ow-unload-finish','ow-out-scan-os']}
+        {title:'海外仓',ids:['ow-arrival-scan','ow-unload-finish','ow-out-scan-os','ow-pallet-bind','pda-stock-count']}
     ];
     return groups.map(function(group){
         const items=group.ids.map(function(id){return tasks.find(function(item){return item[0]===id;});}).filter(Boolean);
@@ -2686,6 +2694,8 @@ function generateWarehousePdaOperationScreen(taskId){
     if(taskId==='ow-arrival-scan')return h+generateOwArrivalScanScreen();
     if(taskId==='ow-unload-finish')return h+generateOwUnloadFinishScreen();
     if(taskId==='ow-out-scan-os')return h+generateOwOutScanScreen();
+    if(taskId==='ow-pallet-bind')return h+generatePdaPalletBindScreen();
+    if(taskId==='pda-stock-count')return h+generateOwStockCountScreen();
     if(taskId==='pda-work-order')return h+generatePdaWorkOrderScreen();
     h+='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
     (config.sections||[]).forEach(function(section){h+=pdaSection(section);});
@@ -2716,7 +2726,7 @@ function pdaTaskIcon(itemId){
         'wh-issue':'!','wh-air-sort':'⇆','wh-air-bag':'▰','wh-air-pack':'▤','pda-work-order':'✓',
         'pda-air-checkin':'✈','pda-air-bag-sort':'▰','pda-air-out-scan':'⇲','pda-work-order-register':'✎',
         'pda-pallet-bind':'▦','pda-pallet-adjust':'⇄','pda-bag-adjust':'⇌','pda-receive-check':'✓','pda-find-scan':'⌕','pda-load-scan':'▣','pda-load-finish':'✓','pda-sort-scan':'☰',
-        'ow-arrival-scan':'⇊','ow-unload-finish':'▤','ow-out-scan-os':'⇈'
+        'ow-arrival-scan':'⇊','ow-unload-finish':'▤','ow-out-scan-os':'⇈','ow-pallet-bind':'▦','pda-stock-count':'▥'
     };
     return map[itemId]||'▦';
 }

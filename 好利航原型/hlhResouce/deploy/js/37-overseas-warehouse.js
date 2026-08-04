@@ -332,7 +332,7 @@ function owPickupDetailPanel(apptNo,row,headers){
     rows.forEach(function(r){tP+=parseInt(r[3],10)||0;tV+=parseFloat(r[4])||0;tW+=parseFloat(r[5])||0;});
     var h='<section>'+owSectionTitle('提货明细（本次提货所选运单/子单）');
     h+='<div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm">';
-    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['运单号','品名','子单(选/总)','已提件数','体积(CBM)','重量(KG)'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['运单号','品名','子单(选/总)','提货件数','体积(CBM)','重量(KG)'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
     if(rows.length===0){
         h+='<tr><td colspan="6" class="px-3 py-8 text-center text-text-muted">'+tr('暂无提货明细')+'</td></tr>';
     }else{
@@ -477,7 +477,7 @@ _owPickupWaybills.forEach(function(w){
 });
 /* 新增提货预约的子单选择状态：waybill idx → 已选子单 idx 数组 */
 var _owCreateSubSel={};
-/* 已生成提货预约的提货明细：提货申请号 → [[运单号,品名,选中/总子单,已提件数,体积,重量],...] */
+/* 已生成提货预约的提货明细：提货申请号 → [[运单号,品名,选中/总子单,提货件数,体积,重量],...] */
 var _owPickupDetailByAppt={};
 function owCreateInput(label,id,ph,required){
     return '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr(label)+(required?'<span class="text-red-500 ml-1">*</span>':'')+'</label>'+

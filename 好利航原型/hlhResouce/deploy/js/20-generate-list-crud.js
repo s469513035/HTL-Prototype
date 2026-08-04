@@ -28,7 +28,8 @@ function generateListPage(id,page,statusFilter){
     const showRowActions=headerState.showRowActions;
     const dataColDefs=headerState.dataColDefs;
     const tableColumnSettings=getTableColumnSettings(id,dataColDefs);
-    let visibleDataCols=dataColDefs.filter(function(col){return !tableColumnSettings.hidden[col.index];});
+    const listHiddenHeaders=c.listHiddenHeaders||[];
+    let visibleDataCols=dataColDefs.filter(function(col){return !tableColumnSettings.hidden[col.index]&&listHiddenHeaders.indexOf(col.label)<0;});
     if(visibleDataCols.length===0&&dataColDefs.length){
         tableColumnSettings.hidden[dataColDefs[0].index]=false;
         visibleDataCols=[dataColDefs[0]];

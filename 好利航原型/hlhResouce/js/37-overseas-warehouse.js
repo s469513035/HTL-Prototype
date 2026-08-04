@@ -12,32 +12,32 @@ var OW_WAREHOUSES=['拉各斯海外仓','达喀尔海外仓','阿比让海外仓
 /* ---------- 需求1：提货预约管理 ---------- */
 addPrototypeTable('ow-pickup','提货预约管理',
     '提货申请号|提单号|配舱单号|客户|目的仓库|提货方式|派送费(USD)|件数|重量(KG)|应收合计(USD)|付款状态|预约时段|状态|操作',
-    ['待付款','待审批','已生成DO','待提货','部分提货','已完成'],
+    ['已放货','待放货'],
     [
-        ['DR-20260715-023','HT-NG-20260715-00023','B2607-01','东莞市鑫海物流','拉各斯海外仓','上门提货','—','8','125.0','1860.00','已付款','2026-07-16 09:00','待提货'],
-        ['DR-20260715-024','HT-SN-20260715-00088','B2607-02','上海锦程国际贸易','达喀尔海外仓','派送','120.00','12','240.0','2520.00','已付款','2026-07-16 10:00','待审批'],
-        ['DR-20260714-019','HT-CI-20260714-00051','B2607-01','广州远航贸易','阿比让海外仓','派送','86.00','5','72.0','980.00','待付款','—','待付款'],
-        ['DR-20260713-011','HT-NG-20260713-00040','B2606-09','深圳市华运达国际货运','拉各斯海外仓','上门提货','—','20','410.0','4260.00','已付款','2026-07-14 11:00','已完成'],
-        ['DR-20260713-009','HT-CM-20260713-00033','B2606-08','东莞市鑫海物流','杜阿拉海外仓','派送','150.00','6','96.0','1180.00','金额不足','—','待付款'],
-        ['DR-20260712-005','HT-NG-20260712-00021','B2606-07','上海锦程国际贸易','拉各斯海外仓','上门提货','—','15','300.0','3200.00','已付款','2026-07-13 09:00','部分提货']
+        ['DR-20260715-023','HT-NG-20260715-00023','B2607-01','东莞市鑫海物流','拉各斯海外仓','上门提货','—','8','125.0','1860.00','已付款','2026-07-16 09:00','已放货'],
+        ['DR-20260715-024','HT-SN-20260715-00088','B2607-02','上海锦程国际贸易','达喀尔海外仓','派送','120.00','12','240.0','2520.00','已付款','2026-07-16 10:00','待放货'],
+        ['DR-20260714-019','HT-CI-20260714-00051','B2607-01','广州远航贸易','阿比让海外仓','派送','86.00','5','72.0','980.00','未付款','—','待放货'],
+        ['DR-20260713-011','HT-NG-20260713-00040','B2606-09','深圳市华运达国际货运','拉各斯海外仓','上门提货','—','20','410.0','4260.00','已付款','2026-07-14 11:00','已放货'],
+        ['DR-20260713-009','HT-CM-20260713-00033','B2606-08','东莞市鑫海物流','杜阿拉海外仓','派送','150.00','6','96.0','1180.00','部分付款','—','待放货'],
+        ['DR-20260712-005','HT-NG-20260712-00021','B2606-07','上海锦程国际贸易','拉各斯海外仓','上门提货','—','15','300.0','3200.00','已付款','2026-07-13 09:00','已放货']
     ],
     [
         {label:'提货申请号',type:'text'},
-        {label:'提单号',type:'text'},
         {label:'客户',type:'text'},
         {label:'目的仓库',type:'select',options:OW_WAREHOUSES},
         {label:'提货方式',type:'select',options:['上门提货','派送']},
-        {label:'状态',type:'select',options:['待付款','待审批','已生成DO','待提货','部分提货','已完成']}
+        {label:'状态',type:'select',options:['已放货','待放货']}
     ]
 );
 TC['ow-pickup'].fieldOptions={
     '目的仓库':OW_WAREHOUSES,
     '提货方式':['上门提货','派送'],
-    '付款状态':['待付款','已付款','金额不足'],
-    '状态':['待付款','待审批','已生成DO','待提货','部分提货','已完成']
+    '付款状态':['已付款','部分付款','未付款'],
+    '状态':['已放货','待放货']
 };
 TC['ow-pickup'].noExpand=true;
 TC['ow-pickup'].noAutoAudit=true;
+TC['ow-pickup'].listHiddenHeaders=['提单号','配舱单号'];
 /* 本表有 付款状态/状态 两列含“状态”，默认取第一列会打偏，锁定生命周期“状态”列 */
 TC['ow-pickup'].statusMatch=function(row,tab,headers){
     var i=headers.indexOf('状态');
@@ -47,19 +47,19 @@ TC['ow-pickup'].statusMatch=function(row,tab,headers){
 /* ---------- 需求3：海外仓到货(按国内配舱单逐件扫描入库) ---------- */
 addPrototypeTable('ow-arrival','海外仓到货',
     '配舱单号|提单号|目的仓库|运输方式|柜号|总票数|应到件数|已到件数|到货进度|到货状态|操作',
-    ['待到货','到货中','已到齐','有异常'],
+    ['部分到货','已到齐'],
     [
         ['YPCD-20260625-002','TD-20260625-002','拉各斯海外仓','海运','MSKU1234567','8','42','42','42/42','已到齐'],
-        ['YPCD-20260625-001','TD-20260625-001','达喀尔海外仓','海运','COSU7654321','5','26','18','18/26','到货中'],
-        ['YPCD-20260624-001','TD-20260624-001','阿比让海外仓','海运','ONEU2233445','6','30','0','0/30','待到货'],
-        ['YPCD-20260620-003','TD-20260620-003','杜阿拉海外仓','空运','—','3','12','11','11/12','有异常']
+        ['YPCD-20260625-001','TD-20260625-001','达喀尔海外仓','海运','COSU7654321','5','26','18','18/26','部分到货'],
+        ['YPCD-20260624-001','TD-20260624-001','阿比让海外仓','海运','ONEU2233445','6','30','0','0/30','部分到货'],
+        ['YPCD-20260620-003','TD-20260620-003','杜阿拉海外仓','空运','—','3','12','11','11/12','部分到货']
     ],
     [
         {label:'配舱单号',type:'text'},
         {label:'提单号',type:'text'},
         {label:'目的仓库',type:'select',options:OW_WAREHOUSES},
         {label:'运输方式',type:'select',options:['海运','空运']},
-        {label:'到货状态',type:'select',options:['待到货','到货中','已到齐','有异常']}
+        {label:'到货状态',type:'select',options:['部分到货','已到齐']}
     ]
 );
 TC['ow-arrival'].noExpand=true;
@@ -68,23 +68,23 @@ TC['ow-arrival'].noAutoAudit=true;
 /* ---------- 需求4：海外仓出库(按提货单逐件扫描出库) ---------- */
 addPrototypeTable('ow-outbound','海外仓出库',
     '放货单DO号|预约提货单号|提单号|配舱单号|客户|目的仓库|提货方式|应出件数|已出件数|出库进度|出库状态|出库操作人|操作时间|操作网点|操作',
-    ['待出库','出库中','已出库','已签收'],
+    ['待出库','已出库'],
     [
-        ['DO-NG-20260715-00023','DR-20260715-023','HT-NG-20260715-00023','B2607-01','东莞市鑫海物流','拉各斯海外仓','上门提货','8','8','8/8','已签收','李仓管','2026-07-16 09:20','拉各斯海外仓'],
-        ['DO-NG-20260713-00040','DR-20260713-011','HT-NG-20260713-00040','B2606-09','深圳市华运达国际货运','拉各斯海外仓','上门提货','20','12','12/20','出库中','王海波','2026-07-16 10:35','拉各斯海外仓'],
+        ['DO-NG-20260715-00023','DR-20260715-023','HT-NG-20260715-00023','B2607-01','东莞市鑫海物流','拉各斯海外仓','上门提货','8','8','8/8','已出库','李仓管','2026-07-16 09:20','拉各斯海外仓'],
+        ['DO-NG-20260713-00040','DR-20260713-011','HT-NG-20260713-00040','B2606-09','深圳市华运达国际货运','拉各斯海外仓','上门提货','20','12','12/20','待出库','王海波','2026-07-16 10:35','拉各斯海外仓'],
         ['DO-SN-20260715-00088','DR-20260715-024','HT-SN-20260715-00088','B2607-02','上海锦程国际贸易','达喀尔海外仓','派送','12','0','0/12','待出库','—','—','达喀尔海外仓']
     ],
     [
         {label:'放货单DO号',type:'text'},
         {label:'预约提货单号',type:'text'},
-        {label:'配舱单号',type:'text'},
         {label:'客户',type:'text'},
         {label:'目的仓库',type:'select',options:OW_WAREHOUSES},
-        {label:'出库状态',type:'select',options:['待出库','出库中','已出库','已签收']}
+        {label:'出库状态',type:'select',options:['待出库','已出库']}
     ]
 );
 TC['ow-outbound'].noExpand=true;
 TC['ow-outbound'].noAutoAudit=true;
+TC['ow-outbound'].listHiddenHeaders=['提单号','配舱单号'];
 
 /* ---------- 海外仓库存(在库 / 部分提货Remaining / 异常隔离) ---------- */
 addPrototypeTable('ow-inventory','海外仓库存',
@@ -288,14 +288,13 @@ function owGateGrid(gates,cols){
 }
 /* 放货前置校验（预约阶段：付款→审批→生成DO；身份/验证码/签字见出库核验） */
 function owReleasePreGates(rowData,headers){
-    var paid=owCell(rowData,headers,'付款状态')==='已付款';
-    var status=owCell(rowData,headers,'状态');
-    var approved=paid&&status!=='待审批'&&status!=='待付款';
-    var doGen=approved&&['已生成DO','待提货','部分提货','已完成'].indexOf(status)>=0;
+    var payStatus=owCell(rowData,headers,'付款状态');
+    var paid=payStatus==='已付款';
+    var released=owCell(rowData,headers,'状态')==='已放货';
     return owGateGrid([
         ['1 付款到账','财务核对银行流水→可审批',paid],
-        ['2 放货审批','审批通过→可生成DO',approved],
-        ['3 生成放货单DO','有DO→仓库可开单出库',doGen]
+        ['2 放货审批','审批通过→可生成DO',paid||released],
+        ['3 生成放货单DO/已放货','有DO→仓库可开单出库',released]
     ],3);
 }
 /* 出库核验校验（出库阶段：二维码→验证码→身份→客户签字→仓管签字） */
@@ -356,8 +355,8 @@ function owSwitchPickupTab(tab){
     else{if(detail)detail.classList.add('hidden');if(info)info.classList.remove('hidden');if(bi)bi.className=on;if(bd)bd.className=off;}
 }
 
-/* 提货预约是否已放行：状态进入“已生成DO”及之后即视为已放行（放货状态列已并入状态列） */
-function owPickupReleased(status){return ['已生成DO','待提货','部分提货','已完成'].indexOf(status)>=0;}
+/* 提货预约是否已放行：状态为“已放货”即视为已放行 */
+function owPickupReleased(status){return status==='已放货';}
 /* ================= 需求1：提货预约详情（放货单DO / 费用 / 硬闸 / 派送费） ================= */
 function openOverseasPickupDetail(id,rowIdx){
     var d=owRowData(id,rowIdx);
@@ -421,7 +420,7 @@ function openOverseasPickupDetail(id,rowIdx){
     }
     /* 电子放货单 DO：仅“已放行”状态显示（不展示二维码；二维码+验证码在出库扫描时核验） */
     if(released){
-        var outStatus=status==='已完成'?'已出库':(status==='部分提货'?'部分出库':'待出库');
+        var outStatus='待出库';
         h+='<section>'+owSectionTitle('电子放货单 DO');
         h+='<div class="rounded-lg border border-surface-200 bg-white p-3">'+owInfoGrid([
             ['DO号','DO-'+job.replace('HT-','')],['有效时间','2026-07-16 08:00~18:00'],['出库状态',outStatus]
@@ -436,9 +435,10 @@ function openOverseasPickupDetail(id,rowIdx){
     h+='</div>';
     /* footer */
     var actionBtn='';
-    if(status==='待审批')actionBtn='<button onclick="showToast(\''+esc(tr('放货审批已提交（需财务核对银行到账）'))+'\');closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('放货审批')+'</button>';
-    else if(status==='待付款')actionBtn='<button onclick="showToast(\''+esc(tr('已通知客户付款'))+'\');closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('通知付款')+'</button>';
-    else if(status==='已生成DO'||status==='待提货')actionBtn='<button onclick="showToast(\''+esc(tr('放货单DO已下发仓库'))+'\');closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('下发放货单')+'</button>';
+    var payStatus=owCell(row,headers,'付款状态');
+    if(status==='待放货'&&payStatus!=='已付款')actionBtn='<button onclick="showToast(\''+esc(tr('已通知客户付款'))+'\');closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('通知付款')+'</button>';
+    else if(status==='待放货')actionBtn='<button onclick="showToast(\''+esc(tr('放货审批已提交（需财务核对银行到账）'))+'\');closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('放货审批')+'</button>';
+    else actionBtn='<button onclick="showToast(\''+esc(tr('放货单DO已下发仓库'))+'\');closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('下发放货单')+'</button>';
     var footer=actionBtn+'<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('关闭')+'</button>';
     owOpenModal(tr('提货预约详情')+' - '+apptNo,'76%',h,footer);
 }
@@ -668,7 +668,7 @@ function submitOverseasPickupCreate(){
     var job=(blEl&&blEl.value)?blEl.value:'HT-NEW-20260716-'+String(100+seq).slice(-3);
     var batch=(allocEl&&allocEl.value)?allocEl.value:'B2607-NEW';
     /* 列顺序须与表头一致：提货申请号|提单号|配舱单号|客户|目的仓库|提货方式|派送费(USD)|件数|重量(KG)|应收合计(USD)|付款状态|预约时段|状态 */
-    var newRow=[apptNo,job,batch,custEl.value,(whEl&&whEl.value)||'拉各斯海外仓',pickup,fee,String(totalPcs),totalWeight.toFixed(1),due,'待付款',slot,'待付款'];
+    var newRow=[apptNo,job,batch,custEl.value,(whEl&&whEl.value)||'拉各斯海外仓',pickup,fee,String(totalPcs),totalWeight.toFixed(1),due,'未付款',slot,'待放货'];
     TC['ow-pickup'].d.unshift(newRow);
     _owPickupDetailByAppt[apptNo]=detail;   /* 存提货明细供查看页“提货明细”插页 */
     closeCrudModal();
@@ -881,7 +881,7 @@ function submitOverseasPickupManualRelease(id,idx){
     var srcRow=(c.d||[]).find(function(r){return r[0]===apptNo;});
     if(srcRow){
         var iSt=headers.indexOf('状态');
-        if(iSt>=0)srcRow[iSt]='待提货';
+        if(iSt>=0)srcRow[iSt]='已放货';
     }
     var doNo='DO-'+(owCell(row,headers,'提单号')||'').replace('HT-','');
     closeCrudModal();

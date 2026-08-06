@@ -1496,6 +1496,12 @@ function getToolbarActions(id){
             {key:'export',label:'导出数据'}
         ];
     }
+    if(id==='ow-pallet-info'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
     if(id==='ow-pickup'){
         return [
             {key:'search',label:'查询数据',variant:'primary'},

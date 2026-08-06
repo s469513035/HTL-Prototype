@@ -64,7 +64,9 @@ const menuData=[
 {id:'ow-pickup',label:'提货预约管理',page:'overseas-wh',tab:'ow-pickup'},
 {id:'ow-arrival',label:'海外仓到货',page:'overseas-wh',tab:'ow-arrival'},
 {id:'ow-outbound',label:'海外仓出库',page:'overseas-wh',tab:'ow-outbound'},
-{id:'ow-inventory',label:'海外仓库存',page:'overseas-wh',tab:'ow-inventory'}
+{id:'ow-inventory',label:'海外仓库存',page:'overseas-wh',tab:'ow-inventory'},
+{id:'ow-pallet-info',label:'托盘查询',page:'overseas-wh',tab:'ow-pallet-info'},
+{id:'ow-pallet-print',label:'托盘条码打印',page:'overseas-wh',tab:'ow-pallet-print'}
 ]},
 
 {id:'cs',label:'客服',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"/></svg>',children:[

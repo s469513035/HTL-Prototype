@@ -105,6 +105,79 @@ addPrototypeTable('ow-inventory','海外仓库存',
 );
 TC['ow-inventory'].noExpand=true;
 TC['ow-inventory'].noAutoAudit=true;
+
+/* ---------- 托盘查询(从仓储管理复制；去托盘类型/运输方式/封板状态列) ---------- */
+addPrototypeTable('ow-pallet-info','托盘查询','状态|托盘号|货区|国家|件数|重量|登记方式|登记人|登记仓|操作',['使用中','已作废'],[
+    ['已作废','TP202509220017','E6','塞内加尔','15','37.5KG','员工端','卖零食的小女孩','腾信国际'],
+    ['已作废','TP202509220018','E6','尼日利亚','18','45.0KG','员工端','卖零食的小女孩','腾信国际'],
+    ['已作废','TP202509220019','E6','加纳','20','50.0KG','员工端','卖零食的小女孩','腾信国际'],
+    ['使用中','TP202509220011','A12','塞内加尔','8','20.0KG','员工端','卖零食的小女孩','腾信国际'],
+    ['使用中','TX20250927018','','尼日利亚','12','30.0KG','员工端','卖零食的小女孩','腾信国际'],
+    ['使用中','TX20250927019','','塞内加尔','10','25.0KG','员工端','卖零食的小女孩','腾信国际'],
+    ['使用中','TP202509190011','','科特迪瓦','25','62.5KG','员工端','卖零食的小女孩','腾信国际'],
+    ['使用中','KAPAI-11','','喀麦隆','30','75.0KG','员工端','卢慧恒','深圳坂田'],
+    ['已作废','ZIYING22','','加纳','7','17.5KG','员工端','卢慧恒','深圳坂田'],
+    ['已作废','11','','多哥','3','7.5KG','员工端','卢慧恒','深圳坂田'],
+    ['已作废','12','','塞内加尔','5','12.5KG','员工端','卢慧恒','深圳坂田'],
+    ['已作废','tp54684','A12','尼日利亚','22','55.0KG','PDA端','卖零食的小女孩','腾信国际'],
+    ['已作废','TP546876','A12','尼日利亚','18','45.0KG','PDA端','卖零食的小女孩','腾信国际']
+],[
+    {label:'托盘编号',type:'text',field:'palletNo',placeholder:'请输入托盘编号'},
+    {label:'国家',type:'select',field:'country',options:['塞内加尔','尼日利亚','加纳','科特迪瓦','喀麦隆','多哥']},
+    {label:'状态',type:'select',field:'status',options:['使用中','已作废']},
+    {label:'登记方式',type:'select',field:'regMethod',options:['员工端','PDA端']}
+]);
+TC['ow-pallet-info'].noExpand=true;
+TC['ow-pallet-info'].noAutoAudit=true;
+/* 托盘明细弹窗(复用仓储管理 _palletInfoDetailMap；配舱时间→到货时间，去是否找货/是否装柜) */
+function openOwPalletInfoDetailModal(id,rowIdx){
+    var c=TC[id]||{};
+    var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+    var rowData=data[rowIdx];
+    if(!rowData){showToast(tr('未找到托盘数据'));return;}
+    var palletNo=owCell(rowData,c.h||[],'托盘号');
+    var rows=(typeof _palletInfoDetailMap!=='undefined'&&_palletInfoDetailMap[palletNo])?_palletInfoDetailMap[palletNo]:[];
+    var waybillSet={};
+    rows.forEach(function(r){if(r.waybillNo)waybillSet[r.waybillNo]=true;});
+    var html='<div class="space-y-4">';
+    html+='<div class="flex flex-wrap items-center gap-6 rounded-lg border border-primary-100 bg-primary-50/40 px-4 py-3">';
+    [['托盘号',palletNo],['子单笔数',String(rows.length)],['涉及运单数',String(Object.keys(waybillSet).length)]].forEach(function(item){
+        html+='<div><div class="text-xs text-text-muted">'+tr(item[0])+'</div><div class="text-sm font-semibold text-primary-700 mt-0.5">'+esc(item[1]||'—')+'</div></div>';
+    });
+    html+='</div>';
+    html+='<div class="border border-surface-200 rounded-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm min-w-[880px]">';
+    html+='<thead class="bg-surface-50 text-text-secondary"><tr>'+
+        ['子单号','运单号','客户单号','配舱单号','到货时间','上托人','上托时间'].map(function(hd){return '<th class="px-3 py-2 text-left whitespace-nowrap border-b border-surface-200">'+tr(hd)+'</th>';}).join('')+
+    '</tr></thead><tbody>';
+    if(!rows.length){
+        html+='<tr><td colspan="7" class="px-3 py-8 text-center text-text-muted">'+tr('该托盘暂无明细数据')+'</td></tr>';
+    }else{
+        rows.forEach(function(r){
+            html+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">'+
+                '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(r.subNo||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.waybillNo||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.customerNo||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.boxingNo||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.boxingTime||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.upPalletBy||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.upPalletTime||'—')+'</td>'+
+            '</tr>';
+        });
+    }
+    html+='</tbody></table></div></div></div>';
+    var titleEl=document.getElementById('crud-modal-title');
+    var bodyEl=document.getElementById('crud-modal-body');
+    var footerEl=document.getElementById('crud-modal-footer');
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='74%';
+    if(titleEl)titleEl.textContent=tr('托盘明细')+' - '+palletNo;
+    if(bodyEl)bodyEl.innerHTML=html;
+    if(footerEl)footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>';
+    var modal=document.getElementById('crud-modal');if(modal)modal.classList.add('show');
+}
+/* ---------- 托盘条码打印(复用 palletPrint pageMode) ---------- */
+TC['ow-pallet-print']={t:'托盘条码打印',pageMode:'palletPrint',h:[],q:[],s:[],d:[]};
+
 /* 历史盘点记录：运单号 → [{盘点件数,盘点人,盘点时间,盘点说明,盘点附件}] */
 var _owInvCountRecords={
     'WB-20260701002':[

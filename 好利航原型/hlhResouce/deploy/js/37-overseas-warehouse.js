@@ -387,15 +387,14 @@ function owPickupDetailRows(apptNo,row,headers){
     var total=parseInt(owCell(row,headers,'件数')||'0',10)||0;
     var wt=parseFloat(owCell(row,headers,'重量(KG)')||'0')||0;
     if(total<=0)return [];
-    var names=['服装配件','手机配件','五金工具'];
+    var cargoTypes=['普货','敏感货','普货'];
     var n=total>=6?2:1;
     var rows=[],remP=total,remW=wt;
     for(var i=0;i<n;i++){
         var pcs=(i===n-1)?remP:Math.ceil(total/n);
         if(pcs>remP)pcs=remP;remP-=pcs;
         var w=(i===n-1)?remW:+(wt/n).toFixed(1);remW=+(remW-w).toFixed(1);
-        var subCnt=Math.max(1,Math.ceil(pcs/3));
-        rows.push(['WB-2026070'+(i+1)+String(100+i),names[i%names.length],subCnt+'/'+subCnt,String(pcs),(pcs*0.06).toFixed(3),(w<0?0:w).toFixed(1)]);
+        rows.push(['WB-2026070'+(i+1)+String(100+i),cargoTypes[i%cargoTypes.length],String(pcs),String(pcs),(pcs*0.06).toFixed(3),(w<0?0:w).toFixed(1)]);
     }
     return rows;
 }
@@ -405,7 +404,7 @@ function owPickupDetailPanel(apptNo,row,headers){
     rows.forEach(function(r){tP+=parseInt(r[3],10)||0;tV+=parseFloat(r[4])||0;tW+=parseFloat(r[5])||0;});
     var h='<section>'+owSectionTitle('提货明细（本次提货所选运单/子单）');
     h+='<div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm">';
-    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['运单号','品名','子单(选/总)','提货件数','体积(CBM)','重量(KG)'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['运单号','货物类型','到货件数','提货件数','体积(CBM)','重量(KG)'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
     if(rows.length===0){
         h+='<tr><td colspan="6" class="px-3 py-8 text-center text-text-muted">'+tr('暂无提货明细')+'</td></tr>';
     }else{
@@ -528,16 +527,16 @@ var OW_CUSTOMER_WAREHOUSE={
 /* 运单明细（按客户+提单号/配舱单号条件加载）；子单字段对齐运单管理“子单信息”弹窗：长/宽/高/重量/体积 */
 /* 一个子单 = 一件，子单无件数(默认1)；运单“可提货件数”= 子单数 */
 var _owPickupWaybills=[
-    {wb:'WB-20260701002',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'服装配件',subs:[
+    {wb:'WB-20260701002',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'服装配件',cargo:'普货',subs:[
         {sub:'WB-20260701002-01',l:'55',w:'42',ht:'38',wt:'12.5',vol:'0.088'},
         {sub:'WB-20260701002-02',l:'48',w:'36',ht:'30',wt:'11.0',vol:'0.052'},
         {sub:'WB-20260701002-03',l:'40',w:'30',ht:'25',wt:'8.5',vol:'0.030'},
         {sub:'WB-20260701002-04',l:'45',w:'35',ht:'28',wt:'9.5',vol:'0.044'}]},
-    {wb:'WB-20260701012',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'手机配件',subs:[
+    {wb:'WB-20260701012',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'手机配件',cargo:'敏感货',subs:[
         {sub:'WB-20260701012-01',l:'50',w:'40',ht:'35',wt:'16.5',vol:'0.070'},
         {sub:'WB-20260701012-02',l:'42',w:'32',ht:'28',wt:'12.5',vol:'0.038'},
         {sub:'WB-20260701012-03',l:'38',w:'30',ht:'25',wt:'10.0',vol:'0.029'}]},
-    {wb:'WB-20260701018',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'五金工具',subs:[
+    {wb:'WB-20260701018',bl:'BL-NG-20260710-01',alloc:'YPCD-20260625-002',name:'五金工具',cargo:'普货',subs:[
         {sub:'WB-20260701018-01',l:'45',w:'35',ht:'30',wt:'15.0',vol:'0.047'},
         {sub:'WB-20260701018-02',l:'38',w:'30',ht:'25',wt:'12.0',vol:'0.029'},
         {sub:'WB-20260701018-03',l:'40',w:'32',ht:'28',wt:'13.0',vol:'0.036'}]}
@@ -727,7 +726,7 @@ function submitOverseasPickupCreate(){
         var pcs=0,wt=0,vol=0;
         sel.forEach(function(si){var s=w.subs[si];if(s){pcs+=1;wt+=parseFloat(s.wt)||0;vol+=parseFloat(s.vol)||0;}});
         totalPcs+=pcs;totalWeight+=wt;totalVol+=vol;
-        detail.push([w.wb,w.name,sel.length+'/'+w.subs.length,String(pcs),vol.toFixed(3),wt.toFixed(1)]);
+        detail.push([w.wb,w.cargo||'普货',String(w.subs.length),String(pcs),vol.toFixed(3),wt.toFixed(1)]);
     });
     if(totalPcs===0){showToast(tr('所选运单未选择子单，请点“子单选择”'));return;}
     var due=(totalPcs*150).toFixed(2);
@@ -871,7 +870,7 @@ function submitOverseasPickupEdit(id,rowIdx){
         var pcs=0,wt=0,vol=0;
         sel.forEach(function(si){var s=w.subs[si];if(s){pcs+=1;wt+=parseFloat(s.wt)||0;vol+=parseFloat(s.vol)||0;}});
         totalPcs+=pcs;totalWeight+=wt;totalVol+=vol;
-        detail.push([w.wb,w.name,sel.length+'/'+w.subs.length,String(pcs),vol.toFixed(3),wt.toFixed(1)]);
+        detail.push([w.wb,w.cargo||'普货',String(w.subs.length),String(pcs),vol.toFixed(3),wt.toFixed(1)]);
     });
     if(totalPcs===0){showToast(tr('请至少选择一个运单的子单'));return;}
     /* ③ 提货单信息 */

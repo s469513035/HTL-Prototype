@@ -202,7 +202,13 @@ function generateListPage(id,page,statusFilter){
             } else {
                 actionHtml='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+viewClick+'">'+L.view+'</a>';
                 if(id==='ow-outbound')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openOverseasQuickOutbound(\''+id+'\','+gi+')">'+tr('快捷出库')+'</a>';
-                if(id==='ow-pickup')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openOverseasPickupAdjust(\''+id+'\','+gi+')">'+tr('调整明细')+'</a>';
+                if(id==='ow-pickup'){
+                    var owStIdx=dataHeaders(c).indexOf('状态');
+                    var owReleased=owStIdx>=0&&row[owStIdx]==='已放货';
+                    actionHtml+=owReleased
+                        ?'<span class="text-text-muted mr-3 cursor-not-allowed" title="'+tr('已放货，不能调整明细')+'">'+tr('调整明细')+'</span>'
+                        :'<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openOverseasPickupAdjust(\''+id+'\','+gi+')">'+tr('调整明细')+'</a>';
+                }
                 if(id==='wh-sort-bag')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openSortBagAdjustModal(\''+id+'\','+gi+')">'+tr('调整明细')+'</a>';
                 if(id==='ow-inventory')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openOverseasInventoryCountRecords(\''+id+'\','+gi+')">'+tr('盘点记录')+'</a>';
                 /* 统一规则：行内操作列仅保留“查看”，编辑/删除已迁至工具栏操作按钮区（见 renderToolbarActions） */

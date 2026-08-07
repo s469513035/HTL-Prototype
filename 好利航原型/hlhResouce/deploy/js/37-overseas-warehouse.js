@@ -574,6 +574,8 @@ function openOverseasPickupAdjust(id,rowIdx){
     var apptNo=owCell(row,headers,'提货申请号');
     var cust=owCell(row,headers,'客户');
     var wh=owCell(row,headers,'目的仓库');
+    /* 已放货不允许调整明细 */
+    if(owPickupReleased(owCell(row,headers,'状态'))){showToast(tr('该提货单已放货，不能调整明细'));return;}
     /* 回显现有提货明细：优先取已存档明细，否则用当前展示的明细(与查看/手动放行一致) */
     var saved=_owPickupDetailByAppt[apptNo];
     if(!saved||!saved.length)saved=owPickupDetailRows(apptNo,row,headers)||[];

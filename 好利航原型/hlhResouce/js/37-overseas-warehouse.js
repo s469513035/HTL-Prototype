@@ -590,10 +590,29 @@ function openOverseasPickupAdjust(id,rowIdx){
         _owCreateSubSel[i]=arr;
         _owAdjustPicked.push(i);
     });
-    /* 存档明细里若有不在运单库中的运单(如历史合成行)，也作为只读行展示在提货明细 */
-    _owAdjustExtraRows=saved.filter(function(r){
-        return !_owPickupWaybills.some(function(w){return w.wb===r[0];});
+    /* 存档明细里若有不在运单库中的运单(如历史合成行)：即时补建为可调整运单(按件数生成子单)，
+       使其同样支持“子单选择”，不再只读 */
+    saved.forEach(function(r){
+        if(_owPickupWaybills.some(function(w){return w.wb===r[0];}))return;
+        var pcs=parseInt(r[3],10)||0;
+        var totalSub=parseInt(r[2],10)||pcs||1;
+        if(totalSub<pcs)totalSub=pcs;
+        var unitW=totalSub?((parseFloat(r[5])||0)/totalSub):0;
+        var unitV=totalSub?((parseFloat(r[4])||0)/totalSub):0;
+        var subs=[];
+        for(var k=0;k<totalSub;k++){
+            subs.push({sub:r[0]+'-'+String(k+1).padStart(2,'0'),l:'45',w:'35',ht:'30',wt:unitW.toFixed(1),vol:unitV.toFixed(3)});
+        }
+        var nw={wb:r[0],bl:owCell(row,headers,'提单号')||'',alloc:owCell(row,headers,'配舱单号')||'',name:r[1]||'普货',cargo:r[1]||'普货',subs:subs};
+        nw.pcs=subs.length;
+        nw.weight=subs.reduce(function(a,s){return a+(parseFloat(s.wt)||0);},0).toFixed(1);
+        nw.vol=subs.reduce(function(a,s){return a+(parseFloat(s.vol)||0);},0).toFixed(3);
+        var ni=_owPickupWaybills.push(nw)-1;
+        var arr=[];for(var m=0;m<Math.min(pcs||subs.length,subs.length);m++)arr.push(m);
+        _owCreateSubSel[ni]=arr;
+        _owAdjustPicked.push(ni);
     });
+    _owAdjustExtraRows=[];
     var h='<div class="space-y-5">';
     /* ① 提货条件：客户/目的仓库锁死，提单号+批次号可选 */
     h+='<section>'+owSectionTitle('① 提货条件（客户与目的仓库不可修改；可按提单号/批次号加载运单明细）');

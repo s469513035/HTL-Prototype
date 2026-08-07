@@ -551,6 +551,8 @@ _owPickupWaybills.forEach(function(w){
 var _owCreateSubSel={};
 /* 调整明细弹窗：已加入提货明细的运单 idx 列表 */
 var _owAdjustPicked=[];
+/* 调整明细弹窗：不在运单库中的历史明细行（只读展示，可移出） */
+var _owAdjustExtraRows=[];
 /* 已生成提货预约的提货明细：提货申请号 → [[运单号,品名,选中/总子单,提货件数,体积,重量],...] */
 var _owPickupDetailByAppt={};
 function owCreateInput(label,id,ph,required){
@@ -572,20 +574,26 @@ function openOverseasPickupAdjust(id,rowIdx){
     var apptNo=owCell(row,headers,'提货申请号');
     var cust=owCell(row,headers,'客户');
     var wh=owCell(row,headers,'目的仓库');
-    /* 回显：已生成明细里出现过的运单默认勾选并全选子单；无明细则全不选 */
-    var saved=_owPickupDetailByAppt[apptNo]||[];
+    /* 回显现有提货明细：优先取已存档明细，否则用当前展示的明细(与查看/手动放行一致) */
+    var saved=_owPickupDetailByAppt[apptNo];
+    if(!saved||!saved.length)saved=owPickupDetailRows(apptNo,row,headers)||[];
     var savedWb={};
-    saved.forEach(function(r){savedWb[r[0]]=parseInt(r[3],10)||0;});
+    saved.forEach(function(r){savedWb[r[0]]=parseInt(r[3],10)||0;});   /* 运单号 → 提货件数 */
     _owCreateSubSel={};
-    _owPickupWaybills.forEach(function(w,i){
-        if(savedWb[w.wb]!==undefined){
-            var n=Math.min(savedWb[w.wb]||w.subs.length,w.subs.length);
-            var arr=[];for(var k=0;k<n;k++)arr.push(k);
-            _owCreateSubSel[i]=arr;
-        }
-    });
     _owAdjustPicked=[];   /* 提货明细：已选运单 idx 列表 */
-    _owPickupWaybills.forEach(function(w,i){ if(savedWb[w.wb]!==undefined)_owAdjustPicked.push(i); });
+    _owPickupWaybills.forEach(function(w,i){
+        if(savedWb[w.wb]===undefined)return;
+        var n=savedWb[w.wb]||w.subs.length;
+        if(n>w.subs.length)n=w.subs.length;
+        if(n<1)n=1;
+        var arr=[];for(var k=0;k<n;k++)arr.push(k);
+        _owCreateSubSel[i]=arr;
+        _owAdjustPicked.push(i);
+    });
+    /* 存档明细里若有不在运单库中的运单(如历史合成行)，也作为只读行展示在提货明细 */
+    _owAdjustExtraRows=saved.filter(function(r){
+        return !_owPickupWaybills.some(function(w){return w.wb===r[0];});
+    });
     var h='<div class="space-y-5">';
     /* ① 提货条件：客户/目的仓库锁死，提单号+批次号可选 */
     h+='<section>'+owSectionTitle('① 提货条件（客户与目的仓库不可修改；可按提单号/批次号加载运单明细）');
@@ -677,6 +685,11 @@ function owAdjustAddPicked(){
     owAdjustRenderPicked();
     showToast(tr('已添加到提货明细')+'（'+chks.length+'）');
 }
+function owAdjustRemoveExtra(k){
+    _owAdjustExtraRows.splice(k,1);
+    owAdjustRenderPicked();
+    showToast(tr('已移出'));
+}
 function owAdjustRemove(i){
     var pos=_owAdjustPicked.indexOf(i);
     if(pos>=0)_owAdjustPicked.splice(pos,1);
@@ -693,9 +706,22 @@ function owAdjustRenderPicked(){
     h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+
         ['运单号','货物类型','到货件数','已选件数','体积(CBM)','重量(KG)','子单选择','操作'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+
         '</tr></thead><tbody>';
-    if(_owAdjustPicked.length===0){
+    if(_owAdjustPicked.length===0&&_owAdjustExtraRows.length===0){
         h+='<tr><td colspan="8" class="px-3 py-6 text-center text-text-muted">'+tr('暂无提货明细，请从上方运单明细添加')+'</td></tr>';
     }else{
+        /* 历史明细行（不在运单库中）：只读展示，可移出 */
+        _owAdjustExtraRows.forEach(function(r,k){
+            h+='<tr class="border-t border-surface-100">'+
+                '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(r[0])+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary">'+tr(r[1]||'普货')+'</td>'+
+                '<td class="px-3 py-2 font-medium">'+esc(r[2])+'</td>'+
+                '<td class="px-3 py-2"><span class="font-semibold text-primary-700">'+esc(r[3])+'</span></td>'+
+                '<td class="px-3 py-2">'+esc(r[4])+'</td>'+
+                '<td class="px-3 py-2">'+esc(r[5])+'</td>'+
+                '<td class="px-3 py-2 text-text-muted">—</td>'+
+                '<td class="px-3 py-2"><a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="owAdjustRemoveExtra('+k+')">'+tr('移出')+'</a></td>'+
+            '</tr>';
+        });
         _owAdjustPicked.forEach(function(i){
             var w=_owPickupWaybills[i];if(!w)return;
             var sel=_owCreateSubSel[i]||[];
@@ -719,8 +745,14 @@ function submitOverseasPickupAdjust(id,rowIdx){
     var c=TC[id]||{};
     var d=owRowData(id,rowIdx);var row=d.row,headers=(c.h||[]);
     if(!row)return;
-    if(_owAdjustPicked.length===0){showToast(tr('请至少添加一个运单到提货明细'));return;}
+    if(_owAdjustPicked.length===0&&_owAdjustExtraRows.length===0){showToast(tr('请至少添加一个运单到提货明细'));return;}
     var totalPcs=0,totalWeight=0,detail=[];
+    /* 历史明细行按原值计入 */
+    _owAdjustExtraRows.forEach(function(r){
+        totalPcs+=parseInt(r[3],10)||0;
+        totalWeight+=parseFloat(r[5])||0;
+        detail.push(r.slice());
+    });
     _owAdjustPicked.forEach(function(i){
         var w=_owPickupWaybills[i];if(!w)return;
         var sel=_owCreateSubSel[i]||[];

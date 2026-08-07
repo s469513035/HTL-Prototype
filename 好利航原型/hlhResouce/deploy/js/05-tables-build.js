@@ -802,15 +802,19 @@ TC['prod-inquiry-quote'].entryFields=[
 ];
 TC['prod-inquiry-quote'].pageMode='inquiryQuoteEntry';
 TC['prod-inquiry-quote'].forceLocalHeader=true;
-/* 银行凭证：在「汇率」后插入「本位币」列（金额列已改本位币口径） */
-(function(){
-    var c=TC['fin-bank-voucher'];
+/* 银行凭证 / 收款管理：在「汇率」后插入「本位币」列，金额列改本位币口径 */
+['fin-bank-voucher','fin-ar-receipt'].forEach(function(tid){
+    var c=TC[tid];
     if(!c||!c.h)return;
+    ['总金额','已使用金额','未使用金额'].forEach(function(n){
+        var k=c.h.indexOf(n+'(人民币)');
+        if(k>=0)c.h[k]=n+'(本位币)';
+    });
     var i=c.h.indexOf('汇率');
     if(i<0||c.h.indexOf('本位币')>=0)return;
     c.h.splice(i+1,0,'本位币');
     (c.d||[]).forEach(function(r){r.splice(i+1,0,'人民币');});
-})();
+});
 if(TC['wb-manage']){
     const siteIdx=TC['wb-manage'].h.indexOf('所属网点');
     if(siteIdx<0){

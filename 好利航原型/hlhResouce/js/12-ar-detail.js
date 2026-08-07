@@ -41,14 +41,48 @@ function arStatusBadge(st){
     return '<span class="badge '+cls+'">'+esc(st)+'</span>';
 }
 
+function arNum(v){return parseFloat(String(v==null?'0':v).replace(/,/g,''))||0;}
+function arFmt(n){return n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+/* 按币别汇总某客户/业务员的 待核销 / 待出账（待出账=未制账单的费用） */
+function arSumByCurrency(name){
+    var key=_arLeftTab==='sales'?'sales':'cust';
+    var map={};
+    _arDetailRows.forEach(function(r){
+        if(name&&r[key]!==name)return;
+        if(r.st==='作废')return;
+        var cur=r.cur||'人民币';
+        if(!map[cur])map[cur]={pending:0,out:0};
+        map[cur].pending+=arNum(r.unused);
+        if(r.bf!=='是')map[cur].out+=arNum(r.amt);
+    });
+    return map;
+}
+function arCurrencyLines(name){
+    var map=arSumByCurrency(name);
+    var curs=Object.keys(map);
+    if(!curs.length)return '<div class="text-xs text-text-muted">'+tr('暂无金额')+'</div>';
+    var cls=function(v){return v<0?'text-red-500':'text-primary-600';};
+    var h='';
+    curs.forEach(function(cur){
+        var m=map[cur];
+        h+='<div class="text-xs text-text-muted leading-5"><span class="text-text-secondary">'+esc(cur)+'</span>　'+
+            tr('待核销')+': <span class="'+cls(m.pending)+'">'+arFmt(m.pending)+'</span>　'+
+            tr('待出账')+': <span class="'+cls(m.out)+'">'+arFmt(m.out)+'</span></div>';
+    });
+    return h;
+}
 function arLeftListHtml(){
     var list=_arLeftTab==='sales'?_arSales:_arCustomers;
-    var h='<div onclick="filterArByCustomer(\'\')" class="px-4 py-3 border-b border-surface-100 cursor-pointer '+(_arCustFilter===''?'bg-amber-50 border-l-2 border-l-amber-400':'hover:bg-surface-50')+'"><div class="text-sm font-medium text-text-primary">'+tr('全部')+' ('+_arDetailRows.length+')</div></div>';
+    var allOn=_arCustFilter==='';
+    var h='<div onclick="filterArByCustomer(\'\')" class="px-4 py-3 border-b border-surface-100 cursor-pointer '+(allOn?'bg-amber-50 border-l-2 border-l-amber-400':'hover:bg-surface-50')+'">';
+    h+='<div class="text-sm font-medium text-text-primary mb-1">'+tr('全部')+' ('+_arDetailRows.length+')</div>';
+    h+=arCurrencyLines('');
+    h+='</div>';
     list.forEach(function(c){
         var on=_arCustFilter===c.name;
         h+='<div onclick="filterArByCustomer(\''+esc(c.name)+'\')" class="px-4 py-3 border-b border-surface-100 cursor-pointer '+(on?'bg-amber-50 border-l-2 border-l-amber-400':'hover:bg-surface-50')+'">';
         h+='<div class="text-sm font-medium text-text-primary mb-1">'+esc(c.name)+'</div>';
-        h+='<div class="text-xs text-text-muted">'+tr('待核销')+': <span class="'+(parseFloat(c.pending)<0?'text-red-500':'text-primary-600')+'">'+esc(c.pending)+'</span>　'+tr('待出账')+': <span class="'+(parseFloat(c.out)<0?'text-red-500':'text-primary-600')+'">'+esc(c.out)+'</span></div>';
+        h+=arCurrencyLines(c.name);
         h+='</div>';
     });
     return h;
@@ -69,7 +103,7 @@ function renderArDetailRows(){
         if(_arStatusFilter&&r.st!==_arStatusFilter)return false;
         return true;
     });
-    if(!rows.length)return '<tr><td colspan="24" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    if(!rows.length)return '<tr><td colspan="21" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
     return rows.map(function(r,i){
         var h='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
         h+='<td class="px-3 py-2.5 text-text-muted">'+(i+1)+'</td>';
@@ -80,14 +114,11 @@ function renderArDetailRows(){
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.fee)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(r.amt)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.cur)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.rate)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(r.rmb)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.used)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.unused)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap">'+arStatusBadge(r.st)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.ftime)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.cyc)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.days)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.due||'')+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.bf)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.bn)+'</td>';
@@ -248,9 +279,7 @@ function openArDetailModal(){
     html+='<div>'+lbl('金额',true)+'<input type="number" required class="'+inputCls+'" placeholder="'+esc(tr('请输入金额'))+'"></div>';
     html+='<div>'+lbl('类型',true)+selHtml(['追加','覆盖','总值'],'请选择类型')+'</div>';
     html+='<div>'+lbl('币别',true)+selHtml(['人民币','美元','欧元'],'请选择币别')+'</div>';
-    html+='<div>'+lbl('汇率',true)+'<input type="text" required class="'+inputCls+'" value="1.0000"></div>';
     html+='<div>'+lbl('交易时间',true)+'<input type="datetime-local" class="'+inputCls+'" value="2026-07-20T17:49"></div>';
-    html+='<div>'+lbl('税点(%)',false)+'<input type="number" step="0.01" class="'+inputCls+'" value="0.00"></div>';
     html+='<div class="md:col-span-3">'+lbl('备注',false)+'<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'"></textarea></div>';
     html+='</div>';
     bodyEl.innerHTML=html;
@@ -286,7 +315,7 @@ function generateArDetailPage(id){
     h+='</div>';
     h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto"><table class="w-full text-sm" style="min-width:2000px;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     h+='<th class="px-3 py-3 text-left font-semibold" style="width:40px">#</th><th class="px-3 py-3 text-left font-semibold" style="width:40px"><input type="checkbox" onchange="document.querySelectorAll(\'.ar-detail-check\').forEach(function(c){c.checked=this.checked;}.bind(this))"></th>';
-    ['运单号','客户名称','业务员名称','费用名称','金额(原币)','币别编号','汇率','金额(人民币)','已核销金额','未核销金额','核销标识','费用时间','结算周期','结算周期天数','账单到期时间','制账单标识','账单编号','账单批次号','备注','数据来源','创建时间','创建员工编号'].forEach(function(c){h+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    ['运单号','客户名称','业务员名称','费用名称','金额(原币)','币别编号','已核销金额','未核销金额','核销标识','费用时间','结算周期','账单到期时间','制账单标识','账单编号','账单批次号','备注','数据来源','创建时间','创建员工编号'].forEach(function(c){h+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody id="ar-detail-tbody">'+renderArDetailRows()+'</tbody></table></div></div>';
     h+='</div></div>';
     return h;

@@ -340,7 +340,7 @@ function openBankVoucherDetailModal(id,idx,rowData){
     let html='<div class="mb-3 flex items-center gap-2"><span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-sm font-semibold text-text-primary">'+tr('凭证信息')+'</span></div>';
     html+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">';
     /* 银行凭证列表金额已改「本位币」口径；收款管理仍沿用人民币标签 */
-    var baseCur=(id==='fin-bank-voucher')?'本位币':'人民币';
+    var baseCur=(((TC[id]&&TC[id].h)||[]).indexOf('总金额(本位币)')>=0)?'本位币':'人民币';
     var baseCurVal=gv('本位币')||'人民币';
     html+=card('','green',[['凭证编号',g('凭证编号')],['凭证借贷标识',g('凭证借贷标识')],['总金额(原币)',g('总金额(原币)')],['币别',g('币别')],['汇率',g('汇率')]]);
     /* 本位币显示在「总金额(本位币)」上方 */

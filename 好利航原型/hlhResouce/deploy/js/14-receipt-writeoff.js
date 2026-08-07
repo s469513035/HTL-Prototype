@@ -125,7 +125,7 @@ function receiptLeftTableHtml(v){
         Object.keys(_receiptConsumed).forEach(function(k){ var w=_receiptConsumed[k]; if(w.voucher===code&&(!wbf||String(w.wb).indexOf(wbf)>=0))rows.push(w); });
     }
     /* 字段参照「待核销明细」，并增加 核销金额 / 核销人 / 核销时间 */
-    var cols=['运单号','账单号','客户名称','费用科目','金额(原币)','币别','核销金额(本位币)','核销人','核销时间'];
+    var cols=['运单号','账单号','客户名称','费用科目','金额','币别','核销金额','核销人','核销时间'];
     var h='<table class="w-full text-sm" style="min-width:900px"><thead><tr class="bg-[#EFF6FF] text-text-secondary"><th class="px-2 py-2 text-left" style="width:32px">#</th><th class="px-2 py-2" style="width:32px"></th>';
     cols.forEach(function(c){h+='<th class="px-2 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';
@@ -182,7 +182,7 @@ function receiptRightTableHtml(v){
     var rows=(typeof _arDetailSeed!=='undefined'?_arDetailSeed:[]).filter(function(r){
         return r.cust===cust&&r.cur===cur&&r.st==='待核销'&&!_receiptConsumed[receiptFeeKey(r)]&&(!wbf||String(r.wb).indexOf(wbf)>=0)&&(!bnf||String(r.bn||'').indexOf(bnf)>=0)&&(!tf||r.fee===tf);
     });
-    var cols=['运单号','账单号','客户名称','费用科目','金额(原币)','币别','核销状态'];
+    var cols=['运单号','账单号','客户名称','费用科目','金额','币别','核销状态'];
     var h='<table class="w-full text-sm" style="min-width:760px"><thead><tr class="bg-[#EFF6FF] text-text-secondary"><th class="px-2 py-2 text-left" style="width:32px">#</th><th class="px-2 py-2" style="width:32px"></th>';
     cols.forEach(function(c){h+='<th class="px-2 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';

@@ -315,8 +315,11 @@ function openBankVoucherDetailModal(id,idx,rowData){
     }
     let html='<div class="mb-3 flex items-center gap-2"><span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-sm font-semibold text-text-primary">'+tr('凭证信息')+'</span></div>';
     html+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">';
-    html+=card('','green',[['凭证编号',g(0)],['凭证借贷标识',g(2)],['总金额(原币)',g(6)],['币别',g(7)],['汇率',g(8)]]);
-    html+=card('','blue',[['认领账户类型',g(3)],['认领账户名称',g(5)],['总金额(人民币)',g(9)],['已使用金额(人民币)',g(10)],['未使用金额(人民币)',g(11)]]);
+    /* 本位币选择框（银行凭证列表已改为“本位币”口径；收款管理仍沿用人民币标签） */
+    var baseCur=(id==='fin-bank-voucher')?'本位币':'人民币';
+    var baseCurSel='<select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-white">'+['人民币','美元','欧元','港币'].map(function(o){return '<option'+(o==='人民币'?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';
+    html+=card('','green',[['凭证编号',g(0)],['凭证借贷标识',g(2)],['总金额(原币)',g(6)],['币别',g(7)],['汇率',g(8)],['本位币',baseCurSel]]);
+    html+=card('','blue',[['认领账户类型',g(3)],['认领账户名称',g(5)],['总金额('+baseCur+')',g(9)],['已使用金额('+baseCur+')',g(10)],['未使用金额('+baseCur+')',g(11)]]);
     html+=card('我方账户信息','yellow',[['账户号码',g(12)],['账户名称',g(13)],['账户开户行',ourBank?esc(ourBank):'—'],['费用时间',g(18)]]);
     html+=card('对方账户信息','red',[['账户号码',g(14)],['账户名称',g(15)],['账号开户行',g(16)],['交易流水号',g(17)]]);
     html+='</div>';

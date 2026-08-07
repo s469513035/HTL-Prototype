@@ -549,6 +549,8 @@ _owPickupWaybills.forEach(function(w){
 });
 /* 新增提货预约的子单选择状态：waybill idx → 已选子单 idx 数组 */
 var _owCreateSubSel={};
+/* 调整明细弹窗：已加入提货明细的运单 idx 列表 */
+var _owAdjustPicked=[];
 /* 已生成提货预约的提货明细：提货申请号 → [[运单号,品名,选中/总子单,提货件数,体积,重量],...] */
 var _owPickupDetailByAppt={};
 function owCreateInput(label,id,ph,required){
@@ -582,54 +584,146 @@ function openOverseasPickupAdjust(id,rowIdx){
             _owCreateSubSel[i]=arr;
         }
     });
+    _owAdjustPicked=[];   /* 提货明细：已选运单 idx 列表 */
+    _owPickupWaybills.forEach(function(w,i){ if(savedWb[w.wb]!==undefined)_owAdjustPicked.push(i); });
     var h='<div class="space-y-5">';
-    /* 锁定条件（只读） */
-    h+='<section>'+owSectionTitle('提货条件（客户与目的仓库不可修改）');
+    /* ① 提货条件：客户/目的仓库锁死，提单号+批次号可选 */
+    h+='<section>'+owSectionTitle('① 提货条件（客户与目的仓库不可修改；可按提单号/批次号加载运单明细）');
     h+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4">';
-    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('提货申请号')+'</label><input type="text" readonly value="'+esc(apptNo)+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary"></div>';
     h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('客户')+'</label><input type="text" readonly value="'+esc(cust)+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary"></div>';
     h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('目的仓库')+'</label><input type="text" readonly value="'+esc(wh)+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary"></div>';
-    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('当前状态')+'</label><input type="text" readonly value="'+esc(owCell(row,headers,'状态'))+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary"></div>';
-    h+='</div></section>';
-    /* 提货明细（可调整） */
-    h+='<section>'+owSectionTitle('提货明细（勾选运单默认全选子单，点“子单选择”调整提货子单）');
-    h+='<div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-sm">';
-    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+
-        '<th class="px-3 py-2 w-10 text-center"><input type="checkbox" onclick="owPickupToggleAll(this)"></th>'+
-        ['运单号','货物类型','可提货件数','体积(CBM)','重量(KG)','已选件数','子单选择'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+
-        '</tr></thead><tbody>';
-    _owPickupWaybills.forEach(function(w,i){
-        var sel=_owCreateSubSel[i]||[];
-        h+='<tr class="border-t border-surface-100">'+
-            '<td class="px-3 py-2 text-center"><input type="checkbox" class="ow-create-wb-chk" data-idx="'+i+'"'+(sel.length?' checked':'')+' onchange="owPickupOnWbCheck('+i+')"></td>'+
-            '<td class="px-3 py-2 font-medium text-primary-700">'+esc(w.wb)+'</td>'+
-            '<td class="px-3 py-2 text-text-secondary">'+tr(w.cargo||'普货')+'</td>'+
-            '<td class="px-3 py-2 font-medium">'+w.pcs+'</td>'+
-            '<td class="px-3 py-2">'+esc(w.vol)+'</td>'+
-            '<td class="px-3 py-2">'+esc(w.weight)+'</td>'+
-            '<td class="px-3 py-2"><span id="ow-selpcs-'+i+'" class="font-semibold text-primary-700">'+sel.length+'</span></td>'+
-            '<td class="px-3 py-2"><a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="openOwSubSelectModal('+i+')">'+tr('子单选择')+'</a></td>'+
-        '</tr>';
-    });
-    h+='</tbody></table></div>';
-    h+='<div class="mt-2 text-[11px] text-text-muted">'+tr('已选件数按所选子单实时统计；保存后更新提货件数、重量与提货明细。')+'</div>';
+    var bls=[],allocs=[];
+    _owPickupWaybills.forEach(function(w){if(w.bl&&bls.indexOf(w.bl)<0)bls.push(w.bl);if(w.alloc&&allocs.indexOf(w.alloc)<0)allocs.push(w.alloc);});
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('提单号')+'</label><select id="ow-adjust-bl" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"><option value="">'+tr('全部')+'</option>'+bls.map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join('')+'</select></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('批次号')+'</label><select id="ow-adjust-alloc" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"><option value="">'+tr('全部')+'</option>'+allocs.map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join('')+'</select></div>';
+    h+='</div>';
+    h+='<div class="mt-3"><button type="button" onclick="owAdjustLoadWaybills()" class="h-9 px-4 rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('加载运单明细')+'</button></div>';
+    h+='</section>';
+    /* ② 运单明细（可加载并添加到提货明细） */
+    h+='<section id="ow-adjust-src-section" class="hidden">'+owSectionTitle('② 运单明细（勾选后点“添加到提货明细”）');
+    h+='<div id="ow-adjust-src-wrap"></div>';
+    h+='<div class="mt-3"><button type="button" onclick="owAdjustAddPicked()" class="h-9 px-4 rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('添加到提货明细')+'</button></div>';
+    h+='</section>';
+    /* ③ 提货明细（可移出） */
+    h+='<section>'+owSectionTitle('③ 提货明细（可点“移出”退回运单明细列表）');
+    h+='<div id="ow-adjust-picked-wrap"></div>';
     h+='</section>';
     h+='</div>';
     var footer='<button onclick="submitOverseasPickupAdjust(\''+id+'\','+rowIdx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存')+'</button>'+
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('取消')+'</button>';
-    owOpenModal(tr('调整明细')+' - '+apptNo,'86%',h,footer);
+    owOpenModal(tr('调整明细')+' - '+apptNo,'88%',h,footer);
+    owAdjustRenderPicked();
+}
+/* 运单明细（可添加）：按提单号/批次号过滤，排除已在提货明细中的 */
+function owAdjustRenderSrc(){
+    var blEl=document.getElementById('ow-adjust-bl');
+    var allocEl=document.getElementById('ow-adjust-alloc');
+    var bl=blEl?blEl.value:'';
+    var alloc=allocEl?allocEl.value:'';
+    var wrap=document.getElementById('ow-adjust-src-wrap');
+    if(!wrap)return;
+    var list=[];
+    _owPickupWaybills.forEach(function(w,i){
+        if(_owAdjustPicked.indexOf(i)>=0)return;
+        if(bl&&w.bl!==bl)return;
+        if(alloc&&w.alloc!==alloc)return;
+        list.push(i);
+    });
+    var h='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm">';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+
+        '<th class="px-3 py-2 w-10 text-center"><input type="checkbox" onclick="owAdjustToggleAllSrc(this)"></th>'+
+        ['运单号','货物类型','提单号','批次号','可提货件数','体积(CBM)','重量(KG)'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+
+        '</tr></thead><tbody>';
+    if(list.length===0){
+        h+='<tr><td colspan="8" class="px-3 py-6 text-center text-text-muted">'+tr('无可添加的运单（可能已全部加入提货明细）')+'</td></tr>';
+    }else{
+        list.forEach(function(i){
+            var w=_owPickupWaybills[i];
+            h+='<tr class="border-t border-surface-100">'+
+                '<td class="px-3 py-2 text-center"><input type="checkbox" class="ow-adjust-src-chk" data-idx="'+i+'"></td>'+
+                '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(w.wb)+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary">'+tr(w.cargo||'普货')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(w.bl||'—')+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(w.alloc||'—')+'</td>'+
+                '<td class="px-3 py-2 font-medium">'+w.pcs+'</td>'+
+                '<td class="px-3 py-2">'+esc(w.vol)+'</td>'+
+                '<td class="px-3 py-2">'+esc(w.weight)+'</td>'+
+            '</tr>';
+        });
+    }
+    h+='</tbody></table></div>';
+    wrap.innerHTML=h;
+}
+function owAdjustLoadWaybills(){
+    var sec=document.getElementById('ow-adjust-src-section');
+    if(sec)sec.classList.remove('hidden');
+    owAdjustRenderSrc();
+    showToast(tr('已按条件加载运单明细'));
+}
+function owAdjustToggleAllSrc(box){
+    document.querySelectorAll('.ow-adjust-src-chk').forEach(function(c){c.checked=box.checked;});
+}
+function owAdjustAddPicked(){
+    var chks=Array.prototype.slice.call(document.querySelectorAll('.ow-adjust-src-chk')).filter(function(c){return c.checked;});
+    if(chks.length===0){showToast(tr('请先勾选要添加的运单'));return;}
+    chks.forEach(function(c){
+        var i=parseInt(c.getAttribute('data-idx'),10);
+        if(_owAdjustPicked.indexOf(i)<0){
+            _owAdjustPicked.push(i);
+            _owCreateSubSel[i]=owAllSubIdx(i);   /* 添加时默认全选子单 */
+        }
+    });
+    owAdjustRenderSrc();
+    owAdjustRenderPicked();
+    showToast(tr('已添加到提货明细')+'（'+chks.length+'）');
+}
+function owAdjustRemove(i){
+    var pos=_owAdjustPicked.indexOf(i);
+    if(pos>=0)_owAdjustPicked.splice(pos,1);
+    delete _owCreateSubSel[i];
+    owAdjustRenderPicked();
+    owAdjustRenderSrc();   /* 移出后回到运单明细列表 */
+    showToast(tr('已移出，退回运单明细列表'));
+}
+/* 提货明细（可移出/子单选择） */
+function owAdjustRenderPicked(){
+    var wrap=document.getElementById('ow-adjust-picked-wrap');
+    if(!wrap)return;
+    var h='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm">';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+
+        ['运单号','货物类型','到货件数','已选件数','体积(CBM)','重量(KG)','子单选择','操作'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+
+        '</tr></thead><tbody>';
+    if(_owAdjustPicked.length===0){
+        h+='<tr><td colspan="8" class="px-3 py-6 text-center text-text-muted">'+tr('暂无提货明细，请从上方运单明细添加')+'</td></tr>';
+    }else{
+        _owAdjustPicked.forEach(function(i){
+            var w=_owPickupWaybills[i];if(!w)return;
+            var sel=_owCreateSubSel[i]||[];
+            h+='<tr class="border-t border-surface-100">'+
+                '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(w.wb)+'</td>'+
+                '<td class="px-3 py-2 text-text-secondary">'+tr(w.cargo||'普货')+'</td>'+
+                '<td class="px-3 py-2 font-medium">'+w.subs.length+'</td>'+
+                '<td class="px-3 py-2"><span id="ow-selpcs-'+i+'" class="font-semibold text-primary-700">'+sel.length+'</span></td>'+
+                '<td class="px-3 py-2">'+esc(w.vol)+'</td>'+
+                '<td class="px-3 py-2">'+esc(w.weight)+'</td>'+
+                '<td class="px-3 py-2"><a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="openOwSubSelectModal('+i+')">'+tr('子单选择')+'</a></td>'+
+                '<td class="px-3 py-2"><a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="owAdjustRemove('+i+')">'+tr('移出')+'</a></td>'+
+            '</tr>';
+        });
+    }
+    h+='</tbody></table></div>';
+    h+='<div class="mt-2 text-[11px] text-text-muted">'+tr('已选件数按所选子单实时统计；保存后更新提货件数、重量与提货明细。')+'</div>';
+    wrap.innerHTML=h;
 }
 function submitOverseasPickupAdjust(id,rowIdx){
     var c=TC[id]||{};
     var d=owRowData(id,rowIdx);var row=d.row,headers=(c.h||[]);
     if(!row)return;
-    var checked=Array.prototype.slice.call(document.querySelectorAll('.ow-create-wb-chk')).filter(function(x){return x.checked;});
-    if(checked.length===0){showToast(tr('请至少勾选一个运单'));return;}
+    if(_owAdjustPicked.length===0){showToast(tr('请至少添加一个运单到提货明细'));return;}
     var totalPcs=0,totalWeight=0,detail=[];
-    checked.forEach(function(x){
-        var wi=parseInt(x.getAttribute('data-idx'),10);
-        var w=_owPickupWaybills[wi];if(!w)return;
-        var sel=_owCreateSubSel[wi]||[];
+    _owAdjustPicked.forEach(function(i){
+        var w=_owPickupWaybills[i];if(!w)return;
+        var sel=_owCreateSubSel[i]||[];
         if(sel.length===0)return;
         var pcs=0,wt=0,vol=0;
         sel.forEach(function(si){var s=w.subs[si];if(s){pcs+=1;wt+=parseFloat(s.wt)||0;vol+=parseFloat(s.vol)||0;}});
@@ -783,6 +877,11 @@ function confirmOwSubSelect(i){
     _owCreateSubSel[i]=sel;
     var wbChk=document.querySelector('.ow-create-wb-chk[data-idx="'+i+'"]');
     if(wbChk)wbChk.checked=sel.length>0;
+    /* 调整明细弹窗：子单全不选视为移出，退回运单明细列表 */
+    if(!wbChk&&document.getElementById('ow-adjust-picked-wrap')){
+        if(sel.length===0){closeOwSubSelectModal();owAdjustRemove(i);return;}
+        owAdjustRenderPicked();
+    }
     owUpdateSelPcs(i);
     closeOwSubSelectModal();
 }
@@ -872,53 +971,24 @@ function openOverseasPickupEdit(id,rowIdx){
     var slot=owCell(row,headers,'预约时段');
     var slotTime=(slot&&slot.indexOf(' ')>=0)?slot.split(' ')[1]:'';
     var released=owPickupReleased(status);
-    /* 放行前可编辑：初始化提货明细子单选择（默认全选，可调整） */
-    if(!released){ _owCreateSubSel={}; _owPickupWaybills.forEach(function(w,i){_owCreateSubSel[i]=owAllSubIdx(i);}); }
     var h='<div class="space-y-5">';
     if(released){
         h+='<div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">'+tr('该提货预约已放行，仅可查看，不可编辑。')+'</div>';
     }else{
-        h+='<div class="rounded-lg border border-primary-100 bg-primary-50 px-3 py-2 text-[11px] text-primary-700">'+tr('放行前可编辑：可调整提货明细（运单/子单）、提货方式、派送费、预约时段与提货人信息；客户/提单号/配舱单号创建时确定不可改。')+'</div>';
+        h+='<div class="rounded-lg border border-primary-100 bg-primary-50 px-3 py-2 text-[11px] text-primary-700">'+tr('可修改提货方式、派送费、预约时段、派送地址与联系人信息；客户/申请号/目的仓库/状态不可修改。提货明细请用列表“调整明细”功能。')+'</div>';
     }
-    /* ① 提货条件（创建时确定·只读，布局参照新增） */
-    h+='<section>'+owSectionTitle('① 提货条件（创建时确定·只读）')+owInfoGrid([
-        ['客户',owCell(row,headers,'客户')],['提单号',owCell(row,headers,'提单号')],['配舱单号',owCell(row,headers,'配舱单号')],['目的仓库',owCell(row,headers,'目的仓库')],
-        ['提货申请号',apptNo],['应收合计(USD)',owCell(row,headers,'应收合计(USD)')],['当前状态',status]
+    /* ① 提货基本信息（只读） */
+    h+='<section>'+owSectionTitle('① 提货基本信息（不可修改）')+owInfoGrid([
+        ['客户',owCell(row,headers,'客户')],['提货申请号',apptNo],['目的仓库',owCell(row,headers,'目的仓库')],['当前状态',status]
     ])+'</section>';
-    /* ② 提货明细：放行前可编辑调整（运单/子单），放行后只读 */
+    /* ② 提货单信息：放行前可编辑，放行后只读 */
     if(released){
-        h+=owPickupDetailPanel(apptNo,row,headers);
-    }else{
-        h+='<section>'+owSectionTitle('② 提货明细（放行前可调整：勾选运单默认全选子单，点“子单选择”调整提货子单）');
-        h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm">';
-        h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+
-            '<th class="px-3 py-2 w-10 text-center"><input type="checkbox" checked onclick="owPickupToggleAll(this)"></th>'+
-            ['运单号','品名','可提货件数','体积(CBM)','重量(KG)','已选件数','子单选择'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+
-            '</tr></thead><tbody>';
-        _owPickupWaybills.forEach(function(w,i){
-            h+='<tr class="border-t border-surface-100">'+
-                '<td class="px-3 py-2 text-center"><input type="checkbox" class="ow-create-wb-chk" data-idx="'+i+'" checked onchange="owPickupOnWbCheck('+i+')"></td>'+
-                '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(w.wb)+'</td>'+
-                '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+tr(w.name)+'</td>'+
-                '<td class="px-3 py-2 font-medium">'+w.pcs+'</td>'+
-                '<td class="px-3 py-2">'+esc(w.vol)+'</td>'+
-                '<td class="px-3 py-2">'+esc(w.weight)+'</td>'+
-                '<td class="px-3 py-2"><span id="ow-selpcs-'+i+'" class="font-semibold text-primary-700">'+((_owCreateSubSel[i]||[]).length)+'</span></td>'+
-                '<td class="px-3 py-2"><a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="openOwSubSelectModal('+i+')">'+tr('子单选择')+'</a></td>'+
-            '</tr>';
-        });
-        h+='</tbody></table></div>';
-        h+='<div class="mt-2 text-[11px] text-text-muted">'+tr('已选件数按所选子单实时统计；保存后按“已选件数”更新提货明细与应收合计。')+'</div>';
-        h+='</section>';
-    }
-    /* ③ 提货单信息：放行前可编辑，放行后只读 */
-    if(released){
-        h+='<section>'+owSectionTitle('③ 提货单信息（只读）')+owInfoGrid([
+        h+='<section>'+owSectionTitle('② 提货单信息（只读）')+owInfoGrid([
             ['提货方式',pickupType],['预约时段',slot],['派送费(USD)',isDelivery?deliveryFee:'—'],['派送地址',isDelivery?'Lagos, Ikeja GRA, 23 Isaac John St.':'—'],
             ['提货人姓名','Mr. Okafor'],['提货人电话','+234 802 000 111'],['证件号','ID·A1234567'],['车牌号','LOS-882-KJA']
         ])+'</section>';
     }else{
-        h+='<section>'+owSectionTitle('③ 提货单信息（可编辑）');
+        h+='<section>'+owSectionTitle('② 提货单信息（可编辑）');
         h+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4">';
         h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary">'+tr('提货方式')+'<span class="text-red-500 ml-1">*</span></label>';
         h+='<div class="flex items-center gap-6 h-9">'+
@@ -943,28 +1013,14 @@ function openOverseasPickupEdit(id,rowIdx){
         ?'<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>'
         :'<button onclick="submitOverseasPickupEdit(\''+id+'\','+rowIdx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存')+'</button>'+
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('取消')+'</button>';
-    owOpenModal(tr('编辑提货预约')+' - '+apptNo,'82%',h,footer);
+    owOpenModal(tr('修改提货信息')+' - '+apptNo,'72%',h,footer);
 }
 function submitOverseasPickupEdit(id,rowIdx){
     var c=TC[id]||{};
     var d=owRowData(id,rowIdx);var row=d.row,headers=(c.h||[]);
     if(!row)return;
     var apptNo=owCell(row,headers,'提货申请号');
-    /* 提货明细（放行前可调整）：从子单选择重建 */
-    var wbChks=Array.prototype.slice.call(document.querySelectorAll('.ow-create-wb-chk')).filter(function(x){return x.checked;});
-    var totalPcs=0,totalWeight=0,totalVol=0,detail=[];
-    wbChks.forEach(function(cb){
-        var wi=parseInt(cb.getAttribute('data-idx'),10);
-        var w=_owPickupWaybills[wi];if(!w)return;
-        var sel=_owCreateSubSel[wi]||[];
-        if(sel.length===0)return;
-        var pcs=0,wt=0,vol=0;
-        sel.forEach(function(si){var s=w.subs[si];if(s){pcs+=1;wt+=parseFloat(s.wt)||0;vol+=parseFloat(s.vol)||0;}});
-        totalPcs+=pcs;totalWeight+=wt;totalVol+=vol;
-        detail.push([w.wb,w.cargo||'普货',String(w.subs.length),String(pcs),vol.toFixed(3),wt.toFixed(1)]);
-    });
-    if(totalPcs===0){showToast(tr('请至少选择一个运单的子单'));return;}
-    /* ③ 提货单信息 */
+    /* 仅修改提货信息（提货明细由列表“调整明细”维护） */
     var radios=document.getElementsByName('ow-edit-pickup');
     var pickup='上门提货';
     for(var i=0;i<radios.length;i++){if(radios[i].checked)pickup=radios[i].value;}
@@ -975,21 +1031,17 @@ function submitOverseasPickupEdit(id,rowIdx){
     var fee=pickup==='派送'?parseFloat(feeEl.value||'0').toFixed(2):'—';
     var srcRow=(c.d||[]).find(function(r){return r[0]===apptNo;});
     if(srcRow){
-        var iP=headers.indexOf('提货方式'),iF=headers.indexOf('派送费(USD)'),iS=headers.indexOf('预约时段'),iPcs=headers.indexOf('件数'),iWt=headers.indexOf('重量(KG)'),iDue=headers.indexOf('应收合计(USD)');
+        var iP=headers.indexOf('提货方式'),iF=headers.indexOf('派送费(USD)'),iS=headers.indexOf('预约时段');
         if(iP>=0)srcRow[iP]=pickup;
         if(iF>=0)srcRow[iF]=fee;
         if(iS>=0)srcRow[iS]=slot;
-        if(iPcs>=0)srcRow[iPcs]=String(totalPcs);
-        if(iWt>=0)srcRow[iWt]=totalWeight.toFixed(1);
-        if(iDue>=0)srcRow[iDue]=(totalPcs*150).toFixed(2);
     }
-    _owPickupDetailByAppt[apptNo]=detail;
     closeCrudModal();
     var mc=document.getElementById('main-content');
     var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
     var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
     if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
-    showToast(tr('提货预约已更新')+'：'+apptNo+'（'+detail.length+tr('个运单')+' / '+totalPcs+tr('件')+'）');
+    showToast(tr('提货信息已更新')+'：'+apptNo);
 }
 
 /* ================= 手动放行（提货明细+金额，补充原因→自动生成放货单DO） ================= */

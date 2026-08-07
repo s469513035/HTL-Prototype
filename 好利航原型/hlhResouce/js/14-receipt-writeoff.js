@@ -147,17 +147,18 @@ function receiptLeftTableHtml(v){
     /* 提现明细：字段参照图示（提现凭证编号/提现金额(原币)/币别/汇率/提现金额(本位币)/交易流水号/提现时间/提现备注/提现人） */
     if(_receiptLeftTab==='withdraw'){
         var wds=(_receiptWithdrawals[code]||[]).filter(function(w){return !wbf||String(w.no).indexOf(wbf)>=0;});
-        var wcols=['提现凭证编号','提现金额(原币)','币别','汇率','提现金额(本位币)','交易流水号','提现时间','提现备注','提现人'];
+        var wcols=['提现凭证编号','提现金额(原币)','币别','汇率','本位币','提现金额(本位币)','交易流水号','提现时间','提现备注','提现人'];
         var wh='<table class="w-full text-sm" style="min-width:980px"><thead><tr class="bg-[#EFF6FF] text-text-secondary"><th class="px-2 py-2 text-left" style="width:32px">#</th><th class="px-2 py-2" style="width:32px"></th>';
         wcols.forEach(function(c){wh+='<th class="px-2 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
         wh+='</tr></thead><tbody>';
-        if(!wds.length){wh+='<tr><td colspan="11" class="py-8 text-center text-text-muted">'+tr('暂无提现明细')+'</td></tr>';}
+        if(!wds.length){wh+='<tr><td colspan="12" class="py-8 text-center text-text-muted">'+tr('暂无提现明细')+'</td></tr>';}
         wds.forEach(function(w,i){
             wh+='<tr class="border-t border-surface-100 hover:bg-primary-50/30"><td class="px-2 py-2 text-text-muted">'+(i+1)+'</td><td class="px-2 py-2"><input type="checkbox" class="receipt-withdraw-check" value="'+esc(w.no)+'"></td>';
             wh+='<td class="px-2 py-2 whitespace-nowrap text-primary-700">'+esc(w.no)+'</td>';
             wh+='<td class="px-2 py-2 whitespace-nowrap text-blue-700">'+receiptFmt(w.amt)+'</td>';
             wh+='<td class="px-2 py-2 whitespace-nowrap text-text-secondary">'+esc(w.cur)+'</td>';
             wh+='<td class="px-2 py-2 whitespace-nowrap text-text-secondary">'+esc(w.rate)+'</td>';
+            wh+='<td class="px-2 py-2 whitespace-nowrap text-text-secondary">'+esc(w.base||'人民币')+'</td>';
             wh+='<td class="px-2 py-2 whitespace-nowrap text-blue-700">'+receiptFmt(w.rmb)+'</td>';
             wh+='<td class="px-2 py-2 whitespace-nowrap text-text-secondary">'+esc(w.serial||'')+'</td>';
             wh+='<td class="px-2 py-2 whitespace-nowrap text-text-secondary">'+esc(w.time)+'</td>';
@@ -221,6 +222,7 @@ function openReceiptWithdrawModal(v){
     var code=voucherVal('fin-ar-receipt',v,'凭证编号');
     var cur=voucherVal('fin-ar-receipt',v,'币别')||'人民币';
     var rate=voucherVal('fin-ar-receipt',v,'汇率')||'1.0000';
+    var baseCur=voucherVal('fin-ar-receipt',v,'本位币')||'人民币';
     var total=parseFloat(voucherVal('fin-ar-receipt',v,'总金额(本位币)'))||0;
     var used=(parseFloat(voucherVal('fin-ar-receipt',v,'已使用金额(本位币)'))||0)+receiptUsedAmount(code);
     var remain=total-used;
@@ -232,11 +234,12 @@ function openReceiptWithdrawModal(v){
     var roCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary';
     function lbl(t,req){return '<label class="text-sm font-medium text-text-secondary mb-1.5 block">'+(req?'<span class="text-red-500">*</span> ':'')+tr(t)+'</label>';}
     var h='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
-    h+='<div>'+lbl('剩余金额',false)+'<input id="rw-remain" type="text" readonly value="'+esc(receiptFmt(remain))+'" class="'+roCls+'"></div>';
+    h+='<div>'+lbl('剩余金额',false)+'<input id="rw-remain" type="text" readonly value="'+esc(receiptFmt(remain)+'　'+baseCur)+'" class="'+roCls+'"></div>';
     h+='<div>'+lbl('凭证金额',true)+'<input id="rw-amt" type="number" step="0.01" min="0" oninput="receiptWithdrawSync()" class="'+inputCls+'" placeholder="'+esc(tr('请输入提现金额'))+'"></div>';
     h+='<div>'+lbl('金额大写',false)+'<input id="rw-upper" type="text" readonly class="'+roCls+'" placeholder="'+esc(tr('自动生成'))+'"></div>';
     h+='<div>'+lbl('币别',true)+'<select id="rw-cur" class="'+inputCls+'">'+['人民币','美元','欧元','港币'].map(function(o){return '<option'+(o===cur?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
     h+='<div>'+lbl('汇率',true)+'<input id="rw-rate" type="text" value="'+esc(rate)+'" oninput="receiptWithdrawSync()" class="'+inputCls+'"></div>';
+    h+='<div>'+lbl('本位币',true)+'<select id="rw-basecur" class="'+inputCls+'">'+['人民币','美元','欧元','港币'].map(function(o){return '<option'+(o===baseCur?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
     h+='<div>'+lbl('交易流水号',false)+'<input id="rw-serial" type="text" class="'+inputCls+'" placeholder="'+esc(tr('请输入交易流水号'))+'"></div>';
     h+='<div>'+lbl('交易时间',true)+'<input id="rw-time" type="datetime-local" value="'+esc(receiptNowStr().replace(' ','T').slice(0,16))+'" class="'+inputCls+'"></div>';
     h+='<div>'+lbl('我方银行账户',true)+'<select id="rw-acct" class="'+inputCls+'"><option value="">'+tr('请选择')+'</option>'+bankAccts.map(function(r){return '<option value="'+esc(r[0])+'">'+esc(r[0]+' '+(r[1]||''))+'</option>';}).join('')+'</select><div id="rw-acct-tip" class="hidden text-xs text-red-500 mt-1">'+tr('必填选项')+'</div></div>';
@@ -278,6 +281,7 @@ function submitReceiptWithdraw(){
         amt:String(amt),
         cur:(document.getElementById('rw-cur')||{}).value||'人民币',
         rate:String(rate),
+        base:(document.getElementById('rw-basecur')||{}).value||'人民币',
         rmb:String(rmb),
         serial:((document.getElementById('rw-serial')||{}).value||'').trim(),
         time:time,

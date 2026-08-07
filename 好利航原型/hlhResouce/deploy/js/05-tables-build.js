@@ -802,6 +802,15 @@ TC['prod-inquiry-quote'].entryFields=[
 ];
 TC['prod-inquiry-quote'].pageMode='inquiryQuoteEntry';
 TC['prod-inquiry-quote'].forceLocalHeader=true;
+/* 银行凭证：在「汇率」后插入「本位币」列（金额列已改本位币口径） */
+(function(){
+    var c=TC['fin-bank-voucher'];
+    if(!c||!c.h)return;
+    var i=c.h.indexOf('汇率');
+    if(i<0||c.h.indexOf('本位币')>=0)return;
+    c.h.splice(i+1,0,'本位币');
+    (c.d||[]).forEach(function(r){r.splice(i+1,0,'人民币');});
+})();
 if(TC['wb-manage']){
     const siteIdx=TC['wb-manage'].h.indexOf('所属网点');
     if(siteIdx<0){

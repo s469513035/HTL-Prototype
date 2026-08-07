@@ -167,8 +167,8 @@ function bankVoucherAction(kind,id){
     const row=(_listData[id]&&_listData[id][idx])?_listData[id][idx]:(TC[id]&&TC[id].d?TC[id].d[idx]:null);
     if(kind==='detail'){ openBankVoucherDetailModal(id,idx,row); return; }
     if(kind==='claim'){ openVoucherClaimModal(row); return; }
-    if(kind==='rate'){ openVoucherRateModal(row); return; }
-    if(kind==='remark'){ openVoucherRemarkModal(row); return; }
+    if(kind==='rate'){ openVoucherRateModal(row,id); return; }
+    if(kind==='remark'){ openVoucherRemarkModal(row,id); return; }
     if(kind==='unclaim'){ openConfirmTip(tr('确定撤销认领吗?'),function(){showToast(tr('已撤销认领'));}); return; }
     if(kind==='void'){ openConfirmTip(tr('确定作废选中凭证吗?'),function(){showToast(tr('凭证已作废'));}); return; }
     showToast(tr('操作成功'));
@@ -207,26 +207,45 @@ function openVoucherClaimModal(row){
     document.getElementById('crud-modal').classList.add('show');
 }
 
-function openVoucherRateModal(row){
+/* 凭证列按表头名取值（银行凭证含「本位币」列，收款管理不含，列序不同） */
+function voucherVal(id,row,name){
+    var h=(TC[id]&&TC[id].h)||[];
+    var i=h.indexOf(name);
+    return (i>=0&&row)?(row[i]==null?'':String(row[i])):'';
+}
+var VOUCHER_BASE_CURRENCIES=['人民币','美元','欧元','港币'];
+function voucherBaseCurSelect(val,cls){
+    return '<select class="'+(cls||'w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50')+'">'+VOUCHER_BASE_CURRENCIES.map(function(o){return '<option'+((val||'人民币')===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';
+}
+function openVoucherRateModal(row,id){
     const titleEl=document.getElementById('crud-modal-title');
     const bodyEl=document.getElementById('crud-modal-body');
     const footerEl=document.getElementById('crud-modal-footer');
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='48%';
-    const rate=(row&&row[8])?row[8]:'1.0000';
+    id=id||'fin-bank-voucher';
+    const rate=voucherVal(id,row,'汇率')||'1.0000';
+    const srcCur=voucherVal(id,row,'币别')||'人民币';
+    const baseCur=voucherVal(id,row,'本位币')||'人民币';
     titleEl.textContent=tr('修改汇率');
-    bodyEl.innerHTML='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('新汇率')+'</label><input type="text" required class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(rate)+'"></div>';
+    const roCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary';
+    let rh='<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+    rh+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('原币别')+'</label><input type="text" readonly value="'+esc(srcCur)+'" class="'+roCls+'"></div>';
+    rh+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('本位币')+'</label><input type="text" readonly value="'+esc(baseCur)+'" class="'+roCls+'"></div>';
+    rh+='<div class="md:col-span-2"><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('新汇率')+'</label><input type="text" required class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(rate)+'"></div>';
+    rh+='</div><div class="mt-2 text-[11px] text-text-muted">'+tr('汇率为「原币别 → 本位币」的折算比率。')+'</div>';
+    bodyEl.innerHTML=rh;
     footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button><button onclick="closeCrudModal();showToast(\''+tr('汇率已修改')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
 }
 
-function openVoucherRemarkModal(row){
+function openVoucherRemarkModal(row,id){
     const titleEl=document.getElementById('crud-modal-title');
     const bodyEl=document.getElementById('crud-modal-body');
     const footerEl=document.getElementById('crud-modal-footer');
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='48%';
-    const remark=(row&&row[23])?row[23]:'';
+    const remark=voucherVal(id||'fin-bank-voucher',row,'财务备注');
     titleEl.textContent=tr('修改财务备注');
     bodyEl.innerHTML='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('财务备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入财务备注'))+'">'+esc(remark)+'</textarea></div>';
     footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button><button onclick="closeCrudModal();showToast(\''+tr('财务备注已修改')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button>';
@@ -241,12 +260,14 @@ function openBankVoucherModal(mode,id,rowIdx,rowData){
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='76%';
     const isEdit=mode==='edit';
-    const g=function(i){return rowData?(rowData[i]||''):'';};
-    const dc=rowData?(rowData[2]||'收入'):'收入';
-    const settle=g(19),claimType=g(3),amount=g(6);
-    const currency=rowData?(rowData[7]||'人民币'):'人民币';
-    const rate=rowData?(rowData[8]||'1.0000'):'1.0000';
-    const serial=g(17),ourAcct=g(12),oppName=g(15),oppBank=g(16),oppAcct=g(14),summary=g(22),remark=g(23);
+    /* 按表头名取值：银行凭证含「本位币」列，列序与收款管理不同 */
+    const g=function(name){return voucherVal(id,rowData,name);};
+    const dc=g('凭证借贷标识')||'收入';
+    const settle=g('交割方式'),claimType=g('认领账户类型'),amount=g('总金额(原币)');
+    const currency=g('币别')||'人民币';
+    const rate=g('汇率')||'1.0000';
+    const baseCur=g('本位币')||'人民币';
+    const serial=g('交易流水号'),ourAcct=g('我方账户'),oppName=g('对方账号名称'),oppBank=g('对方开户行'),oppAcct=g('对方账户'),summary=g('财务摘要'),remark=g('财务备注');
     const bankAccts=(TC['fin-bank-account']&&TC['fin-bank-account'].d?TC['fin-bank-account'].d.map(function(r){return r[0];}):[]);
     const bankAcctLabels={};
     if(TC['fin-bank-account']&&TC['fin-bank-account'].d){TC['fin-bank-account'].d.forEach(function(r){bankAcctLabels[r[0]]=r[0]+' '+r[1];});}
@@ -262,7 +283,7 @@ function openBankVoucherModal(mode,id,rowIdx,rowData){
     html+='<div>'+lbl('交割方式',true)+selHtml(['现金','微信','支付宝','银行'],settle,'请选择')+'</div>';
     if(id==='fin-ar-receipt'){
         var arReceiptCustList=['上海云图供应链管理有限公司','幻想直客客户','深圳市腾讯','蓝色有限','天地直客','咖美智慧公司','星星玩具电商','梦幻直客客户'];
-        html+='<div>'+lbl('客户',true)+selHtml(arReceiptCustList,g(5),'请选择客户')+'</div>';
+        html+='<div>'+lbl('客户',true)+selHtml(arReceiptCustList,g('认领账户名称'),'请选择客户')+'</div>';
     }else{
         html+='<div>'+lbl('认领类型',false)+selHtml(['客户','服务商'],claimType,'请选择')+'</div>';
     }
@@ -270,6 +291,7 @@ function openBankVoucherModal(mode,id,rowIdx,rowData){
     html+='<div>'+lbl('金额大写',false)+'<input type="text" readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" placeholder="'+esc(tr('自动生成'))+'"></div>';
     html+='<div>'+lbl('币别',true)+selHtml(['人民币','美元','欧元'],currency)+'</div>';
     html+='<div>'+lbl('汇率',true)+'<input type="text" required class="'+inputCls+'" value="'+esc(rate)+'"></div>';
+    html+='<div>'+lbl('本位币',true)+voucherBaseCurSelect(baseCur,inputCls)+'</div>';
     html+='<div>'+lbl('交易流水号',false)+'<input type="text" class="'+inputCls+'" value="'+esc(serial)+'" placeholder="'+esc(tr('请输入交易流水号'))+'"></div>';
     html+='<div>'+lbl('交易时间',true)+'<input type="datetime-local" class="'+inputCls+'" value="2026-07-20T14:36"></div>';
     html+='<div>'+lbl('我方银行账户',true)+'<select class="'+inputCls+'"><option value="">'+tr('请选择')+'</option>'+bankAccts.map(function(a){return '<option value="'+esc(a)+'"'+(ourAcct===a?' selected':'')+'>'+esc(bankAcctLabels[a]||a)+'</option>';}).join('')+'</select></div>';
@@ -301,10 +323,12 @@ function openBankVoucherDetailModal(id,idx,rowData){
     const footerEl=document.getElementById('crud-modal-footer');
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='90%';
-    const g=function(i){var v=rowData?(rowData[i]||''):'';return v===''?'—':esc(v);};
+    /* 按表头名取值：银行凭证插入「本位币」列后列序与收款管理不同，避免写死下标 */
+    const gv=function(name){return voucherVal(id,rowData,name);};
+    const g=function(name){var v=gv(name);return v===''?'—':esc(v);};
     titleEl.textContent=tr('凭证详情');
     let ourBank='';
-    if(TC['fin-bank-account']&&TC['fin-bank-account'].d){var m=TC['fin-bank-account'].d.find(function(r){return r[0]===(rowData?rowData[12]:'');});if(m)ourBank=m[3];}
+    if(TC['fin-bank-account']&&TC['fin-bank-account'].d){var m=TC['fin-bank-account'].d.find(function(r){return r[0]===gv('我方账户');});if(m)ourBank=m[3];}
     function card(title,color,rows){
         var cls={green:'bg-green-50 border-green-100',blue:'bg-blue-50 border-blue-100',yellow:'bg-amber-50 border-amber-100',red:'bg-red-50 border-red-100'}[color];
         var tcls={green:'text-green-700',blue:'text-blue-700',yellow:'text-amber-700',red:'text-red-700'}[color];
@@ -315,13 +339,14 @@ function openBankVoucherDetailModal(id,idx,rowData){
     }
     let html='<div class="mb-3 flex items-center gap-2"><span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-sm font-semibold text-text-primary">'+tr('凭证信息')+'</span></div>';
     html+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">';
-    /* 本位币选择框（银行凭证列表已改为“本位币”口径；收款管理仍沿用人民币标签） */
+    /* 银行凭证列表金额已改「本位币」口径；收款管理仍沿用人民币标签 */
     var baseCur=(id==='fin-bank-voucher')?'本位币':'人民币';
-    var baseCurSel='<select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-white">'+['人民币','美元','欧元','港币'].map(function(o){return '<option'+(o==='人民币'?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';
-    html+=card('','green',[['凭证编号',g(0)],['凭证借贷标识',g(2)],['总金额(原币)',g(6)],['币别',g(7)],['汇率',g(8)],['本位币',baseCurSel]]);
-    html+=card('','blue',[['认领账户类型',g(3)],['认领账户名称',g(5)],['总金额('+baseCur+')',g(9)],['已使用金额('+baseCur+')',g(10)],['未使用金额('+baseCur+')',g(11)]]);
-    html+=card('我方账户信息','yellow',[['账户号码',g(12)],['账户名称',g(13)],['账户开户行',ourBank?esc(ourBank):'—'],['费用时间',g(18)]]);
-    html+=card('对方账户信息','red',[['账户号码',g(14)],['账户名称',g(15)],['账号开户行',g(16)],['交易流水号',g(17)]]);
+    var baseCurVal=gv('本位币')||'人民币';
+    html+=card('','green',[['凭证编号',g('凭证编号')],['凭证借贷标识',g('凭证借贷标识')],['总金额(原币)',g('总金额(原币)')],['币别',g('币别')],['汇率',g('汇率')]]);
+    /* 本位币显示在「总金额(本位币)」上方 */
+    html+=card('','blue',[['认领账户类型',g('认领账户类型')],['认领账户名称',g('认领账户名称')],['本位币',esc(baseCurVal)],['总金额('+baseCur+')',g('总金额('+baseCur+')')],['已使用金额('+baseCur+')',g('已使用金额('+baseCur+')')],['未使用金额('+baseCur+')',g('未使用金额('+baseCur+')')]]);
+    html+=card('我方账户信息','yellow',[['账户号码',g('我方账户')],['账户名称',g('我方账户名称')],['账户开户行',ourBank?esc(ourBank):'—'],['费用时间',g('费用时间')]]);
+    html+=card('对方账户信息','red',[['账户号码',g('对方账户')],['账户名称',g('对方账号名称')],['账号开户行',g('对方开户行')],['交易流水号',g('交易流水号')]]);
     html+='</div>';
     html+='<div class="flex items-center gap-4 border-b border-surface-200 mb-3 text-sm">';
     html+='<button type="button" data-vd-tab="writeoff" onclick="switchVoucherDetailTab(this,\'writeoff\')" class="pb-2 -mb-px border-b-2 border-primary-500 text-primary-600 font-medium cursor-pointer">'+tr('核销明细')+'</button>';

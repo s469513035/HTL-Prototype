@@ -77,8 +77,8 @@ function receiptToolbarAction(kind){
     var v=(_receiptSelIdx>=0&&TC['fin-ar-receipt'].d)?TC['fin-ar-receipt'].d[_receiptSelIdx]:null;
     if(!v){ showToast(tr('请先选择凭证')); return; }
     if(kind==='detail'){ openBankVoucherDetailModal('fin-ar-receipt',_receiptSelIdx,v); return; }
-    if(kind==='rate'){ openVoucherRateModal(v); return; }
-    if(kind==='remark'){ openVoucherRemarkModal(v); return; }
+    if(kind==='rate'){ openVoucherRateModal(v,'fin-ar-receipt'); return; }
+    if(kind==='remark'){ openVoucherRemarkModal(v,'fin-ar-receipt'); return; }
     if(kind==='withdraw'){ showToast(tr('凭证提现')); return; }
     if(kind==='offset'){ showToast(tr('凭证对冲')); return; }
 }

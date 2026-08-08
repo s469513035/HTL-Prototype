@@ -287,14 +287,52 @@ function openOverseasInventoryCountRecords(id,rowIdx){
         ['运单号',wb],['客户',owCell(row,headers,'客户')],['货区货位',owCell(row,headers,'货区货位')],['在库件数',owCell(row,headers,'在库件数')]
     ],4)+'</section>';
     h+='<section>'+owSectionTitle('历史盘点记录（'+recs.length+' 条）');
-    h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+['盘点件数','盘点人','盘点时间','盘点说明','盘点附件'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+['盘点件数','盘点人','盘点时间','盘点说明','操作'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
     if(!recs.length){h+='<tr><td colspan="5" class="px-3 py-8 text-center text-text-muted">'+tr('暂无盘点记录')+'</td></tr>';}
-    recs.forEach(function(r){
-        h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-semibold text-primary-700">'+esc(r.qty)+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.by)+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.time)+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r.note)+'</td><td class="px-3 py-2 whitespace-nowrap">'+((r.file&&r.file!=='—')?'<a class="text-primary-600 hover:underline cursor-pointer" onclick="showToast(tr(\'附件预览（原型示意）\'))">'+esc(r.file)+'</a>':'—')+'</td></tr>';
+    recs.forEach(function(r,ri){
+        var hasFile=r.file&&r.file!=='—';
+        h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-semibold text-primary-700">'+esc(r.qty)+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.by)+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.time)+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r.note)+'</td>'+
+            '<td class="px-3 py-2 whitespace-nowrap">'+(hasFile
+                ?'<a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="openOverseasInvCountAttachment(\''+esc(wb)+'\','+ri+',\''+id+'\','+rowIdx+')">'+tr('查看附件')+'</a>'
+                :'<span class="text-text-muted">'+tr('无附件')+'</span>')+'</td></tr>';
     });
     h+='</tbody></table></div></section>';
     h+='</div>';
     owOpenModal(tr('盘点记录')+' - '+wb,'70%',h);
+}
+/* 盘点附件信息弹窗（由盘点记录“查看附件”打开） */
+function openOverseasInvCountAttachment(wb,recIdx,id,rowIdx){
+    var recs=_owInvCountRecords[wb]||[];
+    var r=recs[recIdx];
+    if(!r){showToast(tr('未找到盘点记录'));return;}
+    var fileName=r.file||'—';
+    var isImg=/\.(jpg|jpeg|png|gif|bmp)$/i.test(fileName);
+    var h='<div class="space-y-4">';
+    h+='<section>'+owSectionTitle('盘点信息')+owInfoGrid([
+        ['运单号',wb],['盘点件数',r.qty],['盘点人',r.by],['盘点时间',r.time],['盘点说明',r.note]
+    ],4)+'</section>';
+    h+='<section>'+owSectionTitle('附件信息');
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
+        ['附件名称','类型','大小','上传人','上传时间','操作'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
+    h+='<tr class="border-t border-surface-100">'+
+        '<td class="px-3 py-2 font-medium text-primary-700 break-all">'+esc(fileName)+'</td>'+
+        '<td class="px-3 py-2 text-text-secondary">'+tr(isImg?'盘点照片':'盘点单据')+'</td>'+
+        '<td class="px-3 py-2 text-text-secondary">'+(isImg?'1.2 MB':'386 KB')+'</td>'+
+        '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.by)+'</td>'+
+        '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.time)+'</td>'+
+        '<td class="px-3 py-2 whitespace-nowrap"><a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="showToast(\''+esc(tr('附件预览（原型示意）'))+'\')">'+tr('预览')+'</a><a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="showToast(\''+esc(tr('附件下载中（原型示意）'))+'\')">'+tr('下载')+'</a></td>'+
+    '</tr>';
+    h+='</tbody></table></div>';
+    /* 预览区 */
+    h+='<div class="mt-3 rounded-lg border border-dashed border-surface-300 bg-surface-50 p-6 text-center">';
+    h+='<div class="text-4xl text-text-muted mb-2">'+(isImg?'🖼':'📄')+'</div>';
+    h+='<div class="text-sm font-medium text-text-primary break-all">'+esc(fileName)+'</div>';
+    h+='<div class="text-[11px] text-text-muted mt-1">'+tr('原型示意：实际系统在此展示附件预览')+'</div>';
+    h+='</div>';
+    h+='</section></div>';
+    var footer='<button onclick="openOverseasInventoryCountRecords(\''+id+'\','+rowIdx+')" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer mr-2">'+tr('返回盘点记录')+'</button>'+
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>';
+    owOpenModal(tr('附件信息')+' - '+fileName,'62%',h,footer);
 }
 
 /* ================= 桌面详情弹窗公共小工具 ================= */

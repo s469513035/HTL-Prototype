@@ -293,47 +293,47 @@ function openOverseasInventoryCountRecords(id,rowIdx){
         var hasFile=r.file&&r.file!=='—';
         h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-semibold text-primary-700">'+esc(r.qty)+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.by)+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.time)+'</td><td class="px-3 py-2 text-text-secondary">'+esc(r.note)+'</td>'+
             '<td class="px-3 py-2 whitespace-nowrap">'+(hasFile
-                ?'<a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="openOverseasInvCountAttachment(\''+esc(wb)+'\','+ri+',\''+id+'\','+rowIdx+')">'+tr('查看附件')+'</a>'
+                ?'<a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="openOverseasInvCountAttachment(\''+esc(wb)+'\','+ri+')">'+tr('查看附件')+'</a>'
                 :'<span class="text-text-muted">'+tr('无附件')+'</span>')+'</td></tr>';
     });
     h+='</tbody></table></div></section>';
     h+='</div>';
     owOpenModal(tr('盘点记录')+' - '+wb,'70%',h);
 }
-/* 盘点附件信息弹窗（由盘点记录“查看附件”打开） */
-function openOverseasInvCountAttachment(wb,recIdx,id,rowIdx){
+/* 盘点附件图片查看（由盘点记录“查看附件”打开：独立图片查看框，点遮罩/× 关闭） */
+function openOverseasInvCountAttachment(wb,recIdx){
     var recs=_owInvCountRecords[wb]||[];
     var r=recs[recIdx];
     if(!r){showToast(tr('未找到盘点记录'));return;}
     var fileName=r.file||'—';
-    var isImg=/\.(jpg|jpeg|png|gif|bmp)$/i.test(fileName);
-    var h='<div class="space-y-4">';
-    h+='<section>'+owSectionTitle('盘点信息')+owInfoGrid([
-        ['运单号',wb],['盘点件数',r.qty],['盘点人',r.by],['盘点时间',r.time],['盘点说明',r.note]
-    ],4)+'</section>';
-    h+='<section>'+owSectionTitle('附件信息');
-    h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
-        ['附件名称','类型','大小','上传人','上传时间','操作'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>';
-    h+='<tr class="border-t border-surface-100">'+
-        '<td class="px-3 py-2 font-medium text-primary-700 break-all">'+esc(fileName)+'</td>'+
-        '<td class="px-3 py-2 text-text-secondary">'+tr(isImg?'盘点照片':'盘点单据')+'</td>'+
-        '<td class="px-3 py-2 text-text-secondary">'+(isImg?'1.2 MB':'386 KB')+'</td>'+
-        '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.by)+'</td>'+
-        '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.time)+'</td>'+
-        '<td class="px-3 py-2 whitespace-nowrap"><a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="showToast(\''+esc(tr('附件预览（原型示意）'))+'\')">'+tr('预览')+'</a><a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="showToast(\''+esc(tr('附件下载中（原型示意）'))+'\')">'+tr('下载')+'</a></td>'+
-    '</tr>';
-    h+='</tbody></table></div>';
-    /* 预览区 */
-    h+='<div class="mt-3 rounded-lg border border-dashed border-surface-300 bg-surface-50 p-6 text-center">';
-    h+='<div class="text-4xl text-text-muted mb-2">'+(isImg?'🖼':'📄')+'</div>';
-    h+='<div class="text-sm font-medium text-text-primary break-all">'+esc(fileName)+'</div>';
-    h+='<div class="text-[11px] text-text-muted mt-1">'+tr('原型示意：实际系统在此展示附件预览')+'</div>';
-    h+='</div>';
-    h+='</section></div>';
-    var footer='<button onclick="openOverseasInventoryCountRecords(\''+id+'\','+rowIdx+')" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer mr-2">'+tr('返回盘点记录')+'</button>'+
-        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>';
-    owOpenModal(tr('附件信息')+' - '+fileName,'62%',h,footer);
+    var old=document.getElementById('ow-attach-viewer');if(old)old.remove();
+    var m=document.createElement('div');
+    m.id='ow-attach-viewer';
+    m.className='fixed inset-0 z-[90] flex items-center justify-center bg-black/70 p-4';
+    m.setAttribute('onclick','if(event.target===this)closeOwAttachmentViewer()');
+    /* 盘点照片占位图（SVG 内联，示意上传的现场照片） */
+    var svg='<svg viewBox="0 0 480 320" class="w-full h-auto block" xmlns="http://www.w3.org/2000/svg">'+
+        '<rect width="480" height="320" fill="#E2E8F0"/>'+
+        '<rect x="0" y="230" width="480" height="90" fill="#CBD5E1"/>'+
+        '<rect x="60" y="120" width="120" height="110" rx="4" fill="#94A3B8"/>'+
+        '<rect x="70" y="132" width="100" height="16" rx="2" fill="#E2E8F0"/>'+
+        '<rect x="190" y="150" width="100" height="80" rx="4" fill="#A8B4C4"/>'+
+        '<rect x="300" y="100" width="120" height="130" rx="4" fill="#8FA0B4"/>'+
+        '<rect x="310" y="112" width="100" height="14" rx="2" fill="#E2E8F0"/>'+
+        '<circle cx="410" cy="55" r="26" fill="#F1F5F9"/>'+
+        '<text x="240" y="300" font-size="18" fill="#475569" text-anchor="middle" font-family="sans-serif">'+esc(tr('盘点现场照片'))+'</text>'+
+        '</svg>';
+    var html='<div class="relative max-w-3xl w-full">';
+    html+='<button type="button" onclick="closeOwAttachmentViewer()" class="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-text-secondary shadow-lg text-lg leading-none">×</button>';
+    html+='<div class="rounded-xl bg-white overflow-hidden shadow-2xl">';
+    html+='<div class="px-4 py-2.5 border-b border-surface-200 text-sm font-semibold text-text-primary break-all">'+esc(fileName)+'</div>';
+    html+='<div class="bg-surface-100">'+svg+'</div>';
+    html+='<div class="px-4 py-2 text-[11px] text-text-muted flex flex-wrap gap-4"><span>'+tr('上传人')+'：'+esc(r.by)+'</span><span>'+tr('上传时间')+'：'+esc(r.time)+'</span></div>';
+    html+='</div></div>';
+    m.innerHTML=html;
+    document.body.appendChild(m);
 }
+function closeOwAttachmentViewer(){var m=document.getElementById('ow-attach-viewer');if(m)m.remove();}
 
 /* ================= 桌面详情弹窗公共小工具 ================= */
 function owCell(rowData,headers,name){

@@ -409,7 +409,7 @@ function formulaButtonGroup(targetId,fields){
 var SC_EXPR_FIELDS=[
     {cn:'总件数',code:'totalPiece'},{cn:'收货实际重',code:'receiveActualWeight'},{cn:'收货实际体积',code:'receiveActualVolume'},
     {cn:'收货体积重',code:'receiveVolumeWeight'},{cn:'计费重',code:'chargeWeight'},{cn:'计费体积',code:'chargeVolume'},
-    {cn:'报关',code:'customsFlag'},{cn:'商检',code:'inspectionFlag'},{cn:'货物类型',code:'cargoType'}
+    {cn:'报关',code:'customsFlag'},{cn:'仿牌',code:'fakeBrandFlag'},{cn:'货物类型',code:'cargoType'}
 ];
 /* 计算公式条件字段 */
 var SC_FORMULA_FIELDS=[

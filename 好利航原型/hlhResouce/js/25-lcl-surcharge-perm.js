@@ -404,95 +404,144 @@ function formulaButtonGroup(targetId,fields){
     return html;
 }
 
+/* ================= 附加杂费配置 · 新增/编辑（左侧表单 + 右侧表达式构建器 + 明细表） ================= */
+/* 表达式条件字段（中文 -> 表达式变量） */
+var SC_EXPR_FIELDS=[
+    {cn:'总件数',code:'totalPiece'},{cn:'收货实际重',code:'receiveActualWeight'},{cn:'收货实际体积',code:'receiveActualVolume'},
+    {cn:'收货体积重',code:'receiveVolumeWeight'},{cn:'计费重',code:'chargeWeight'},{cn:'计费方',code:'chargeVolume'},
+    {cn:'报关',code:'customsFlag'},{cn:'商检',code:'inspectionFlag'}
+];
+/* 计算公式条件字段 */
+var SC_FORMULA_FIELDS=[
+    {cn:'收货体积重',code:'receiveVolumeWeight'},{cn:'收货实际重',code:'receiveActualWeight'},{cn:'计费重',code:'chargeWeight'},
+    {cn:'收货实际体积',code:'receiveActualVolume'},{cn:'计费方',code:'chargeVolume'},{cn:'总件数',code:'totalPiece'},
+    {cn:'报关资料份数',code:'customsDocCount'}
+];
+var SC_OPS=['1','2','3','4','5','6','7','8','9','0','.','&&','||','?','+','-','*','/','(',')','==','!=','>','<','>=','<=','max','min',','];
+var _scRows=[];      /* [{expr:[token],formula:[token]}]  token={k:'f',cn,code} | {k:'o',v} */
+var _scActive=0;     /* 当前作用行（# 列勾选） */
+var _scView=false;
+
+function scNewRow(){return {expr:[],formula:[]};}
+function scTokenCode(t){return t.k==='f'?('#{'+t.code+'}'):t.v;}
+function scCode(list){return (list||[]).map(scTokenCode).join('');}
+function scChips(list){
+    var h='';
+    (list||[]).forEach(function(t){
+        h+=t.k==='f'
+            ?'<span class="inline-block px-1.5 py-0.5 mr-1 rounded bg-orange-50 border border-orange-200 text-orange-700">'+esc(t.cn)+'</span>'
+            :'<span class="inline-block px-1.5 py-0.5 mr-1 rounded bg-surface-100 border border-surface-200 text-text-secondary">'+esc(t.v)+'</span>';
+    });
+    return h;
+}
+function scSetActive(i){_scActive=i;scRenderTable();}
+function scAddRow(){_scRows.push(scNewRow());_scActive=_scRows.length-1;scRenderTable();}
+function scDelRow(i){
+    if(_scRows.length<=1){showToast(tr('至少保留一行'));return;}
+    _scRows.splice(i,1);
+    if(_scActive>=_scRows.length)_scActive=_scRows.length-1;
+    scRenderTable();
+}
+function scAddField(target,idx){
+    var f=(target==='expr'?SC_EXPR_FIELDS:SC_FORMULA_FIELDS)[idx];
+    var row=_scRows[_scActive];
+    if(!f||!row)return;
+    row[target].push({k:'f',cn:f.cn,code:f.code});
+    scRenderTable();
+}
+function scAddOp(target,op){
+    var row=_scRows[_scActive];
+    if(!row)return;
+    row[target].push({k:'o',v:op});
+    scRenderTable();
+}
+function scBack(i,target){
+    var row=_scRows[i];
+    if(!row||!row[target].length)return;
+    row[target].pop();
+    scRenderTable();
+}
+function scBtnGrid(items,onclick){
+    var h='<div class="grid grid-cols-3 gap-1.5">';
+    items.forEach(function(it,i){
+        h+='<button type="button" onclick="'+onclick(i,it)+'" class="h-7 px-1 rounded text-xs font-medium text-white bg-orange-400 hover:bg-orange-500 cursor-pointer truncate">'+esc(it)+'</button>';
+    });
+    return h+'</div>';
+}
+function scRenderTable(){
+    var tb=document.getElementById('sc-expr-tbody');
+    if(!tb)return;
+    var h='';
+    _scRows.forEach(function(r,i){
+        var on=_scActive===i;
+        h+='<tr class="border-t border-surface-100 '+(on?'bg-orange-50/40':'hover:bg-surface-50')+'">';
+        h+='<td class="px-3 py-2 text-text-muted">'+(i+1)+'</td>';
+        h+='<td class="px-3 py-2"><input type="checkbox" '+(on?'checked':'')+' onclick="scSetActive('+i+')" class="accent-orange-500" title="'+esc(tr('勾选后按钮作用于本行'))+'"></td>';
+        h+='<td class="px-3 py-2"><button type="button" onclick="scBack('+i+',\'expr\')" class="mr-1 w-5 h-5 rounded-full bg-surface-100 border border-surface-200 text-text-muted hover:bg-surface-200 cursor-pointer" title="'+esc(tr('回退一个'))+'">?</button>'+scChips(r.expr)+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary break-all">'+esc(scCode(r.expr))+'</td>';
+        h+='<td class="px-3 py-2"><button type="button" onclick="scBack('+i+',\'formula\')" class="mr-1 w-5 h-5 rounded-full bg-surface-100 border border-surface-200 text-text-muted hover:bg-surface-200 cursor-pointer" title="'+esc(tr('回退一个'))+'">?</button>'+scChips(r.formula)+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary break-all">'+esc(scCode(r.formula))+'</td>';
+        h+='<td class="px-3 py-2 whitespace-nowrap"><a onclick="scAddRow()" class="text-orange-500 hover:text-orange-600 cursor-pointer mr-3">'+tr('新增')+'</a><a onclick="scDelRow('+i+')" class="text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</a></td>';
+        h+='</tr>';
+    });
+    tb.innerHTML=h;
+}
+function scField(label,inner,required){
+    return '<div class="mb-4"><label class="block text-sm text-text-secondary mb-1.5">'+(required?'<span class="text-red-500 mr-0.5">*</span>':'')+tr(label)+'</label>'+inner+'</div>';
+}
 function openSurchargeModal(mode,id,rowIdx,rowData){
     const c=TC[id];
     const L=_lang[_currentLang];
-    const titleEl=document.getElementById('crud-modal-title');
-    const bodyEl=document.getElementById('crud-modal-body');
-    const footerEl=document.getElementById('crud-modal-footer');
-    const modeLabel=mode==='view'?L.view:mode==='add'?L.add:mode==='copy'?tr('复制新增'):L.edit;
-    titleEl.textContent=modeLabel+tr(c.t);
     const isView=mode==='view';
-    const data=_listData[id]||expandData(id);
-    const lastCode=data.length&&data[data.length-1][0]?data[data.length-1][0]:'SC000';
-    const lm=lastCode.match(/^(.*?)(\d+)$/);
-    const autoCode=lm?lm[1]+String(parseInt(lm[2])+1).padStart(lm[2].length,'0'):'SC001';
-    const basic=[
-        {label:'附加费代码',value:mode==='add'?autoCode:mode==='copy'?'':(rowData?rowData[0]:''),readonly:mode==='edit'||isView},
-        {label:'附加费名称',value:rowData?rowData[1]:'报关费',required:true,readonly:isView},
-        {label:'品名大类',type:'select',options:['电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他'],value:rowData?rowData[2]:'电子产品',readonly:isView},
-        {label:'状态',type:'select',options:['启用','停用'],value:rowData?rowData[3]:'启用',readonly:isView},
-        {label:'开始时间',type:'date',value:rowData?rowData[4]:'2025-01-01',readonly:isView},
-        {label:'结束时间',type:'date',value:rowData?rowData[5]:'2025-12-31',readonly:isView},
-        {label:'备注',type:'textarea',rows:2,span:'md:col-span-2',value:rowData?rowData[6]:'',readonly:isView}
-    ];
-    let html='<div class="space-y-5">';
-    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基本信息')+'</div>'+renderFields(basic,'modal')+'</div>';
-    html+='<div class="border border-surface-200 rounded-xl overflow-hidden">';
-    html+='<div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between"><div class="text-sm font-semibold text-text-primary">'+tr('费用明细')+'</div>'+(isView?'':'<button type="button" onclick="addSurchargeDetailRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button>')+'</div>';
-    html+='<div class="overflow-x-auto"><table class="w-full text-xs min-w-[1260px]"><thead><tr class="bg-[#EFF6FF] text-text-secondary">'+
-        '<th class="text-left px-3 py-2">'+tr('附加费名称')+'</th><th class="text-left px-3 py-2">'+tr('费用类型')+'</th><th class="text-left px-3 py-2">'+tr('品名大类')+'</th><th class="text-left px-3 py-2">'+tr('币别')+'</th><th class="text-left px-3 py-2">'+tr('是否扣件')+'</th><th class="text-left px-3 py-2">'+tr('国家')+'</th><th class="text-left px-3 py-2">'+tr('条件表达式')+'</th><th class="text-left px-3 py-2">'+tr('计算公式')+'</th>'+(isView?'':'<th class="text-left px-3 py-2">'+tr('操作')+'</th>')+'</tr></thead><tbody id="surcharge-detail-tbody">'+surchargeDetailRowHtml(isView)+'</tbody></table></div></div>';
+    _scView=isView;
+    _scRows=[scNewRow()];_scActive=0;
+    /* 预置示例：总件数 * 1 */
+    _scRows[0].expr=[{k:'f',cn:'总件数',code:'totalPiece'},{k:'o',v:'*'},{k:'o',v:'1'}];
+    const modeLabel=mode==='view'?L.view:mode==='add'?L.add:mode==='copy'?tr('复制新增'):L.edit;
+    document.getElementById('crud-modal-title').textContent=modeLabel;
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='92%';
+    const inCls='w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white';
+    const dis=isView?' disabled':'';
+    const ro=isView?' readonly':'';
+    const sel=function(opts,val){return '<select class="'+inCls+'"'+dis+'>'+(val?'':'<option value="">'+tr('请选择')+'</option>')+opts.map(function(o){return '<option'+(val===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';};
+    let html='<div class="flex gap-6 items-start">';
+    /* 左侧表单 */
+    html+='<div class="w-[300px] flex-shrink-0 border-r border-surface-200 pr-6">';
+    html+=scField('附加费名称','<input type="text" class="'+inCls+'" placeholder="'+esc(tr('请输入附加费名称'))+'" value="'+esc(rowData?(rowData[1]||''):'')+'"'+ro+'>',true);
+    html+=scField('费用类型',sel(['报关','仓储','文件','商检','派送','其他'],''),true);
+    html+=scField('币别',sel(['人民币','美元','欧元','港币'],''),true);
+    html+=scField('附加费开始时间','<input type="date" class="'+inCls+'" placeholder="'+esc(tr('请选择附加费开始时间'))+'"'+ro+'>',true);
+    html+=scField('附加费结束时间','<input type="date" class="'+inCls+'" placeholder="'+esc(tr('请选择附加费结束时间'))+'"'+ro+'>',true);
+    html+=scField('是否扣件',sel(['是','否'],'是'),true);
+    html+=scField('问题件类型',sel(['运单拦截','问题件-超大','问题件-超长','问题件-超围长','问题件-超重','退件/少件扣件','查验扣件','签收地址错','未提取','客户要求暂扣'],''),true);
+    html+=scField('备注','<input type="text" class="'+inCls+'" placeholder="'+esc(tr('请输入备注'))+'"'+ro+'>',false);
     html+='</div>';
-    bodyEl.innerHTML=html;
+    /* 右侧表达式构建区 */
+    html+='<div class="flex-1 min-w-0 space-y-4">';
+    html+='<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">';
+    html+='<div><div class="text-sm text-text-secondary mb-2">'+tr('表达式条件')+'</div>'+scBtnGrid(SC_EXPR_FIELDS.map(function(f){return f.cn;}),function(i){return 'scAddField(\'expr\','+i+')';})+'</div>';
+    html+='<div><div class="text-sm text-text-secondary mb-2">'+tr('计算公式条件')+'</div>'+scBtnGrid(SC_FORMULA_FIELDS.map(function(f){return f.cn;}),function(i){return 'scAddField(\'formula\','+i+')';})+'</div>';
+    html+='</div>';
+    html+='<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">';
+    html+='<div><div class="text-sm text-text-secondary mb-2">'+tr('表达式条件运算符')+'</div>'+scBtnGrid(SC_OPS,function(i,op){return 'scAddOp(\'expr\',\''+(op==="'"?"\\'":op)+'\')';})+'</div>';
+    html+='<div><div class="text-sm text-text-secondary mb-2">'+tr('计算公式条件运算符')+'</div>'+scBtnGrid(SC_OPS,function(i,op){return 'scAddOp(\'formula\',\''+(op==="'"?"\\'":op)+'\')';})+'</div>';
+    html+='</div>';
+    /* 明细表 */
+    html+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-xs" style="min-width:900px"><thead><tr class="bg-surface-50 text-text-secondary">';
+    ['序号','#','表达式中文','表达式','计算公式中文','计算公式','操作'].forEach(function(x){html+='<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';});
+    html+='</tr></thead><tbody id="sc-expr-tbody"></tbody></table></div>';
+    html+='<div class="text-[11px] text-text-muted">'+tr('说明：勾选「#」选中作用行，再点上方按钮即可拼接表达式/计算公式；「?」按钮可回退一个。')+'</div>';
+    html+='</div></div>';
+    document.getElementById('crud-modal-body').innerHTML=html;
+    scRenderTable();
+    const footerEl=document.getElementById('crud-modal-footer');
     if(isView){
         footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
     }else{
-        footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr('保存成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存配置')+'</button>';
+        footerEl.innerHTML='<button onclick="closeCrudModal();showToast(\''+tr('保存成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 cursor-pointer">'+tr('确认')+'</button><button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('关闭')+'</button>';
     }
     document.getElementById('crud-modal').classList.add('show');
-}
-
-function surchargeDetailRowHtml(isView){
-    var roInput=isView?' readonly':'';
-    var roSelect=isView?' disabled':'';
-    return '<tr class="border-b border-surface-100 hover:bg-surface-50">'+
-        '<td class="px-3 py-2"><input class="w-full h-8 px-2 border border-surface-200 rounded bg-white" value="报关费"'+roInput+'></td>'+
-        '<td class="px-3 py-2"><select class="w-full h-8 px-2 border border-surface-200 rounded bg-white"'+roSelect+'>'+selectOptionsHtml(['报关','仓储','文件','其他'],'报关')+'</select></td>'+
-        '<td class="px-3 py-2"><select class="w-full h-8 px-2 border border-surface-200 rounded bg-white"'+roSelect+'>'+selectOptionsHtml(['电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他'],'电子产品')+'</select></td>'+
-        '<td class="px-3 py-2"><select class="w-full h-8 px-2 border border-surface-200 rounded bg-white"'+roSelect+'><option>USD</option><option>CNY</option><option>EUR</option></select></td>'+
-        '<td class="px-3 py-2"><select class="w-full h-8 px-2 border border-surface-200 rounded bg-white"'+roSelect+'>'+selectOptionsHtml(['否','是'],'否')+'</select></td>'+
-        '<td class="px-3 py-2"><select class="w-full h-8 px-2 border border-surface-200 rounded bg-white"'+roSelect+'>'+selectOptionsHtml(['全部','中国','尼日利亚','塞内加尔','加纳'],'全部')+'</select></td>'+
-        '<td class="px-3 py-2"><input data-surcharge-condition class="w-full h-8 px-2 border border-surface-200 rounded bg-white" value="总件数>0"'+roInput+'></td>'+
-        '<td class="px-3 py-2"><input data-surcharge-formula class="w-full h-8 px-2 border border-surface-200 rounded bg-white" value="总件数*5"'+roInput+'></td>'+
-        (isView?'':'<td class="px-3 py-2"><div class="flex items-center gap-2"><button type="button" onclick="openSurchargeExpressionModal(this)" class="text-primary-600 hover:text-primary-700 cursor-pointer">'+tr('编辑')+'</button><button type="button" onclick="this.closest(\'tr\').remove()" class="text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></div></td>')+
-        '</tr>';
-}
-
-function addSurchargeDetailRow(){
-    const tbody=document.getElementById('surcharge-detail-tbody');
-    if(!tbody)return;
-    tbody.insertAdjacentHTML('beforeend',surchargeDetailRowHtml());
-    applyRuntimeEnhancements(tbody.lastElementChild);
-}
-
-function openSurchargeExpressionModal(btn){
-    _activeSurchargeDetailRow=btn?btn.closest('tr'):null;
-    const conditionInput=_activeSurchargeDetailRow?_activeSurchargeDetailRow.querySelector('[data-surcharge-condition]'):null;
-    const formulaInput=_activeSurchargeDetailRow?_activeSurchargeDetailRow.querySelector('[data-surcharge-formula]'):null;
-    const conditionFields=['总件数','运单实际体积','运单计费重','品名个数','品名大类','到货围长','品名附加','国家','报关','合并报关','拆分报关','单件实际重','单件长'];
-    const formulaFields=['总件数','收货计费重','实际重量','实际体积','子单匹配件数'];
-    document.getElementById('expression-modal-title').textContent=tr('条件表达式信息');
-    let html='<div class="space-y-4">';
-    html+='<div class="rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-2">'+tr('条件表达式')+'</div><input id="surcharge-condition-builder" type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 mb-3" value="'+esc(conditionInput?conditionInput.value:'总件数>0')+'">'+formulaButtonGroup('surcharge-condition-builder',conditionFields)+'</div>';
-    html+='<div class="rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-2">'+tr('计算公式')+'</div><input id="surcharge-formula-builder" type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 mb-3" value="'+esc(formulaInput?formulaInput.value:'总件数*5')+'">'+formulaButtonGroup('surcharge-formula-builder',formulaFields)+'</div>';
-    html+='</div>';
-    document.getElementById('expression-modal-body').innerHTML=html;
-    document.getElementById('expression-modal-footer').innerHTML='<button onclick="closeExpressionModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="saveSurchargeExpression()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存')+'</button>';
-    document.getElementById('expression-modal').classList.add('show');
-    applyRuntimeEnhancements(document.getElementById('expression-modal-body'));
-}
-
-function saveSurchargeExpression(){
-    if(_activeSurchargeDetailRow){
-        const condition=_activeSurchargeDetailRow.querySelector('[data-surcharge-condition]');
-        const formula=_activeSurchargeDetailRow.querySelector('[data-surcharge-formula]');
-        const conditionBuilder=document.getElementById('surcharge-condition-builder');
-        const formulaBuilder=document.getElementById('surcharge-formula-builder');
-        if(condition&&conditionBuilder)condition.value=conditionBuilder.value;
-        if(formula&&formulaBuilder)formula.value=formulaBuilder.value;
-    }
-    closeExpressionModal();
-    showToast(tr('保存成功'));
 }
 
 function closeExpressionModal(){

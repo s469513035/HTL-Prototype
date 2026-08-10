@@ -408,14 +408,13 @@ function formulaButtonGroup(targetId,fields){
 /* 表达式条件字段（中文 -> 表达式变量） */
 var SC_EXPR_FIELDS=[
     {cn:'总件数',code:'totalPiece'},{cn:'收货实际重',code:'receiveActualWeight'},{cn:'收货实际体积',code:'receiveActualVolume'},
-    {cn:'收货体积重',code:'receiveVolumeWeight'},{cn:'计费重',code:'chargeWeight'},{cn:'计费方',code:'chargeVolume'},
-    {cn:'报关',code:'customsFlag'},{cn:'商检',code:'inspectionFlag'}
+    {cn:'收货体积重',code:'receiveVolumeWeight'},{cn:'计费重',code:'chargeWeight'},{cn:'计费体积',code:'chargeVolume'},
+    {cn:'报关',code:'customsFlag'},{cn:'商检',code:'inspectionFlag'},{cn:'货物类型',code:'cargoType'}
 ];
 /* 计算公式条件字段 */
 var SC_FORMULA_FIELDS=[
     {cn:'收货体积重',code:'receiveVolumeWeight'},{cn:'收货实际重',code:'receiveActualWeight'},{cn:'计费重',code:'chargeWeight'},
-    {cn:'收货实际体积',code:'receiveActualVolume'},{cn:'计费方',code:'chargeVolume'},{cn:'总件数',code:'totalPiece'},
-    {cn:'报关资料份数',code:'customsDocCount'}
+    {cn:'收货实际体积',code:'receiveActualVolume'},{cn:'计费体积',code:'chargeVolume'},{cn:'总件数',code:'totalPiece'}
 ];
 var SC_OPS=['1','2','3','4','5','6','7','8','9','0','.','&&','||','?','+','-','*','/','(',')','==','!=','>','<','>=','<=','max','min',','];
 var _scRows=[];      /* [{expr:[token],formula:[token]}]  token={k:'f',cn,code} | {k:'o',v} */

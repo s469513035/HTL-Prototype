@@ -948,6 +948,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='setDisable')click='setRowsStatus(\''+id+'\',\'禁用\')';
     else if(action.key==='batchDelete')click='deleteSelectedRows(\''+id+'\')';
     else if(action.key==='voidRows')click='voidSelectedRows(\''+id+'\')';
+    else if(action.key==='lclBatchPublish')click='openLclQuoteBatchPublish(\''+id+'\')';
     else if(action.key==='labelFieldDoc')click='openLabelFieldDocModal()';
     else if(action.key==='newSortScan')click='openSortBagRuleModal(\''+id+'\')';
     else if(action.key==='editCodingRule')click='openCodingRuleEditModal(\''+id+'\')';
@@ -1523,6 +1524,7 @@ function getToolbarActions(id){
             {key:'search',label:'查询数据',variant:'primary'},
             {type:'add',label:'新增数据',variant:'primary'},
             {type:'edit',label:'编辑数据'},
+            {key:'lclBatchPublish',label:'批量发布报价',variant:'primary'},
             {key:'copy',label:'复制新增'},
             {key:'export',label:'导出数据'},
             {key:'voidRows',label:'作废',variant:'danger'}

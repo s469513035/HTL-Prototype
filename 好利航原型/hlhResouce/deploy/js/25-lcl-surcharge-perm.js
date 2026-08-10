@@ -130,7 +130,7 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('报价基本信息')+'</div>';
     html+='<div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('报价编号')+'</label>'+(mode==='copy'?'<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(quoteCode)+'" placeholder="'+tr('自动生成')+'">':'<input type="text" readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+esc(quoteCode)+'">')+'</div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('报价名称')+'</label><input type="text" '+(isView?roCls:'class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"')+' value="'+esc(quoteName)+'"></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('报价名称')+'</label><input id="lq-name" type="text" '+(isView?roCls:'class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"')+' value="'+esc(quoteName)+'"></div>';
     if(isView){
         html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('销售产品')+'</label><input type="text"'+roCls+' value="'+esc(products)+'"></div>';
         html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发货仓库')+'</label><input type="text"'+roCls+' value="'+esc(branches)+'"></div>';
@@ -140,10 +140,13 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
         html+=checkedDropdownFieldHtml('发货仓库',warehouseOptions,branches);
         html+=checkedDropdownFieldHtml('目的仓库',destWarehouseOptions,ports);
     }
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('报价开始时间')+'</label><input type="date" '+(isView?roCls:'class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"')+' value="'+esc(startDate)+'"></div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('报价结束时间')+'</label><input type="date" '+(isView?roCls:'class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"')+' value="'+esc(endDate)+'"></div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('使用客户')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['全部客户','指定客户','鑫达贸易','远洋物流','速达货运'],customer)+'</select></div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('状态')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['已生效','待生效','已失效'],status)+'</select></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('报价开始时间')+'</label><input id="lq-start" type="date" '+(isView?roCls:'class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"')+' value="'+esc(startDate)+'"></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('报价结束时间')+'</label><input id="lq-end" type="date" '+(isView?roCls:'class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"')+' value="'+esc(endDate)+'"></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('使用客户')+'</label><select id="lq-customer" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['全部客户','指定客户','鑫达贸易','远洋物流','速达货运'],customer)+'</select></div>';
+    /* 状态由系统控制：新增默认「草稿」，经「批量发布报价」转为「正式」；仅查看态只读展示 */
+    if(isView){
+        html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('状态')+'</label><input type="text" readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+esc(status)+'"></div>';
+    }
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('所属币别')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['CNY','USD','EUR','GBP'],'USD')+'</select></div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('计重类型')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['重量','体积'],'重量')+'</select></div>';
     html+='<div class="md:col-span-4 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y"'+(isView?' readonly':'')+'>'+tr('按客户、产品、发货仓库和目的仓库维护散货报价。')+'</textarea></div>';
@@ -155,9 +158,96 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
     if(isView){
         footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
     }else{
-        footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr('保存成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存报价')+'</button>';
+        footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="submitLclQuote(\''+mode+'\',\''+id+'\',\''+esc(quoteCode)+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存报价')+'</button>';
     }
     document.getElementById('crud-modal').classList.add('show');
+}
+
+/* 保存报价：新增（含复制新增）默认写入「草稿」状态 */
+function submitLclQuote(mode,id,quoteCode){
+    var c=TC[id];if(!c){closeCrudModal();return;}
+    var v=function(elId,dft){var el=document.getElementById(elId);return el&&el.value?el.value:(dft||'');};
+    if(mode==='add'||mode==='copy'){
+        var code=quoteCode||('QP'+String(((_listData[id]||c.d||[]).length+1)).padStart(3,'0'));
+        var name=v('lq-name','散货报价');
+        if(!name){showToast(tr('请填写报价名称'));return;}
+        var row=[];
+        c.h.slice(0,-1).forEach(function(hd){
+            if(hd==='报价编号')row.push(code);
+            else if(hd==='报价名称')row.push(name);
+            else if(hd==='销售产品')row.push('西非海运专线');
+            else if(hd==='报价开始时间')row.push(v('lq-start','2026-01-01'));
+            else if(hd==='报价结束时间')row.push(v('lq-end','2026-12-31'));
+            else if(hd==='发货仓库')row.push('深圳盐田仓');
+            else if(hd==='使用客户')row.push(v('lq-customer','全部客户'));
+            else if(hd==='目的仓库')row.push('达喀尔海外仓');
+            else if(hd==='状态')row.push('草稿');
+            else row.push('');
+        });
+        if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
+        _listData[id].unshift(row);
+        closeCrudModal();
+        var mc=document.getElementById('main-content');
+        if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,1,(typeof _statusFilterVal!=='undefined'?_statusFilterVal:'')||'');
+        showToast(tr('已保存为草稿')+'：'+code);
+        return;
+    }
+    closeCrudModal();
+    showToast(tr('保存成功'));
+}
+
+/* ===== 批量发布报价（草稿 → 正式） ===== */
+function openLclQuoteBatchPublish(id){
+    var indices=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!indices.length){showToast(tr('请先勾选要发布的报价'));return;}
+    var c=TC[id];if(!c)return;
+    if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
+    var data=_listData[id];
+    var iCode=c.h.indexOf('报价编号'),iStart=c.h.indexOf('报价开始时间'),iEnd=c.h.indexOf('报价结束时间'),iSt=c.h.indexOf('状态');
+    var picked=indices.map(function(i){return {i:i,r:data[i]};}).filter(function(x){return x.r;});
+    var eligible=picked.filter(function(x){return x.r[iSt]!=='作废'&&x.r[iSt]!=='正式';});
+    var blocked=picked.length-eligible.length;
+    if(!eligible.length){showToast(tr('所选报价均已发布或已作废，无需发布'));return;}
+    var fmt=function(d){var s=String(d||'');return s?(s.length<=10?s+' 00:00:00':s):'—';};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='72%';
+    document.getElementById('crud-modal-title').textContent=tr('批量发布报价');
+    var h='<div class="space-y-4">';
+    h+='<div class="text-sm font-semibold text-text-primary">'+tr('批量发布报价个数')+'：<span class="text-orange-500">'+eligible.length+'</span></div>';
+    if(blocked>0)h+='<div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">'+tr('另有 ')+blocked+tr(' 条已发布或已作废，将不做处理。')+'</div>';
+    eligible.forEach(function(x,n){
+        var r=x.r;
+        h+='<div class="space-y-2">';
+        h+='<div class="text-sm text-text-primary">'+(n+1)+'、'+tr('操作报价编号')+'：<span class="font-semibold text-orange-500">'+esc(r[iCode])+'</span></div>';
+        h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-surface-50 text-text-secondary">';
+        ['报价编号','旧生效时间','旧失效时间','新生效时间','新失效时间','修改方式'].forEach(function(t){h+='<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(t)+'</th>';});
+        h+='</tr></thead><tbody><tr class="border-t border-surface-100">';
+        h+='<td class="px-3 py-2 whitespace-nowrap text-text-primary">'+esc(r[iCode])+'</td>';
+        h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+esc(fmt(r[iStart]))+'</td>';
+        h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+esc(fmt(r[iEnd]))+'</td>';
+        h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+esc(fmt(r[iStart]))+'</td>';
+        h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+esc(fmt(r[iEnd]))+'</td>';
+        h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+tr('发布')+'</td>';
+        h+='</tr></tbody></table></div></div>';
+    });
+    h+='</div>';
+    document.getElementById('crud-modal-body').innerHTML=h;
+    var codes=eligible.map(function(x){return x.i;}).join(',');
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="confirmLclQuoteBatchPublish(\''+id+'\',\''+codes+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认')+'</button>'+
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function confirmLclQuoteBatchPublish(id,idxCsv){
+    var c=TC[id];if(!c)return;
+    var iSt=c.h.indexOf('状态');
+    var data=_listData[id]||[];
+    var list=String(idxCsv||'').split(',').filter(function(s){return s!=='';}).map(function(s){return parseInt(s,10);});
+    list.forEach(function(i){if(data[i])data[i][iSt]='正式';});
+    closeCrudModal();
+    var mc=document.getElementById('main-content');
+    if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,_listPage[id]||1,(typeof _statusFilterVal!=='undefined'?_statusFilterVal:'')||'');
+    showToast(tr('批量发布成功')+'，'+list.length+' '+tr('条报价已转为正式'));
 }
 
 function lclExcelInput(value,extraClass){

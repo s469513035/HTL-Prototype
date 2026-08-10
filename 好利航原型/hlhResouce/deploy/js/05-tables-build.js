@@ -779,6 +779,7 @@ TC['wb-manage'].forceLocalHeader=true;
 TC['wb-manage'].readonlyList=true;
 TC['prod-manage'].forceLocalHeader=true;
 TC['prod-surcharge'].forceLocalHeader=true;
+TC['prod-surcharge'].noExpand=true;   /* 首列已改为附加费名称，不再按编码自动扩充演示行 */
 TC['prod-price-lcl'].forceLocalHeader=true;
 TC['prod-inquiry-quote']={
     t:'询价报价',

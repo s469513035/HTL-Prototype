@@ -429,7 +429,7 @@ function scChips(list){
     var h='';
     (list||[]).forEach(function(t){
         h+=t.k==='f'
-            ?'<span class="inline-block px-1.5 py-0.5 mr-1 rounded bg-orange-50 border border-orange-200 text-orange-700">'+esc(t.cn)+'</span>'
+            ?'<span class="inline-block px-1.5 py-0.5 mr-1 rounded bg-primary-50 border border-primary-200 text-primary-700">'+esc(t.cn)+'</span>'
             :'<span class="inline-block px-1.5 py-0.5 mr-1 rounded bg-surface-100 border border-surface-200 text-text-secondary">'+esc(t.v)+'</span>';
     });
     return h;
@@ -464,7 +464,7 @@ function scBack(i,target){
 function scBtnGrid(items,onclick){
     var h='<div class="grid grid-cols-3 gap-1.5">';
     items.forEach(function(it,i){
-        h+='<button type="button" onclick="'+onclick(i,it)+'" class="h-7 px-1 rounded text-xs font-medium text-white bg-orange-400 hover:bg-orange-500 cursor-pointer truncate">'+esc(it)+'</button>';
+        h+='<button type="button" onclick="'+onclick(i,it)+'" class="h-7 px-1 rounded text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 cursor-pointer truncate">'+esc(it)+'</button>';
     });
     return h+'</div>';
 }
@@ -474,14 +474,14 @@ function scRenderTable(){
     var h='';
     _scRows.forEach(function(r,i){
         var on=_scActive===i;
-        h+='<tr class="border-t border-surface-100 '+(on?'bg-orange-50/40':'hover:bg-surface-50')+'">';
+        h+='<tr class="border-t border-surface-100 '+(on?'bg-primary-50/40':'hover:bg-surface-50')+'">';
         h+='<td class="px-3 py-2 text-text-muted">'+(i+1)+'</td>';
-        h+='<td class="px-3 py-2"><input type="checkbox" '+(on?'checked':'')+' onclick="scSetActive('+i+')" class="accent-orange-500" title="'+esc(tr('勾选后按钮作用于本行'))+'"></td>';
+        h+='<td class="px-3 py-2"><input type="checkbox" '+(on?'checked':'')+' onclick="scSetActive('+i+')" class="accent-primary-600" title="'+esc(tr('勾选后按钮作用于本行'))+'"></td>';
         h+='<td class="px-3 py-2"><button type="button" onclick="scBack('+i+',\'expr\')" class="mr-1 w-5 h-5 rounded-full bg-surface-100 border border-surface-200 text-text-muted hover:bg-surface-200 cursor-pointer" title="'+esc(tr('回退一个'))+'">?</button>'+scChips(r.expr)+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary break-all">'+esc(scCode(r.expr))+'</td>';
         h+='<td class="px-3 py-2"><button type="button" onclick="scBack('+i+',\'formula\')" class="mr-1 w-5 h-5 rounded-full bg-surface-100 border border-surface-200 text-text-muted hover:bg-surface-200 cursor-pointer" title="'+esc(tr('回退一个'))+'">?</button>'+scChips(r.formula)+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary break-all">'+esc(scCode(r.formula))+'</td>';
-        h+='<td class="px-3 py-2 whitespace-nowrap"><a onclick="scAddRow()" class="text-orange-500 hover:text-orange-600 cursor-pointer mr-3">'+tr('新增')+'</a><a onclick="scDelRow('+i+')" class="text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</a></td>';
+        h+='<td class="px-3 py-2 whitespace-nowrap"><a onclick="scAddRow()" class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3">'+tr('新增')+'</a><a onclick="scDelRow('+i+')" class="text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</a></td>';
         h+='</tr>';
     });
     tb.innerHTML=h;
@@ -500,7 +500,7 @@ function openSurchargeModal(mode,id,rowIdx,rowData){
     const modeLabel=mode==='view'?L.view:mode==='add'?L.add:mode==='copy'?tr('复制新增'):L.edit;
     document.getElementById('crud-modal-title').textContent=modeLabel;
     const panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='92%';
+    if(panel)panel.style.width='78%';
     const inCls='w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white';
     const dis=isView?' disabled':'';
     const ro=isView?' readonly':'';
@@ -513,8 +513,6 @@ function openSurchargeModal(mode,id,rowIdx,rowData){
     html+=scField('币别',sel(['人民币','美元','欧元','港币'],''),true);
     html+=scField('附加费开始时间','<input type="date" class="'+inCls+'" placeholder="'+esc(tr('请选择附加费开始时间'))+'"'+ro+'>',true);
     html+=scField('附加费结束时间','<input type="date" class="'+inCls+'" placeholder="'+esc(tr('请选择附加费结束时间'))+'"'+ro+'>',true);
-    html+=scField('是否扣件',sel(['是','否'],'是'),true);
-    html+=scField('问题件类型',sel(['运单拦截','问题件-超大','问题件-超长','问题件-超围长','问题件-超重','退件/少件扣件','查验扣件','签收地址错','未提取','客户要求暂扣'],''),true);
     html+=scField('备注','<input type="text" class="'+inCls+'" placeholder="'+esc(tr('请输入备注'))+'"'+ro+'>',false);
     html+='</div>';
     /* 右侧表达式构建区 */
@@ -539,7 +537,7 @@ function openSurchargeModal(mode,id,rowIdx,rowData){
     if(isView){
         footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
     }else{
-        footerEl.innerHTML='<button onclick="closeCrudModal();showToast(\''+tr('保存成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 cursor-pointer">'+tr('确认')+'</button><button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('关闭')+'</button>';
+        footerEl.innerHTML='<button onclick="closeCrudModal();showToast(\''+tr('保存成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认')+'</button><button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('关闭')+'</button>';
     }
     document.getElementById('crud-modal').classList.add('show');
 }

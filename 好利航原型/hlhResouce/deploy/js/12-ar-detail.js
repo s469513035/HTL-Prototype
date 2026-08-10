@@ -157,7 +157,30 @@ function arDetailAction(kind){
     var checked=document.querySelectorAll('.ar-detail-check:checked');
     if(!checked.length){showToast(tr('请先勾选数据'));return;}
     if(kind==='genBill'){ openArGenBillModal(); return; }
-    if(kind==='void'){ openConfirmTip(tr('确定作废选中的应收明细吗?'),function(){showToast(tr('已作废'));}); return; }
+    if(kind==='void'){ arVoidSelected(); return; }
+}
+
+/* 作废：仅「待核销」（未核销）的应收明细可作废，已核销/部分核销/已作废跳过 */
+function arVoidSelected(){
+    var sel=arGetSelectedRows();
+    if(!sel.length){showToast(tr('请先勾选数据'));return;}
+    var eligible=sel.filter(function(r){return r.st==='待核销';});
+    var blocked=sel.length-eligible.length;
+    if(!eligible.length){showToast(tr('仅「待核销」状态的应收明细可作废'));return;}
+    var msg='本次将作废 '+eligible.length+' 条「待核销」应收明细';
+    if(blocked>0)msg+='；另有 '+blocked+' 条非待核销状态（已核销/部分核销/已作废）将跳过';
+    msg+='，作废后不可恢复，确认作废？';
+    openConfirmTip(msg,function(){
+        eligible.forEach(function(r){r.st='作废';});
+        refreshArDetailView();
+        showToast(tr('已作废')+' '+eligible.length+' '+tr('条'));
+    });
+}
+/* 刷新左侧币别汇总 + 状态页签 + 明细行 */
+function refreshArDetailView(){
+    var ll=document.getElementById('ar-left-list'); if(ll)ll.innerHTML=arLeftListHtml();
+    var st=document.getElementById('ar-status-tabs'); if(st)st.innerHTML=arStatusTabsHtml();
+    var tb=document.getElementById('ar-detail-tbody'); if(tb)tb.innerHTML=renderArDetailRows();
 }
 
 function arGetSelectedRows(){
@@ -192,9 +215,12 @@ function arGroupListHtml(groups){
     ['客户','币别','总费用','总票数','总件数'].forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';
     if(!groups.length){h+='<tr><td colspan="5" class="py-6 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';}
-    var tf=0,tw=0,tp=0;
-    groups.forEach(function(g){
-        tf+=g.fee;tw+=g.wbCount;tp+=g.pcs;
+    /* 明细按币别排序，保证同币别相邻；合计按币别分类汇总（不同币别不可相加） */
+    var sorted=groups.slice().sort(function(a,b){return String(a.cur)<String(b.cur)?-1:(String(a.cur)>String(b.cur)?1:0);});
+    var byCur={},curOrder=[];
+    sorted.forEach(function(g){
+        if(!byCur[g.cur]){byCur[g.cur]={fee:0,wb:0,pcs:0};curOrder.push(g.cur);}
+        byCur[g.cur].fee+=g.fee;byCur[g.cur].wb+=g.wbCount;byCur[g.cur].pcs+=g.pcs;
         h+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
         h+='<td class="px-3 py-2.5 text-text-primary whitespace-nowrap">'+esc(g.cust)+'</td>';
         h+='<td class="px-3 py-2.5 text-text-secondary whitespace-nowrap">'+esc(g.cur)+'</td>';
@@ -202,10 +228,17 @@ function arGroupListHtml(groups){
         h+='<td class="px-3 py-2.5 text-primary-700">'+g.wbCount+'</td>';
         h+='<td class="px-3 py-2.5 text-blue-700">'+g.pcs+'</td></tr>';
     });
-    if(groups.length){
-        h+='<tr class="border-t border-surface-200 bg-surface-50 font-semibold"><td class="px-3 py-2.5 text-text-primary">'+tr('合计')+'</td><td class="px-3 py-2.5"></td><td class="px-3 py-2.5 text-orange-600">'+tf.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td><td class="px-3 py-2.5 text-primary-700">'+tw+'</td><td class="px-3 py-2.5 text-blue-700">'+tp+'</td></tr>';
-    }
+    curOrder.forEach(function(cur){
+        var m=byCur[cur];
+        h+='<tr class="border-t border-surface-200 bg-surface-50 font-semibold">'+
+            '<td class="px-3 py-2.5 text-text-primary whitespace-nowrap">'+tr('合计')+'（'+esc(cur)+'）</td>'+
+            '<td class="px-3 py-2.5 text-text-secondary whitespace-nowrap">'+esc(cur)+'</td>'+
+            '<td class="px-3 py-2.5 text-orange-600 whitespace-nowrap">'+m.fee.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'+
+            '<td class="px-3 py-2.5 text-primary-700">'+m.wb+'</td>'+
+            '<td class="px-3 py-2.5 text-blue-700">'+m.pcs+'</td></tr>';
+    });
     h+='</tbody></table></div>';
+    if(curOrder.length>1)h+='<div class="mt-1.5 text-[11px] text-amber-600">'+tr('注意：本次涉及多个币别，已按币别分类汇总，不同币别不做合并。')+'</div>';
     return h;
 }
 

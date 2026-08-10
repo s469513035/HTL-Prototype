@@ -947,6 +947,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='setEnable')click='setRowsStatus(\''+id+'\',\'启用\')';
     else if(action.key==='setDisable')click='setRowsStatus(\''+id+'\',\'禁用\')';
     else if(action.key==='batchDelete')click='deleteSelectedRows(\''+id+'\')';
+    else if(action.key==='voidRows')click='voidSelectedRows(\''+id+'\')';
     else if(action.key==='labelFieldDoc')click='openLabelFieldDocModal()';
     else if(action.key==='newSortScan')click='openSortBagRuleModal(\''+id+'\')';
     else if(action.key==='editCodingRule')click='openCodingRuleEditModal(\''+id+'\')';
@@ -1517,6 +1518,16 @@ function getToolbarActions(id){
             {key:'export',label:'导出数据'}
         ];
     }
+    if(id==='prod-price-lcl'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {type:'add',label:'新增数据',variant:'primary'},
+            {type:'edit',label:'编辑数据'},
+            {key:'copy',label:'复制新增'},
+            {key:'export',label:'导出数据'},
+            {key:'voidRows',label:'作废',variant:'danger'}
+        ];
+    }
     if(id==='prod-surcharge'){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
@@ -1543,7 +1554,7 @@ function getToolbarActions(id){
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
 var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag'];
-var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher'];
+var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl'];
 function listRowCanEdit(id){return _rowNoEditIds.indexOf(id)<0;}
 function listRowCanDelete(id){return _rowNoDeleteIds.indexOf(id)<0;}
 

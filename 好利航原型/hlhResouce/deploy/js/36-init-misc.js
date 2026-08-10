@@ -90,6 +90,28 @@ function getSelectedRowIndices(){
     return indices;
 }
 
+/* 作废选中数据：置状态列为「作废」（不删除数据），已作废的跳过 */
+function voidSelectedRows(id){
+    const indices=getSelectedRowIndices();
+    if(indices.length===0){showToast(tr('请先勾选数据'));return;}
+    const c=TC[id];if(!c)return;
+    const si=(c.h||[]).findIndex(h=>h.includes('状态'));
+    if(si<0){showToast(tr('未找到状态列'));return;}
+    if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
+    const data=_listData[id];
+    const eligible=indices.filter(function(i){return data[i]&&data[i][si]!=='作废';});
+    const blocked=indices.length-eligible.length;
+    if(!eligible.length){showToast(tr('所选数据均已作废'));return;}
+    let msg='本次将作废 '+eligible.length+' 条数据';
+    if(blocked>0)msg+='；另有 '+blocked+' 条已作废将跳过';
+    msg+='，作废后不可恢复，确认作废？';
+    openConfirmTip(msg,function(){
+        eligible.forEach(function(i){if(data[i])data[i][si]='作废';});
+        document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal);
+        showToast(tr('已作废')+' '+eligible.length+' '+tr('条'));
+    });
+}
+
 function toggleEnableDisable(id){
     const indices=getSelectedRowIndices();
     if(indices.length===0){showToast(tr('请先勾选数据'));return;}

@@ -1429,26 +1429,24 @@ function openOverseasQuickOutbound(id,rowIdx){
     h+='<section>'+owSectionTitle('放货单信息')+owInfoGrid([
         ['放货单DO号',doNo],['预约提货单号',owCell(row,headers,'预约提货单号')],['提单号',owCell(row,headers,'提单号')],['配舱单号',owCell(row,headers,'配舱单号')],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')],['提货方式',owCell(row,headers,'提货方式')],['应出件数',total]
     ])+'</section>';
-    h+='<section>'+owSectionTitle('出库核验');
-    h+='<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
-    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('一次性验证码')+'<span class="text-red-500 ml-1">*</span></label><input id="ow-quick-code" type="text" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg" placeholder="'+tr('演示')+'：'+esc(code)+'"></div>';
-    h+='<label class="flex items-end gap-2 text-sm text-text-secondary pb-2"><input type="checkbox" id="ow-quick-id" class="rounded border-surface-300 text-primary-600"><span>'+tr('身份核验一致（证件/电话/授权）')+'</span></label>';
-    h+='<div class="flex items-end pb-1"><span class="text-[11px] text-text-muted">'+tr('二维码核销由现场扫描或此处校验码替代')+'</span></div>';
+    h+='<section>'+owSectionTitle('出库核验（内部操作·系统自动核验）');
+    h+='<div class="grid grid-cols-1 md:grid-cols-3 gap-3">';
+    [['放货二维码','已自动核销'],['一次性验证码',code+'（已自动核验）'],['提货人身份','已自动核验一致']].forEach(function(it){
+        h+='<div class="rounded-lg border border-green-200 bg-green-50 px-3 py-2">'+
+            '<div class="flex items-center justify-between"><span class="text-xs font-semibold text-green-700">'+tr(it[0])+'</span><span class="text-xs text-green-600">✓ '+tr('通过')+'</span></div>'+
+            '<div class="text-[11px] text-text-muted mt-1 break-all">'+esc(it[1])+'</div></div>';
+    });
     h+='</div>';
     h+='<div class="mt-3 mb-1 text-[11px] font-medium text-text-secondary">'+tr('出库单据上传（签收单 / 签字单，支持拍照或选择图片）')+'</div>';
     h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-4">'+owQuickDocTile('pod','签收单')+owQuickDocTile('sign','签字单')+'</div></section>';
-    h+='<div class="rounded-lg bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">'+tr('校验码 + 身份核验 + 上传签收单/签字单 全部满足后方可快捷出库（一键放行全部件数）。')+'</div>';
+    h+='<div class="rounded-lg bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-700">'+tr('内部快捷出库：二维码/验证码/身份由系统自动核验，上传签收单与签字单后即可一键放行全部件数。')+'</div>';
     h+='</div>';
-    var codeAttr=esc(code).replace(/'/g,"");
-    var footer='<button onclick="submitOverseasQuickOutbound(\''+id+'\','+rowIdx+',\''+codeAttr+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认快捷出库')+'</button>'+
+    var footer='<button onclick="submitOverseasQuickOutbound(\''+id+'\','+rowIdx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认快捷出库')+'</button>'+
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer ml-2">'+tr('取消')+'</button>';
     owOpenModal(tr('快捷出库')+' - '+doNo,'70%',h,footer);
 }
-function submitOverseasQuickOutbound(id,rowIdx,code){
-    var codeEl=document.getElementById('ow-quick-code');
-    if(!codeEl||!codeEl.value.trim()){showToast(tr('请输入一次性验证码'));return;}
-    if(codeEl.value.trim()!==code){showToast(tr('验证码不正确，禁止放货'));codeEl.focus();return;}
-    if(!document.getElementById('ow-quick-id').checked){showToast(tr('请先核验提货人身份'));return;}
+function submitOverseasQuickOutbound(id,rowIdx){
+    /* 内部快捷出库：二维码/验证码/身份由系统自动核验，无需人工输入 */
     var podEl=document.getElementById('ow-quick-doc-pod');
     var signEl=document.getElementById('ow-quick-doc-sign');
     if(!podEl||podEl.dataset.uploaded!=='1'){showToast(tr('请上传签收单'));return;}
@@ -1472,7 +1470,7 @@ function submitOverseasQuickOutbound(id,rowIdx,code){
     closeCrudModal();
     var mc=document.getElementById('main-content');
     if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,1,'');
-    showToast(tr('快捷出库完成：已核验放行并减库存生成POD')+'（'+doNo+'）');
+    showToast(tr('快捷出库完成：系统已自动核验放行并减库存生成POD')+'（'+doNo+'）');
 }
 
 /* ---------- 新增出库单（参照提货预约：选客户→自动带仓库→加载运单明细→勾选出库子单） ---------- */

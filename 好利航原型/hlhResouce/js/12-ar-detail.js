@@ -299,8 +299,11 @@ function generateArDetailPage(id){
     h+='</div>';
     h+='<div class="flex-1 flex flex-col overflow-hidden min-w-0">';
     h+='<div class="px-4 py-3 border-b border-surface-200 bg-white">';
-    h+='<div class="flex items-end gap-3 mb-3">';
+    h+='<div class="flex items-end gap-3 mb-3 flex-wrap">';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('运单号')+'</label><input class="h-8 px-3 text-xs border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('运单号'))+'"></div>';
+    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('提单号')+'</label><input class="h-8 px-3 text-xs border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('提单号'))+'"></div>';
+    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('客户')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('全部')+'</option>'+_arCustomers.map(function(x){return '<option>'+esc(x.name)+'</option>';}).join('')+'</select></div>';
+    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('结算周期')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('全部')+'</option><option>出货票结</option><option>出货月结</option><option>签收月结</option></select></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('财务科目')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('全部')+'</option><option>运费</option><option>报关费</option><option>应收附加费</option><option>客户理赔费</option></select></div>';
     h+='</div>';
     h+='<div class="flex items-center gap-2">';

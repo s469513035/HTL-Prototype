@@ -51,6 +51,7 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     html+=crmInputFieldHtml('联系电话',contactPhone,'tel',readonly);
     html+=crmInputFieldHtml('客户邮箱',getTableValueByHeader(c,rowData,'客户邮箱',''),'email',readonly);
     html+=crmSelectFieldHtml('客户类型',['直客','同行','平台','代理'],getTableValueByHeader(c,rowData,'客户类型',''),readonly);
+    html+=crmSelectFieldHtml('结算周期',['出货票结','出货月结','签收月结'],getTableValueByHeader(c,rowData,'结算周期',''),readonly);
     html+=crmSelectFieldHtml('所属业务员',getEmployeeNameOptions(),salesPerson,readonly);
     html+=crmSelectFieldHtml('所属操作',getEmployeeNameOptions(),settlementPerson,readonly);
     html+=crmSelectFieldHtml('所属客服',getEmployeeNameOptions(),csrPerson,readonly);

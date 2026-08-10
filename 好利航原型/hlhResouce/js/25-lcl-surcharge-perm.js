@@ -121,7 +121,7 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
     const branches=rowData?rowData[5]:'深圳盐田仓,广州南沙仓';
     const customer=rowData?rowData[6]:'全部客户';
     const ports=rowData?rowData[7]:'达喀尔海外仓,拉各斯海外仓';
-    const status=rowData?rowData[8]:'待生效';
+    const status=rowData?rowData[8]:'草稿';
     const warehouseOptions=getWarehouseNameOptions();
     const destWarehouseOptions=['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓'];
     const roCls=isView?' readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed"':'';
@@ -203,28 +203,29 @@ function openLclQuoteBatchPublish(id){
     var c=TC[id];if(!c)return;
     if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
     var data=_listData[id];
-    var iCode=c.h.indexOf('报价编号'),iStart=c.h.indexOf('报价开始时间'),iEnd=c.h.indexOf('报价结束时间'),iSt=c.h.indexOf('状态');
+    var iCode=c.h.indexOf('报价编号'),iName=c.h.indexOf('报价名称'),iProd=c.h.indexOf('销售产品'),iStart=c.h.indexOf('报价开始时间'),iEnd=c.h.indexOf('报价结束时间'),iSt=c.h.indexOf('状态');
     var picked=indices.map(function(i){return {i:i,r:data[i]};}).filter(function(x){return x.r;});
-    var eligible=picked.filter(function(x){return x.r[iSt]!=='作废'&&x.r[iSt]!=='正式';});
+    /* 仅「草稿」状态可发布 */
+    var eligible=picked.filter(function(x){return x.r[iSt]==='草稿';});
     var blocked=picked.length-eligible.length;
-    if(!eligible.length){showToast(tr('所选报价均已发布或已作废，无需发布'));return;}
+    if(!eligible.length){showToast(tr('仅「草稿」状态的报价可发布'));return;}
     var fmt=function(d){var s=String(d||'');return s?(s.length<=10?s+' 00:00:00':s):'—';};
     var panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='72%';
     document.getElementById('crud-modal-title').textContent=tr('批量发布报价');
     var h='<div class="space-y-4">';
     h+='<div class="text-sm font-semibold text-text-primary">'+tr('批量发布报价个数')+'：<span class="text-orange-500">'+eligible.length+'</span></div>';
-    if(blocked>0)h+='<div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">'+tr('另有 ')+blocked+tr(' 条已发布或已作废，将不做处理。')+'</div>';
+    if(blocked>0)h+='<div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-700">'+tr('另有 ')+blocked+tr(' 条非草稿状态（正式/作废），将不做处理。')+'</div>';
     eligible.forEach(function(x,n){
         var r=x.r;
         h+='<div class="space-y-2">';
         h+='<div class="text-sm text-text-primary">'+(n+1)+'、'+tr('操作报价编号')+'：<span class="font-semibold text-orange-500">'+esc(r[iCode])+'</span></div>';
         h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-surface-50 text-text-secondary">';
-        ['报价编号','旧生效时间','旧失效时间','新生效时间','新失效时间','修改方式'].forEach(function(t){h+='<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(t)+'</th>';});
+        ['报价编号','报价名称','销售产品','新生效时间','新失效时间','修改方式'].forEach(function(t){h+='<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(t)+'</th>';});
         h+='</tr></thead><tbody><tr class="border-t border-surface-100">';
         h+='<td class="px-3 py-2 whitespace-nowrap text-text-primary">'+esc(r[iCode])+'</td>';
-        h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+esc(fmt(r[iStart]))+'</td>';
-        h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+esc(fmt(r[iEnd]))+'</td>';
+        h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+esc(iName>=0?r[iName]:'')+'</td>';
+        h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+esc(iProd>=0?r[iProd]:'')+'</td>';
         h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+esc(fmt(r[iStart]))+'</td>';
         h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+esc(fmt(r[iEnd]))+'</td>';
         h+='<td class="px-3 py-2 whitespace-nowrap text-text-secondary">'+tr('发布')+'</td>';

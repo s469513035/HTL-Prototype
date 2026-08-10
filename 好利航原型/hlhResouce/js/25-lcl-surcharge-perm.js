@@ -460,6 +460,29 @@ function scBack(i,target){
     row[target].pop();
     scRenderTable();
 }
+/* 清空单元格内容 */
+function scClear(i,target){
+    var row=_scRows[i];
+    if(!row)return;
+    if(!row[target].length){showToast(tr('该单元格已为空'));return;}
+    row[target]=[];
+    scRenderTable();
+}
+/* 清空整行（表达式 + 计算公式） */
+function scClearRow(i){
+    var row=_scRows[i];
+    if(!row)return;
+    if(!row.expr.length&&!row.formula.length){showToast(tr('该行已为空'));return;}
+    openConfirmTip(tr('确定清空本行的表达式与计算公式吗？'),function(){
+        row.expr=[];row.formula=[];
+        scRenderTable();
+    });
+}
+/* 单元格前置操作按钮：? 回退一个 / × 清空 */
+function scCellOps(i,target){
+    return '<button type="button" onclick="scBack('+i+',\''+target+'\')" class="mr-1 w-5 h-5 rounded-full bg-surface-100 border border-surface-200 text-text-muted hover:bg-surface-200 cursor-pointer" title="'+esc(tr('回退一个'))+'">?</button>'+
+        '<button type="button" onclick="scClear('+i+',\''+target+'\')" class="mr-1 w-5 h-5 rounded-full bg-surface-100 border border-surface-200 text-text-muted hover:bg-red-50 hover:text-red-500 cursor-pointer" title="'+esc(tr('清空单元格'))+'">×</button>';
+}
 function scBtnGrid(items,onclick){
     var h='<div class="grid grid-cols-3 gap-1.5">';
     items.forEach(function(it,i){
@@ -476,11 +499,11 @@ function scRenderTable(){
         h+='<tr class="border-t border-surface-100 '+(on?'bg-primary-50/40':'hover:bg-surface-50')+'">';
         h+='<td class="px-3 py-2 text-text-muted">'+(i+1)+'</td>';
         h+='<td class="px-3 py-2"><input type="checkbox" '+(on?'checked':'')+' onclick="scSetActive('+i+')" class="accent-primary-600" title="'+esc(tr('勾选后按钮作用于本行'))+'"></td>';
-        h+='<td class="px-3 py-2"><button type="button" onclick="scBack('+i+',\'expr\')" class="mr-1 w-5 h-5 rounded-full bg-surface-100 border border-surface-200 text-text-muted hover:bg-surface-200 cursor-pointer" title="'+esc(tr('回退一个'))+'">?</button>'+scChips(r.expr)+'</td>';
+        h+='<td class="px-3 py-2">'+scCellOps(i,'expr')+scChips(r.expr)+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary break-all">'+esc(scCode(r.expr))+'</td>';
-        h+='<td class="px-3 py-2"><button type="button" onclick="scBack('+i+',\'formula\')" class="mr-1 w-5 h-5 rounded-full bg-surface-100 border border-surface-200 text-text-muted hover:bg-surface-200 cursor-pointer" title="'+esc(tr('回退一个'))+'">?</button>'+scChips(r.formula)+'</td>';
+        h+='<td class="px-3 py-2">'+scCellOps(i,'formula')+scChips(r.formula)+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary break-all">'+esc(scCode(r.formula))+'</td>';
-        h+='<td class="px-3 py-2 whitespace-nowrap"><a onclick="scAddRow()" class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3">'+tr('新增')+'</a><a onclick="scDelRow('+i+')" class="text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</a></td>';
+        h+='<td class="px-3 py-2 whitespace-nowrap"><a onclick="scAddRow()" class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3">'+tr('新增')+'</a><a onclick="scClearRow('+i+')" class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3">'+tr('清空')+'</a><a onclick="scDelRow('+i+')" class="text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</a></td>';
         h+='</tr>';
     });
     tb.innerHTML=h;
@@ -528,7 +551,7 @@ function openSurchargeModal(mode,id,rowIdx,rowData){
     html+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-xs" style="min-width:900px"><thead><tr class="bg-surface-50 text-text-secondary">';
     ['序号','#','表达式中文','表达式','计算公式中文','计算公式','操作'].forEach(function(x){html+='<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';});
     html+='</tr></thead><tbody id="sc-expr-tbody"></tbody></table></div>';
-    html+='<div class="text-[11px] text-text-muted">'+tr('说明：勾选「#」选中作用行，再点上方按钮即可拼接表达式/计算公式；「?」按钮可回退一个。')+'</div>';
+    html+='<div class="text-[11px] text-text-muted">'+tr('说明：勾选「#」选中作用行，再点上方按钮即可拼接表达式/计算公式；「?」回退一个，「×」清空该单元格，操作列「清空」可清空整行。')+'</div>';
     html+='</div></div>';
     document.getElementById('crud-modal-body').innerHTML=html;
     scRenderTable();

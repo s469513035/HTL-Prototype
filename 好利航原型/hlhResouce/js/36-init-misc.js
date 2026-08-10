@@ -96,13 +96,29 @@ function toggleEnableDisable(id){
     const c=TC[id];
     const si=(c.h||[]).findIndex(h=>h.includes('状态')||h.includes('启用'));
     if(si<0){showToast(tr('未找到状态列'));return;}
+    /* 关闭态取本表状态词表中的非“启用”值（停用/禁用），避免写入表外状态导致状态页签筛不到 */
+    const offLabel=((c.s||[]).filter(function(s){return s==='停用'||s==='禁用';})[0])||'禁用';
+    const data=_listData[id]||[];
+    let toOff=0,toOn=0;
     indices.forEach(function(idx){
-        if(_listData[id]&&_listData[id][idx]){
-            const current=_listData[id][idx][si];
-            _listData[id][idx][si]=(current==='启用'?'禁用':'启用');
-        }
+        const row=data[idx];
+        if(!row)return;
+        if(row[si]==='启用')toOff++;else toOn++;
     });
-    document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal);
-    showToast(tr('状态已更新'));
+    let msg='本次共选择 '+indices.length+' 条数据：';
+    const parts=[];
+    if(toOn)parts.push('启用 '+toOn+' 条');
+    if(toOff)parts.push(offLabel+' '+toOff+' 条');
+    msg+=parts.join('，')+'，确认继续？';
+    openConfirmTip(msg,function(){
+        indices.forEach(function(idx){
+            if(_listData[id]&&_listData[id][idx]){
+                const current=_listData[id][idx][si];
+                _listData[id][idx][si]=(current==='启用'?offLabel:'启用');
+            }
+        });
+        document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal);
+        showToast(tr('状态已更新'));
+    });
 }
 

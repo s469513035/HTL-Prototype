@@ -250,7 +250,6 @@ function openArGenBillModal(){
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('账单信息')+'</div><div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('账单批次号')+'</label><input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(defaultBatch)+'" placeholder="'+esc(tr('请输入账单批次号'))+'"></div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('账单到期时间')+'</label><input type="date" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+dueStr+'"></div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('结算周期')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"><option>出货票结</option><option>出货月结</option><option>签收月结</option></select></div>';
     html+='<div class="md:col-span-3 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('生成备注')+'</label><textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('可选，补充账单备注'))+'"></textarea></div>';
     html+='</div></div>';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用汇总')+'</div>'+arGroupListHtml(groups)+'</div>';

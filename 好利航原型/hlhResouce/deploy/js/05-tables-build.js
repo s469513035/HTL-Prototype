@@ -781,7 +781,6 @@ TC['prod-manage'].forceLocalHeader=true;
 TC['prod-surcharge'].forceLocalHeader=true;
 TC['prod-surcharge'].noExpand=true;   /* 首列已改为附加费名称，不再按编码自动扩充演示行 */
 TC['prod-price-lcl'].forceLocalHeader=true;
-TC['prod-price-lcl'].voidOnlyStatus=['草稿'];   /* 作废仅限草稿状态 */
 TC['prod-inquiry-quote']={
     t:'询价报价',
     h:['所属港口','运输方式','货物类型','英文货物类型','类型编码','计算系数','内部备注','所属仓库','收货模式','结算方式','杂费','运输时效','操作'],

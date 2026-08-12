@@ -1,6 +1,6 @@
 function statusBadge(val){
-    const g=['启用','已通过','已入仓','已确认','已完成','已放行','已同步','已对齐','已生效','已出库','已作废','已结算','已开具','已登记','已补录','已处理','已验证','已付款','已开票','正常','运行中','已领取','已复核','在途','全部放行','已解决','全部抵扣','正式'];
-    const r=['停用','禁用','已驳回','异常','已销毁','已过期','冻结','熔断','未通过','作废'];
+    const g=['启用','已通过','已入仓','已确认','已完成','已放行','已同步','已对齐','已生效','已出库','已作废','已结算','已开具','已登记','已补录','已处理','已验证','已付款','已开票','正常','运行中','已领取','已复核','在途','全部放行','已解决','全部抵扣','正式','已启用'];
+    const r=['停用','禁用','已驳回','异常','已销毁','已过期','冻结','熔断','未通过','作废','已禁用'];
     const a=['待审核','待审批','待入仓','待定','待处理','待确认','待补录','待领取','待到港','待预约','待出库','待开票','待同步','有差异','告警中','告警','维护中','待抢单','待结算','预警','待通知','已登记','待抵扣','部分抵扣','草稿'];
     const label=_statusLangMap[val]&&_lang[_currentLang][_statusLangMap[val]]?_lang[_currentLang][_statusLangMap[val]]:tr(val);
     if(g.includes(val))return '<span class="badge bg-green-50 text-green-700">'+label+'</span>';
@@ -948,7 +948,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='setDisable')click='setRowsStatus(\''+id+'\',\'禁用\')';
     else if(action.key==='batchDelete')click='deleteSelectedRows(\''+id+'\')';
     else if(action.key==='voidRows')click='voidSelectedRows(\''+id+'\')';
-    else if(action.key==='lclBatchPublish')click='openLclQuoteBatchPublish(\''+id+'\')';
+    else if(action.key==='setStatus')click='setRowsStatus(\''+id+'\',\''+(action.status||'启用')+'\')';
     else if(action.key==='labelFieldDoc')click='openLabelFieldDocModal()';
     else if(action.key==='newSortScan')click='openSortBagRuleModal(\''+id+'\')';
     else if(action.key==='editCodingRule')click='openCodingRuleEditModal(\''+id+'\')';
@@ -1524,10 +1524,10 @@ function getToolbarActions(id){
             {key:'search',label:'查询数据',variant:'primary'},
             {type:'add',label:'新增数据',variant:'primary'},
             {type:'edit',label:'编辑数据'},
-            {key:'lclBatchPublish',label:'批量发布报价',variant:'primary'},
+            {key:'setStatus',status:'已启用',label:'启用',variant:'success'},
+            {key:'setStatus',status:'已禁用',label:'禁用',variant:'danger'},
             {key:'copy',label:'复制新增'},
-            {key:'export',label:'导出数据'},
-            {key:'voidRows',label:'作废',variant:'danger'}
+            {key:'export',label:'导出数据'}
         ];
     }
     if(id==='prod-surcharge'){

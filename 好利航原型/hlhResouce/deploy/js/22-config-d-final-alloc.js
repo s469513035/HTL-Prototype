@@ -6,16 +6,24 @@ function openTrackCfgModal(mode,id,rowIdx,rowData){
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='72%';
     const isEdit=mode==='edit';
-    const code=rowData?rowData[0]:'';
-    const name=rowData?rowData[1]:'';
-    const type=rowData?rowData[2]:'';
-    const sysBizVal=rowData?rowData[3]:'';
-    const cnContent=rowData?rowData[4]:'';
-    const enContent=rowData?rowData[5]:'';
-    const clientShow=rowData?(rowData[6]||'是'):'是';
-    const remark=rowData?rowData[7]:'';
-    const sortNo=(rowData&&rowData[8])?rowData[8]:'100';
-    const trackTypes=['头程','干线','尾程','清关','派送','签收','异常'];
+    /* 按表头名取值：轨迹配置已插入法语/葡语内容列，列序会变，不能写死下标 */
+    const gv=function(n,dft){
+        var h=(TC[id]&&TC[id].h)||[];var k=h.indexOf(n);
+        var v=(k>=0&&rowData)?(rowData[k]==null?'':String(rowData[k])):'';
+        return v===''?(dft||''):v;
+    };
+    const code=gv('轨迹编号');
+    const name=gv('轨迹名称');
+    const type=gv('轨迹类型');
+    const sysBizVal=gv('对应系统业务');
+    const cnContent=gv('中文内容');
+    const enContent=gv('英文内容');
+    const frContent=gv('法语内容');
+    const ptContent=gv('葡语内容');
+    const clientShow=gv('客户端是否显示','是');
+    const remark=gv('备注');
+    const sortNo=gv('排序号','100');
+    const trackTypes=(typeof TRACK_TYPE_OPTIONS!=='undefined')?TRACK_TYPE_OPTIONS:['预报','入仓','装袋','配舱','国内仓出库','离港','到港','提柜','海外入仓','预约提货','海外出仓','签收'];
     const sysBizOpts=['订单','入仓','出库','运输','清关','派送','签收','自提'];
     titleEl.textContent=isEdit?tr('编辑'):tr('新增');
     const inputCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
@@ -32,6 +40,8 @@ function openTrackCfgModal(mode,id,rowIdx,rowData){
     html+='<div>'+lbl('中文内容(字典维护映射值)',false)+'<input type="text" class="'+inputCls+'" placeholder="'+esc(tr('请输入中文内容(字典维护映射值)'))+'"></div>';
     html+='<div>'+lbl('英文内容',false)+'<input type="text" class="'+inputCls+'" value="'+esc(enContent)+'" placeholder="'+esc(tr('请输入英文内容'))+'"></div>';
     html+='<div>'+lbl('英文内容(字典维护映射值)',false)+'<input type="text" class="'+inputCls+'" placeholder="'+esc(tr('请输入英文内容(字典维护映射值)'))+'"></div>';
+    html+='<div>'+lbl('法语内容',false)+'<input type="text" class="'+inputCls+'" value="'+esc(frContent)+'" placeholder="'+esc(tr('请输入法语内容'))+'"></div>';
+    html+='<div>'+lbl('葡语内容',false)+'<input type="text" class="'+inputCls+'" value="'+esc(ptContent)+'" placeholder="'+esc(tr('请输入葡语内容'))+'"></div>';
     html+='<div>'+lbl('客户端显示标志',true)+'<select class="'+inputCls+'">'+['是','否'].map(function(o){return '<option value="'+esc(o)+'"'+(clientShow===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
     html+='<div>'+lbl('排序',false)+'<input type="number" class="'+inputCls+'" value="'+esc(sortNo)+'"></div>';
     html+='<div>'+lbl('备注',false)+'<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'">'+esc(remark)+'</textarea></div>';

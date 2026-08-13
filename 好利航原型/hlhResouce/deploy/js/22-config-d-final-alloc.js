@@ -15,7 +15,6 @@ function openTrackCfgModal(mode,id,rowIdx,rowData){
     const code=gv('轨迹编号');
     const name=gv('轨迹名称');
     const type=gv('轨迹类型');
-    const sysBizVal=gv('对应系统业务');
     const cnContent=gv('中文内容');
     const enContent=gv('英文内容');
     const frContent=gv('法语内容');
@@ -24,7 +23,6 @@ function openTrackCfgModal(mode,id,rowIdx,rowData){
     const remark=gv('备注');
     const sortNo=gv('排序号','100');
     const trackTypes=(typeof TRACK_TYPE_OPTIONS!=='undefined')?TRACK_TYPE_OPTIONS:['预报','入仓','装袋','配舱','国内仓出库','离港','到港','提柜','海外入仓','预约提货','海外出仓','签收'];
-    const sysBizOpts=['订单','入仓','出库','运输','清关','派送','签收','自提'];
     titleEl.textContent=isEdit?tr('编辑'):tr('新增');
     const inputCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
     function lbl(t,req){return '<label class="text-sm font-medium text-text-secondary mb-1.5 block">'+(req?'<span class="text-red-500">*</span> ':'')+tr(t)+'</label>';}
@@ -35,7 +33,6 @@ function openTrackCfgModal(mode,id,rowIdx,rowData){
     else{html+='<input type="text" required class="'+inputCls+'" value="'+esc(code)+'" placeholder="'+esc(tr('请输入轨迹编号'))+'"></div>';}
     html+='<div>'+lbl('轨迹名称',true)+'<input type="text" required class="'+inputCls+'" value="'+esc(name)+'" placeholder="'+esc(tr('请输入轨迹名称'))+'"></div>';
     html+='<div>'+lbl('轨迹类型',false)+selHtml(trackTypes,type,'请选择轨迹类型')+'</div>';
-    html+='<div>'+lbl('对应系统业务',false)+selHtml(sysBizOpts,sysBizVal,'请选择对应系统业务')+'</div>';
     html+='<div>'+lbl('中文内容',false)+'<input type="text" class="'+inputCls+'" value="'+esc(cnContent)+'" placeholder="'+esc(tr('请输入中文内容'))+'"></div>';
     html+='<div>'+lbl('中文内容(字典维护映射值)',false)+'<input type="text" class="'+inputCls+'" placeholder="'+esc(tr('请输入中文内容(字典维护映射值)'))+'"></div>';
     html+='<div>'+lbl('英文内容',false)+'<input type="text" class="'+inputCls+'" value="'+esc(enContent)+'" placeholder="'+esc(tr('请输入英文内容'))+'"></div>';

@@ -141,8 +141,11 @@ function fillTrackContent(sel){
     const cn=document.getElementById('track-add-cn');
     const en=document.getElementById('track-add-en');
     if(!row)return;
-    if(cn)cn.value=row[4]||row[1]||'';
-    if(en)en.value=row[5]||'';
+    /* 按表头名取值：轨迹配置列有增删（法语/葡语、对应系统业务），不能写死下标 */
+    const h=(TC['biz-track-cfg']&&TC['biz-track-cfg'].h)||[];
+    const val=function(n){var k=h.indexOf(n);return (k>=0&&row[k])?row[k]:'';};
+    if(cn)cn.value=val('中文内容')||row[1]||'';
+    if(en)en.value=val('英文内容');
 }
 
 /* ===== 应收明细 fin-ar-detail（左栏客户/业务员 + 状态页签 + 宽表 + 新增弹窗） ===== */

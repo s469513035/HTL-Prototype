@@ -665,7 +665,7 @@ TC['biz-track-cfg']={t:'轨迹配置',forceLocalHeader:true,readonlyList:true,h:
 ['yyscz','预约送仓中','','','预约送仓中','Delivery Appointment Scheduled','是','','','2026-07-15 16:15:12','系统'],
 ['YJDL','已交快递服务商','','','已交快递服务商','Handover to Courier Company','是','','','2026-07-15 16:15:12','系统']]};
 var TRACK_TYPE_OPTIONS=['预报','入仓','装袋','配舱','国内仓出库','离港','到港','提柜','海外入仓','预约提货','海外出仓','签收'];
-TC['biz-track-cfg'].q=[{label:'轨迹名称',type:'text'},{label:'轨迹类型',type:'select',options:TRACK_TYPE_OPTIONS},{label:'对应系统业务',type:'select',options:['订单','入仓','出库','运输','清关','派送','签收','自提']},{label:'中文内容',type:'text'},{label:'客户端显示标志',type:'select',options:['是','否']}];
+TC['biz-track-cfg'].q=[{label:'轨迹名称',type:'text'},{label:'轨迹类型',type:'select',options:TRACK_TYPE_OPTIONS},{label:'中文内容',type:'text'},{label:'客户端显示标志',type:'select',options:['是','否']}];
 TC['biz-msg-flow']={t:'消息流程管理',forceLocalHeader:true,readonlyList:true,h:['流程编号','流程名称','流程类型','流程节点','流程连接线','类型','启用状态','备注','创建时间','创建人','修改时间','操作'],s:['启用','禁用'],d:[
 ['2071935585487982594','测试开箱验货','待办流程','[{"id":"229feadc-b7d0-40e1-9f3a-1c2d3e4f5a6b","type":"start","name":"开始"}]','[{"lineFrom":"229feadc-b7d0","lineTo":"a1b2c3d4"}]','KXYH','启用','','2026-06-30 20:35:13','CS08',''],
 ['MANUAL_SETTLEMENT_REMIND','人工结算提醒消息','待办流程','[{"id":"05d1e531-4da2-4c8f-9a1b-2c3d4e5f6a7b","type":"start"}]','[{"lineFrom":"05d1e531-4da2","lineTo":"b2c3d4e5"}]','MANUAL_SETTLEMENT','启用','系统内置消息,请勿删除(勿动)','2026-06-24 16:27:15','HYD','2026-06-30 20:30:33'],

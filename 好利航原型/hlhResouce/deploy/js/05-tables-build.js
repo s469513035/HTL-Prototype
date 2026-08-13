@@ -781,30 +781,35 @@ TC['prod-manage'].forceLocalHeader=true;
 TC['prod-surcharge'].forceLocalHeader=true;
 TC['prod-surcharge'].noExpand=true;   /* 首列已改为附加费名称，不再按编码自动扩充演示行 */
 TC['prod-price-lcl'].forceLocalHeader=true;
-/* 轨迹配置：英文内容后插入「法语内容」「葡语内容」，并按新的轨迹类型补充整套演示数据 */
+/* 轨迹配置：去掉「对应系统业务」列；英文内容后插入「法语内容」「葡语内容」；按新的轨迹类型补充整套演示数据 */
 (function(){
     var c=TC['biz-track-cfg'];
     if(!c||!c.h)return;
+    var b=c.h.indexOf('对应系统业务');
+    if(b>=0){
+        c.h.splice(b,1);
+        (c.d||[]).forEach(function(r){r.splice(b,1);});
+    }
     var i=c.h.indexOf('英文内容');
     if(i>=0&&c.h.indexOf('法语内容')<0){
         c.h.splice(i+1,0,'法语内容','葡语内容');
         (c.d||[]).forEach(function(r){r.splice(i+1,0,'','');});
     }
     if((c.d||[]).some(function(r){return r[2]==='预报';}))return;
-    /* 列顺序：轨迹编号|轨迹名称|轨迹类型|对应系统业务|中文内容|英文内容|法语内容|葡语内容|客户端是否显示|备注|排序号|创建时间|创建人 */
+    /* 列顺序：轨迹编号|轨迹名称|轨迹类型|中文内容|英文内容|法语内容|葡语内容|客户端是否显示|备注|排序号|创建时间|创建人 */
     var seed=[
-        ['YB','预报','预报','订单','已预报','Forecast Received','Prévision reçue','Previsão recebida'],
-        ['RC','入仓','入仓','入仓','已入仓','Warehouse In','Entrée en entrepôt','Entrada no armazém'],
-        ['ZD','装袋','装袋','入仓','已装袋','Bagging Completed','Mise en sac terminée','Ensacamento concluído'],
-        ['PC','配舱','配舱','出库','已配舱','Space Allocated','Espace alloué','Espaço alocado'],
-        ['GNCK','国内仓出库','国内仓出库','出库','国内仓已出库','Domestic Warehouse Out','Sortie entrepôt national','Saída do armazém nacional'],
-        ['LG','离港','离港','运输','已离港','Departed from Port','Départ du port','Partida do porto'],
-        ['DG','到港','到港','运输','已到港','Arrived at Port','Arrivée au port','Chegada ao porto'],
-        ['TG','提柜','提柜','清关','已提柜','Container Picked Up','Conteneur enlevé','Contêiner retirado'],
-        ['HWRC','海外入仓','海外入仓','入仓','海外仓已入仓','Overseas Warehouse In','Entrée entrepôt outre-mer','Entrada no armazém no exterior'],
-        ['YYTH','预约提货','预约提货','自提','已预约提货','Pickup Appointment Made','Rendez-vous d enlèvement pris','Agendamento de retirada feito'],
-        ['HWCC','海外出仓','海外出仓','出库','海外仓已出库','Overseas Warehouse Out','Sortie entrepôt outre-mer','Saída do armazém no exterior'],
-        ['QS','签收','签收','签收','已签收','Delivered / Signed','Livré / Signé','Entregue / Assinado']
+        ['YB','预报','预报','已预报','Forecast Received','Prévision reçue','Previsão recebida'],
+        ['RC','入仓','入仓','已入仓','Warehouse In','Entrée en entrepôt','Entrada no armazém'],
+        ['ZD','装袋','装袋','已装袋','Bagging Completed','Mise en sac terminée','Ensacamento concluído'],
+        ['PC','配舱','配舱','已配舱','Space Allocated','Espace alloué','Espaço alocado'],
+        ['GNCK','国内仓出库','国内仓出库','国内仓已出库','Domestic Warehouse Out','Sortie entrepôt national','Saída do armazém nacional'],
+        ['LG','离港','离港','已离港','Departed from Port','Départ du port','Partida do porto'],
+        ['DG','到港','到港','已到港','Arrived at Port','Arrivée au port','Chegada ao porto'],
+        ['TG','提柜','提柜','已提柜','Container Picked Up','Conteneur enlevé','Contêiner retirado'],
+        ['HWRC','海外入仓','海外入仓','海外仓已入仓','Overseas Warehouse In','Entrée entrepôt outre-mer','Entrada no armazém no exterior'],
+        ['YYTH','预约提货','预约提货','已预约提货','Pickup Appointment Made','Rendez-vous d enlèvement pris','Agendamento de retirada feito'],
+        ['HWCC','海外出仓','海外出仓','海外仓已出库','Overseas Warehouse Out','Sortie entrepôt outre-mer','Saída do armazém no exterior'],
+        ['QS','签收','签收','已签收','Delivered / Signed','Livré / Signé','Entregue / Assinado']
     ];
     seed.forEach(function(s,idx){
         c.d.unshift(s.concat(['是','','' +((idx+1)*10),'2026-08-01 09:00:00','系统']));

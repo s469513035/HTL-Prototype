@@ -136,8 +136,8 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
         html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发货仓库')+'</label><input type="text"'+roCls+' value="'+esc(branches)+'"></div>';
         html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('目的仓库')+'</label><input type="text"'+roCls+' value="'+esc(ports)+'"></div>';
     }else{
-        /* 销售产品改为单选 */
-        html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('销售产品')+'</label><select id="lq-product" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['西非海运专线','西非空运专线','中东海运专线','欧洲铁路专线'],String(products||'').split(',')[0].trim())+'</select></div>';
+        /* 销售产品：多选 */
+        html+='<div id="lq-product-wrap">'+checkedDropdownFieldHtml('销售产品',['西非海运专线','西非空运专线','中东海运专线','欧洲铁路专线'],products)+'</div>';
         html+=checkedDropdownFieldHtml('发货仓库',warehouseOptions,branches);
         html+=checkedDropdownFieldHtml('目的仓库',destWarehouseOptions,ports);
     }
@@ -166,7 +166,13 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
     document.getElementById('crud-modal').classList.add('show');
 }
 
-/* 保存报价：新增（含复制新增）默认写入「草稿」状态 */
+/* 读取「销售产品」多选结果（逗号分隔） */
+function lclPickedProducts(){
+    var el=document.querySelector('#lq-product-wrap [data-checked-dropdown-input]');
+    if(!el)return '';
+    return String(el.value||'').split(',').map(function(s){return s.trim();}).filter(Boolean).join(',');
+}
+/* 保存报价：新增（含复制新增）按所选状态写入 */
 function submitLclQuote(mode,id,quoteCode){
     var c=TC[id];if(!c){closeCrudModal();return;}
     var v=function(elId,dft){var el=document.getElementById(elId);return el&&el.value?el.value:(dft||'');};
@@ -178,7 +184,7 @@ function submitLclQuote(mode,id,quoteCode){
         c.h.slice(0,-1).forEach(function(hd){
             if(hd==='报价编号')row.push(code);
             else if(hd==='报价名称')row.push(name);
-            else if(hd==='销售产品')row.push(v('lq-product','西非海运专线'));
+            else if(hd==='销售产品')row.push(lclPickedProducts()||'西非海运专线');
             else if(hd==='报价开始时间')row.push(v('lq-start','2026-01-01'));
             else if(hd==='报价结束时间')row.push(v('lq-end','2026-12-31'));
             else if(hd==='发货仓库')row.push('深圳盐田仓');

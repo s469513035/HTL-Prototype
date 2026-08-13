@@ -31,10 +31,14 @@ var _noPreClaimPage=1;
 var _noPreForecastPage=1;
 var _noPreClaimPageSize=100;
 var _lclWeightPriceMode='vertical';
+var _lclCargoTab='普货';   /* 价格维护按货物类型分插页：普货 / 敏感货 */
 var _lclWeightPriceRows=[
     {groupId:'lcl-g-1',weightSeg:'0-1',price:'1',cargoType:'普货',billingMode:'单价',billingUnit:'KGS'},
     {groupId:'lcl-g-1',weightSeg:'2-4',price:'2',cargoType:'普货',billingMode:'单价',billingUnit:'KGS'},
-    {groupId:'lcl-g-1',weightSeg:'5-100',price:'3',cargoType:'普货',billingMode:'单价',billingUnit:'KGS'}
+    {groupId:'lcl-g-1',weightSeg:'5-100',price:'3',cargoType:'普货',billingMode:'单价',billingUnit:'KGS'},
+    {groupId:'lcl-g-2',weightSeg:'0-1',price:'2',cargoType:'敏感货',billingMode:'单价',billingUnit:'KGS'},
+    {groupId:'lcl-g-2',weightSeg:'2-4',price:'3.5',cargoType:'敏感货',billingMode:'单价',billingUnit:'KGS'},
+    {groupId:'lcl-g-2',weightSeg:'5-100',price:'5',cargoType:'敏感货',billingMode:'单价',billingUnit:'KGS'}
 ];
 
 function incrementTrailingNumber(value,index){

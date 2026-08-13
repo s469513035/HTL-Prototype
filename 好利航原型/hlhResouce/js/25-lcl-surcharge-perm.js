@@ -109,6 +109,7 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
     const modeLabel=mode==='view'?L.view:mode==='add'?L.add:mode==='copy'?tr('复制新增'):L.edit;
     titleEl.textContent=modeLabel+tr(c.t);
     const isView=mode==='view';
+    _lclCargoTab='普货';   /* 每次打开默认停在普货插页 */
     const data=_listData[id]||expandData(id);
     const lastCode=data.length&&data[data.length-1][0]?data[data.length-1][0]:'QP000';
     const lm=lastCode.match(/^(.*?)(\d+)$/);
@@ -155,6 +156,7 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
     html+='<div class="md:col-span-4 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y"'+(isView?' readonly':'')+'>'+tr('按客户、产品、发货仓库和目的仓库维护散货报价。')+'</textarea></div>';
     html+='</div></div>';
     html+='<div class="border border-surface-200 rounded-xl overflow-hidden"><div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3"><div class="text-sm font-semibold text-text-primary">'+tr('价格维护')+'</div>'+(isView?'':'<div class="flex items-center gap-2"><button type="button" onclick="addLclWeightPriceRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button><button type="button" onclick="switchLclWeightPriceMode(\'horizontal\')" class="h-8 px-3 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('横向')+'</button><button type="button" onclick="switchLclWeightPriceMode(\'vertical\')" class="h-8 px-3 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('纵向')+'</button></div>')+'</div>';
+    html+='<div id="lcl-cargo-tabs" class="flex gap-2 border-b border-surface-200 px-4">'+lclCargoTabsHtml()+'</div>';
     html+='<div id="lcl-weight-price-wrap">'+renderLclWeightPriceTable(_lclWeightPriceMode)+'</div></div>';
     html+='</div>';
     bodyEl.innerHTML=html;
@@ -223,8 +225,13 @@ function nextLclWeightPriceGroupId(){
     return 'lcl-g-'+(max+1);
 }
 
+/* 当前插页（货物类型）下的价格行 */
+function lclTabRows(){
+    return (_lclWeightPriceRows||[]).filter(function(r){return (r.cargoType||'普货')===_lclCargoTab;});
+}
 function getLclHorizontalModel(){
-    const source=_lclWeightPriceRows.length?_lclWeightPriceRows:[defaultLclWeightPriceRow({groupId:'lcl-g-1',weightSeg:'0-1',price:'1'})];
+    const tabRows=lclTabRows();
+    const source=tabRows.length?tabRows:[defaultLclWeightPriceRow({groupId:nextLclWeightPriceGroupId(),weightSeg:'0-1',price:'',cargoType:_lclCargoTab})];
     const segments=[];
     const groups=[];
     const groupMap={};
@@ -243,28 +250,33 @@ function getLclHorizontalModel(){
     return {segments:segments,groups:groups};
 }
 
+/* 用当前插页采集到的行替换该货物类型的行，其它插页数据原样保留 */
+function mergeLclTabRows(tabRows){
+    const others=(_lclWeightPriceRows||[]).filter(function(r){return (r.cargoType||'普货')!==_lclCargoTab;});
+    _lclWeightPriceRows=others.concat(tabRows);
+}
 function captureLclWeightPriceRows(){
     const vertical=document.getElementById('lcl-weight-price-vertical');
     const horizontal=document.getElementById('lcl-weight-price-horizontal');
     if(vertical){
-        _lclWeightPriceRows=Array.from(vertical.querySelectorAll('tbody tr')).map(function(row){
+        mergeLclTabRows(Array.from(vertical.querySelectorAll('tbody tr')).map(function(row){
             return {
                 groupId:row.dataset.groupId||nextLclWeightPriceGroupId(),
                 weightSeg:(row.querySelector('[data-field="weightSeg"]')||{}).value||'',
                 price:(row.querySelector('[data-field="price"]')||{}).value||'',
-                cargoType:(row.querySelector('[data-field="cargoType"]')||{}).value||'普货',
+                cargoType:_lclCargoTab,
                 currency:(row.querySelector('[data-field="currency"]')||{}).value||'USD',
                 billingMode:(row.querySelector('[data-field="billingMode"]')||{}).value||'单价',
                 billingUnit:(row.querySelector('[data-field="billingUnit"]')||{}).value||'KGS'
             };
-        });
+        }));
     }else if(horizontal){
         const weightInputs=Array.from(horizontal.querySelectorAll('thead [data-horizontal-weight-seg]'));
         const segments=weightInputs.map(function(input){return input.value||'';});
         const nextRows=[];
         Array.from(horizontal.querySelectorAll('tbody tr[data-horizontal-row]')).forEach(function(row){
             const groupId=row.dataset.groupId||nextLclWeightPriceGroupId();
-            const cargoType=(row.querySelector('[data-horizontal-cargo-type]')||{}).value||'普货';
+            const cargoType=_lclCargoTab;
             const currency=(row.querySelector('[data-horizontal-currency]')||{}).value||'USD';
             const billingMode=(row.querySelector('[data-horizontal-billing-mode]')||{}).value||'单价';
             const billingUnit=(row.querySelector('[data-horizontal-billing-unit]')||{}).value||'KGS';
@@ -273,20 +285,21 @@ function captureLclWeightPriceRows(){
                 nextRows.push({groupId:groupId,weightSeg:seg,price:(prices[i]||{}).value||'',cargoType:cargoType,currency:currency,billingMode:billingMode,billingUnit:billingUnit});
             });
         });
-        _lclWeightPriceRows=nextRows;
+        mergeLclTabRows(nextRows);
     }
-    if(_lclWeightPriceRows.length===0)_lclWeightPriceRows=[defaultLclWeightPriceRow()];
+    if(_lclWeightPriceRows.length===0)_lclWeightPriceRows=[defaultLclWeightPriceRow({cargoType:_lclCargoTab})];
 }
 
 function renderLclWeightPriceTable(mode){
     mode=mode||_lclWeightPriceMode;
-    const rows=_lclWeightPriceRows.length?_lclWeightPriceRows:[{weightSeg:'0-1',price:'1',cargoType:'普货',billingMode:'单价'}];
+    const tabRows=lclTabRows();
+    const rows=tabRows.length?tabRows:[{weightSeg:'',price:'',cargoType:_lclCargoTab,billingMode:'单价'}];
     let html='';
     if(mode==='horizontal'){
         const matrix=getLclHorizontalModel();
         html+='<div class="overflow-auto max-h-[360px]" id="lcl-weight-price-horizontal"><table class="w-max min-w-full text-xs border-collapse">';
         html+='<thead><tr class="bg-[#EFF6FF] text-text-secondary">';
-        ['货物类型','计费方式'].forEach(function(hd){html+='<th rowspan="2" class="text-left px-3 py-2 border border-surface-200 min-w-[110px] bg-[#EFF6FF]">'+tr(hd)+'</th>';});
+        ['计费方式'].forEach(function(hd){html+='<th rowspan="2" class="text-left px-3 py-2 border border-surface-200 min-w-[110px] bg-[#EFF6FF]">'+tr(hd)+'</th>';});
         html+='<th colspan="'+Math.max(matrix.segments.length,1)+'" class="text-left px-3 py-2 border border-surface-200">'+tr('重量段')+'</th>';
         html+='<th rowspan="2" class="sticky right-0 z-20 text-center px-3 py-2 border border-surface-200 min-w-[96px] bg-[#EFF6FF] shadow-[-6px_0_8px_-8px_rgba(15,23,42,.45)]">'+tr('操作')+'</th></tr>';
         html+='<tr class="bg-[#EFF6FF] text-text-secondary">';
@@ -298,7 +311,6 @@ function renderLclWeightPriceTable(mode){
         html+='</tr></thead><tbody>';
         matrix.groups.forEach(function(group){
             html+='<tr data-horizontal-row data-group-id="'+esc(group.groupId)+'" class="hover:bg-primary-50/30">';
-            html+='<td class="border border-surface-200 bg-white"><select data-horizontal-cargo-type class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['普货','敏感货'],group.cargoType||'普货')+'</select></td>';
             html+='<td class="border border-surface-200 bg-white"><select data-horizontal-billing-mode class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['单价','总价'],group.billingMode||'单价')+'</select></td>';
             matrix.segments.forEach(function(seg){
                 html+='<td class="min-w-[128px] border border-surface-200 bg-white">'+lclExcelInput(group.prices[seg]||'','text-right').replace('data-excel-cell','data-excel-cell data-horizontal-price')+'</td>';
@@ -309,10 +321,9 @@ function renderLclWeightPriceTable(mode){
         html+='</tbody></table></div>';
     }else{
         html+='<div class="overflow-auto max-h-[360px]" id="lcl-weight-price-vertical"><table class="w-full min-w-[760px] text-xs border-collapse">';
-        html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary"><th class="text-left px-3 py-2 border border-surface-200 min-w-[120px]">'+tr('货物类型')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('重量段')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('单价/总价')+'</th><th class="text-left px-3 py-2 border border-surface-200">'+tr('计费方式')+'</th><th class="text-center px-3 py-2 border border-surface-200">'+tr('操作')+'</th></tr></thead><tbody>';
+        html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary"><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('重量段')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('单价/总价')+'</th><th class="text-left px-3 py-2 border border-surface-200">'+tr('计费方式')+'</th><th class="text-center px-3 py-2 border border-surface-200">'+tr('操作')+'</th></tr></thead><tbody>';
         rows.forEach(function(row,idx){
             html+='<tr data-group-id="'+esc(row.groupId||nextLclWeightPriceGroupId())+'" class="hover:bg-primary-50/30">';
-            html+='<td class="border border-surface-200 bg-white"><select data-field="cargoType" class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['普货','敏感货'],row.cargoType||'普货')+'</select></td>';
             html+='<td class="border border-surface-200 bg-white">'+lclExcelInput(row.weightSeg)+'<input type="hidden" data-field="weightSeg" value="'+esc(row.weightSeg||'')+'"></td>';
             html+='<td class="border border-surface-200 bg-white">'+lclExcelInput(row.price,'text-right')+'<input type="hidden" data-field="price" value="'+esc(row.price||'')+'"></td>';
             html+='<td class="border border-surface-200 bg-white"><select data-field="billingMode" class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['单价','总价'],row.billingMode||'单价')+'</select></td>';
@@ -356,23 +367,46 @@ function addLclWeightPriceRow(){
     captureLclWeightPriceRows();
     if(_lclWeightPriceMode==='horizontal'){
         const matrix=getLclHorizontalModel();
-        const base=matrix.groups[0]||{cargoType:'普货',currency:'USD',billingMode:'单价',billingUnit:'KGS'};
+        const base=matrix.groups[0]||{currency:'USD',billingMode:'单价',billingUnit:'KGS'};
         const groupId=nextLclWeightPriceGroupId();
         matrix.segments.forEach(function(seg){
-            _lclWeightPriceRows.push(defaultLclWeightPriceRow({groupId:groupId,weightSeg:seg,price:'',cargoType:base.cargoType,currency:base.currency,billingMode:base.billingMode,billingUnit:base.billingUnit}));
+            _lclWeightPriceRows.push(defaultLclWeightPriceRow({groupId:groupId,weightSeg:seg,price:'',cargoType:_lclCargoTab,currency:base.currency,billingMode:base.billingMode,billingUnit:base.billingUnit}));
         });
     }else{
-        const base=_lclWeightPriceRows[0]||defaultLclWeightPriceRow();
-        _lclWeightPriceRows.push(defaultLclWeightPriceRow({groupId:base.groupId,weightSeg:'',price:'',cargoType:base.cargoType,currency:base.currency,billingMode:base.billingMode,billingUnit:base.billingUnit}));
+        const base=lclTabRows()[0]||defaultLclWeightPriceRow({cargoType:_lclCargoTab});
+        _lclWeightPriceRows.push(defaultLclWeightPriceRow({groupId:base.groupId,weightSeg:'',price:'',cargoType:_lclCargoTab,currency:base.currency,billingMode:base.billingMode,billingUnit:base.billingUnit}));
     }
     renderLclWeightPriceWrap(_lclWeightPriceMode);
+}
+
+/* 切换货物类型插页（切换前先保存当前插页的编辑内容） */
+function switchLclCargoTab(tab){
+    syncVisibleLclExcelInputs();
+    captureLclWeightPriceRows();
+    _lclCargoTab=tab||'普货';
+    const bar=document.getElementById('lcl-cargo-tabs');
+    if(bar)bar.innerHTML=lclCargoTabsHtml();
+    renderLclWeightPriceWrap(_lclWeightPriceMode);
+}
+function lclCargoTabsHtml(){
+    return ['普货','敏感货'].map(function(t){
+        var on=_lclCargoTab===t;
+        var n=(_lclWeightPriceRows||[]).filter(function(r){return (r.cargoType||'普货')===t;}).length;
+        return '<button type="button" onclick="switchLclCargoTab(\''+t+'\')" class="'+(on?'px-3 py-2 text-sm font-semibold text-primary-600 border-b-2 border-primary-600':'px-3 py-2 text-sm font-medium text-text-secondary border-b-2 border-transparent hover:text-primary-600')+' cursor-pointer">'+tr(t)+'（'+n+'）</button>';
+    }).join('');
 }
 
 function removeLclWeightPriceRow(idx){
     syncVisibleLclExcelInputs();
     captureLclWeightPriceRows();
-    _lclWeightPriceRows.splice(idx,1);
-    if(_lclWeightPriceRows.length===0)_lclWeightPriceRows.push(defaultLclWeightPriceRow());
+    /* idx 是当前插页内的序号，需换算到全量数组 */
+    const tabRows=lclTabRows();
+    const target=tabRows[idx];
+    if(target){
+        const pos=_lclWeightPriceRows.indexOf(target);
+        if(pos>=0)_lclWeightPriceRows.splice(pos,1);
+    }
+    if(_lclWeightPriceRows.length===0)_lclWeightPriceRows.push(defaultLclWeightPriceRow({cargoType:_lclCargoTab}));
     renderLclWeightPriceWrap(_lclWeightPriceMode);
 }
 

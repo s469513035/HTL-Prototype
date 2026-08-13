@@ -245,7 +245,7 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     html+='<th class="px-2 py-2 text-center text-xs font-semibold text-text-secondary">'+tr('操作')+'</th>';
     html+='</tr></thead><tbody id="weight-rule-tbody">';
     html+=weightRuleRowHtml((editCustomers||'').split(',')[0]||'全部客户');
-    html+=weightRuleRowHtml('指定客户','总重量>50','MAX(实重,材积重)','1','2','四舍五入');
+    html+=weightRuleRowHtml('指定客户','总重量>50','体积重量','1','2','四舍五入');
     html+='</tbody></table></div></div>';
     html+='</div>';
     bodyEl.innerHTML=html;
@@ -256,14 +256,14 @@ function openProductManageModal(mode,id,rowIdx,rowData){
 function weightRuleRowHtml(customer,conditionExpr,weightExpr,pieceMin,ticketMin,roundType){
     customer=customer||'全部客户';
     conditionExpr=conditionExpr||'总重量>100';
-    weightExpr=weightExpr||'MAX(实重,材积重)';
+    weightExpr=weightExpr||'实际重量';
     pieceMin=pieceMin||'0.5';
     ticketMin=ticketMin||'1';
     roundType=roundType||'进一法';
     return '<tr class="hover:bg-surface-50">'+
         '<td class="px-2 py-1 min-w-[130px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['全部客户','指定客户','鑫达贸易','远洋物流','速达货运','蓝海跨境','华运达国际'],customer)+'</select></td>'+
         '<td class="px-2 py-1 min-w-[170px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(conditionExpr)+'"></td>'+
-        '<td class="px-2 py-1 min-w-[180px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(weightExpr)+'"></td>'+
+        '<td class="px-2 py-1 min-w-[180px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['实际重量','预报重量','体积重量'],weightExpr)+'</select></td>'+
         '<td class="px-2 py-1 min-w-[110px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(pieceMin)+'"></td>'+
         '<td class="px-2 py-1 min-w-[110px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(ticketMin)+'"></td>'+
         '<td class="px-2 py-1 min-w-[120px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['进一法','四舍五入','取整'],roundType)+'</select></td>'+

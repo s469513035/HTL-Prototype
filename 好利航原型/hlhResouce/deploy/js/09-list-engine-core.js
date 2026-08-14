@@ -919,6 +919,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='pickupEdit')click='openSelectedPickupEdit(\''+id+'\')';
     else if(action.key==='pickupManualRelease')click='openOverseasPickupManualRelease(\''+id+'\')';
     else if(action.key==='invManualCount')click='openOverseasInventoryManualCount(\''+id+'\')';
+    else if(action.key==='approvalAudit')click='openSelectedApprovalAudit(\''+id+'\')';
     else if(id==='ow-outbound'&&action.type==='add')click='openOverseasOutboundCreate()';
     else if(action.type==='add')click='openCrudModal(\'add\',\''+id+'\',-1)';
     else if(action.type==='edit')click='openSelectedCrud(\'edit\',\''+id+'\')';
@@ -1542,6 +1543,13 @@ function getToolbarActions(id){
             {key:'enable',label:'启用/禁用'}
         ];
     }
+    if(id==='approval-mine'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'approvalAudit',label:'审核',variant:'primary'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
     if(id==='ow-inventory'||id==='wh-stock-check'){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
@@ -1559,8 +1567,8 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check'];
-var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl','biz-track-cfg','wh-stock-check'];
+var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine'];
+var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl','biz-track-cfg','wh-stock-check','approval-mine'];
 function listRowCanEdit(id){return _rowNoEditIds.indexOf(id)<0;}
 function listRowCanDelete(id){return _rowNoDeleteIds.indexOf(id)<0;}
 

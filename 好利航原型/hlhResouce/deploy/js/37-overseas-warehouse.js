@@ -188,7 +188,10 @@ var _owInvCountRecords={
         {qty:'11',by:'Okafor',time:'2026-07-12 11:05',note:'发现少 1 件，转异常隔离核查',file:'异常盘点-0712.pdf'}
     ]
 };
-/* ===== 需求3：海外仓库存详情（运单主信息 + 到库/出库 双插页明细） ===== */
+/* 库存类表格的仓库列名：海外仓库存=目的仓库，国内库存盘点=收货仓库 */
+function owInvWhName(headers){return (headers||[]).indexOf('收货仓库')>=0?'收货仓库':'目的仓库';}
+function owInvTitle(id,suffix){return tr((TC[id]&&TC[id].t)||'库存')+suffix;}
+/* ===== 需求3：库存详情（运单主信息 + 到库/出库 双插页明细），海外仓库存与国内库存盘点共用 ===== */
 function openOverseasInventoryDetail(id,rowIdx){
     var d=owRowData(id,rowIdx);var row=d.row,headers=(d.c.h||[]);
     if(!row){showToast(tr('未找到库存数据'));return;}
@@ -207,8 +210,9 @@ function openOverseasInventoryDetail(id,rowIdx){
         outRows+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(wb+'-'+p2(j+1))+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(loc)+'</td><td class="px-3 py-2 text-green-600 whitespace-nowrap">'+tr('已出库')+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(ops[j%ops.length])+'</td><td class="px-3 py-2 text-text-secondary whitespace-nowrap">2026-07-16 '+p2(10+j%6)+':'+p2((j*11)%60)+'</td></tr>';
     }
     var h='<div class="space-y-5">';
+    var whName=owInvWhName(headers);
     h+='<section>'+owSectionTitle('运单主信息')+owInfoGrid([
-        ['运单号',wb],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')],['品名',owCell(row,headers,'品名')],
+        ['运单号',wb],['客户',owCell(row,headers,'客户')],[whName,owCell(row,headers,whName)],['品名',owCell(row,headers,'品名')],
         ['货物类型',owCell(row,headers,'货物类型')],['货区货位',loc],['到库件数',String(arrived)],['已出件数',String(shipped)],
         ['在库件数',owCell(row,headers,'在库件数')],['盘点件数',owCell(row,headers,'盘点件数')],['入库时间',owCell(row,headers,'入库时间')],['库存状态',owCell(row,headers,'库存状态')]
     ])+'</section>';
@@ -219,7 +223,7 @@ function openOverseasInventoryDetail(id,rowIdx){
     h+='<div id="ow-inv-tab-arrival"><div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+['子单号','货区货位','到库状态','扫描操作人','到库时间'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>'+(arrRows||'<tr><td colspan="5" class="px-3 py-8 text-center text-text-muted">'+tr('暂无到库明细')+'</td></tr>')+'</tbody></table></div></div>';
     h+='<div id="ow-inv-tab-outbound" class="hidden"><div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+['子单号','货区货位','出库状态','扫描操作人','出库时间'].map(function(x){return '<th class="px-3 py-2 text-left font-medium whitespace-nowrap">'+tr(x)+'</th>';}).join('')+'</tr></thead><tbody>'+(outRows||'<tr><td colspan="5" class="px-3 py-8 text-center text-text-muted">'+tr('暂无出库明细')+'</td></tr>')+'</tbody></table></div></div>';
     h+='</div>';
-    owOpenModal(tr('海外仓库存详情')+' - '+wb,'78%',h);
+    owOpenModal(owInvTitle(id,tr('详情'))+' - '+wb,'78%',h);
 }
 function owSwitchInvTab(tab){
     var a=document.getElementById('ow-inv-tab-arrival'),o=document.getElementById('ow-inv-tab-outbound');
@@ -239,7 +243,7 @@ function openOverseasInventoryManualCount(id){
     var inStock=owCell(row,headers,'在库件数');
     var h='<div class="space-y-5">';
     h+='<section>'+owSectionTitle('库存信息')+owInfoGrid([
-        ['运单号',wb],['客户',owCell(row,headers,'客户')],['目的仓库',owCell(row,headers,'目的仓库')],['货区货位',owCell(row,headers,'货区货位')],
+        ['运单号',wb],['客户',owCell(row,headers,'客户')],[owInvWhName(headers),owCell(row,headers,owInvWhName(headers))],['货区货位',owCell(row,headers,'货区货位')],
         ['到库件数',owCell(row,headers,'到库件数')],['已出件数',owCell(row,headers,'已出件数')],['在库件数',inStock],['当前盘点件数',owCell(row,headers,'盘点件数')]
     ])+'</section>';
     h+='<section>'+owSectionTitle('手动盘点');

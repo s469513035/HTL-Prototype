@@ -49,6 +49,7 @@ const menuData=[
 {id:'wh-pack-rule',label:'配舱规则',page:'wh-domestic',tab:'wh-pack-rule'},
 {id:'wh-final-alloc',label:'配舱计划',page:'wh-domestic',tab:'wh-final-alloc'},
 {id:'wh-cargo-search',label:'查货管理',page:'wh-domestic',tab:'wh-cargo-search'},
+{id:'wh-stock-check',label:'国内库存盘点',page:'wh-domestic',tab:'wh-stock-check'},
 {id:'wh-sort-bag',label:'分拣装袋管理',page:'wh-domestic',tab:'wh-sort-bag'},
 {id:'wh-replenish-drop',label:'补货落货管理',page:'wh-domestic',tab:'wh-replenish-drop'},
 {id:'wh-pallet-info',label:'托盘信息查询',page:'wh-domestic',tab:'wh-pallet-info'},

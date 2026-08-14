@@ -1560,7 +1560,7 @@ function getToolbarActions(id){
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
 var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag'];
-var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl'];
+var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl','biz-track-cfg'];
 function listRowCanEdit(id){return _rowNoEditIds.indexOf(id)<0;}
 function listRowCanDelete(id){return _rowNoDeleteIds.indexOf(id)<0;}
 

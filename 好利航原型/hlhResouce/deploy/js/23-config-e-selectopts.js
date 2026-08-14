@@ -263,7 +263,7 @@ function weightRuleRowHtml(customer,conditionExpr,weightExpr,pieceMin,ticketMin,
     return '<tr class="hover:bg-surface-50">'+
         '<td class="px-2 py-1 min-w-[130px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['全部客户','指定客户','鑫达贸易','远洋物流','速达货运','蓝海跨境','华运达国际'],customer)+'</select></td>'+
         '<td class="px-2 py-1 min-w-[170px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(conditionExpr)+'"></td>'+
-        '<td class="px-2 py-1 min-w-[180px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['实际重量','预报重量','体积重量'],weightExpr)+'</select></td>'+
+        '<td class="px-2 py-1 min-w-[180px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['实际重量','体积重量','MAX(实际重量，体积重量)'],weightExpr)+'</select></td>'+
         '<td class="px-2 py-1 min-w-[110px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(pieceMin)+'"></td>'+
         '<td class="px-2 py-1 min-w-[110px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(ticketMin)+'"></td>'+
         '<td class="px-2 py-1 min-w-[120px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['进一法','四舍五入','取整'],roundType)+'</select></td>'+

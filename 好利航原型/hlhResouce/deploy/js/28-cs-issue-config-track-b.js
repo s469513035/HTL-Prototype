@@ -139,6 +139,33 @@ function openCsIssueAddModal(id){
     document.getElementById('crud-modal').classList.add('show');
 }
 
+/* 查看 Modal（参照反馈弹窗：问题记录时间轴 + 基本信息，只读无回复框） */
+function openCsIssueViewModal(id,rowIdx){
+    const info=_csRowOf(id,rowIdx);
+    const wbNo=info.get('运单号');
+    const headerInfo=[[tr('运单号'),wbNo],[tr('问题类型'),info.get('问题类型名称')],[tr('客户名称'),info.get('客户名称')],[tr('销售产品'),info.get('销售产品')]];
+    const records=csIssueRecordsOf(wbNo,info.get('问题类型名称'),info.get('最新响应时间'),info.get('最新响应内容'));
+    let h='<div class="space-y-5">';
+    h+='<div><div class="text-sm font-semibold text-text-primary mb-3 pl-2 border-l-3 border-primary-500">'+tr('问题记录')+'</div>';
+    h+=csIssueTimelineHtml(records,headerInfo);
+    h+='</div>';
+    h+='<div><div class="text-sm font-semibold text-text-primary mb-3 pl-2 border-l-3 border-primary-500">'+tr('基本信息')+'</div>';
+    h+='<div class="rounded-xl border border-surface-200 bg-white p-4"><div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 text-sm">';
+    [['运单号',wbNo],['问题类型',info.get('问题类型名称')],['问题件状态',info.get('问题件状态')],
+     ['客户名称',info.get('客户名称')],['销售产品',info.get('销售产品')],['登记人',info.get('登记人')],
+     ['登记时间',info.get('登记时间')],['最新响应时间',info.get('最新响应时间')],['最新响应内容',info.get('最新响应内容')]
+    ].forEach(function(p){
+        h+='<div class="min-w-0"><span class="text-text-secondary">'+tr(p[0])+'：</span><span class="text-text-primary break-all">'+esc(p[1]||'-')+'</span></div>';
+    });
+    h+='</div></div></div></div>';
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=tr('问题件详情');
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
 /* 反馈/放行 Modal （4 种模式合一） */
 function openCsIssueFeedbackModal(id,mode){
     const indices=getSelectedRowIndices();

@@ -3,7 +3,7 @@ function generateTrackMaintainPage(id){
     let h='<div class="h-full flex overflow-hidden bg-surface-50">';
     h+='<div class="w-80 flex-shrink-0 flex flex-col border-r border-surface-200 bg-white">';
     h+='<div class="flex items-center gap-4 px-4 pt-3 border-b border-surface-200">';
-    [['waybill','运单号'],['master','主单号'],['provider','服务商主单号']].forEach(function(t){
+    [['waybill','运单号'],['bl','提单号']].forEach(function(t){
         const on=_trackMaintainTab===t[0];
         h+='<button type="button" data-tm-tab="'+t[0]+'" onclick="switchTrackMaintainTab(\''+t[0]+'\')" class="'+(on?'pb-2 -mb-px border-b-2 border-primary-500 text-primary-600 font-medium':'pb-2 -mb-px border-b-2 border-transparent text-text-secondary hover:text-primary-600')+' text-sm cursor-pointer whitespace-nowrap">'+tr(t[1])+'</button>';
     });

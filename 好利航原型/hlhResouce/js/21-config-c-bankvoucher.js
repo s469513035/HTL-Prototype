@@ -306,6 +306,15 @@ function openVoucherRemarkModal(row,id){
     document.getElementById('crud-modal').classList.add('show');
 }
 
+/* 新增/修改凭证：金额(本位币) = 凭证金额 × 汇率（只读自动计算） */
+function voucherModalCalcBase(){
+    var a=document.getElementById('bv-amount'),r=document.getElementById('bv-rate'),o=document.getElementById('bv-base-amount');
+    if(!o)return;
+    var amt=parseFloat(String((a&&a.value)||'').replace(/,/g,''));
+    var rate=parseFloat(String((r&&r.value)||'').replace(/,/g,''));
+    if(isNaN(amt)||isNaN(rate)){o.value='';return;}
+    o.value=(amt*rate).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
 function openBankVoucherModal(mode,id,rowIdx,rowData){
     const L=_lang[_currentLang];
     const titleEl=document.getElementById('crud-modal-title');
@@ -346,11 +355,13 @@ function openBankVoucherModal(mode,id,rowIdx,rowData){
         html+='<div>'+lbl('认领类型',false)+'<select id="voucher-claim-type" onchange="onVoucherClaimTypeChange(this)" class="'+inputCls+'">'+['客户','服务商'].map(function(o){return '<option'+(claimTypeVal===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
         html+='<div id="voucher-claim-target-wrap">'+claimTargetHtml+'</div>';
     }
-    html+='<div>'+lbl('凭证金额',true)+'<input type="number" required class="'+inputCls+'" value="'+esc(amount)+'" placeholder="'+esc(tr('请输入凭证金额'))+'"></div>';
+    html+='<div>'+lbl('凭证金额',true)+'<input id="bv-amount" type="number" required oninput="voucherModalCalcBase()" class="'+inputCls+'" value="'+esc(amount)+'" placeholder="'+esc(tr('请输入凭证金额'))+'"></div>';
     html+='<div>'+lbl('金额大写',false)+'<input type="text" readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" placeholder="'+esc(tr('自动生成'))+'"></div>';
     html+='<div>'+lbl('币别',true)+selHtml(['人民币','美元','欧元'],currency)+'</div>';
-    html+='<div>'+lbl('汇率',true)+'<input type="text" required class="'+inputCls+'" value="'+esc(rate)+'"></div>';
+    html+='<div>'+lbl('汇率',true)+'<input id="bv-rate" type="text" required oninput="voucherModalCalcBase()" class="'+inputCls+'" value="'+esc(rate)+'"></div>';
     html+='<div>'+lbl('本位币',true)+voucherBaseCurSelect(baseCur,inputCls)+'</div>';
+    /* 金额(本位币)：凭证金额 × 汇率，自动计算不可修改 */
+    html+='<div>'+lbl('金额(本位币)',false)+'<input id="bv-base-amount" type="text" readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary cursor-not-allowed" placeholder="'+esc(tr('自动计算'))+'"></div>';
     html+='<div>'+lbl('交易流水号',false)+'<input type="text" class="'+inputCls+'" value="'+esc(serial)+'" placeholder="'+esc(tr('请输入交易流水号'))+'"></div>';
     html+='<div>'+lbl('交易时间',true)+'<input type="datetime-local" class="'+inputCls+'" value="2026-07-20T14:36"></div>';
     html+='<div>'+lbl('我方银行账户',true)+'<select class="'+inputCls+'"><option value="">'+tr('请选择')+'</option>'+bankAccts.map(function(a){return '<option value="'+esc(a)+'"'+(ourAcct===a?' selected':'')+'>'+esc(bankAcctLabels[a]||a)+'</option>';}).join('')+'</select></div>';
@@ -371,6 +382,7 @@ function openBankVoucherModal(mode,id,rowIdx,rowData){
     ['序号','文件名称','文件类型','缩略图','文件大小(kb)','上传人','上传时间','操作'].forEach(function(c){html+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     html+='</tr></thead><tbody><tr><td colspan="8" class="py-8 text-center text-text-muted">'+tr('无数据')+'</td></tr></tbody></table></div>';
     bodyEl.innerHTML=html;
+    voucherModalCalcBase();   /* 打开时先按现有金额×汇率算一次 */
     const toast=isEdit?tr('保存成功'):tr('新增成功');
     footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+toast+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+(isEdit?tr('保存修改'):tr('确认提交'))+'</button>';
     document.getElementById('crud-modal').classList.add('show');

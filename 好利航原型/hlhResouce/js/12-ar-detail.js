@@ -17,15 +17,15 @@ var _arDetailSeed=[
 {wb:'H2604170009',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'派送费',amt:'111116666',cur:'人民币',rate:'1',rmb:'111116666',used:'0',unused:'111116666',st:'待核销',ftime:'2026-04-17 17:26:28',cyc:'出货月结',days:'1',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-04-17 17:26:35',cb:'HYD-开发者'}
 ];
 var _arCustomers=[
-{name:'蓝城电商公司',pending:'-100',out:'-100'},
-{name:'天地直客',pending:'-34373.58',out:'-40713.58'},
-{name:'星星玩具电商',pending:'1693.85',out:'3588.85'},
-{name:'梦幻直客客户',pending:'2460',out:'2615'}
+{name:'蓝城电商公司',code:'C10006',settle:'出货票结'},
+{name:'天地直客',code:'TDKH1',settle:'出货月结'},
+{name:'星星玩具电商',code:'XXWJ0',settle:'出货月结'},
+{name:'梦幻直客客户',code:'MHKH1',settle:'签收月结'}
 ];
 var _arSales=[
-{name:'天地销售',pending:'-27435.58',out:'-38510.58'},
-{name:'梦幻小业务',pending:'2460',out:'2615'},
-{name:'BTWOZCW',pending:'1693.85',out:'3588.85'}
+{name:'天地销售',code:'EMP-TD01',settle:'出货月结'},
+{name:'梦幻小业务',code:'EMP-MH02',settle:'签收月结'},
+{name:'BTWOZCW',code:'EMP-BT03',settle:'出货月结'}
 ];
 var _arDetailRows=_arDetailSeed.slice();
 var _arLeftTab='cust';
@@ -75,14 +75,14 @@ function arLeftListHtml(){
     var list=_arLeftTab==='sales'?_arSales:_arCustomers;
     var allOn=_arCustFilter==='';
     var h='<div onclick="filterArByCustomer(\'\')" class="px-4 py-3 border-b border-surface-100 cursor-pointer '+(allOn?'bg-amber-50 border-l-2 border-l-amber-400':'hover:bg-surface-50')+'">';
-    h+='<div class="text-sm font-medium text-text-primary mb-1">'+tr('全部')+' ('+_arDetailRows.length+')</div>';
-    h+=arCurrencyLines('');
+    h+='<div class="text-sm font-medium text-text-primary">'+tr('全部')+' ('+_arDetailRows.length+')</div>';
     h+='</div>';
+    /* 展示 代码 / 结算模式（不再统计待核销、待出账） */
     list.forEach(function(c){
         var on=_arCustFilter===c.name;
         h+='<div onclick="filterArByCustomer(\''+esc(c.name)+'\')" class="px-4 py-3 border-b border-surface-100 cursor-pointer '+(on?'bg-amber-50 border-l-2 border-l-amber-400':'hover:bg-surface-50')+'">';
         h+='<div class="text-sm font-medium text-text-primary mb-1">'+esc(c.name)+'</div>';
-        h+=arCurrencyLines(c.name);
+        h+='<div class="text-xs text-text-muted leading-5"><span class="text-text-secondary">'+tr('代码')+'</span>：'+esc(c.code||'-')+'　<span class="text-text-secondary">'+tr('结算模式')+'</span>：'+esc(c.settle||'-')+'</div>';
         h+='</div>';
     });
     return h;
@@ -292,25 +292,32 @@ function openArGenBillModal(){
     document.getElementById('crud-modal').classList.add('show');
 }
 
-function openArDetailModal(){
+/* 调整：与新增同一弹窗，仅运单号不可修改 */
+function openArAdjustModal(){
+    var sel=arGetSelectedRows();
+    if(!sel.length){showToast(tr('请先勾选要调整的应收明细'));return;}
+    openArDetailModal(sel[0]);
+}
+function openArDetailModal(editRow){
     const L=_lang[_currentLang];
+    const isAdjust=!!editRow;
     const titleEl=document.getElementById('crud-modal-title');
     const bodyEl=document.getElementById('crud-modal-body');
     const footerEl=document.getElementById('crud-modal-footer');
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='72%';
-    titleEl.textContent=tr('新增');
+    titleEl.textContent=isAdjust?tr('调整'):tr('新增');
     const inputCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    const roCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary cursor-not-allowed';
     const subjects=['运费','报关费','应收附加费','客户理赔费','应收EMF申报费','仓储费','派送费'];
+    const selVal=function(opts,val){var s='<select class="'+inputCls+'">';opts.forEach(function(o){s+='<option'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});return s+'</select>';};
     function lbl(t,req){return '<label class="text-sm font-medium text-text-secondary mb-1.5 block">'+(req?'<span class="text-red-500">*</span> ':'')+tr(t)+'</label>';}
     function selHtml(opts,ph){var s='<select class="'+inputCls+'"><option value="">'+tr(ph)+'</option>';opts.forEach(function(o){s+='<option>'+esc(o)+'</option>';});return s+'</select>';}
     let html='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
-    html+='<div>'+lbl('运单号',true)+'<input type="text" required class="'+inputCls+'" placeholder="'+esc(tr('请输入运单号'))+'"></div>';
-    html+='<div>'+lbl('财务科目',true)+selHtml(subjects,'请选择财务科目')+'</div>';
-    html+='<div>'+lbl('单位',true)+selHtml(['票','件','实际重量','计费重量'],'请选择单位')+'</div>';
-    html+='<div>'+lbl('金额',true)+'<input type="number" required class="'+inputCls+'" placeholder="'+esc(tr('请输入金额'))+'"></div>';
-    html+='<div>'+lbl('类型',true)+selHtml(['追加','覆盖','总值'],'请选择类型')+'</div>';
-    html+='<div>'+lbl('币别',true)+selHtml(['人民币','美元','欧元'],'请选择币别')+'</div>';
+    html+='<div>'+lbl('运单号',true)+(isAdjust?'<input type="text" readonly value="'+esc(editRow.wb||'')+'" class="'+roCls+'">':'<input type="text" required class="'+inputCls+'" placeholder="'+esc(tr('请输入运单号'))+'">')+'</div>';
+    html+='<div>'+lbl('财务科目',true)+(isAdjust?selVal(subjects,editRow.fee):selHtml(subjects,'请选择财务科目'))+'</div>';
+    html+='<div>'+lbl('金额',true)+'<input type="number" required class="'+inputCls+'" value="'+esc(isAdjust?(editRow.amt||''):'')+'" placeholder="'+esc(tr('请输入金额'))+'"></div>';
+    html+='<div>'+lbl('币别',true)+(isAdjust?selVal(['人民币','美元','欧元'],editRow.cur):selHtml(['人民币','美元','欧元'],'请选择币别'))+'</div>';
     html+='<div>'+lbl('交易时间',true)+'<input type="datetime-local" class="'+inputCls+'" value="2026-07-20T17:49"></div>';
     html+='<div class="md:col-span-3">'+lbl('备注',false)+'<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'"></textarea></div>';
     html+='</div>';
@@ -341,6 +348,7 @@ function generateArDetailPage(id){
     h+='<div class="flex items-center gap-2">';
     h+='<button type="button" onclick="filterArByStatus(_arStatusFilter)" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';
     h+='<button type="button" onclick="openArDetailModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">+ '+tr('新增')+'</button>';
+    h+='<button type="button" onclick="openArAdjustModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('调整')+'</button>';
     h+='<button type="button" onclick="openArConfirmModal()" class="h-9 px-4 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 cursor-pointer">'+tr('费用确认')+'</button>';
     h+='<button type="button" onclick="arDetailAction(\'genBill\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('生成账单')+'</button>';
     h+='<button type="button" onclick="arDetailAction(\'void\')" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('作废')+'</button>';

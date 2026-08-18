@@ -60,6 +60,13 @@ function arBillDetailSelected(){
     openArBillDetail(bns[0]);
 }
 
+/* 下载账单：勾选后下载所选账单（原型以提示模拟） */
+function arBillDownloadSelected(){
+    var bns=arBillCheckedBns();
+    if(!bns.length){ showToast(tr('请先勾选要下载的账单')); return; }
+    var names=bns.slice(0,3).join('、')+(bns.length>3?('等 '+bns.length+' 个'):'');
+    showToast(tr('正在下载账单')+'：'+names);
+}
 function arBillVoidSelected(){
     var bns=arBillCheckedBns();
     if(!bns.length){ showToast(tr('请先勾选要作废的账单')); return; }
@@ -137,6 +144,7 @@ function generateArBillPage(id){
     h+='<div class="px-4 py-3 flex items-center gap-2 flex-wrap">';
     h+='<button onclick="renderArBillTable()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';
     h+='<button onclick="arBillDetailSelected()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('详情')+'</button>';
+    h+='<button onclick="arBillDownloadSelected()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('下载账单')+'</button>';
     h+='<button onclick="arBillVoidSelected()" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('作废')+'</button>';
     h+='</div></div>';
     h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto"><table class="w-full text-sm" style="min-width:1900px;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';

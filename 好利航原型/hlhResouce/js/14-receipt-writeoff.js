@@ -48,8 +48,6 @@ function generateReceiptPage(id){
     h+='<button onclick="renderReceiptVouchers()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';
     h+='<button onclick="receiptToolbarAction(\'add\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">+ '+tr('新增')+'</button>';
     h+='<button onclick="receiptToolbarAction(\'detail\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('详情')+'</button>';
-    h+='<button onclick="receiptToolbarAction(\'withdraw\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('凭证提现')+'</button>';
-    h+='<button onclick="receiptToolbarAction(\'offset\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('凭证对冲')+'</button>';
     h+='<button onclick="receiptToolbarAction(\'rate\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('修改汇率')+'</button>';
     h+='<button onclick="receiptToolbarAction(\'remark\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('修改财务备注')+'</button>';
     h+='</div>';
@@ -131,7 +129,8 @@ function receiptLeftPanelHtml(v){
     var leftPh=_receiptLeftTab==='withdraw'?'请输入提现凭证编号':(_receiptLeftTab==='offset'?'请输入对冲凭证编号':'请输入运单号');
     h+='<div class="flex items-center gap-2 mb-3 flex-wrap"><input id="receipt-left-wb" class="h-8 px-3 text-xs border border-surface-200 rounded-lg bg-surface-50" placeholder="'+tr(leftPh)+'"><button onclick="renderReceiptLeft()" class="h-8 px-3 text-xs font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>'+(_receiptLeftTab==='writeoff'?'<button onclick="receiptReverseWriteoff()" class="h-8 px-3 text-xs font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 cursor-pointer">'+tr('撤销核销')+'</button>':'')+'</div>';
     h+='<div class="flex items-center gap-4 border-b border-surface-200 mb-3 text-sm">';
-    [['writeoff','核销明细'],['withdraw','提现明细'],['offset','对冲明细']].forEach(function(t){
+    /* 已隐藏「提现明细」「对冲明细」插页（对应的凭证提现/对冲按钮同步隐藏） */
+    [['writeoff','核销明细']].forEach(function(t){
         var on=_receiptLeftTab===t[0];
         h+='<button onclick="switchReceiptLeftTab(\''+t[0]+'\')" class="'+(on?'pb-2 -mb-px border-b-2 border-primary-500 text-primary-600 font-medium':'pb-2 -mb-px border-b-2 border-transparent text-text-secondary hover:text-primary-600')+' cursor-pointer">'+tr(t[1])+'</button>';
     });

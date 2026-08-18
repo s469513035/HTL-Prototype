@@ -800,6 +800,16 @@ addPrototypeTable('wh-stock-check','国内库存盘点',
 );
 TC['wh-stock-check'].noExpand=true;
 TC['wh-stock-check'].noAutoAudit=true;
+/* 银行账户：开户人名后插入「使用网点」（分公司，可多选） */
+(function(){
+    var c=TC['fin-bank-account'];
+    if(!c||!c.h||c.h.indexOf('使用网点')>=0)return;
+    var i=c.h.indexOf('开户人名');
+    if(i<0)return;
+    var sites=['深圳总部业务客服部','广州业务分部','武汉分部,义乌分部','宁波分部','深圳总部业务客服部,广州业务分部'];
+    c.h.splice(i+1,0,'使用网点');
+    (c.d||[]).forEach(function(r,k){r.splice(i+1,0,sites[k%sites.length]);});
+})();
 TC['prod-price-lcl'].forceLocalHeader=true;
 /* 轨迹配置：去掉「对应系统业务」列；英文内容后插入「法语内容」「葡语内容」；按新的轨迹类型补充整套演示数据 */
 (function(){

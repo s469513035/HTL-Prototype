@@ -207,6 +207,47 @@ function openVoucherClaimModal(row){
     document.getElementById('crud-modal').classList.add('show');
 }
 
+/* 分公司名称列表（组织架构 perm-branch） */
+function getBranchNameOptions(){
+    var c=TC['perm-branch']||{};
+    var h=c.h||[];var i=h.indexOf('分公司名称');
+    var out=[];
+    (c.d||[]).forEach(function(r){var v=i>=0?r[i]:'';if(v&&out.indexOf(v)<0)out.push(v);});
+    return out.length?out:['深圳总部业务客服部','广州业务分部','武汉分部','义乌分部','宁波分部'];
+}
+/* 认领类型 -> 可选对象（客户 / 服务商），用于凭证认领联动 */
+function getVoucherClaimOptions(claimType){
+    var out=[];
+    if(claimType==='服务商'){
+        var p=TC['base-provider']||{};
+        var ph=p.h||[];var pi=ph.indexOf('服务商全称');
+        if(pi<0)pi=ph.indexOf('服务商名称');
+        (p.d||[]).forEach(function(r){var v=pi>=0?r[pi]:'';if(v&&out.indexOf(v)<0)out.push(v);});
+        if(!out.length)out=['上海某某报关有限公司','中远海运集运','马士基航运'];
+    }else{
+        var c=TC['crm-cust']||{};
+        var ch=c.h||[];var ci=ch.indexOf('客户全称');
+        if(ci<0)ci=ch.indexOf('客户简称');
+        (c.d||[]).forEach(function(r){var v=ci>=0?r[ci]:'';if(v&&out.indexOf(v)<0)out.push(v);});
+        if(!out.length)out=['深圳市华运达国际货运代理有限公司','广州远洋进出口贸易有限公司'];
+    }
+    return out;
+}
+/* 认领类型切换：重新加载「认领对象」下拉 */
+function onVoucherClaimTypeChange(sel){
+    var wrap=document.getElementById('voucher-claim-target-wrap');
+    if(!wrap)return;
+    var type=sel&&sel.value?sel.value:'客户';
+    var opts=getVoucherClaimOptions(type);
+    var lblTxt=(type==='服务商')?'服务商':'客户';
+    var inputCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    var h='<label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr(lblTxt)+'</label>';
+    h+='<select id="voucher-claim-target" class="'+inputCls+'"><option value="">'+tr('请选择')+tr(lblTxt)+'</option>';
+    opts.forEach(function(o){h+='<option>'+esc(o)+'</option>';});
+    h+='</select>';
+    wrap.innerHTML=h;
+}
+
 /* 凭证列按表头名取值（银行凭证含「本位币」列，收款管理不含，列序不同） */
 function voucherVal(id,row,name){
     var h=(TC[id]&&TC[id].h)||[];
@@ -216,6 +257,14 @@ function voucherVal(id,row,name){
 var VOUCHER_BASE_CURRENCIES=['人民币','美元','欧元','港币'];
 function voucherBaseCurSelect(val,cls){
     return '<select class="'+(cls||'w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50')+'">'+VOUCHER_BASE_CURRENCIES.map(function(o){return '<option'+((val||'人民币')===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';
+}
+/* 修改汇率：本位币金额 = 原币金额 × 新汇率 */
+function voucherRateCalc(){
+    var a=document.getElementById('vr-src-amt'),r=document.getElementById('vr-rate'),o=document.getElementById('vr-base-amt');
+    if(!o)return;
+    var amt=parseFloat(String((a&&a.value)||'0').replace(/,/g,''))||0;
+    var rate=parseFloat((r&&r.value)||'0')||0;
+    o.value=(amt*rate).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 function openVoucherRateModal(row,id){
     const titleEl=document.getElementById('crud-modal-title');
@@ -227,14 +276,19 @@ function openVoucherRateModal(row,id){
     const rate=voucherVal(id,row,'汇率')||'1.0000';
     const srcCur=voucherVal(id,row,'币别')||'人民币';
     const baseCur=voucherVal(id,row,'本位币')||'人民币';
+    const srcAmt=voucherVal(id,row,'总金额(原币)')||'0';
     titleEl.textContent=tr('修改汇率');
     const roCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary';
+    const inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
     let rh='<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
     rh+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('原币别')+'</label><input type="text" readonly value="'+esc(srcCur)+'" class="'+roCls+'"></div>';
-    rh+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('本位币')+'</label><input type="text" readonly value="'+esc(baseCur)+'" class="'+roCls+'"></div>';
-    rh+='<div class="md:col-span-2"><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('新汇率')+'</label><input type="text" required class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(rate)+'"></div>';
-    rh+='</div><div class="mt-2 text-[11px] text-text-muted">'+tr('汇率为「原币别 → 本位币」的折算比率。')+'</div>';
+    rh+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('原币金额')+'</label><input id="vr-src-amt" type="text" readonly value="'+esc(srcAmt)+'" class="'+roCls+'"></div>';
+    rh+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('本位币币别')+'</label><select id="vr-base-cur" class="'+inCls+'">'+VOUCHER_BASE_CURRENCIES.map(function(o){return '<option'+(baseCur===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
+    rh+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('新汇率')+'</label><input id="vr-rate" type="number" step="0.0001" min="0" required oninput="voucherRateCalc()" class="'+inCls+'" value="'+esc(rate)+'"></div>';
+    rh+='<div class="md:col-span-2"><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('本位币金额')+'（'+tr('自动计算')+'）</label><input id="vr-base-amt" type="text" readonly class="'+roCls+'"></div>';
+    rh+='</div><div class="mt-2 text-[11px] text-text-muted">'+tr('本位币金额 = 原币金额 × 新汇率；汇率为「原币别 → 本位币」的折算比率。')+'</div>';
     bodyEl.innerHTML=rh;
+    voucherRateCalc();
     footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button><button onclick="closeCrudModal();showToast(\''+tr('汇率已修改')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
 }
@@ -281,11 +335,16 @@ function openBankVoucherModal(mode,id,rowIdx,rowData){
     html+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
     html+='<div>'+lbl('借贷标识',false)+'<div class="h-10 flex items-center gap-6 text-sm text-text-secondary"><label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="voucher-dc" value="支出"'+(dc==='支出'?' checked':'')+'><span>'+tr('支出')+'</span></label><label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="voucher-dc" value="收入"'+(dc!=='支出'?' checked':'')+'><span>'+tr('收入')+'</span></label></div></div>';
     html+='<div>'+lbl('交割方式',true)+selHtml(['现金','微信','支付宝','银行'],settle,'请选择')+'</div>';
-    if(id==='fin-ar-receipt'){
-        var arReceiptCustList=['上海云图供应链管理有限公司','幻想直客客户','深圳市腾讯','蓝色有限','天地直客','咖美智慧公司','星星玩具电商','梦幻直客客户'];
-        html+='<div>'+lbl('客户',true)+selHtml(arReceiptCustList,g('认领账户名称'),'请选择客户')+'</div>';
-    }else{
-        html+='<div>'+lbl('认领类型',false)+selHtml(['客户','服务商'],claimType,'请选择')+'</div>';
+    /* 认领类型 -> 联动加载对应的「客户 / 服务商」选择框 */
+    var claimTypeVal=claimType||'客户';
+    var claimTargetVal=g('认领账户名称');
+    var claimTargetLabel=(claimTypeVal==='服务商')?'服务商':'客户';
+    var claimTargetHtml='<label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr(claimTargetLabel)+'</label>'+
+        '<select id="voucher-claim-target" class="'+inputCls+'"><option value="">'+tr('请选择')+tr(claimTargetLabel)+'</option>'+
+        getVoucherClaimOptions(claimTypeVal).map(function(o){return '<option'+(claimTargetVal===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';
+    {
+        html+='<div>'+lbl('认领类型',false)+'<select id="voucher-claim-type" onchange="onVoucherClaimTypeChange(this)" class="'+inputCls+'">'+['客户','服务商'].map(function(o){return '<option'+(claimTypeVal===o?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
+        html+='<div id="voucher-claim-target-wrap">'+claimTargetHtml+'</div>';
     }
     html+='<div>'+lbl('凭证金额',true)+'<input type="number" required class="'+inputCls+'" value="'+esc(amount)+'" placeholder="'+esc(tr('请输入凭证金额'))+'"></div>';
     html+='<div>'+lbl('金额大写',false)+'<input type="text" readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" placeholder="'+esc(tr('自动生成'))+'"></div>';
@@ -468,13 +527,19 @@ function openBankAccountModal(mode,id,rowIdx,rowData){
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='64%';
     const isEdit=mode==='edit';
-    const g=function(i){return rowData?(rowData[i]||''):'';};
-    const acctNo=g(0),name=g(1),nameEn=g(2),bank=g(3),bankEn=g(4);
-    const currency=rowData?(rowData[5]||'人民币'):'人民币';
-    const branch=g(6),holder=g(7);
-    const balance=rowData?(rowData[8]||'0'):'0';
-    const status=rowData?(rowData[9]||'启用'):'启用';
-    const remark=g(10);
+    /* 按表头名取值：已插入「使用网点」列，列序会变，不能写死下标 */
+    const g=function(n,dft){
+        var h=(TC[id]&&TC[id].h)||[];var k=h.indexOf(n);
+        var v=(k>=0&&rowData)?(rowData[k]==null?'':String(rowData[k])):'';
+        return v===''?(dft||''):v;
+    };
+    const acctNo=g('账户号码'),name=g('账户名称'),nameEn=g('账户名称(英文)'),bank=g('开户银行'),bankEn=g('开户银行(英文)');
+    const currency=g('币别','人民币');
+    const branch=g('分行支行'),holder=g('开户人名');
+    const sites=g('使用网点');
+    const balance=g('账户余额','0');
+    const status=g('启用状态','启用');
+    const remark=g('备注');
     const currencies=['人民币','美元','欧元'];
     titleEl.textContent=isEdit?tr('编辑'):tr('新增');
     const inputCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
@@ -490,6 +555,8 @@ function openBankAccountModal(mode,id,rowIdx,rowData){
     html+='<div>'+lbl('币别',true)+selHtml(currencies,currency)+'</div>';
     html+='<div>'+lbl('分行支行',false)+txt(branch,'请输入分行支行',false)+'</div>';
     html+='<div>'+lbl('开户人名',false)+txt(holder,'请输入开户人名',false)+'</div>';
+    /* 使用网点：加载分公司数据，可多选 */
+    html+='<div>'+checkedDropdownFieldHtml('使用网点',getBranchNameOptions(),sites)+'</div>';
     html+='<div>'+lbl('账户余额',false)+'<input type="number" class="'+inputCls+'" value="'+esc(balance)+'"></div>';
     html+='<div>'+lbl('启用状态',true)+selHtml(['启用','禁用'],status)+'</div>';
     html+='<div class="md:col-span-2">'+lbl('备注',false)+'<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'">'+esc(remark)+'</textarea></div>';

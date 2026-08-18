@@ -536,7 +536,6 @@ function openBankAccountModal(mode,id,rowIdx,rowData){
     const acctNo=g('账户号码'),name=g('账户名称'),nameEn=g('账户名称(英文)'),bank=g('开户银行'),bankEn=g('开户银行(英文)');
     const currency=g('币别','人民币');
     const branch=g('分行支行'),holder=g('开户人名');
-    const sites=g('使用网点');
     const balance=g('账户余额','0');
     const status=g('启用状态','启用');
     const remark=g('备注');
@@ -555,8 +554,6 @@ function openBankAccountModal(mode,id,rowIdx,rowData){
     html+='<div>'+lbl('币别',true)+selHtml(currencies,currency)+'</div>';
     html+='<div>'+lbl('分行支行',false)+txt(branch,'请输入分行支行',false)+'</div>';
     html+='<div>'+lbl('开户人名',false)+txt(holder,'请输入开户人名',false)+'</div>';
-    /* 使用网点：加载分公司数据，可多选 */
-    html+='<div>'+checkedDropdownFieldHtml('使用网点',getBranchNameOptions(),sites)+'</div>';
     html+='<div>'+lbl('账户余额',false)+'<input type="number" class="'+inputCls+'" value="'+esc(balance)+'"></div>';
     html+='<div>'+lbl('启用状态',true)+selHtml(['启用','禁用'],status)+'</div>';
     html+='<div class="md:col-span-2">'+lbl('备注',false)+'<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'">'+esc(remark)+'</textarea></div>';

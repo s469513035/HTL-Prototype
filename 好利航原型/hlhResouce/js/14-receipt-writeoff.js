@@ -53,7 +53,7 @@ function generateReceiptPage(id){
     h+='</div>';
     h+='<div class="px-4 pb-3 overflow-auto" style="max-height:260px"><table class="w-full text-sm" style="min-width:1400px"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     h+='<th class="px-3 py-2.5 text-left font-semibold" style="width:40px">#</th><th class="px-3 py-2.5" style="width:40px"></th>';
-    ['凭证编号','凭证状态','凭证借贷标识','客户名称','总金额(原币)','币别','汇率','本位币','总金额(本位币)','已使用金额(本位币)','未使用金额(本位币)','我方账户'].forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    ['凭证编号','凭证状态','凭证借贷标识','客户名称','金额(原币)','币别','汇率','本位币','金额(本位币)','已使用金额(本位币)','未使用金额(本位币)','我方账户'].forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody id="receipt-voucher-tbody">'+receiptVoucherRows()+'</tbody></table></div>';
     h+='</div>';
     h+='<div id="receipt-detail" class="flex-1 overflow-auto p-4 min-w-0">'+receiptDetailHtml()+'</div>';
@@ -68,7 +68,7 @@ function receiptVoucherRows(){
     return d.map(function(r,i){
         var on=_receiptSelIdx===i;
         var used=(parseFloat(rv(r,'已使用金额(本位币)'))||0)+receiptUsedAmount(r[0]);
-        var unused=(parseFloat(rv(r,'总金额(本位币)'))||0)-used;
+        var unused=(parseFloat(rv(r,'金额(本位币)'))||0)-used;
         return '<tr class="border-t border-surface-100 cursor-pointer '+(on?'bg-primary-50':'hover:bg-primary-50/30')+'" onclick="selectReceiptVoucher('+i+')">'+
             '<td class="px-3 py-2.5 text-text-muted">'+(i+1)+'</td>'+
             '<td class="px-3 py-2.5"><input type="radio" name="receipt-v"'+(on?' checked':'')+' onclick="selectReceiptVoucher('+i+')"></td>'+
@@ -76,11 +76,11 @@ function receiptVoucherRows(){
             '<td class="px-3 py-2.5 whitespace-nowrap">'+statusBadge(rv(r,'凭证状态'))+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'凭证借贷标识'))+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'认领账户名称'))+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(rv(r,'总金额(原币)'))+'</td>'+
+            '<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(rv(r,'金额(原币)'))+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'币别'))+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'汇率'))+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'本位币'))+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(rv(r,'总金额(本位币)'))+'</td>'+
+            '<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(rv(r,'金额(本位币)'))+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap text-orange-600">'+receiptFmt(used)+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap text-green-600">'+receiptFmt(unused)+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'我方账户'))+'</td></tr>';
@@ -109,14 +109,14 @@ function receiptToolbarAction(kind){
 function receiptDetailHtml(){
     if(_receiptSelIdx<0||!TC['fin-ar-receipt'].d[_receiptSelIdx])return '<div class="h-full flex items-center justify-center text-text-muted text-sm">'+tr('请选择上方凭证以进行核销 / 反核销操作')+'</div>';
     var v=TC['fin-ar-receipt'].d[_receiptSelIdx];
-    var totalRmb=parseFloat(voucherVal('fin-ar-receipt',v,'总金额(本位币)'))||0;
+    var totalRmb=parseFloat(voucherVal('fin-ar-receipt',v,'金额(本位币)'))||0;
     var used=(parseFloat(voucherVal('fin-ar-receipt',v,'已使用金额(本位币)'))||0)+receiptUsedAmount(v[0]);
     var unused=totalRmb-used;
     var h='<div class="flex flex-wrap items-center gap-x-8 gap-y-2 mb-4 text-sm">';
     h+='<span><span class="text-text-secondary">'+tr('凭证编号')+'：</span><span class="font-semibold text-primary-700">'+esc(v[0])+'</span></span>';
     h+='<span><span class="text-text-secondary">'+tr('客户名称')+'：</span><span class="font-medium text-text-primary">'+esc(v[5])+'</span></span>';
     h+='<span><span class="text-text-secondary">'+tr('凭证状态')+'：</span>'+statusBadge(v[1])+'</span>';
-    h+='<span><span class="text-text-secondary">'+tr('总金额(本位币)')+'：</span><span class="font-semibold text-blue-700">'+receiptFmt(totalRmb)+'</span></span>';
+    h+='<span><span class="text-text-secondary">'+tr('金额(本位币)')+'：</span><span class="font-semibold text-blue-700">'+receiptFmt(totalRmb)+'</span></span>';
     h+='<span><span class="text-text-secondary">'+tr('已使用金额(本位币)')+'：</span><span class="font-semibold text-orange-600">'+receiptFmt(used)+'</span></span>';
     h+='<span><span class="text-text-secondary">'+tr('未使用金额(本位币)')+'：</span><span class="font-semibold text-green-600">'+receiptFmt(unused)+'</span></span>';
     h+='</div>';
@@ -222,7 +222,7 @@ function openReceiptWithdrawModal(v){
     var cur=voucherVal('fin-ar-receipt',v,'币别')||'人民币';
     var rate=voucherVal('fin-ar-receipt',v,'汇率')||'1.0000';
     var baseCur=voucherVal('fin-ar-receipt',v,'本位币')||'人民币';
-    var total=parseFloat(voucherVal('fin-ar-receipt',v,'总金额(本位币)'))||0;
+    var total=parseFloat(voucherVal('fin-ar-receipt',v,'金额(本位币)'))||0;
     var used=(parseFloat(voucherVal('fin-ar-receipt',v,'已使用金额(本位币)'))||0)+receiptUsedAmount(code);
     var remain=total-used;
     var bankAccts=(TC['fin-bank-account']&&TC['fin-bank-account'].d)?TC['fin-bank-account'].d:[];
@@ -261,7 +261,7 @@ function submitReceiptWithdraw(){
     if(isNaN(amt)||amt<=0){showToast(tr('请输入正确的凭证金额'));if(amtEl)amtEl.focus();return;}
     var rate=parseFloat((document.getElementById('rw-rate')||{}).value)||1;
     var rmb=amt*rate;
-    var total=parseFloat(voucherVal('fin-ar-receipt',v,'总金额(本位币)'))||0;
+    var total=parseFloat(voucherVal('fin-ar-receipt',v,'金额(本位币)'))||0;
     var used=(parseFloat(voucherVal('fin-ar-receipt',v,'已使用金额(本位币)'))||0)+receiptUsedAmount(code);
     var remain=total-used;
     if(rmb>remain+0.005){showToast(tr('提现金额不得超过剩余金额')+'（'+receiptFmt(remain)+'）');if(amtEl)amtEl.focus();return;}

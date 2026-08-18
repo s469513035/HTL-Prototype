@@ -861,9 +861,10 @@ TC['prod-inquiry-quote'].forceLocalHeader=true;
 ['fin-bank-voucher','fin-ar-receipt'].forEach(function(tid){
     var c=TC[tid];
     if(!c||!c.h)return;
-    ['总金额','已使用金额','未使用金额'].forEach(function(n){
-        var k=c.h.indexOf(n+'(人民币)');
-        if(k>=0)c.h[k]=n+'(本位币)';
+    /* 总金额(人民币) -> 金额(本位币)；其余金额列仅换币种口径 */
+    [['总金额','金额'],['已使用金额','已使用金额'],['未使用金额','未使用金额']].forEach(function(p){
+        var k=c.h.indexOf(p[0]+'(人民币)');
+        if(k>=0)c.h[k]=p[1]+'(本位币)';
     });
     var i=c.h.indexOf('汇率');
     if(i<0||c.h.indexOf('本位币')>=0)return;

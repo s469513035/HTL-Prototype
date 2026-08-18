@@ -276,7 +276,7 @@ function openVoucherRateModal(row,id){
     const rate=voucherVal(id,row,'汇率')||'1.0000';
     const srcCur=voucherVal(id,row,'币别')||'人民币';
     const baseCur=voucherVal(id,row,'本位币')||'人民币';
-    const srcAmt=voucherVal(id,row,'总金额(原币)')||'0';
+    const srcAmt=voucherVal(id,row,'金额(原币)')||'0';
     titleEl.textContent=tr('修改汇率');
     const roCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary';
     const inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
@@ -326,7 +326,7 @@ function openBankVoucherModal(mode,id,rowIdx,rowData){
     /* 按表头名取值：银行凭证含「本位币」列，列序与收款管理不同 */
     const g=function(name){return voucherVal(id,rowData,name);};
     const dc=g('凭证借贷标识')||'收入';
-    const settle=g('交割方式'),claimType=g('认领账户类型'),amount=g('总金额(原币)');
+    const settle=g('交割方式'),claimType=g('认领账户类型'),amount=g('金额(原币)');
     const currency=g('币别')||'人民币';
     const rate=g('汇率')||'1.0000';
     const baseCur=g('本位币')||'人民币';
@@ -411,11 +411,11 @@ function openBankVoucherDetailModal(id,idx,rowData){
     let html='<div class="mb-3 flex items-center gap-2"><span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-sm font-semibold text-text-primary">'+tr('凭证信息')+'</span></div>';
     html+='<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">';
     /* 银行凭证列表金额已改「本位币」口径；收款管理仍沿用人民币标签 */
-    var baseCur=(((TC[id]&&TC[id].h)||[]).indexOf('总金额(本位币)')>=0)?'本位币':'人民币';
+    var baseCur=(((TC[id]&&TC[id].h)||[]).indexOf('金额(本位币)')>=0)?'本位币':'人民币';
     var baseCurVal=gv('本位币')||'人民币';
-    html+=card('','green',[['凭证编号',g('凭证编号')],['凭证借贷标识',g('凭证借贷标识')],['总金额(原币)',g('总金额(原币)')],['币别',g('币别')],['汇率',g('汇率')]]);
-    /* 本位币显示在「总金额(本位币)」上方 */
-    html+=card('','blue',[['认领账户类型',g('认领账户类型')],['认领账户名称',g('认领账户名称')],['本位币',esc(baseCurVal)],['总金额('+baseCur+')',g('总金额('+baseCur+')')],['已使用金额('+baseCur+')',g('已使用金额('+baseCur+')')],['未使用金额('+baseCur+')',g('未使用金额('+baseCur+')')]]);
+    html+=card('','green',[['凭证编号',g('凭证编号')],['凭证借贷标识',g('凭证借贷标识')],['金额(原币)',g('金额(原币)')],['币别',g('币别')],['汇率',g('汇率')]]);
+    /* 本位币显示在「金额(本位币)」上方 */
+    html+=card('','blue',[['认领账户类型',g('认领账户类型')],['认领账户名称',g('认领账户名称')],['本位币',esc(baseCurVal)],['金额('+baseCur+')',g('金额('+baseCur+')')],['已使用金额('+baseCur+')',g('已使用金额('+baseCur+')')],['未使用金额('+baseCur+')',g('未使用金额('+baseCur+')')]]);
     html+=card('我方账户信息','yellow',[['账户号码',g('我方账户')],['账户名称',g('我方账户名称')],['账户开户行',ourBank?esc(ourBank):'—'],['费用时间',g('费用时间')]]);
     html+=card('对方账户信息','red',[['账户号码',g('对方账户')],['账户名称',g('对方账号名称')],['账号开户行',g('对方开户行')],['交易流水号',g('交易流水号')]]);
     html+='</div>';

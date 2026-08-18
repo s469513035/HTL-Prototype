@@ -527,7 +527,7 @@ function openBankAccountModal(mode,id,rowIdx,rowData){
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='64%';
     const isEdit=mode==='edit';
-    /* 按表头名取值：已插入「使用网点」列，列序会变，不能写死下标 */
+    /* 按表头名取值，避免后续增删列导致下标错位 */
     const g=function(n,dft){
         var h=(TC[id]&&TC[id].h)||[];var k=h.indexOf(n);
         var v=(k>=0&&rowData)?(rowData[k]==null?'':String(rowData[k])):'';

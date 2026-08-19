@@ -39,8 +39,7 @@ function generateReceiptPage(id){
     h+='<div class="px-4 pt-3 flex items-end gap-4 flex-wrap">';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('凭证编号')+'</label><input class="'+inputCls+'" placeholder="'+tr('凭证编号')+'"></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('认领客户')+'</label><input class="'+inputCls+'" placeholder="'+tr('认领客户')+'"></div>';
-    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('凭证状态')+'</label><select class="'+selCls+'"><option>'+tr('全部')+'</option><option>待抵扣</option><option>部分抵扣</option><option>全部抵扣</option><option>作废</option></select></div>';
-    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('借贷标识')+'</label><select class="'+selCls+'"><option>'+tr('全部')+'</option><option>收入</option><option>支出</option></select></div>';
+    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('凭证状态')+'</label><select class="'+selCls+'"><option>'+tr('全部')+'</option><option>待认领</option><option>待抵扣</option><option>部分抵扣</option><option>全部抵扣</option><option>作废</option></select></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('币别')+'</label><select class="'+selCls+'"><option>'+tr('全部')+'</option><option>人民币</option><option>美元</option><option>欧元</option></select></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('交易流水号')+'</label><input class="'+inputCls+'" placeholder="'+tr('交易流水号')+'"></div>';
     h+='</div>';
@@ -53,7 +52,7 @@ function generateReceiptPage(id){
     h+='</div>';
     h+='<div class="px-4 pb-3 overflow-auto" style="max-height:260px"><table class="w-full text-sm" style="min-width:1400px"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     h+='<th class="px-3 py-2.5 text-left font-semibold" style="width:40px">#</th><th class="px-3 py-2.5" style="width:40px"></th>';
-    ['凭证编号','凭证状态','凭证借贷标识','客户名称','金额(原币)','币别','汇率','本位币','金额(本位币)','已使用金额(本位币)','未使用金额(本位币)','我方账户'].forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    ['凭证编号','凭证状态','客户名称','金额(原币)','币别','汇率','本位币','金额(本位币)','已使用金额(本位币)','未使用金额(本位币)','我方账户'].forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody id="receipt-voucher-tbody">'+receiptVoucherRows()+'</tbody></table></div>';
     h+='</div>';
     h+='<div id="receipt-detail" class="flex-1 overflow-auto p-4 min-w-0">'+receiptDetailHtml()+'</div>';
@@ -63,7 +62,7 @@ function generateReceiptPage(id){
 
 function receiptVoucherRows(){
     var d=(TC['fin-ar-receipt']&&TC['fin-ar-receipt'].d)?TC['fin-ar-receipt'].d:[];
-    if(!d.length)return '<tr><td colspan="14" class="py-8 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    if(!d.length)return '<tr><td colspan="13" class="py-8 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
     var rv=function(r,name){return voucherVal('fin-ar-receipt',r,name);};
     return d.map(function(r,i){
         var on=_receiptSelIdx===i;
@@ -74,7 +73,6 @@ function receiptVoucherRows(){
             '<td class="px-3 py-2.5"><input type="radio" name="receipt-v"'+(on?' checked':'')+' onclick="selectReceiptVoucher('+i+')"></td>'+
             '<td class="px-3 py-2.5 font-medium text-primary-700 whitespace-nowrap">'+esc(rv(r,'凭证编号'))+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap">'+statusBadge(rv(r,'凭证状态'))+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'凭证借贷标识'))+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'认领账户名称'))+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(rv(r,'金额(原币)'))+'</td>'+
             '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'币别'))+'</td>'+

@@ -1,7 +1,7 @@
 function statusBadge(val){
     const g=['启用','已通过','已入仓','已确认','已完成','已放行','已同步','已对齐','已生效','已出库','已作废','已结算','已开具','已登记','已补录','已处理','已验证','已付款','已开票','正常','运行中','已领取','已复核','在途','全部放行','已解决','全部抵扣','正式','已启用'];
     const r=['停用','禁用','已驳回','异常','已销毁','已过期','冻结','熔断','未通过','作废','已禁用'];
-    const a=['待审核','待审批','待入仓','待定','待处理','待确认','待补录','待领取','待到港','待预约','待出库','待开票','待同步','有差异','告警中','告警','维护中','待抢单','待结算','预警','待通知','已登记','待抵扣','部分抵扣','草稿'];
+    const a=['待审核','待审批','待入仓','待定','待处理','待确认','待补录','待领取','待到港','待预约','待出库','待开票','待同步','有差异','告警中','告警','维护中','待抢单','待结算','预警','待通知','已登记','待认领','待抵扣','部分抵扣','草稿'];
     const label=_statusLangMap[val]&&_lang[_currentLang][_statusLangMap[val]]?_lang[_currentLang][_statusLangMap[val]]:tr(val);
     if(g.includes(val))return '<span class="badge bg-green-50 text-green-700">'+label+'</span>';
     if(r.includes(val))return '<span class="badge bg-red-50 text-red-700">'+label+'</span>';
@@ -922,6 +922,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='approvalAudit')click='openSelectedApprovalAudit(\''+id+'\')';
     else if(id==='ow-outbound'&&action.type==='add')click='openOverseasOutboundCreate()';
     else if(action.type==='add')click='openCrudModal(\'add\',\''+id+'\',-1)';
+    else if((id==='fin-bank-voucher'||id==='fin-ar-receipt')&&action.type==='edit')click='openSelectedVoucherEdit(\''+id+'\')';
     else if(action.type==='edit')click='openSelectedCrud(\'edit\',\''+id+'\')';
     else if(action.type==='view')click='openSelectedCrud(\'view\',\''+id+'\')';
     else if(action.key==='search')click='runListSearch(\''+id+'\')';

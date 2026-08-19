@@ -866,6 +866,12 @@ TC['prod-inquiry-quote'].forceLocalHeader=true;
         var k=c.h.indexOf(p[0]+'(人民币)');
         if(k>=0)c.h[k]=p[1]+'(本位币)';
     });
+    /* 去掉「凭证借贷标识」列（表头与每行同步移除，保持列序对齐） */
+    var dc=c.h.indexOf('凭证借贷标识');
+    if(dc>=0){
+        c.h.splice(dc,1);
+        (c.d||[]).forEach(function(r){r.splice(dc,1);});
+    }
     var i=c.h.indexOf('汇率');
     if(i<0||c.h.indexOf('本位币')>=0)return;
     c.h.splice(i+1,0,'本位币');

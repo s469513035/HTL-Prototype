@@ -160,13 +160,28 @@ function switchApprovalMemberTab(btn){
     });
 }
 
+/* 认领 / 修改：仅「待认领」状态的凭证可操作，已认领(待抵扣及以后)与作废凭证一律拦截 */
+var VOUCHER_CLAIMABLE_STATUS='待认领';
+function voucherRowClaimable(id,row){
+    return !!row&&voucherVal(id,row,'凭证状态')===VOUCHER_CLAIMABLE_STATUS;
+}
+function openSelectedVoucherEdit(id){
+    const idx=getSelectedRowIndex();
+    if(idx<0){openActionModal('selectRequired',id,-1);return;}
+    const row=(_listData[id]&&_listData[id][idx])?_listData[id][idx]:(TC[id]&&TC[id].d?TC[id].d[idx]:null);
+    if(!voucherRowClaimable(id,row)){showToast(tr('只能修改「待认领」状态的凭证'));return;}
+    openCrudModal('edit',id,idx);
+}
 function bankVoucherAction(kind,id){
     id=id||'fin-bank-voucher';
     const idx=getSelectedRowIndex();
     if(idx<0){showToast(tr('请先勾选数据'));return;}
     const row=(_listData[id]&&_listData[id][idx])?_listData[id][idx]:(TC[id]&&TC[id].d?TC[id].d[idx]:null);
     if(kind==='detail'){ openBankVoucherDetailModal(id,idx,row); return; }
-    if(kind==='claim'){ openVoucherClaimModal(row); return; }
+    if(kind==='claim'){
+        if(!voucherRowClaimable(id,row)){showToast(tr('只能认领「待认领」状态的凭证'));return;}
+        openVoucherClaimModal(row); return;
+    }
     if(kind==='rate'){ openVoucherRateModal(row,id); return; }
     if(kind==='remark'){ openVoucherRemarkModal(row,id); return; }
     if(kind==='unclaim'){ openConfirmTip(tr('确定撤销认领吗?'),function(){showToast(tr('已撤销认领'));}); return; }
@@ -325,7 +340,6 @@ function openBankVoucherModal(mode,id,rowIdx,rowData){
     const isEdit=mode==='edit';
     /* 按表头名取值：银行凭证含「本位币」列，列序与收款管理不同 */
     const g=function(name){return voucherVal(id,rowData,name);};
-    const dc=g('凭证借贷标识')||'收入';
     const settle=g('交割方式'),claimType=g('认领账户类型'),amount=g('金额(原币)');
     const currency=g('币别')||'人民币';
     const rate=g('汇率')||'1.0000';
@@ -342,7 +356,6 @@ function openBankVoucherModal(mode,id,rowIdx,rowData){
     let html='';
     html+='<div class="mb-3 flex items-center gap-2"><span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-sm font-semibold text-text-primary">'+tr('基本信息')+'</span></div>';
     html+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
-    html+='<div>'+lbl('借贷标识',false)+'<div class="h-10 flex items-center gap-6 text-sm text-text-secondary"><label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="voucher-dc" value="支出"'+(dc==='支出'?' checked':'')+'><span>'+tr('支出')+'</span></label><label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="voucher-dc" value="收入"'+(dc!=='支出'?' checked':'')+'><span>'+tr('收入')+'</span></label></div></div>';
     html+='<div>'+lbl('交割方式',true)+selHtml(['现金','微信','支付宝','银行'],settle,'请选择')+'</div>';
     /* 认领类型 -> 联动加载对应的「客户 / 服务商」选择框 */
     var claimTypeVal=claimType||'客户';
@@ -413,7 +426,7 @@ function openBankVoucherDetailModal(id,idx,rowData){
     /* 银行凭证列表金额已改「本位币」口径；收款管理仍沿用人民币标签 */
     var baseCur=(((TC[id]&&TC[id].h)||[]).indexOf('金额(本位币)')>=0)?'本位币':'人民币';
     var baseCurVal=gv('本位币')||'人民币';
-    html+=card('','green',[['凭证编号',g('凭证编号')],['凭证借贷标识',g('凭证借贷标识')],['金额(原币)',g('金额(原币)')],['币别',g('币别')],['汇率',g('汇率')]]);
+    html+=card('','green',[['凭证编号',g('凭证编号')],['凭证状态',g('凭证状态')],['金额(原币)',g('金额(原币)')],['币别',g('币别')],['汇率',g('汇率')]]);
     /* 本位币显示在「金额(本位币)」上方 */
     html+=card('','blue',[['认领账户类型',g('认领账户类型')],['认领账户名称',g('认领账户名称')],['本位币',esc(baseCurVal)],['金额('+baseCur+')',g('金额('+baseCur+')')],['已使用金额('+baseCur+')',g('已使用金额('+baseCur+')')],['未使用金额('+baseCur+')',g('未使用金额('+baseCur+')')]]);
     html+=card('我方账户信息','yellow',[['账户号码',g('我方账户')],['账户名称',g('我方账户名称')],['账户开户行',ourBank?esc(ourBank):'—'],['费用时间',g('费用时间')]]);

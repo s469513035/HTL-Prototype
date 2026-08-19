@@ -316,7 +316,7 @@ function renderWaybillDetailInner(detailId,id,row){
     const remark=waybillCell(id,row,['仓库异常备注','备注'],'—');
     let h='<div data-waybill-detail>';
     h+='<div class="flex flex-wrap items-center gap-x-7 gap-y-2 text-sm text-text-secondary mb-4">';
-    [['所属网点',site],['所属客户',customer],['业务员',sales],['跟单员','—'],['客服员',service],['结算员',settle]].forEach(function(item){h+='<div><span>'+tr(item[0])+'：</span><span class="text-text-primary">'+esc(item[1]||'—')+'</span></div>';});
+    [['所属网点',site],['所属客户',customer],['业务员',sales],['客服员',service],['操作员',settle]].forEach(function(item){h+='<div><span>'+tr(item[0])+'：</span><span class="text-text-primary">'+esc(item[1]||'—')+'</span></div>';});
     h+='</div>';
     h+='<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">';
     h+=waybillDetailCard('bg-blue-50/40',[['运单号',waybill],['物流单号',logistics],['客户代码',custCode],['客户名称',customer]]);

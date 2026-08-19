@@ -318,7 +318,9 @@ function openArDetailModal(editRow){
     html+='<div>'+lbl('财务科目',true)+(isAdjust?selVal(subjects,editRow.fee):selHtml(subjects,'请选择财务科目'))+'</div>';
     html+='<div>'+lbl('金额',true)+'<input type="number" required class="'+inputCls+'" value="'+esc(isAdjust?(editRow.amt||''):'')+'" placeholder="'+esc(tr('请输入金额'))+'"></div>';
     html+='<div>'+lbl('币别',true)+(isAdjust?selVal(['人民币','美元','欧元'],editRow.cur):selHtml(['人民币','美元','欧元'],'请选择币别'))+'</div>';
-    html+='<div>'+lbl('交易时间',true)+'<input type="datetime-local" class="'+inputCls+'" value="2026-07-20T17:49"></div>';
+    /* 费用时间：调整时取该明细行的费用时间，转成 datetime-local 需要的 yyyy-MM-ddTHH:mm */
+    const feeTime=isAdjust?String(editRow.ftime||'').replace(' ','T').slice(0,16):'';
+    html+='<div>'+lbl('费用时间',true)+'<input type="datetime-local" class="'+inputCls+'" value="'+esc(feeTime)+'"></div>';
     html+='<div class="md:col-span-3">'+lbl('备注',false)+'<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'"></textarea></div>';
     html+='</div>';
     bodyEl.innerHTML=html;

@@ -248,17 +248,87 @@ function renderWaybillTrackTimeline(waybill){
     return h;
 }
 
+/* ===== 运单详情 · 附件信息：表格式（序号/文件名称/文件类型/缩略图/大小/上传人/上传时间/操作）===== */
+var WAYBILL_ATTACH_TYPES=['原始报关预录单','修改报关预录单','商业发票','装箱单','其他'];
+var _waybillAttachSeed=[
+    {name:'temp.txt',type:'原始报关预录单',size:'0',uploader:'HYD-开发者',time:'2026-08-18 11:37:01'},
+    {name:'temp.txt',type:'修改报关预录单',size:'0',uploader:'HYD-开发者',time:'2026-08-18 11:38:35'}
+];
+
+function waybillNowText(){
+    const d=new Date(),p=function(n){return (n<10?'0':'')+n;};
+    return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+}
+
+function waybillAttachmentRowHtml(f,i){
+    let h='<tr class="attachment-row border-t border-surface-100 hover:bg-primary-50/30">';
+    h+='<td class="px-3 py-2.5 text-primary-700 font-medium">'+(i+1)+'</td>';
+    h+='<td class="px-3 py-2.5 text-primary-700 font-medium">'+esc(f.name||'')+'</td>';
+    h+='<td class="px-3 py-2.5 text-text-secondary whitespace-nowrap">'+esc(f.type||'—')+'</td>';
+    /* 缩略图：非图片附件统一占位 */
+    h+='<td class="px-3 py-2.5"><span class="inline-flex items-center justify-center w-11 h-10 px-1 text-[10px] leading-tight text-center text-text-muted bg-surface-50 border border-surface-200 rounded">'+tr('暂无图片')+'</span></td>';
+    h+='<td class="px-3 py-2.5 text-text-secondary">'+esc(String(f.size==null?'0':f.size))+'</td>';
+    h+='<td class="px-3 py-2.5 text-text-secondary whitespace-nowrap">'+esc(f.uploader||'—')+'</td>';
+    h+='<td class="px-3 py-2.5 text-text-secondary whitespace-nowrap">'+esc(f.time||'—')+'</td>';
+    h+='<td class="px-3 py-2.5 whitespace-nowrap">';
+    h+='<button type="button" onclick="showToast(\''+tr('开始下载')+'\')" class="px-3 py-1 text-xs font-medium text-white bg-amber-500 hover:bg-amber-600 rounded cursor-pointer">'+tr('下载')+'</button> ';
+    h+='<button type="button" onclick="removeWaybillAttachment(this)" class="px-3 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded cursor-pointer">'+tr('删除')+'</button>';
+    h+='</td></tr>';
+    return h;
+}
+
+function waybillAttachmentEmptyRowHtml(){
+    return '<tr class="attachment-empty"><td colspan="8" class="py-10 text-center text-text-muted">'+tr('无数据')+'</td></tr>';
+}
+
+/* 删除/新增后重排序号，并维护空态行 */
+function refreshWaybillAttachmentRows(tbody){
+    if(!tbody)return;
+    const rows=tbody.querySelectorAll('tr.attachment-row');
+    rows.forEach(function(tr,i){ if(tr.children[0])tr.children[0].textContent=i+1; });
+    const empty=tbody.querySelector('tr.attachment-empty');
+    if(rows.length&&empty)empty.remove();
+    if(!rows.length&&!empty)tbody.insertAdjacentHTML('beforeend',waybillAttachmentEmptyRowHtml());
+}
+
+function removeWaybillAttachment(btn){
+    const tr=btn.closest('tr'),tbody=tr?tr.parentNode:null;
+    if(tr)tr.remove();
+    refreshWaybillAttachmentRows(tbody);
+}
+
+/* 独立的上传处理：通用 handleFileUpload 追加的是 div，塞进 tbody 会被浏览器提出表格外 */
+function handleWaybillAttachmentUpload(input,tbodyId){
+    const tbody=document.getElementById(tbodyId);
+    if(!tbody||!input.files)return;
+    const sel=document.getElementById(tbodyId+'-type');
+    const ftype=sel?sel.value:'其他';
+    Array.from(input.files).forEach(function(file){
+        const kb=Math.max(0,Math.round(file.size/1024));
+        const idx=tbody.querySelectorAll('tr.attachment-row').length;
+        tbody.insertAdjacentHTML('beforeend',waybillAttachmentRowHtml({name:file.name,type:ftype,size:String(kb),uploader:'HYD-开发者',time:waybillNowText()},idx));
+    });
+    refreshWaybillAttachmentRows(tbody);
+    input.value='';
+}
+
 function renderWaybillAttachmentPanel(detailId){
     const prefix=detailId+'-attachment';
-    const listId=detailId+'-attachment-list';
-    let html='<div class="flex items-center justify-between mb-3">';
+    const tbodyId=detailId+'-attachment-body';
+    let html='<div class="flex items-center justify-between gap-3 flex-wrap mb-3">';
     html+='<div class="text-sm font-semibold text-primary-700">'+tr('附件信息')+'</div>';
+    html+='<div class="flex items-center gap-2">';
+    html+='<label class="text-sm text-text-secondary whitespace-nowrap">'+tr('附件类型')+'</label>';
+    html+='<select id="'+tbodyId+'-type" class="h-8 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 w-44">'+WAYBILL_ATTACH_TYPES.map(function(o){return '<option>'+esc(o)+'</option>';}).join('')+'</select>';
     html+='<button type="button" onclick="triggerFileUpload(\''+prefix+'\')" class="h-8 px-3 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('附件上传')+'</button>';
-    html+='<input type="file" id="'+prefix+'-file-input" class="hidden" multiple onchange="handleFileUpload(this,\''+listId+'\',\'edit\')">';
-    html+='</div>';
-    html+='<div id="'+listId+'" class="space-y-2">';
-    html+='<div class="attachment-item flex items-center justify-between p-2.5 bg-surface-50 rounded-lg border border-surface-200"><div class="flex items-center gap-2 min-w-0"><svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><div class="min-w-0"><div class="text-sm text-text-primary truncate">商业发票.pdf</div><div class="text-xs text-text-muted">128.5KB</div></div></div><div class="flex items-center gap-3"><button type="button" class="text-primary-600 hover:text-primary-700 text-xs font-medium">'+tr('下载')+'</button><button type="button" onclick="this.closest(\'.attachment-item\').remove()" class="text-red-500 hover:text-red-600 text-xs font-medium">'+tr('删除')+'</button></div></div>';
-    html+='</div>';
+    html+='<input type="file" id="'+prefix+'-file-input" class="hidden" multiple onchange="handleWaybillAttachmentUpload(this,\''+tbodyId+'\')">';
+    html+='</div></div>';
+    html+='<div class="border border-blue-100 rounded-lg overflow-auto bg-white"><table class="w-full text-sm" style="min-width:1080px"><thead class="bg-blue-50"><tr>';
+    ['序号','文件名称','文件类型','缩略图','文件大小(kb)','上传人','上传时间','操作'].forEach(function(hd){html+='<th class="text-left px-3 py-2 border-r border-blue-100 whitespace-nowrap">'+tr(hd)+'</th>';});
+    html+='</tr></thead><tbody id="'+tbodyId+'">';
+    if(_waybillAttachSeed.length){_waybillAttachSeed.forEach(function(f,i){html+=waybillAttachmentRowHtml(f,i);});}
+    else{html+=waybillAttachmentEmptyRowHtml();}
+    html+='</tbody></table></div>';
     return html;
 }
 

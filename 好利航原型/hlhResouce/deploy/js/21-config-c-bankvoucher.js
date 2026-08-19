@@ -376,7 +376,9 @@ function openBankVoucherModal(mode,id,rowIdx,rowData){
     /* 金额(本位币)：凭证金额 × 汇率，自动计算不可修改 */
     html+='<div>'+lbl('金额(本位币)',false)+'<input id="bv-base-amount" type="text" readonly class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary cursor-not-allowed" placeholder="'+esc(tr('自动计算'))+'"></div>';
     html+='<div>'+lbl('交易流水号',false)+'<input type="text" class="'+inputCls+'" value="'+esc(serial)+'" placeholder="'+esc(tr('请输入交易流水号'))+'"></div>';
-    html+='<div>'+lbl('交易时间',true)+'<input type="datetime-local" class="'+inputCls+'" value="2026-07-20T14:36"></div>';
+    /* 费用时间：取行上的「费用时间」列，转成 datetime-local 需要的 yyyy-MM-ddTHH:mm */
+    const feeTime=String(g('费用时间')||'').replace(' ','T').slice(0,16);
+    html+='<div>'+lbl('费用时间',true)+'<input type="datetime-local" class="'+inputCls+'" value="'+esc(feeTime)+'"></div>';
     html+='<div>'+lbl('我方银行账户',true)+'<select class="'+inputCls+'"><option value="">'+tr('请选择')+'</option>'+bankAccts.map(function(a){return '<option value="'+esc(a)+'"'+(ourAcct===a?' selected':'')+'>'+esc(bankAcctLabels[a]||a)+'</option>';}).join('')+'</select></div>';
     html+='<div>'+lbl('对方账户户名',false)+'<input type="text" class="'+inputCls+'" value="'+esc(oppName)+'" placeholder="'+esc(tr('请输入对方账户户名'))+'"></div>';
     html+='<div>'+lbl('对方账户开户行',false)+'<input type="text" class="'+inputCls+'" value="'+esc(oppBank)+'" placeholder="'+esc(tr('请输入对方账户开户行'))+'"></div>';

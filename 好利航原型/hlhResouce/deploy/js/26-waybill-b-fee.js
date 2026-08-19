@@ -186,17 +186,17 @@ function waybillCostRows(id,row){
     const waybill=waybillCell(id,row,['运单号'],'');
     const freight=waybillCell(id,row,['运费'],'CNY 0');
     return [
-        [waybill,'基础运费',freight,'CNY','1.0000',freight,'未核销','2026-06-02 10:31:45','系统算费'],
-        [waybill,'国内段运费','CNY 680','CNY','1.0000','CNY 680','未核销','2026-06-02 10:32:53','仓库入仓'],
-        [waybill,'报关服务费','CNY 350','CNY','1.0000','CNY 350','未核销','2026-06-02 17:26:43','人工录入']
+        [waybill,'基础运费',freight,'CNY','未核销','2026-06-02 10:31:45','系统算费'],
+        [waybill,'国内段运费','CNY 680','CNY','未核销','2026-06-02 10:32:53','仓库入仓'],
+        [waybill,'报关服务费','CNY 350','CNY','未核销','2026-06-02 17:26:43','人工录入']
     ];
 }
 
 function renderWaybillCostTable(id,row,title){
     let html='<div class="text-sm font-semibold text-primary-700 border-l-2 border-primary-500 pl-2 mb-3">'+tr(title)+'</div>';
     html+='<div class="border border-blue-100 overflow-auto bg-white rounded-lg" style="height:300px">';
-    html+='<table class="w-full text-sm" style="min-width:980px"><thead class="bg-blue-50 sticky top-0"><tr>';
-    ['#','运单号','费用名称','金额(原币)','币别','汇率','金额(人民币)','核销标识','费用时间','数据来源'].forEach(function(hd){html+='<th class="text-left px-3 py-2 border-r border-surface-200 whitespace-nowrap">'+tr(hd)+'</th>';});
+    html+='<table class="w-full text-sm" style="min-width:820px"><thead class="bg-blue-50 sticky top-0"><tr>';
+    ['#','运单号','费用名称','金额(原币)','币别','核销标识','费用时间','数据来源'].forEach(function(hd){html+='<th class="text-left px-3 py-2 border-r border-surface-200 whitespace-nowrap">'+tr(hd)+'</th>';});
     html+='</tr></thead><tbody>';
     waybillCostRows(id,row).forEach(function(r,i){
         html+='<tr class="border-t border-surface-100 hover:bg-primary-50/30"><td class="px-3 py-2 font-medium">'+(i+1)+'</td>';
@@ -264,7 +264,6 @@ function renderWaybillAttachmentPanel(detailId){
 
 function renderWaybillDetailPanels(detailId,id,row){
     const waybill=waybillCell(id,row,['运单号'],'');
-    const logistics=waybillCell(id,row,['物流单号'],waybill);
     const weight=waybillCell(id,row,['重量'],'');
     const cbm=waybillCell(id,row,['体积'],'');
     const remark=waybillCell(id,row,['仓库异常备注','备注'],'');
@@ -277,8 +276,13 @@ function renderWaybillDetailPanels(detailId,id,row){
     const panels=[
         ['品名信息',renderWaybillSimpleTable(['品名','箱数','单箱数量','品牌','材质','海关编码'],cargoRows,860)],
         ['费用信息',feePanel],
-        ['材积信息',renderWaybillSimpleTable(['运单子单号','快递单号','收货重量（KG）','长（CM）','宽（CM）','体积（M3）','收货体积重'],[[waybill+'-01',logistics,weight,'—','—',cbm,waybillVolumeWeight(cbm)]],860)],
-        ['工单说明',renderWaybillSimpleTable(['工单说明','处理状态','处理人','创建时间'],[[remark||'暂无工单说明','待处理','—','—']],760)],
+        ['材积信息',renderWaybillSimpleTable(['运单子单号','收货重量（KG）','长（CM）','宽（CM）','体积（M3）','收货体积重'],[[waybill+'-01',weight,'—','—',cbm,waybillVolumeWeight(cbm)]],760)],
+        ['指令日志',renderWaybillSimpleTable(['运单号','指令类型','指令内容','指令备注'],[
+            [waybill,'收货复核','核对到货件数与预报是否一致','实收 12 件，与预报一致'],
+            [waybill,'开箱验货','对整票货物开箱核对品名与数量','客户要求拍照留档'],
+            [waybill,'库内盘点','复核在库件数与重量','较预报少 1 件，已通知客服跟进'],
+            [waybill,'出货复核','装柜前复核唛头与目的仓','—']
+        ],860)],
         ['附件信息',renderWaybillAttachmentPanel(detailId)],
         ['轨迹信息',renderWaybillTrackTimeline(waybill)],
         ['备注说明',renderWaybillSimpleTable(['备注内容','备注人','备注来源','备注时间'],[[remark||'暂无备注','—','运单列表','—']],760)]
@@ -286,7 +290,7 @@ function renderWaybillDetailPanels(detailId,id,row){
     if(id==='wb-manage'){
         panels.push(
             ['操作日志',renderWaybillSimpleTable(['操作类型','操作内容','操作时间','操作人'],[['创建运单','系统创建运单并进入已预报状态','2026-06-02 10:31:45','admin'],['更新资料','更新报关资料和附件信息','2026-06-02 11:08:12','王海波']],860)],
-            ['算费日志',renderWaybillSimpleTable(['费用名称','算费口径','算费金额','算费时间','操作人'],[['基础运费','重量/体积取大计费','CNY 8,580','2026-06-02 10:33:21','系统'],['国内段运费','入仓操作费用','CNY 680','2026-06-02 10:35:08','系统']],900)]
+            ['算费日志',renderWaybillSimpleTable(['费用名称','计算公式','算费金额','算费时间','操作人'],[['基础运费','MAX(实际重量, 体积重量) × 单价','CNY 8,580','2026-06-02 10:33:21','系统'],['国内段运费','件数 × 入仓操作单价','CNY 680','2026-06-02 10:35:08','系统']],900)]
         );
     }
     let html='';
@@ -327,7 +331,7 @@ function renderWaybillDetailInner(detailId,id,row){
     h+='</div>';
     h+='<div class="text-sm text-text-secondary mb-3">'+tr('更多信息')+'</div>';
     h+='<div class="flex items-center gap-8 border-b border-surface-200 mb-4 overflow-x-auto">';
-    const detailTabs=id==='wb-manage'?['品名信息','费用信息','材积信息','工单说明','附件信息','轨迹信息','备注说明','操作日志','算费日志']:['品名信息','费用信息','材积信息','工单说明','附件信息','轨迹信息','备注说明'];
+    const detailTabs=id==='wb-manage'?['品名信息','费用信息','材积信息','指令日志','附件信息','轨迹信息','备注说明','操作日志','算费日志']:['品名信息','费用信息','材积信息','指令日志','附件信息','轨迹信息','备注说明'];
     detailTabs.forEach(function(tab,i){
         h+='<button type="button" data-detail-tab="'+esc(tab)+'" onclick="switchWaybillDetailTab(this)" class="waybill-detail-tab flex-shrink-0 py-2 text-sm border-b-2 '+(i===0?'border-primary-600 text-primary-700 font-semibold':'border-transparent text-text-secondary hover:text-primary-600')+'">'+tr(tab)+'</button>';
     });

@@ -50,9 +50,9 @@ function generateReceiptPage(id){
     h+='<button onclick="receiptToolbarAction(\'rate\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('修改汇率')+'</button>';
     h+='<button onclick="receiptToolbarAction(\'remark\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('修改财务备注')+'</button>';
     h+='</div>';
-    h+='<div class="px-4 pb-3 overflow-auto" style="max-height:260px"><table class="w-full text-sm" style="min-width:1400px"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    h+='<div class="px-4 pb-3 overflow-auto" style="max-height:260px"><table class="w-full text-sm" style="min-width:2800px"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     h+='<th class="px-3 py-2.5 text-left font-semibold" style="width:40px">#</th><th class="px-3 py-2.5" style="width:40px"></th>';
-    ['凭证编号','凭证状态','客户名称','金额(原币)','币别','汇率','本位币','金额(本位币)','已使用金额(本位币)','未使用金额(本位币)','我方账户'].forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    receiptVoucherCols().forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody id="receipt-voucher-tbody">'+receiptVoucherRows()+'</tbody></table></div>';
     h+='</div>';
     h+='<div id="receipt-detail" class="flex-1 overflow-auto p-4 min-w-0">'+receiptDetailHtml()+'</div>';
@@ -60,28 +60,37 @@ function generateReceiptPage(id){
     return h;
 }
 
+/* 列表字段与「银行凭证」保持一致：直接取表头，去掉「操作」列（本页用单选行代替行内操作） */
+function receiptVoucherCols(){
+    var h=(TC['fin-ar-receipt']&&TC['fin-ar-receipt'].h)?TC['fin-ar-receipt'].h:[];
+    return h.filter(function(c){return c!=='操作';});
+}
+
 function receiptVoucherRows(){
     var d=(TC['fin-ar-receipt']&&TC['fin-ar-receipt'].d)?TC['fin-ar-receipt'].d:[];
-    if(!d.length)return '<tr><td colspan="13" class="py-8 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    var cols=receiptVoucherCols();
+    if(!d.length)return '<tr><td colspan="'+(cols.length+2)+'" class="py-8 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
     var rv=function(r,name){return voucherVal('fin-ar-receipt',r,name);};
     return d.map(function(r,i){
         var on=_receiptSelIdx===i;
+        /* 已用/未用要叠加本页核销产生的占用，不能直接取列值 */
         var used=(parseFloat(rv(r,'已使用金额(本位币)'))||0)+receiptUsedAmount(r[0]);
         var unused=(parseFloat(rv(r,'金额(本位币)'))||0)-used;
+        var tds='';
+        cols.forEach(function(c){
+            var cls='px-3 py-2.5 whitespace-nowrap text-text-secondary',val;
+            if(c==='凭证编号'){cls='px-3 py-2.5 font-medium text-primary-700 whitespace-nowrap';val=esc(rv(r,c));}
+            else if(c==='凭证状态'){cls='px-3 py-2.5 whitespace-nowrap';val=statusBadge(rv(r,c));}
+            else if(c==='已使用金额(本位币)'){cls='px-3 py-2.5 whitespace-nowrap text-orange-600';val=receiptFmt(used);}
+            else if(c==='未使用金额(本位币)'){cls='px-3 py-2.5 whitespace-nowrap text-green-600';val=receiptFmt(unused);}
+            else if(c==='金额(原币)'||c==='金额(本位币)'){cls='px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700';val=esc(rv(r,c));}
+            else{val=esc(rv(r,c))||'—';}
+            tds+='<td class="'+cls+'">'+val+'</td>';
+        });
         return '<tr class="border-t border-surface-100 cursor-pointer '+(on?'bg-primary-50':'hover:bg-primary-50/30')+'" onclick="selectReceiptVoucher('+i+')">'+
             '<td class="px-3 py-2.5 text-text-muted">'+(i+1)+'</td>'+
             '<td class="px-3 py-2.5"><input type="radio" name="receipt-v"'+(on?' checked':'')+' onclick="selectReceiptVoucher('+i+')"></td>'+
-            '<td class="px-3 py-2.5 font-medium text-primary-700 whitespace-nowrap">'+esc(rv(r,'凭证编号'))+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap">'+statusBadge(rv(r,'凭证状态'))+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'认领账户名称'))+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(rv(r,'金额(原币)'))+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'币别'))+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'汇率'))+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'本位币'))+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(rv(r,'金额(本位币)'))+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap text-orange-600">'+receiptFmt(used)+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap text-green-600">'+receiptFmt(unused)+'</td>'+
-            '<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(rv(r,'我方账户'))+'</td></tr>';
+            tds+'</tr>';
     }).join('');
 }
 

@@ -86,11 +86,11 @@ function arBillVoidSelected(){
 
 function arBillFeeTableHtml(b){
     var fees=b.fees||[];
-    var cols=['运单号','客户名称','业务员名称','费用名称','金额(原币)','币别','汇率','金额(本位币)'];
+    var cols=['运单号','客户名称','业务员名称','费用名称','金额(原币)','币别'];
     var h='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary"><th class="px-3 py-2.5 text-left font-semibold" style="width:48px">#</th>';
     cols.forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';
-    if(!fees.length){h+='<tr><td colspan="9" class="py-8 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';}
+    if(!fees.length){h+='<tr><td colspan="'+(cols.length+1)+'" class="py-8 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';}
     fees.forEach(function(f,i){
         h+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
         h+='<td class="px-3 py-2.5 text-text-muted">'+(i+1)+'</td>';
@@ -100,8 +100,6 @@ function arBillFeeTableHtml(b){
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(f.fee)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(f.amt)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(f.cur)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(f.rate)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(f.rmb)+'</td>';
         h+='</tr>';
     });
     h+='</tbody></table></div>';
@@ -120,9 +118,8 @@ function openArBillDetail(bn){
     var h='<div class="space-y-5">';
     h+='<div>'+sec('基本信息')+'<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
     h+=fld('应收账单号',b.bn)+fld('账单批次号',b.batch)+fld('客户名称',b.cust);
-    h+=fld('币别',b.cur)+fld('金额（原币）',b.amt)+fld('本位币币别',b.basecur);
-    h+=fld('金额（本位币）',b.rmb)+fld('账单结算周期',b.cyc)+fld('账单到期时间',b.due);
-    h+=fld('账单创建时间',b.ct);
+    h+=fld('币别',b.cur)+fld('金额（原币）',b.amt)+fld('账单结算周期',b.cyc);
+    h+=fld('账单到期时间',b.due)+fld('账单创建时间',b.ct);
     h+='</div></div>';
     h+='<div>'+sec('费用明细')+arBillFeeTableHtml(b)+'</div>';
     h+='</div>';

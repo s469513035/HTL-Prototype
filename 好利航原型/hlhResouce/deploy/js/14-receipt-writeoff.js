@@ -121,7 +121,7 @@ function receiptDetailHtml(){
     var unused=totalRmb-used;
     var h='<div class="flex flex-wrap items-center gap-x-8 gap-y-2 mb-4 text-sm">';
     h+='<span><span class="text-text-secondary">'+tr('凭证编号')+'：</span><span class="font-semibold text-primary-700">'+esc(v[0])+'</span></span>';
-    h+='<span><span class="text-text-secondary">'+tr('客户名称')+'：</span><span class="font-medium text-text-primary">'+esc(v[5])+'</span></span>';
+    h+='<span><span class="text-text-secondary">'+tr('客户名称')+'：</span><span class="font-medium text-text-primary">'+esc(voucherVal('fin-ar-receipt',v,'认领账户名称'))+'</span></span>';
     h+='<span><span class="text-text-secondary">'+tr('凭证状态')+'：</span>'+statusBadge(v[1])+'</span>';
     h+='<span><span class="text-text-secondary">'+tr('金额(本位币)')+'：</span><span class="font-semibold text-blue-700">'+receiptFmt(totalRmb)+'</span></span>';
     h+='<span><span class="text-text-secondary">'+tr('已使用金额(本位币)')+'：</span><span class="font-semibold text-orange-600">'+receiptFmt(used)+'</span></span>';
@@ -183,18 +183,17 @@ function receiptLeftTableHtml(v){
     }
     var rows=[];
     Object.keys(_receiptConsumed).forEach(function(k){ var w=_receiptConsumed[k]; if(w.voucher===code&&(!wbf||String(w.wb).indexOf(wbf)>=0))rows.push(w); });
-    /* 字段参照「待核销明细」，并增加 核销金额 / 核销人 / 核销时间 */
-    var cols=['运单号','账单号','客户名称','费用科目','金额','币别','核销金额','核销人','核销时间'];
-    var h='<table class="w-full text-sm" style="min-width:900px"><thead><tr class="bg-[#EFF6FF] text-text-secondary"><th class="px-2 py-2 text-left" style="width:32px">#</th><th class="px-2 py-2" style="width:32px"></th>';
+    /* 字段参照「待核销明细」，并增加 核销人 / 核销时间 */
+    var cols=['运单号','账单号','客户名称','费用科目','金额','币别','核销人','核销时间'];
+    var h='<table class="w-full text-sm" style="min-width:820px"><thead><tr class="bg-[#EFF6FF] text-text-secondary"><th class="px-2 py-2 text-left" style="width:32px">#</th><th class="px-2 py-2" style="width:32px"></th>';
     cols.forEach(function(c){h+='<th class="px-2 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';
-    if(!rows.length){h+='<tr><td colspan="11" class="py-8 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';}
+    if(!rows.length){h+='<tr><td colspan="'+(cols.length+2)+'" class="py-8 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';}
     rows.forEach(function(w,i){
         h+='<tr class="border-t border-surface-100 hover:bg-primary-50/30"><td class="px-2 py-2 text-text-muted">'+(i+1)+'</td><td class="px-2 py-2"><input type="checkbox" class="receipt-left-check" value="'+esc(w.key)+'"></td>';
         h+='<td class="px-2 py-2 whitespace-nowrap text-primary-700">'+esc(w.wb)+'</td><td class="px-2 py-2 whitespace-nowrap text-text-secondary">'+esc(w.bn||'-')+'</td>';
         h+='<td class="px-2 py-2 whitespace-nowrap text-text-secondary">'+esc(w.cust||'')+'</td><td class="px-2 py-2 whitespace-nowrap text-text-secondary">'+esc(w.subject)+'</td>';
         h+='<td class="px-2 py-2 whitespace-nowrap text-blue-700">'+esc(w.amt||'')+'</td><td class="px-2 py-2 whitespace-nowrap text-text-secondary">'+esc(w.cur||'')+'</td>';
-        h+='<td class="px-2 py-2 whitespace-nowrap text-orange-600">'+receiptFmt(w.amount)+'</td>';
         h+='<td class="px-2 py-2 whitespace-nowrap text-text-secondary">'+esc(w.by)+'</td><td class="px-2 py-2 whitespace-nowrap text-text-secondary">'+esc(w.time)+'</td></tr>';
     });
     h+='</tbody></table>';
@@ -208,7 +207,7 @@ function receiptReverseWriteoff(){
     var checks=Array.prototype.slice.call(document.querySelectorAll('.receipt-left-check:checked'));
     if(!checks.length){showToast(tr('请先勾选要撤销核销的明细'));return;}
     var v=TC['fin-ar-receipt'].d[_receiptSelIdx];
-    var cur=v?v[7]:'',sumRmb=0;
+    var cur=v?voucherVal('fin-ar-receipt',v,'币别'):'',sumRmb=0;
     checks.forEach(function(c){ var w=_receiptConsumed[c.value]; if(w)sumRmb+=parseFloat(String(w.amount||'0').replace(/,/g,''))||0; });
     var msg='本次撤销核销 '+checks.length+' 笔，合计人民币 '+receiptFmt(sumRmb)+'，凭证币别 '+cur+'，确认撤销？';
     openConfirmTip(msg,function(){
@@ -316,7 +315,8 @@ function receiptRightPanelHtml(v){
 }
 
 function receiptRightTableHtml(v){
-    var cust=v[5],cur=v[7];
+    /* 按表头名取值：列增删后下标会整体位移，不能写死 */
+    var cust=voucherVal('fin-ar-receipt',v,'认领账户名称'),cur=voucherVal('fin-ar-receipt',v,'币别');
     var wbf=((document.getElementById('receipt-right-wb')||{}).value||'').trim();
     var bnf=((document.getElementById('receipt-right-bn')||{}).value||'').trim();
     var tf=((document.getElementById('receipt-right-type')||{}).value||'').trim();
@@ -344,7 +344,7 @@ function receiptConfirmWriteoff(){
     var v=TC['fin-ar-receipt'].d[_receiptSelIdx]; if(!v){showToast(tr('请先选择凭证'));return;}
     var checks=Array.prototype.slice.call(document.querySelectorAll('.receipt-right-check:checked'));
     if(!checks.length){showToast(tr('请先勾选要核销的费用明细'));return;}
-    var cur=v[7],sumAmt=0,sumRmb=0;
+    var cur=voucherVal('fin-ar-receipt',v,'币别'),sumAmt=0,sumRmb=0;
     checks.forEach(function(c){ var r=receiptFindFee(c.value); if(!r)return; sumAmt+=parseFloat(String(r.amt||'0').replace(/,/g,''))||0; sumRmb+=parseFloat(String(r.rmb||'0').replace(/,/g,''))||0; });
     var msg='本次核销 '+checks.length+' 笔，币别 '+cur+'，原币合计 '+receiptFmt(sumAmt)+'，折合人民币 '+receiptFmt(sumRmb)+'，确认核销？';
     openConfirmTip(msg,function(){

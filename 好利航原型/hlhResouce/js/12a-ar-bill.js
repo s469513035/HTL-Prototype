@@ -67,21 +67,43 @@ function arBillDownloadSelected(){
     var names=bns.slice(0,3).join('、')+(bns.length>3?('等 '+bns.length+' 个'):'');
     showToast(tr('正在下载账单')+'：'+names);
 }
-function arBillVoidSelected(){
+/* 删除账单：仅「待核销」（未核销）账单可删除；删除后账单从列表移除，
+   其关联的应收费用明细释放回未制单状态，可重新制单。 */
+function arBillDeleteSelected(){
     var bns=arBillCheckedBns();
-    if(!bns.length){ showToast(tr('请先勾选要作废的账单')); return; }
+    if(!bns.length){ showToast(tr('请先勾选要删除的账单')); return; }
     var targets=bns.map(_arBillFind).filter(Boolean);
     var eligible=targets.filter(function(b){ return b.st==='待核销'&&(parseFloat(b.used)||0)===0; });
     var blocked=targets.filter(function(b){ return !(b.st==='待核销'&&(parseFloat(b.used)||0)===0); });
-    if(!eligible.length){ showToast(tr('选中的账单已核销或已作废，不能作废')); return; }
-    var msg='本次将作废 '+eligible.length+' 笔账单：'+eligible.map(function(b){return b.bn;}).join('、');
-    if(blocked.length)msg+='；另有 '+blocked.length+' 笔已核销/已作废将跳过';
-    msg+='。作废后账单不可恢复，确认作废？';
+    if(!eligible.length){ showToast(tr('仅「待核销」状态的账单可删除')); return; }
+    var msg='本次将删除 '+eligible.length+' 笔账单：'+eligible.map(function(b){return b.bn;}).join('、');
+    if(blocked.length)msg+='；另有 '+blocked.length+' 笔非待核销状态将跳过';
+    msg+='。删除账单后关联费用将释放，可以继续制单，确认删除？';
     openConfirmTip(msg,function(){
-        eligible.forEach(function(b){ b.st='作废'; });
+        var gone={};
+        eligible.forEach(function(b){ gone[b.bn]=1; });
+        _arBillRows=_arBillRows.filter(function(b){ return !gone[b.bn]; });
+        arBillReleaseFees(gone);
         renderArBillTable();
-        showToast(tr('已作废')+' '+eligible.length+' '+tr('笔账单'));
+        showToast(tr('已删除')+' '+eligible.length+' '+tr('笔账单')+'，'+tr('关联费用已释放'));
     });
+}
+
+/* 释放账单关联的应收费用明细：清掉制单标识与账单信息，使其可再次生成账单 */
+function arBillReleaseFees(goneBns){
+    if(typeof _arDetailRows==='undefined')return 0;
+    var n=0;
+    _arDetailRows.forEach(function(r){
+        if(r.bn&&goneBns[r.bn]){
+            r.bf='否'; r.bn=''; r.batch=''; r.due='';
+            n++;
+        }
+    });
+    if(typeof refreshArDetailView==='function'){
+        var tb=document.getElementById('ar-detail-tbody');
+        if(tb)refreshArDetailView();
+    }
+    return n;
 }
 
 function arBillFeeTableHtml(b){
@@ -141,8 +163,8 @@ function generateArBillPage(id){
     h+='<div class="px-4 py-3 flex items-center gap-2 flex-wrap">';
     h+='<button onclick="renderArBillTable()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';
     h+='<button onclick="arBillDetailSelected()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('详情')+'</button>';
-    h+='<button onclick="arBillDownloadSelected()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('下载账单')+'</button>';
-    h+='<button onclick="arBillVoidSelected()" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('作废')+'</button>';
+    /* 「下载账单」按钮已隐藏（arBillDownloadSelected 保留备用） */
+    h+='<button onclick="arBillDeleteSelected()" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('删除')+'</button>';
     h+='</div></div>';
     h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto"><table class="w-full text-sm" style="min-width:1900px;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     h+='<th class="px-3 py-3 text-left font-semibold" style="width:40px">#</th><th class="px-3 py-3 text-left font-semibold" style="width:40px"><input type="checkbox" onchange="document.querySelectorAll(\'.arbill-check\').forEach(function(c){c.checked=this.checked;}.bind(this))"></th>';

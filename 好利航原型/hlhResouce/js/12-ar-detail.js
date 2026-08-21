@@ -97,12 +97,22 @@ function arStatusTabsHtml(){
     }).join('');
 }
 
-function renderArDetailRows(){
-    var rows=_arDetailRows.filter(function(r){
-        if(_arCustFilter&&r.cust!==_arCustFilter)return false;
+/* 可见行 = 左侧列表选中项（按当前 tab 匹配客户或业务员）+ 状态页签 + 右侧查询条件。
+   渲染与取勾选行必须用同一份过滤，否则 checkbox 的下标会对到别的行上。 */
+function arVisibleRows(){
+    var qc=((document.getElementById('ar-q-cust')||{}).value||'').trim();
+    var qs=((document.getElementById('ar-q-sales')||{}).value||'').trim();
+    return _arDetailRows.filter(function(r){
+        if(_arCustFilter&&(_arLeftTab==='sales'?r.sales:r.cust)!==_arCustFilter)return false;
         if(_arStatusFilter&&r.st!==_arStatusFilter)return false;
+        if(qc&&r.cust!==qc)return false;
+        if(qs&&r.sales!==qs)return false;
         return true;
     });
+}
+
+function renderArDetailRows(){
+    var rows=arVisibleRows();
     if(!rows.length)return '<tr><td colspan="21" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
     return rows.map(function(r,i){
         var h='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
@@ -184,11 +194,7 @@ function refreshArDetailView(){
 }
 
 function arGetSelectedRows(){
-    var rows=_arDetailRows.filter(function(r){
-        if(_arCustFilter&&r.cust!==_arCustFilter)return false;
-        if(_arStatusFilter&&r.st!==_arStatusFilter)return false;
-        return true;
-    });
+    var rows=arVisibleRows();
     var checked=Array.prototype.slice.call(document.querySelectorAll('.ar-detail-check:checked')).map(function(c){return parseInt(c.value,10);});
     return checked.map(function(i){return rows[i];}).filter(Boolean);
 }
@@ -199,18 +205,44 @@ function arGroupSelected(sel){
     var map={};
     sel.forEach(function(r){
         var key=r.cust+'||'+r.cur;
-        if(!map[key])map[key]={cust:r.cust,cur:r.cur,fee:0,wb:{}};
+        if(!map[key])map[key]={cust:r.cust,cur:r.cur,fee:0,wb:{},rows:[]};
         map[key].fee+=parseFloat(String(r.amt||'0').replace(/,/g,''))||0;
+        map[key].rows.push(r);
         if(r.wb)map[key].wb[r.wb]=1;
     });
     return Object.keys(map).map(function(k){
         var g=map[k];var wbs=Object.keys(g.wb);
         var pcs=wbs.reduce(function(a,w){return a+arPcsOf(w);},0);
-        return {cust:g.cust,cur:g.cur,fee:g.fee,wbCount:wbs.length,pcs:pcs};
+        return {cust:g.cust,cur:g.cur,fee:g.fee,wbCount:wbs.length,pcs:pcs,rows:g.rows};
     });
 }
 
-function arGroupListHtml(groups){
+/* 子表：某个「客户+币别」分组下的费用明细（费用名称 / 币别 / 金额） */
+function arGroupDetailHtml(rows){
+    var h='<div class="border border-surface-200 rounded-lg overflow-hidden bg-white"><table class="w-full text-xs"><thead><tr class="bg-surface-50 text-text-secondary">';
+    ['费用名称','币别','金额'].forEach(function(c){h+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    h+='</tr></thead><tbody>';
+    if(!rows||!rows.length){h+='<tr><td colspan="3" class="py-4 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';}
+    (rows||[]).forEach(function(r){
+        h+='<tr class="border-t border-surface-100">';
+        h+='<td class="px-3 py-2 text-text-primary whitespace-nowrap">'+esc(r.fee)+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.cur)+'</td>';
+        h+='<td class="px-3 py-2 font-medium text-orange-600 whitespace-nowrap">'+esc(r.amt)+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    return h;
+}
+
+/* 点击主行展开/收起子表 */
+function toggleArGroupDetail(rowEl,detailId){
+    var d=document.getElementById(detailId);
+    if(!d)return;
+    var open=d.classList.toggle('hidden')===false;
+    var caret=rowEl.querySelector('[data-ar-caret]');
+    if(caret)caret.textContent=open?'▾':'▸';
+}
+
+function arGroupListHtml(groups,withDetail){
     var h='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     ['客户','币别','总费用','总票数','总件数'].forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';
@@ -218,15 +250,19 @@ function arGroupListHtml(groups){
     /* 明细按币别排序，保证同币别相邻；合计按币别分类汇总（不同币别不可相加） */
     var sorted=groups.slice().sort(function(a,b){return String(a.cur)<String(b.cur)?-1:(String(a.cur)>String(b.cur)?1:0);});
     var byCur={},curOrder=[];
-    sorted.forEach(function(g){
+    sorted.forEach(function(g,gi){
         if(!byCur[g.cur]){byCur[g.cur]={fee:0,wb:0,pcs:0};curOrder.push(g.cur);}
         byCur[g.cur].fee+=g.fee;byCur[g.cur].wb+=g.wbCount;byCur[g.cur].pcs+=g.pcs;
-        h+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
-        h+='<td class="px-3 py-2.5 text-text-primary whitespace-nowrap">'+esc(g.cust)+'</td>';
+        var did='ar-grp-'+gi;
+        h+='<tr class="border-t border-surface-100 hover:bg-primary-50/30'+(withDetail?' cursor-pointer':'')+'"'+(withDetail?' onclick="toggleArGroupDetail(this,\''+did+'\')"':'')+'>';
+        h+='<td class="px-3 py-2.5 text-text-primary whitespace-nowrap">'+(withDetail?'<span data-ar-caret class="inline-block w-3 text-text-muted mr-1">▸</span>':'')+esc(g.cust)+'</td>';
         h+='<td class="px-3 py-2.5 text-text-secondary whitespace-nowrap">'+esc(g.cur)+'</td>';
         h+='<td class="px-3 py-2.5 font-semibold text-orange-600 whitespace-nowrap">'+g.fee.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>';
         h+='<td class="px-3 py-2.5 text-primary-700">'+g.wbCount+'</td>';
         h+='<td class="px-3 py-2.5 text-blue-700">'+g.pcs+'</td></tr>';
+        if(withDetail){
+            h+='<tr id="'+did+'" class="hidden bg-surface-50/60"><td colspan="5" class="px-3 py-3">'+arGroupDetailHtml(g.rows)+'</td></tr>';
+        }
     });
     curOrder.forEach(function(cur){
         var m=byCur[cur];
@@ -251,7 +287,7 @@ function openArConfirmModal(){
     document.getElementById('crud-modal-title').textContent=tr('费用确认');
     var html='<div class="space-y-4">';
     html+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+tr('确认后，勾选的费用明细进入「待核销」列表；未确认的保留在「待确认」列表。')+'</div>';
-    html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用汇总')+'</div>'+arGroupListHtml(groups)+'</div>';
+    html+='<div><div class="flex items-center justify-between mb-3"><div class="text-sm font-semibold text-text-primary">'+tr('费用汇总')+'</div><div class="text-xs text-text-muted">'+tr('点击主行查看该客户的费用明细')+'</div></div>'+arGroupListHtml(groups,true)+'</div>';
     html+='</div>';
     document.getElementById('crud-modal-body').innerHTML=html;
     document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="arConfirmFees()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 cursor-pointer">'+tr('确认费用')+'</button>';
@@ -332,7 +368,7 @@ function generateArDetailPage(id){
     _arDetailRows=_arDetailSeed.slice();_arStatusFilter='';_arCustFilter='';_arLeftTab='cust';
     let h='<div class="h-full flex overflow-hidden bg-surface-50">';
     h+='<div class="w-60 flex-shrink-0 flex flex-col border-r border-surface-200 bg-white">';
-    h+='<div class="p-3 border-b border-surface-200"><div class="relative"><svg class="w-4 h-4 text-text-muted absolute left-2 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input class="w-full h-8 pl-8 pr-3 text-xs border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('搜索...'))+'"></div></div>';
+    /* 左侧搜索框已移除，改由右侧查询区的「客户」「业务员」条件筛选 */
     h+='<div class="flex border-b border-surface-200">';
     h+='<button type="button" data-ar-ltab="cust" onclick="switchArLeftTab(\'cust\')" class="flex-1 py-2 cursor-pointer text-sm text-primary-600 font-medium border-b-2 border-primary-500">'+tr('客户')+'</button>';
     h+='<button type="button" data-ar-ltab="sales" onclick="switchArLeftTab(\'sales\')" class="flex-1 py-2 cursor-pointer text-sm text-text-secondary hover:text-primary-600">'+tr('业务员')+'</button>';
@@ -344,6 +380,9 @@ function generateArDetailPage(id){
     h+='<div class="flex items-end gap-3 mb-3 flex-wrap">';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('运单号')+'</label><input class="h-8 px-3 text-xs border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('运单号'))+'"></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('提单号')+'</label><input class="h-8 px-3 text-xs border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('提单号'))+'"></div>';
+    /* 客户 / 业务员：由左侧搜索框迁移过来，数据源同左侧列表 */
+    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('客户')+'</label><select id="ar-q-cust" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50 min-w-[140px]"><option value="">'+tr('全部')+'</option>'+_arCustomers.map(function(c){return '<option>'+esc(c.name)+'</option>';}).join('')+'</select></div>';
+    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('业务员')+'</label><select id="ar-q-sales" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50 min-w-[140px]"><option value="">'+tr('全部')+'</option>'+_arSales.map(function(s){return '<option>'+esc(s.name)+'</option>';}).join('')+'</select></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('结算周期')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('全部')+'</option><option>出货票结</option><option>出货月结</option><option>签收月结</option></select></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('财务科目')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('全部')+'</option><option>运费</option><option>报关费</option><option>应收附加费</option><option>客户理赔费</option></select></div>';
     h+='</div>';

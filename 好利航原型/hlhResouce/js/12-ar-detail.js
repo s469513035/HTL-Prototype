@@ -219,12 +219,14 @@ function arGroupSelected(sel){
 
 /* 子表：某个「客户+币别」分组下的费用明细（费用名称 / 币别 / 金额） */
 function arGroupDetailHtml(rows){
+    var cols=['运单号','费用名称','币别','金额'];
     var h='<div class="border border-surface-200 rounded-lg overflow-hidden bg-white"><table class="w-full text-xs"><thead><tr class="bg-surface-50 text-text-secondary">';
-    ['费用名称','币别','金额'].forEach(function(c){h+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    cols.forEach(function(c){h+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';
-    if(!rows||!rows.length){h+='<tr><td colspan="3" class="py-4 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';}
+    if(!rows||!rows.length){h+='<tr><td colspan="'+cols.length+'" class="py-4 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';}
     (rows||[]).forEach(function(r){
         h+='<tr class="border-t border-surface-100">';
+        h+='<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(r.wb)+'</td>';
         h+='<td class="px-3 py-2 text-text-primary whitespace-nowrap">'+esc(r.fee)+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(r.cur)+'</td>';
         h+='<td class="px-3 py-2 font-medium text-orange-600 whitespace-nowrap">'+esc(r.amt)+'</td></tr>';
@@ -366,15 +368,8 @@ function openArDetailModal(editRow){
 
 function generateArDetailPage(id){
     _arDetailRows=_arDetailSeed.slice();_arStatusFilter='';_arCustFilter='';_arLeftTab='cust';
+    /* 左侧「客户 / 业务员」快捷选择板块已整体移除，筛选统一走右侧查询区的客户、业务员条件 */
     let h='<div class="h-full flex overflow-hidden bg-surface-50">';
-    h+='<div class="w-60 flex-shrink-0 flex flex-col border-r border-surface-200 bg-white">';
-    /* 左侧搜索框已移除，改由右侧查询区的「客户」「业务员」条件筛选 */
-    h+='<div class="flex border-b border-surface-200">';
-    h+='<button type="button" data-ar-ltab="cust" onclick="switchArLeftTab(\'cust\')" class="flex-1 py-2 cursor-pointer text-sm text-primary-600 font-medium border-b-2 border-primary-500">'+tr('客户')+'</button>';
-    h+='<button type="button" data-ar-ltab="sales" onclick="switchArLeftTab(\'sales\')" class="flex-1 py-2 cursor-pointer text-sm text-text-secondary hover:text-primary-600">'+tr('业务员')+'</button>';
-    h+='</div>';
-    h+='<div id="ar-left-list" class="flex-1 overflow-auto">'+arLeftListHtml()+'</div>';
-    h+='</div>';
     h+='<div class="flex-1 flex flex-col overflow-hidden min-w-0">';
     h+='<div class="px-4 py-3 border-b border-surface-200 bg-white">';
     h+='<div class="flex items-end gap-3 mb-3 flex-wrap">';

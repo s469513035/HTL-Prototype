@@ -62,7 +62,8 @@ function openFclPriceModal(mode,id,rowIdx,rowData){
     }
     document.getElementById('crud-modal-title').textContent=modeLabel+tr(c.t||'整柜报价');
     let html='<div class="space-y-5">';
-    const hiddenMainLabels=id==='fcl-cost-price'?['柜型','始发港','目的港','业务成本',priceLabel]:(['fcl-business-cost','fcl-sales-price'].includes(id)?[]:['柜型',priceLabel]);
+    /* 成本价：柜型/港口在下方矩阵维护；币别改到运费价格表里逐行维护；不再区分使用分公司 */
+    const hiddenMainLabels=id==='fcl-cost-price'?['柜型','始发港','目的港','业务成本','币别','使用分公司',priceLabel]:(['fcl-business-cost','fcl-sales-price'].includes(id)?[]:['柜型',priceLabel]);
     const mainFields=isCostLike?fields.filter(function(f){return !hiddenMainLabels.includes(f.label);}):fields;
     const costKeyFields=[
         {label:'柜型',type:'select',options:FCL_CONTAINER_OPTIONS,value:val('柜型','40HQ'),readonly:isView,required:true},
@@ -230,6 +231,8 @@ function fclCostMatrixRowHtml(row,readonly,containers){
     let html='<tr class="fcl-cost-matrix-row hover:bg-primary-50/30 border-t border-surface-100">';
     html+='<td class="border border-surface-200 bg-white min-w-[150px]">'+fclFeeSelect(FCL_POL_OPTIONS,data.pol||'深圳盐田',readonly)+'</td>';
     html+='<td class="border border-surface-200 bg-white min-w-[150px]">'+fclFeeSelect(FCL_POD_OPTIONS,data.pod||'拉各斯',readonly)+'</td>';
+    /* 币别：目的港之后，逐行维护（原来在「整柜价格信息」里统一选） */
+    html+='<td class="border border-surface-200 bg-white min-w-[120px]">'+fclFeeSelect(FCL_CURRENCY_OPTIONS,data.currency||'USD',readonly)+'</td>';
     containers.forEach(function(ct){
         html+='<td class="border border-surface-200 bg-white min-w-[120px]">'+fclFeeInput(data.empty?'':fclCostSampleAmount(ct,data.delta),readonly,'text-right')+'</td>';
     });
@@ -255,7 +258,7 @@ function renderFclCostPriceMatrixSection(isView,containers){
     ];
     let html='<section class="rounded-xl border border-surface-200 bg-surface-50 overflow-hidden">';
     html+='<div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3">';
-    html+='<div class="text-sm font-semibold text-text-primary">'+tr('费用信息')+'</div>';
+    html+='<div class="text-sm font-semibold text-text-primary">'+tr('运费价格')+'</div>';
     if(!isView){
         html+='<div class="flex items-center gap-2"><button type="button" onclick="addFclCostMatrixRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button><button type="button" onclick="clearFclCostMatrixRows()" class="h-8 px-3 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg bg-white hover:bg-surface-50 cursor-pointer">'+tr('清空')+'</button></div>';
     }
@@ -263,7 +266,7 @@ function renderFclCostPriceMatrixSection(isView,containers){
     html+='<div class="p-4"><div class="rounded-lg border border-surface-200 bg-white overflow-hidden">';
     html+='<div class="overflow-auto max-h-[320px]"><table class="w-full min-w-[920px] text-xs border-collapse">';
     html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary">';
-    ['始发港','目的港'].concat(containers).concat(['操作']).forEach(function(hd){
+    ['始发港','目的港','币别'].concat(containers).concat(['操作']).forEach(function(hd){
         const sticky=hd==='操作'?' sticky right-0 z-20 shadow-[-6px_0_8px_-8px_rgba(15,23,42,.45)]':'';
         html+='<th class="text-left px-3 py-2 border border-surface-200 whitespace-nowrap bg-[#EFF6FF]'+sticky+'">'+tr(hd)+'</th>';
     });
@@ -281,7 +284,6 @@ function fclCostSurchargeRowHtml(row,readonly){
     const data=row||{};
     let html='<tr class="fcl-cost-surcharge-row hover:bg-primary-50/30 border-t border-surface-100">';
     html+='<td class="border border-surface-200 bg-white min-w-[180px]">'+fclFeeInput(data.type||'',readonly)+'</td>';
-    html+='<td class="border border-surface-200 bg-white min-w-[150px]">'+fclFeeSelect(['单价','总价'],data.priceMode||'总价',readonly)+'</td>';
     html+='<td class="border border-surface-200 bg-white min-w-[150px]">'+fclFeeSelect(['按柜','按票','按重量','按体积'],data.billingMode||'按柜',readonly)+'</td>';
     html+='<td class="border border-surface-200 bg-white min-w-[140px]">'+fclFeeInput(data.amount||'',readonly,'text-right')+'</td>';
     html+='<td class="border border-surface-200 bg-white min-w-[120px]">'+fclFeeSelect(FCL_CURRENCY_OPTIONS,data.currency||'USD',readonly)+'</td>';
@@ -297,14 +299,14 @@ function renderFclCostSurchargeTable(isView){
         {type:'燃油附加费',priceMode:'总价',billingMode:'按柜',amount:'60',currency:'USD'}
     ];
     let html='<div class="mt-4 rounded-lg border border-surface-200 bg-white overflow-hidden">';
-    html+='<div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3"><div class="text-xs font-semibold text-text-muted">'+tr('附加费信息')+'</div>';
+    html+='<div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3"><div class="text-xs font-semibold text-text-muted">'+tr('附加费价格')+'</div>';
     if(!isView){
         html+='<div class="flex items-center gap-2"><button type="button" onclick="addFclCostSurchargeRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button><button type="button" onclick="clearFclCostSurchargeRows()" class="h-8 px-3 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg bg-white hover:bg-surface-50 cursor-pointer">'+tr('清空')+'</button></div>';
     }
     html+='</div>';
     html+='<div class="overflow-auto max-h-[220px]"><table class="w-full min-w-[900px] text-xs border-collapse">';
     html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary">';
-    ['附加费类型','单价/总价','计费方式','金额','币别','操作'].forEach(function(hd){
+    ['附加费类型','计费方式','金额','币别','操作'].forEach(function(hd){
         const sticky=hd==='操作'?' sticky right-0 z-20 shadow-[-6px_0_8px_-8px_rgba(15,23,42,.45)]':'';
         html+='<th class="text-left px-3 py-2 border border-surface-200 whitespace-nowrap bg-[#EFF6FF]'+sticky+'">'+tr(hd)+'</th>';
     });

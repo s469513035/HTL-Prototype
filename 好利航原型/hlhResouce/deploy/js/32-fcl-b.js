@@ -71,7 +71,7 @@ function openFclPriceModal(mode,id,rowIdx,rowData){
     ];
     html+='<section class="rounded-xl border border-primary-100 bg-white p-4"><div class="text-sm font-semibold text-primary-700 mb-4">'+tr('整柜价格信息')+'</div>'+renderFields(mainFields,'modal')+'</section>';
     if(isCostLike){
-        if(id==='fcl-cost-price')html+='<div id="fcl-cost-matrix-section">'+renderFclCostPriceMatrixSection(isView,_fclCostMatrixContainers)+'</div>';
+        if(id==='fcl-cost-price')html+='<div id="fcl-cost-matrix-section">'+renderFclCostPriceMatrixSection(isView,_fclCostMatrixContainers)+'</div>'+renderFclCostSurchargeTable(isView);
         else if(!['fcl-business-cost','fcl-sales-price'].includes(id))html+=renderFclFeeMaintainSection(costKeyFields,isView);
     }else{
         html+='<section class="rounded-xl border border-surface-200 bg-surface-50 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('价格组成')+'</div><div class="grid grid-cols-1 md:grid-cols-4 gap-3">';
@@ -275,7 +275,8 @@ function renderFclCostPriceMatrixSection(isView,containers){
     html+='</tbody></table></div>';
     html+='<div class="px-4 py-2 text-[11px] text-text-muted bg-surface-50 border-t border-surface-200">'+tr('柜型列与所选航司路线配置联动，按始发港、目的港维护对应柜型成本价，保存后随当前成本价记录一起生效。')+'</div>';
     html+='</div>';
-    html+=renderFclCostSurchargeTable(isView);
+    /* 附加费价格已拆为独立板块（与运费价格并列），不再嵌在本板块内，
+       同时避免切换航司路线配置重渲染时把已填的附加费行冲掉 */
     html+='</div></section>';
     return html;
 }
@@ -298,12 +299,15 @@ function renderFclCostSurchargeTable(isView){
         {type:'文件费',priceMode:'单价',billingMode:'按票',amount:'80',currency:'USD'},
         {type:'燃油附加费',priceMode:'总价',billingMode:'按柜',amount:'60',currency:'USD'}
     ];
-    let html='<div class="mt-4 rounded-lg border border-surface-200 bg-white overflow-hidden">';
-    html+='<div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3"><div class="text-xs font-semibold text-text-muted">'+tr('附加费价格')+'</div>';
+    /* 与「运费价格」并列的独立板块，样式对齐（rounded-xl section + 同级标题） */
+    let html='<section class="rounded-xl border border-surface-200 bg-surface-50 overflow-hidden">';
+    html+='<div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3">';
+    html+='<div class="text-sm font-semibold text-text-primary">'+tr('附加费价格')+'</div>';
     if(!isView){
         html+='<div class="flex items-center gap-2"><button type="button" onclick="addFclCostSurchargeRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button><button type="button" onclick="clearFclCostSurchargeRows()" class="h-8 px-3 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg bg-white hover:bg-surface-50 cursor-pointer">'+tr('清空')+'</button></div>';
     }
     html+='</div>';
+    html+='<div class="p-4"><div class="rounded-lg border border-surface-200 bg-white overflow-hidden">';
     html+='<div class="overflow-auto max-h-[220px]"><table class="w-full min-w-[900px] text-xs border-collapse">';
     html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary">';
     ['附加费类型','计费方式','金额','币别','操作'].forEach(function(hd){
@@ -314,7 +318,7 @@ function renderFclCostSurchargeTable(isView){
     rows.forEach(function(row){html+=fclCostSurchargeRowHtml(row,isView);});
     html+='</tbody></table></div>';
     html+='<div class="px-4 py-2 text-[11px] text-text-muted bg-surface-50 border-t border-surface-200">'+tr('附加费与成本价一并维护，保存后用于报价、试算和费用重算。')+'</div>';
-    html+='</div>';
+    html+='</div></div></section>';
     return html;
 }
 

@@ -3,6 +3,145 @@ var RISK_LEVEL_OPTIONS=['禁止操作','二次确认','弹出提示'];
 /* 风控条件维度：取自运单主信息 + 子单/品名明细 */
 var RISK_CONDITION_FIELDS=['运单号','客户单号','国内仓库','目的仓库','产品','客户代码','发件人','货物类型','总件数','是否重货','实际重量','体积重量','体积','子单号','品名','箱数','单箱数量','品牌','材质','海关编码'];
 
+/* 需要从系统数据里勾选的条件维度 -> 取数表与编号/名称列 */
+var RISK_ENTITY_SOURCES={
+    '国内仓库':{table:'cfg-warehouse',code:'仓库编码',name:'仓库名称'},
+    '目的仓库':{table:'cfg-warehouse',code:'仓库编码',name:'仓库名称'},
+    '产品':{table:'prod-manage',code:'产品编号',name:'产品名称'},
+    '客户代码':{table:'crm-cust',code:'客户代码',name:'客户简称'}
+};
+var _riskCondSel={};                 /* 维度 -> {include:[[编号,名称]], exclude:[...]} */
+var _riskCondField='';               /* 当前选中的条件维度 */
+var _riskPickerCtx=null;             /* 选择数据弹层上下文 {field,which} */
+
+function riskEntityRows(field){
+    var src=RISK_ENTITY_SOURCES[field];
+    if(!src)return [];
+    var c=TC[src.table];
+    if(!c||!c.h||!c.d)return [];
+    var ci=c.h.indexOf(src.code),ni=c.h.indexOf(src.name);
+    if(ci<0||ni<0)return [];
+    return c.d.map(function(r){return [String(r[ci]||''),String(r[ni]||'')];}).filter(function(p){return p[0];});
+}
+
+function riskCondBucket(field,which){
+    if(!_riskCondSel[field])_riskCondSel[field]={include:[],exclude:[]};
+    return _riskCondSel[field][which]||[];
+}
+
+/* 包含 / 排除 单个表格 */
+function riskEntityTableHtml(field,which,readonly){
+    var rows=riskCondBucket(field,which);
+    var title=which==='include'?'包含':'排除';
+    var bodyId='risk-cond-'+which+'-body';
+    var h='<section class="rounded-lg border border-surface-200 bg-white overflow-hidden">';
+    h+='<div class="flex items-center gap-3 px-3 py-2 border-b border-surface-200">';
+    h+='<span class="w-1 h-4 bg-amber-400 rounded-full"></span>';
+    h+='<span class="text-sm font-semibold text-text-primary">'+tr(title)+'</span>';
+    if(!readonly)h+='<button type="button" onclick="openRiskPickerModal(\''+esc(field)+'\',\''+which+'\')" class="text-xs font-medium text-amber-600 hover:text-amber-700 hover:underline cursor-pointer">'+tr('选择')+'</button>';
+    h+='</div>';
+    h+='<div class="overflow-auto" style="height:180px"><table class="w-full text-xs"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    h+='<th class="px-3 py-2 text-left font-semibold" style="width:44px">#</th><th class="px-3 py-2" style="width:40px"></th>';
+    ['编号','名称'].forEach(function(cName){h+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(cName)+'</th>';});
+    h+='</tr></thead><tbody id="'+bodyId+'">'+riskEntityRowsHtml(rows)+'</tbody></table></div>';
+    h+='<div class="px-3 py-1.5 bg-surface-50 border-t border-surface-200 text-[11px] text-text-secondary">'+tr('表格高度')+'：<input type="number" value="180" class="w-16 h-6 px-2 border border-surface-200 rounded bg-white text-xs"> PX</div>';
+    h+='</section>';
+    return h;
+}
+
+function riskEntityRowsHtml(rows){
+    if(!rows||!rows.length)return '<tr><td colspan="4" class="py-10 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    return rows.map(function(p,i){
+        return '<tr class="border-t border-surface-100 hover:bg-primary-50/30">'+
+            '<td class="px-3 py-1.5 text-text-muted">'+(i+1)+'</td>'+
+            '<td class="px-3 py-1.5"><input type="checkbox" class="rounded border-surface-300 text-primary-600"></td>'+
+            '<td class="px-3 py-1.5 text-primary-700 whitespace-nowrap">'+esc(p[0])+'</td>'+
+            '<td class="px-3 py-1.5 text-text-secondary">'+esc(p[1])+'</td></tr>';
+    }).join('');
+}
+
+/* 右侧内容：实体类维度走包含/排除双表，其余维度保留原有正则/文本条件 */
+function riskConditionBodyHtml(field,readonly,ruleName){
+    if(RISK_ENTITY_SOURCES[field]){
+        return '<div class="space-y-3 pt-3">'+riskEntityTableHtml(field,'include',readonly)+riskEntityTableHtml(field,'exclude',readonly)+'</div>';
+    }
+    var ro=readonly?' readonly':'',dis=readonly?' disabled':'';
+    var h='<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 py-4 text-sm">';
+    h+='<label class="inline-flex items-center gap-2 text-text-secondary"><input type="checkbox" class="rounded border-surface-300 text-primary-600"'+dis+'><span>'+tr('为空值')+'</span></label>';
+    h+='<label class="inline-flex items-center gap-2 text-text-secondary"><input type="checkbox" class="rounded border-surface-300 text-primary-600"'+dis+'><span>'+tr('为非空值')+'</span></label>';
+    h+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('匹配正则表达式')+'</label><input class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"'+ro+'></div>';
+    h+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('不匹配正则表达式')+'</label><input class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"'+ro+'></div>';
+    h+='</div><div class="space-y-3">';
+    h+='<div><label class="text-sm font-semibold text-text-primary mb-1.5 block" data-risk-condition-include-label>'+tr(field)+' - '+tr('包含条件')+'</label><textarea rows="2" data-risk-condition-include class="w-full px-3 py-2 text-sm border border-surface-200 rounded bg-white resize-none" placeholder="'+esc(tr('请输入')+tr(field)+tr('包含条件'))+'"'+ro+'></textarea></div>';
+    h+='<div><label class="text-sm font-semibold text-text-primary mb-1.5 block" data-risk-condition-exclude-label>'+tr(field)+' - '+tr('排除条件')+'</label><textarea rows="2" data-risk-condition-exclude class="w-full px-3 py-2 text-sm border border-surface-200 rounded bg-white resize-none" placeholder="'+esc(tr('请输入')+tr(field)+tr('排除条件'))+'"'+ro+'></textarea></div>';
+    h+='<div><label class="text-sm font-semibold text-text-primary mb-1.5 block">'+tr('提示消息')+'</label><textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded bg-white resize-none" placeholder="'+esc(tr('触发风控时给操作人员的提示内容'))+'"'+ro+'>'+esc(ruleName?ruleName+'，请按风控规则处理。':'')+'</textarea></div>';
+    h+='</div>';
+    return h;
+}
+
+/* ===== 选择数据弹层（独立浮层，避免顶掉外层风控弹窗） ===== */
+function openRiskPickerModal(field,which){
+    _riskPickerCtx={field:field,which:which};
+    var rows=riskEntityRows(field);
+    var picked={};
+    riskCondBucket(field,which).forEach(function(p){picked[p[0]]=1;});
+    var old=document.getElementById('risk-picker-overlay');
+    if(old)old.remove();
+    var ov=document.createElement('div');
+    ov.id='risk-picker-overlay';
+    ov.className='fixed inset-0 bg-black/40 z-[95] flex items-center justify-center p-6';
+    var h='<div class="bg-white rounded-xl shadow-xl w-[860px] max-w-full max-h-[86vh] flex flex-col overflow-hidden">';
+    h+='<div class="px-4 py-3 border-b border-surface-200 flex items-center gap-2"><span class="text-text-muted">#</span><span class="text-sm font-semibold text-text-primary">'+tr('选择数据')+'</span><span class="ml-2 text-xs text-text-muted">'+esc(tr(field))+'</span></div>';
+    h+='<div class="flex-1 overflow-auto"><table class="w-full text-sm"><thead class="sticky top-0"><tr class="bg-[#EFF6FF] text-text-secondary">';
+    h+='<th class="px-3 py-2 text-left font-semibold" style="width:56px">#</th><th class="px-3 py-2" style="width:44px"><input type="checkbox" onchange="riskPickerToggleAll(this)"></th>';
+    ['编号','名称'].forEach(function(cName){h+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(cName)+'</th>';});
+    h+='</tr></thead><tbody>';
+    if(!rows.length){h+='<tr><td colspan="4" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';}
+    rows.forEach(function(p,i){
+        h+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
+        h+='<td class="px-3 py-1.5 text-text-muted">'+(i+1)+'</td>';
+        h+='<td class="px-3 py-1.5"><input type="checkbox" class="risk-picker-check rounded border-surface-300 text-primary-600" data-code="'+esc(p[0])+'" data-name="'+esc(p[1])+'"'+(picked[p[0]]?' checked':'')+'></td>';
+        h+='<td class="px-3 py-1.5 text-primary-700 whitespace-nowrap">'+esc(p[0])+'</td>';
+        h+='<td class="px-3 py-1.5 text-text-secondary">'+esc(p[1])+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div class="px-4 py-3 border-t border-surface-200 flex items-center justify-end gap-2">';
+    h+='<button type="button" onclick="closeRiskPickerModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>';
+    h+='<button type="button" onclick="confirmRiskPicker()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确定')+'</button>';
+    h+='</div></div>';
+    ov.innerHTML=h;
+    document.body.appendChild(ov);
+}
+
+function riskPickerToggleAll(box){
+    var ov=document.getElementById('risk-picker-overlay');
+    if(!ov)return;
+    ov.querySelectorAll('.risk-picker-check').forEach(function(cb){cb.checked=box.checked;});
+}
+
+function closeRiskPickerModal(){
+    var ov=document.getElementById('risk-picker-overlay');
+    if(ov)ov.remove();
+    _riskPickerCtx=null;
+}
+
+function confirmRiskPicker(){
+    if(!_riskPickerCtx)return;
+    var ov=document.getElementById('risk-picker-overlay');
+    if(!ov)return;
+    var list=[];
+    ov.querySelectorAll('.risk-picker-check:checked').forEach(function(cb){
+        list.push([cb.getAttribute('data-code'),cb.getAttribute('data-name')]);
+    });
+    var f=_riskPickerCtx.field,w=_riskPickerCtx.which;
+    if(!_riskCondSel[f])_riskCondSel[f]={include:[],exclude:[]};
+    _riskCondSel[f][w]=list;
+    closeRiskPickerModal();
+    var tb=document.getElementById('risk-cond-'+w+'-body');
+    if(tb)tb.innerHTML=riskEntityRowsHtml(list);
+    showToast(tr('已选择')+' '+list.length+' '+tr('条'));
+}
+
 /* 问题件类型数据源：复用「问题件类型」配置表 */
 function getIssueTypeOptions(){
     var c=TC['cs-issue-type'];
@@ -48,10 +187,13 @@ function openRiskRuleModal(mode,id,rowIdx,rowData){
     const serviceSelected=['报关','合并报关','带电','贴箱唛'];
     const modeLabel=mode==='view'?L.view:mode==='add'?L.add:L.edit;
     titleEl.textContent=tr('风控规则信息')+' - '+modeLabel;
-    let html='<div class="space-y-4">';
+    _riskCondSel={};_riskCondField=RISK_CONDITION_FIELDS[0];
+    /* 左右结构：左=基本信息+附加服务，右=风控条件 */
+    let html='<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">';
+    html+='<div class="space-y-4">';
     html+='<section class="rounded-lg border border-blue-100 bg-white p-4">';
     html+='<div class="text-sm font-semibold text-text-primary mb-4">'+tr('基本信息')+'</div>';
-    html+='<div class="grid grid-cols-1 lg:grid-cols-3 gap-x-6 gap-y-4">';
+    html+='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">';
     html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('规则名称')+'</label><input type="text" required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white" value="'+esc(name)+'" placeholder="'+esc(tr('请输入规则名称'))+'"'+readonly+'></div>';
     html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('生效时间')+'</label><input type="datetime-local" required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white" value="'+esc(datetimeVal(start))+'"'+readonly+'></div>';
     html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('失效时间')+'</label><input type="datetime-local" required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white" value="'+esc(datetimeVal(end))+'"'+readonly+'></div>';
@@ -60,7 +202,7 @@ function openRiskRuleModal(mode,id,rowIdx,rowData){
     /* 选「是」时才需要指定问题件类型 */
     html+='<div id="risk-issue-type-wrap"'+(workOrder==='否'?' class="hidden"':'')+'><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('问题件类型')+'</label><select id="risk-issue-type" required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"'+disabled+'>'+selectOptionsHtml(getIssueTypeOptions(),issueType)+'</select></div>';
     html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('状态')+'</label><select required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"'+disabled+'>'+selectOptionsHtml(['启用','停用'],status)+'</select></div>';
-    html+='<div class="lg:col-span-3"><label class="text-sm font-medium text-text-secondary mb-2 block"><span class="text-red-500">*</span> '+tr('风控环节')+'</label><div class="flex flex-wrap items-center gap-x-8 gap-y-2 min-h-9 rounded border border-surface-200 bg-surface-50 px-3 py-2">';
+    html+='<div class="md:col-span-2"><label class="text-sm font-medium text-text-secondary mb-2 block"><span class="text-red-500">*</span> '+tr('风控环节')+'</label><div class="flex flex-wrap items-center gap-x-8 gap-y-2 min-h-9 rounded border border-surface-200 bg-surface-50 px-3 py-2">';
     ['订单预报','收货操作','出库操作'].forEach(function(loop){
         html+='<label class="inline-flex items-center gap-2 text-sm text-primary-700 cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600"'+(loops.includes(loop)?' checked':'')+disabled+'><span>'+tr(loop)+'</span></label>';
     });
@@ -72,8 +214,9 @@ function openRiskRuleModal(mode,id,rowIdx,rowData){
         html+='<label class="inline-flex items-center gap-2 text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600"'+(serviceSelected.includes(service)?' checked':'')+disabled+'><span>'+tr(service)+'</span></label>';
     });
     html+='</div></section>';
+    html+='</div>';   /* 左列结束 */
     html+='<section class="rounded-lg border border-surface-200 overflow-hidden bg-white">';
-    html+='<div class="flex flex-col xl:flex-row" data-risk-condition-wrap style="min-height:360px">';
+    html+='<div class="flex flex-col xl:flex-row" data-risk-condition-wrap'+(isView?' data-risk-condition-readonly':'')+' style="min-height:360px">';
     html+='<div class="xl:w-52 flex-shrink-0 border-b xl:border-b-0 xl:border-r border-surface-200 bg-surface-50">';
     html+='<div class="h-10 px-4 flex items-center text-sm font-semibold text-text-primary border-b border-surface-200 bg-white">'+tr('风控条件')+'</div>';
     /* 条件维度较多，左侧列表内部滚动，避免把弹窗撑高 */
@@ -83,18 +226,9 @@ function openRiskRuleModal(mode,id,rowIdx,rowData){
     });
     html+='</div></div>';
     html+='<div class="flex-1 min-w-0 p-4">';
-    html+='<div class="text-base font-semibold text-text-primary pb-3 border-b border-surface-200" data-risk-condition-title>'+tr('运单号')+'</div>';
-    html+='<div class="grid grid-cols-1 lg:grid-cols-4 gap-4 py-4 text-sm">';
-    html+='<label class="inline-flex items-center gap-2 text-text-secondary"><input type="checkbox" class="rounded border-surface-300 text-primary-600"'+disabled+'><span>'+tr('为空值')+'</span></label>';
-    html+='<label class="inline-flex items-center gap-2 text-text-secondary"><input type="checkbox" class="rounded border-surface-300 text-primary-600"'+disabled+'><span>'+tr('为非空值')+'</span></label>';
-    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('匹配正则表达式')+'</label><input class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"'+readonly+'></div>';
-    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block">'+tr('不匹配正则表达式')+'</label><input class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"'+readonly+'></div>';
-    html+='</div>';
-    html+='<div class="space-y-3">';
-    html+='<div><label class="text-sm font-semibold text-text-primary mb-1.5 block" data-risk-condition-include-label>'+tr('运单号')+' - '+tr('包含条件')+'</label><textarea rows="2" data-risk-condition-include class="w-full px-3 py-2 text-sm border border-surface-200 rounded bg-white resize-none" placeholder="'+esc(tr('请输入')+tr('运单号')+tr('包含条件'))+'"'+readonly+'>'+esc(loops.join('\n'))+'</textarea></div>';
-    html+='<div><label class="text-sm font-semibold text-text-primary mb-1.5 block" data-risk-condition-exclude-label>'+tr('运单号')+' - '+tr('排除条件')+'</label><textarea rows="2" data-risk-condition-exclude class="w-full px-3 py-2 text-sm border border-surface-200 rounded bg-white resize-none" placeholder="'+esc(tr('请输入')+tr('运单号')+tr('排除条件'))+'"'+readonly+'></textarea></div>';
-    html+='<div><label class="text-sm font-semibold text-text-primary mb-1.5 block">'+tr('提示消息')+'</label><textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded bg-white resize-none" placeholder="'+esc(tr('触发风控时给操作人员的提示内容'))+'"'+readonly+'>'+esc(name?name+'，请按风控规则处理。':'')+'</textarea></div>';
-    html+='</div></div></div></section>';
+    html+='<div class="text-base font-semibold text-text-primary pb-3 border-b border-surface-200" data-risk-condition-title>'+tr(_riskCondField)+'</div>';
+    html+='<div data-risk-condition-body>'+riskConditionBodyHtml(_riskCondField,isView,name)+'</div>';
+    html+='</div></div></section>';
     html+='</div>';
     bodyEl.innerHTML=html;
     if(isView){
@@ -123,15 +257,14 @@ function switchRiskConditionTab(btn){
         }
     });
     const title=wrap.querySelector('[data-risk-condition-title]');
-    const includeLabel=wrap.querySelector('[data-risk-condition-include-label]');
-    const excludeLabel=wrap.querySelector('[data-risk-condition-exclude-label]');
-    const includeInput=wrap.querySelector('[data-risk-condition-include]');
-    const excludeInput=wrap.querySelector('[data-risk-condition-exclude]');
     if(title)title.textContent=tr(field);
-    if(includeLabel)includeLabel.textContent=tr(field)+' - '+tr('包含条件');
-    if(excludeLabel)excludeLabel.textContent=tr(field)+' - '+tr('排除条件');
-    if(includeInput)includeInput.placeholder=tr('请输入')+tr(field)+tr('包含条件');
-    if(excludeInput)excludeInput.placeholder=tr('请输入')+tr(field)+tr('排除条件');
+    /* 实体类维度与文本类维度表单结构不同，整块重渲染 */
+    _riskCondField=field;
+    const body=wrap.querySelector('[data-risk-condition-body]');
+    if(body){
+        const readonly=!!wrap.querySelector('[data-risk-condition-readonly]');
+        body.innerHTML=riskConditionBodyHtml(field,readonly,'');
+    }
 }
 
 function openRoleModal(mode,id,rowIdx,rowData){

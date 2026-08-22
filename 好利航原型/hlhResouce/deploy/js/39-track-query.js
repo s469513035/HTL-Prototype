@@ -9,17 +9,17 @@ var _tqSubExpanded={};   /* 子单展开状态 subCode -> true */
 var _tqSubOwner='';      /* 子单轨迹弹窗当前对应的主单号 */
 
 var TQ_ORDERS={
-'H2608180006':{orderTime:'2026-08-18 11:15:05',country:'US',status:'已签入',subCount:4,events:[
+'H2608180006':{orderTime:'2026-08-18 11:15:05',country:'US',status:'已到货',subCount:4,events:[
     {time:'2026-08-18 11:31:58',by:'天地总部管理员',loc:'',cn:'终配舱登记已完成',en:'The final cabin allocation registration has been completed'},
     {time:'2026-08-18 11:25:32',by:'天地仓管理员',loc:'',cn:'仓库收货已完成',en:'The warehouse receipt process has been completed'},
     {time:'2026-08-18 11:15:05',by:'天地总部管理员',loc:'',cn:'客户已提交预报',en:'Customer has submitted order'}
 ]},
-'H2608180007':{orderTime:'2026-08-18 11:15:07',country:'US',status:'已签入',subCount:3,events:[
+'H2608180007':{orderTime:'2026-08-18 11:15:07',country:'US',status:'已到货',subCount:3,events:[
     {time:'2026-08-18 11:31:58',by:'天地总部管理员',loc:'',cn:'终配舱登记已完成',en:'The final cabin allocation registration has been completed'},
     {time:'2026-08-18 11:25:22',by:'天地仓管理员',loc:'',cn:'仓库收货已完成',en:'The warehouse receipt process has been completed'},
     {time:'2026-08-18 11:15:07',by:'天地总部管理员',loc:'',cn:'客户已提交预报',en:'Customer has submitted order'}
 ]},
-'H2608220003':{orderTime:'2026-08-22 09:54:44',country:'US',status:'已签入',subCount:2,events:[
+'H2608220003':{orderTime:'2026-08-22 09:54:44',country:'US',status:'已到货',subCount:2,events:[
     {time:'2026-08-22 10:40:17',by:'天地仓管理员',loc:'',cn:'仓库收货已完成',en:'The warehouse receipt process has been completed'},
     {time:'2026-08-22 09:54:44',by:'天地总部管理员',loc:'',cn:'客户已提交预报',en:'Customer has submitted order'}
 ]}
@@ -87,7 +87,7 @@ function tqCardHtml(code,o,opts){
     h+='<div class="min-w-0"><div class="text-sm font-medium text-primary-700 truncate">'+esc(code)+'</div>';
     h+='<div class="mt-1.5">'+statusBadge(o.status||'已预报')+'</div></div></div>';
     h+='<div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1.5 text-xs">';
-    h+=tqField('下单时间',o.orderTime)+tqField('订单单号',opts.orderNo||code)+tqField('运单号',opts.wbNo||code);
+    h+=tqField('下单时间',o.orderTime)+tqField('运单号',opts.wbNo||code)+tqField('客户单号',opts.custNo||code);
     h+=tqField('收件国家',o.country)+tqField('轨迹时间',last.time)+tqField('轨迹发送地',last.loc||'-');
     h+='<div class="md:col-span-3"><span class="text-text-secondary">'+tr('轨迹内容')+'：</span>'+
         '<span class="text-text-primary font-medium">'+esc(last.cn||'')+'</span>'+
@@ -240,7 +240,8 @@ function tqSubBodyHtml(code){
     return '<div class="space-y-3">'+subs.map(function(sc,i){
         /* 默认展开第一条子单，其余收起 */
         var open=_tqSubExpanded[sc]!==undefined?_tqSubExpanded[sc]:(i===0);
-        return tqCardHtml(sc,o,{expanded:open,showSub:false,orderNo:code,wbNo:code,onToggle:'tqToggleSub(\''+sc+'\')'});
+        /* 子单卡片的运单号 / 客户单号回填主单号 */
+        return tqCardHtml(sc,o,{expanded:open,showSub:false,wbNo:code,custNo:code,onToggle:'tqToggleSub(\''+sc+'\')'});
     }).join('')+'</div>';
 }
 

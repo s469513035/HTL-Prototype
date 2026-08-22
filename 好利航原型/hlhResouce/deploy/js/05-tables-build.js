@@ -442,10 +442,8 @@ function csIssueRecordsOf(wbNo,fallbackType,fallbackTime,fallbackContent){
 }
 
 /* 轨迹查询 / 轨迹维护 placeholder（菜单占位） */
-addPrototypeTable('cs-track-query','轨迹查询','序号|运单号|物流单号|当前状态|最新轨迹|更新时间|操作',[],[
-    ['1','WB-20260613001','1Z999AA10123456784','派送中','已到达派送站','2026-06-13 14:30',''],
-    ['2','WB-20260612002','SF1234567890123','已签收','客户已签收','2026-06-12 18:00','']
-],[{label:'运单号',type:'text'},{label:'物流单号',type:'text'}]);
+/* 轨迹查询改为自绘页：多单号标签查询 + 轨迹卡片 + 子单轨迹弹窗（见 js/39-track-query.js） */
+TC['cs-track-query']={t:'轨迹查询',pageMode:'trackQuery',h:[],s:[],d:[]};
 TC['cs-track-maint']={t:'轨迹维护',pageMode:'trackMaintain',h:[],s:[],d:[]};
 TC['cs-issue-type']={t:'问题件类型',forceLocalHeader:true,readonlyList:true,h:['问题件类型编号','问题件类型名称','问题件处理模板','区域类型','备注','启用状态','创建时间','创建员工编号','修改时间','修改员工编号','操作'],s:['启用','禁用'],d:[
 ['WTJ_PS','破损','货物存在破损','头程问题件','破损备注2','启用','2026-06-27 17:55:31','天地总部管理员','2026-06-30 20:10:06','天地总部管理员'],

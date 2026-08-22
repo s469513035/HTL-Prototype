@@ -1,3 +1,30 @@
+/* 风控级别：动作口径（不再用低/中/高风险的等级口径） */
+var RISK_LEVEL_OPTIONS=['禁止操作','二次确认','弹出提示'];
+/* 风控条件维度：取自运单主信息 + 子单/品名明细 */
+var RISK_CONDITION_FIELDS=['运单号','客户单号','国内仓库','目的仓库','产品','客户代码','发件人','货物类型','总件数','是否重货','实际重量','体积重量','体积','子单号','品名','箱数','单箱数量','品牌','材质','海关编码'];
+
+/* 问题件类型数据源：复用「问题件类型」配置表 */
+function getIssueTypeOptions(){
+    var c=TC['cs-issue-type'];
+    if(c&&c.h&&c.d){
+        var i=c.h.indexOf('问题件类型名称');
+        if(i>=0){
+            var list=c.d.map(function(r){return r[i];}).filter(Boolean);
+            if(list.length)return list;
+        }
+    }
+    return ['破损','开箱验货','丢件','清关异常','其他'];
+}
+
+/* 生成问题件选「是」才显示问题件类型 */
+function onRiskIssueToggle(){
+    var wrap=document.getElementById('risk-issue-type-wrap');
+    if(!wrap)return;
+    var yes=document.querySelector('input[name="risk-work-order"][value="是"]');
+    if(yes&&yes.checked)wrap.classList.remove('hidden');
+    else wrap.classList.add('hidden');
+}
+
 function openRiskRuleModal(mode,id,rowIdx,rowData){
     const c=TC[id]||{t:'风控规则'};
     const L=_lang[_currentLang];
@@ -13,6 +40,7 @@ function openRiskRuleModal(mode,id,rowIdx,rowData){
     const end=rowData?rowData[2]:'2026-12-31 23:59';
     const level=rowData?rowData[3]:'中风险';
     const workOrder=rowData?rowData[4]:'是';
+    const issueType=(rowData&&rowData[7])||'';
     const loops=String(rowData?rowData[5]:'订单预报|收货操作').split('|');
     const status=rowData?rowData[6]:'启用';
     const disabled=isView?' disabled':'';
@@ -27,8 +55,10 @@ function openRiskRuleModal(mode,id,rowIdx,rowData){
     html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('规则名称')+'</label><input type="text" required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white" value="'+esc(name)+'" placeholder="'+esc(tr('请输入规则名称'))+'"'+readonly+'></div>';
     html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('生效时间')+'</label><input type="datetime-local" required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white" value="'+esc(datetimeVal(start))+'"'+readonly+'></div>';
     html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('失效时间')+'</label><input type="datetime-local" required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white" value="'+esc(datetimeVal(end))+'"'+readonly+'></div>';
-    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('风控级别')+'</label><select required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"'+disabled+'>'+selectOptionsHtml(['低风险','中风险','高风险','严重'],level)+'</select></div>';
-    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('生成工单')+'</label><div class="h-9 flex items-center gap-5 text-sm text-text-secondary"><label class="inline-flex items-center gap-2"><input type="radio" name="risk-work-order" class="text-primary-600" value="否"'+(workOrder==='否'?' checked':'')+disabled+'><span>'+tr('否')+'</span></label><label class="inline-flex items-center gap-2"><input type="radio" name="risk-work-order" class="text-primary-600" value="是"'+(workOrder!=='否'?' checked':'')+disabled+'><span>'+tr('是')+'</span></label></div></div>';
+    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('风控级别')+'</label><select required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"'+disabled+'>'+selectOptionsHtml(RISK_LEVEL_OPTIONS,level)+'</select></div>';
+    html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('生成问题件')+'</label><div class="h-9 flex items-center gap-5 text-sm text-text-secondary"><label class="inline-flex items-center gap-2"><input type="radio" name="risk-work-order" onchange="onRiskIssueToggle()" class="text-primary-600" value="否"'+(workOrder==='否'?' checked':'')+disabled+'><span>'+tr('否')+'</span></label><label class="inline-flex items-center gap-2"><input type="radio" name="risk-work-order" onchange="onRiskIssueToggle()" class="text-primary-600" value="是"'+(workOrder!=='否'?' checked':'')+disabled+'><span>'+tr('是')+'</span></label></div></div>';
+    /* 选「是」时才需要指定问题件类型 */
+    html+='<div id="risk-issue-type-wrap"'+(workOrder==='否'?' class="hidden"':'')+'><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('问题件类型')+'</label><select id="risk-issue-type" required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"'+disabled+'>'+selectOptionsHtml(getIssueTypeOptions(),issueType)+'</select></div>';
     html+='<div><label class="text-sm font-medium text-text-secondary mb-1.5 block"><span class="text-red-500">*</span> '+tr('状态')+'</label><select required class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-white"'+disabled+'>'+selectOptionsHtml(['启用','停用'],status)+'</select></div>';
     html+='<div class="lg:col-span-3"><label class="text-sm font-medium text-text-secondary mb-2 block"><span class="text-red-500">*</span> '+tr('风控环节')+'</label><div class="flex flex-wrap items-center gap-x-8 gap-y-2 min-h-9 rounded border border-surface-200 bg-surface-50 px-3 py-2">';
     ['订单预报','收货操作','出库操作'].forEach(function(loop){
@@ -46,10 +76,12 @@ function openRiskRuleModal(mode,id,rowIdx,rowData){
     html+='<div class="flex flex-col xl:flex-row" data-risk-condition-wrap style="min-height:360px">';
     html+='<div class="xl:w-52 flex-shrink-0 border-b xl:border-b-0 xl:border-r border-surface-200 bg-surface-50">';
     html+='<div class="h-10 px-4 flex items-center text-sm font-semibold text-text-primary border-b border-surface-200 bg-white">'+tr('风控条件')+'</div>';
-    ['运单号','入库网点','客户代码','产品类型','销售产品','服务商渠道','目的港','品名'].forEach(function(item,idx){
+    /* 条件维度较多，左侧列表内部滚动，避免把弹窗撑高 */
+    html+='<div class="overflow-auto" style="max-height:420px">';
+    RISK_CONDITION_FIELDS.forEach(function(item,idx){
         html+='<button type="button" data-risk-condition-tab="'+esc(item)+'" onclick="switchRiskConditionTab(this)" class="w-full h-9 px-4 flex items-center justify-between text-left text-sm transition '+(idx===0?'bg-primary-500 text-white font-medium':'text-text-secondary hover:bg-primary-50')+'"><span>'+tr(item)+'</span><span class="text-xs '+(idx===0?'text-white':'text-text-muted')+'">›</span></button>';
     });
-    html+='</div>';
+    html+='</div></div>';
     html+='<div class="flex-1 min-w-0 p-4">';
     html+='<div class="text-base font-semibold text-text-primary pb-3 border-b border-surface-200" data-risk-condition-title>'+tr('运单号')+'</div>';
     html+='<div class="grid grid-cols-1 lg:grid-cols-4 gap-4 py-4 text-sm">';

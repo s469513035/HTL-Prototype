@@ -38,10 +38,10 @@ q:[{label:'服务商编码',type:'text'},{label:'服务商名称',type:'text'},{
 ['RT-002','中欧快线-广州到鹿特丹','广州南沙','鹿特丹','海运整柜','26','好利航自有','启用'],
 ['RT-003','中东线-深圳到迪拜','深圳盐田','迪拜杰贝阿里','海运散货','17','好利航自有','启用'],
 ['RT-004','东南亚线-广州到曼谷','广州南沙','曼谷','海运整柜','7','好利航自有','停用']]},
-'cfg-risk':{t:'风控规则',h:'规则名称|生效时间|失效时间|风控级别|生成工单|风控环节|状态|操作'.split('|'),s:['启用','停用'],d:[
-['超期未付款冻结','2026-06-01 00:00','2026-12-31 23:59','高风险','是','订单预报|出库操作','启用'],
-['黑名单客户拦截','2026-06-01 00:00','2026-12-31 23:59','严重','是','订单预报|收货操作|出库操作','启用'],
-['超额信用管控','2026-06-01 00:00','2026-12-31 23:59','中风险','否','订单预报','启用']]},
+'cfg-risk':{t:'风控规则',h:'规则名称|生效时间|失效时间|风控级别|生成问题件|风控环节|状态|操作'.split('|'),s:['启用','停用'],d:[
+['超期未付款冻结','2026-06-01 00:00','2026-12-31 23:59','二次确认','是','订单预报|出库操作','启用'],
+['黑名单客户拦截','2026-06-01 00:00','2026-12-31 23:59','禁止操作','是','订单预报|收货操作|出库操作','启用'],
+['超额信用管控','2026-06-01 00:00','2026-12-31 23:59','弹出提示','否','订单预报','启用']]},
 'cfg-approval':{t:'审批流程',h:'流程编码|流程名称|业务类型|审批层级|金额阈值|审批人|状态|操作'.split('|'),s:['启用','停用'],d:[
 ['APR-001','报价审批','报价管理','2级','>5,000 USD','分公司经理→财务总监','启用'],
 ['APR-002','调价审批','销售管理','2级','调价>10%','销售经理→分公司经理','启用'],
@@ -806,7 +806,7 @@ TC['base-sender'].q=[{label:'联系公司',type:'text',field:'company'},{label:'
 TC['base-bank'].q=[{label:'账户编号',type:'text',field:'code'},{label:'币种',type:'select',field:'currency',options:['CNY','USD','EUR']},{label:'账户类型',type:'select',field:'type',options:['基本户','一般户']},{label:'状态',type:'select',field:'status'}];
 TC['prod-channel'].q=[{label:'渠道编码',type:'text',field:'code'},{label:'服务商名称',type:'text',field:'provider'},{label:'渠道类型',type:'select',field:'type',options:['整柜外配','散货外配']},{label:'起运港',type:'text',field:'pol'},{label:'目的港',type:'text',field:'pod'},{label:'状态',type:'select',field:'status'}];
 TC['prod-route'].q=[{label:'路线编码',type:'text',field:'code'},{label:'起运港',type:'text',field:'pol'},{label:'目的港',type:'text',field:'pod'},{label:'运输方式',type:'select',field:'type',options:['海运整柜','海运散货']},{label:'状态',type:'select',field:'status'}];
-TC['cfg-risk'].q=[{label:'规则名称',type:'text',field:'name'},{label:'风控级别',type:'select',field:'level',options:['低风险','中风险','高风险','严重']},{label:'生效时间',type:'date',field:'startTime'},{label:'状态',type:'select',field:'status'}];
+TC['cfg-risk'].q=[{label:'规则名称',type:'text',field:'name'},{label:'风控级别',type:'select',field:'level',options:['禁止操作','二次确认','弹出提示']},{label:'生效时间',type:'date',field:'startTime'},{label:'状态',type:'select',field:'status'}];
 TC['cfg-approval'].q=[{label:'流程编码',type:'text',field:'code'},{label:'业务类型',type:'text',field:'bizType'},{label:'审批层级',type:'select',field:'level',options:['1级','2级','3级']},{label:'状态',type:'select',field:'status'}];
 TC['cfg-todo'].q=[{label:'流程编码',type:'text',field:'code'},{label:'待办类型',type:'select',field:'type',options:['操作确认','财务确认','异常处理']},{label:'状态',type:'select',field:'status'}];
 TC['cfg-msg'].q=[{label:'消息编码',type:'text',field:'code'},{label:'推送渠道',type:'select',field:'channel',options:['短信','邮件','WhatsApp','企微']},{label:'状态',type:'select',field:'status'}];

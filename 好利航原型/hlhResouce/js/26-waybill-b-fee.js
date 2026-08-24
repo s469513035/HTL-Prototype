@@ -248,6 +248,71 @@ function renderWaybillTrackTimeline(waybill){
     return h;
 }
 
+/* ===== 操作指令 wb-op-instruction · 查看附件（附件批量下载） ===== */
+/* 指令类型数据源，发送指令弹窗与本模块共用 */
+var OP_INSTRUCTION_TYPES=['收货复核','开箱验货','库内盘点'];
+var OP_INSTRUCTION_FILE_SLUG={'收货复核':'receive_check','开箱验货':'unpack_inspect','库内盘点':'stock_check'};
+
+function opInstructionAttachRows(row,headers){
+    var g=function(n){var i=headers.indexOf(n);return i>=0?String(row[i]==null?'':row[i]):'';};
+    var type=g('指令类型')||'收货复核';
+    var ct=g('创建时间')||'2026-08-05 10:01:03';
+    var by=g('创建人')||'—';
+    var slug=OP_INSTRUCTION_FILE_SLUG[type]||'op_instruction';
+    var stamp=ct.replace(/[^0-9]/g,'').slice(0,14);
+    return [
+        {name:slug+'_photo_'+stamp+'.jpg',type:type,size:'5818',time:ct,by:by},
+        {name:slug+'_photo_'+stamp+'_02.jpg',type:type,size:'3204',time:ct,by:by}
+    ];
+}
+
+/* 缩略图占位：原型无真实图片，用图片图标框代替 */
+function opInstructionThumbHtml(){
+    return '<span class="inline-flex items-center justify-center w-12 h-12 rounded border border-surface-200 bg-surface-50 text-text-muted">'+
+        '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></span>';
+}
+
+function openSelectedOpInstructionAttach(id){
+    var idx=(typeof getSelectedRowIndex==='function')?getSelectedRowIndex():-1;
+    if(idx<0){showToast(tr('请先勾选一条操作指令'));return;}
+    openOpInstructionAttachModal(id,idx);
+}
+
+function openOpInstructionAttachModal(id,rowIdx){
+    var c=TC[id]||{};
+    var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+    var row=data[rowIdx],headers=(c.h||[]);
+    if(!row){showToast(tr('未找到操作指令数据'));return;}
+    var files=opInstructionAttachRows(row,headers);
+    var h='<div class="border border-surface-200 rounded-lg overflow-auto bg-white"><table class="w-full text-sm" style="min-width:900px"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    ['序号','文件名称','文件类型','缩略图','文件大小(kb)','创建时间','创建人','操作'].forEach(function(hd){
+        h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(hd)+'</th>';
+    });
+    h+='</tr></thead><tbody>';
+    if(!files.length){h+='<tr><td colspan="8" class="py-12 text-center text-text-muted">'+tr('无数据')+'</td></tr>';}
+    files.forEach(function(f,i){
+        h+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
+        h+='<td class="px-3 py-2.5 text-primary-700">'+(i+1)+'</td>';
+        h+='<td class="px-3 py-2.5 text-text-primary">'+esc(f.name)+'</td>';
+        h+='<td class="px-3 py-2.5 text-text-secondary whitespace-nowrap">'+esc(f.type)+'</td>';
+        h+='<td class="px-3 py-2.5">'+opInstructionThumbHtml()+'</td>';
+        h+='<td class="px-3 py-2.5 text-text-secondary">'+esc(f.size)+'</td>';
+        h+='<td class="px-3 py-2.5 text-text-secondary whitespace-nowrap">'+esc(f.time)+'</td>';
+        h+='<td class="px-3 py-2.5 text-text-secondary whitespace-nowrap">'+esc(f.by)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap"><button type="button" onclick="showToast(\''+tr('开始下载')+'\')" class="px-3 py-1 text-xs font-medium text-white bg-amber-500 hover:bg-amber-600 rounded cursor-pointer">'+tr('下载')+'</button></td>';
+        h+='</tr>';
+    });
+    h+='</tbody></table></div>';
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='68%';
+    document.getElementById('crud-modal-title').textContent=tr('附件批量下载');
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="showToast(\''+tr('开始下载')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-amber-500 rounded-lg hover:bg-amber-600 cursor-pointer mr-2">'+tr('批量下载')+'</button>'+
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
 /* ===== 运单详情 · 附件信息：表格式（序号/文件名称/文件类型/缩略图/大小/上传人/上传时间/操作）===== */
 var WAYBILL_ATTACH_TYPES=['原始报关预录单','修改报关预录单','商业发票','装箱单','其他'];
 var _waybillAttachSeed=[

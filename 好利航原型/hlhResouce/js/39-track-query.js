@@ -88,7 +88,7 @@ function tqCardHtml(code,o,opts){
     h+='<div class="mt-1.5">'+statusBadge(o.status||'已预报')+'</div></div></div>';
     h+='<div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1.5 text-xs">';
     h+=tqField('下单时间',o.orderTime)+tqField('运单号',opts.wbNo||code)+tqField('客户单号',opts.custNo||code);
-    h+=tqField('收件国家',o.country)+tqField('轨迹时间',last.time)+tqField('轨迹发送地',last.loc||'-');
+    h+=tqField('收件国家',o.country)+tqField('轨迹时间',last.time)+tqField('轨迹发生地',last.loc||'-');
     h+='<div class="md:col-span-3"><span class="text-text-secondary">'+tr('轨迹内容')+'：</span>'+
         '<span class="text-text-primary font-medium">'+esc(last.cn||'')+'</span>'+
         (last.en?'<span class="ml-2 text-primary-600">'+esc(last.en)+'</span>':'')+'</div>';

@@ -1370,7 +1370,7 @@ function getToolbarActions(id){
             {key:'csAdd',label:'新增数据',variant:'primary'},
             {key:'csFeedback',label:'客服反馈'},
             {key:'csReplyForCust',label:'代客户反馈'},
-            {key:'csCustReply',label:'客户反馈'},
+            /* 「客户反馈」按钮已隐藏（客户侧自行反馈，TMS 端不再直接操作） */
             {key:'csRelease',label:'放行'},
             {key:'csReturn',label:'退件'},
             {key:'csRevokeRelease',label:'撤销放行',variant:'danger'}

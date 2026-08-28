@@ -3076,7 +3076,24 @@ TC['crm-cust'].d=[
     ['C10004','鑫海物流','东莞市鑫海物流有限公司','散货','CN 中国','广州南沙仓','禁用','C类','赵经理','zhao@xinhai.com','平台','出货票结','赵六','陈七','陈七','441900199506064567','91441900MA5EXAMPLE4','13600136004','200万','5年','国内物流、仓储配送','东莞市虎门镇','暂停合作','admin','2026-03-20','广州分公司','admin','2026-04-01','广州分公司'],
     ['C10005','锦程国际贸易','上海锦程国际贸易有限公司','整柜','CN 中国','上海浦东仓','启用','A类','陈经理','chen@jincheng.com','代理','出货月结','张三','周八','周八','310115199107075678','91310115MA5EXAMPLE5','13500135005','1000万','20年','国际贸易、供应链管理','上海市浦东新区外高桥','VIP客户','admin','2026-04-01','上海分公司','admin','2026-05-24','深圳分公司']
 ];
-TC['crm-cust'].q=[{label:'客户代码',type:'text'},{label:'客户简称',type:'text'},{label:'所属国家',type:'select',options:COUNTRY_CODE_NAME_OPTIONS},{label:'客户类型',type:'select',options:['直客','同行','平台','代理']},{label:'所属业务员',type:'select',options:['张三','李四','王五','赵六']},{label:'所属客服',type:'select',options:['陈七','周八','吴九']},{label:'启用状态',type:'select',options:['启用','禁用']},{label:'客户等级',type:'select',options:['A类','B类','C类','D类']},{label:'发件人',type:'text'},{label:'发件人公司',type:'text'},{label:'发件人电话',type:'text'}];
+/* 开户状态：列表「全部 / 待开户 / 审批中 / 已开户」四个插页的数据来源。
+   在「启用状态」后插入一列，表头与每行同步，避免列序错位。 */
+(function(){
+    var c=TC['crm-cust'];
+    if(!c||!c.h)return;
+    var i=c.h.indexOf('启用状态');
+    if(i<0||c.h.indexOf('开户状态')>=0)return;
+    c.h.splice(i+1,0,'开户状态');
+    var seed=['已开户','待开户','已开户','待开户','审批中'];
+    (c.d||[]).forEach(function(r,k){r.splice(i+1,0,seed[k%seed.length]);});
+})();
+TC['crm-cust'].s=['待开户','审批中','已开户'];
+/* 默认取数规则会先命中「启用状态」，必须显式指定按开户状态过滤 */
+TC['crm-cust'].statusMatch=function(row,tab,headers){
+    var i=headers.indexOf('开户状态');
+    return i>=0&&row[i]===tab;
+};
+TC['crm-cust'].q=[{label:'客户代码',type:'text'},{label:'客户简称',type:'text'},{label:'所属国家',type:'select',options:COUNTRY_CODE_NAME_OPTIONS},{label:'客户类型',type:'select',options:['直客','同行','平台','代理']},{label:'所属业务员',type:'select',options:['张三','李四','王五','赵六']},{label:'所属客服',type:'select',options:['陈七','周八','吴九']},{label:'启用状态',type:'select',options:['启用','禁用']},{label:'开户状态',type:'select',options:['待开户','审批中','已开户']},{label:'客户等级',type:'select',options:['A类','B类','C类','D类']},{label:'发件人',type:'text'},{label:'发件人公司',type:'text'},{label:'发件人电话',type:'text'}];
 applyStandardSheetTable('base-provider','服务商管理',
     ['服务商代码','服务商全称','服务商全称（英文）','服务商类型','联系人','联系人手机','联系人邮箱','账期','营业执照号','银行账号','开户行','开票信息','是否启用','营业地址','备注'],
     [['SUP-2025-001','上海某某报关有限公司','Shanghai XX Customs Broker Co., Ltd.','报关','李某','13900000020','li@example.com','月结 30 天','91310115YYYYYYYYY2','6225 9900 0000 0000','中国银行上海浦东支行','上海某某报关有限公司 / 上海市浦东新区 XX 路 / 021-60000000','是','上海市浦东新区 XX 路 XX 号 X 楼','美西旺季优先档期'],

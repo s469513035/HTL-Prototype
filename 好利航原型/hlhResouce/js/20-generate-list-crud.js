@@ -135,7 +135,7 @@ function generateListPage(id,page,statusFilter){
         h+='</div>';
         h+='</div>';
     }
-    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-order'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg')){
+    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-order'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust')){
         const statusCounts={};
         statusCounts['']=allData.length;
         c.s.forEach(s=>{statusCounts[s]=allData.filter(row=>{

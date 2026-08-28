@@ -922,6 +922,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='approvalAudit')click='openSelectedApprovalAudit(\''+id+'\')';
     else if(action.key==='msgDetail')click='openSelectedApprovalMsg(\''+id+'\')';
     else if(action.key==='opInstructionAttach')click='openSelectedOpInstructionAttach(\''+id+'\')';
+    else if(action.key==='crmApplyAccount')click='openSelectedCrmAccountApply(\''+id+'\')';
     else if(id==='ow-outbound'&&action.type==='add')click='openOverseasOutboundCreate()';
     else if(action.type==='add')click='openCrudModal(\'add\',\''+id+'\',-1)';
     else if((id==='fin-bank-voucher'||id==='fin-ar-receipt')&&action.type==='edit')click='openSelectedVoucherEdit(\''+id+'\')';
@@ -1189,6 +1190,7 @@ function getToolbarActions(id){
             {key:'search',label:'查询数据',variant:'primary'},
             {type:'add',label:'新增数据',variant:'primary'},
             {type:'edit',label:'编辑数据'},
+            {key:'crmApplyAccount',label:'申请开户',variant:'primary'},
             {type:'view',label:'查看详情'},
             {key:'enable',label:'启用/禁用'},
             {key:'resetPwd',label:'重置密码'},

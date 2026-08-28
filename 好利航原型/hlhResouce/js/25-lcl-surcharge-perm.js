@@ -1,3 +1,161 @@
+/* ===== 客户管理 · 申请开户 =====
+ * 仅「待开户」客户可申请；弹窗补充确认 基本信息 / 企业资质信息 / 附件信息，
+ * 提交后开户状态置为「审批中」。
+ */
+var CRM_ACCT_FILE_TYPES=['营业执照','法人身份证','开户许可证','签约合同','其他'];
+var _crmAcctFiles=[];
+var _crmAcctCtx=null;   /* {id,rowIdx} */
+
+function openSelectedCrmAccountApply(id){
+    var idx=(typeof getSelectedRowIndex==='function')?getSelectedRowIndex():-1;
+    if(idx<0){showToast(tr('请先勾选一条客户数据'));return;}
+    var c=TC[id]||{};
+    var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+    var row=data[idx];
+    if(!row){showToast(tr('未找到客户数据'));return;}
+    var st=getTableValueByHeader(c,row,'开户状态','');
+    if(st!=='待开户'){showToast(tr('仅「待开户」状态的客户可以申请开户，当前为')+'「'+(st||'—')+'」');return;}
+    openCrmAccountApplyModal(id,idx);
+}
+
+function crmAcctSection(title,inner){
+    return '<section class="rounded-lg border border-surface-200 bg-white p-4">'+
+        '<div class="flex items-center gap-2 mb-4"><span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
+        '<span class="text-sm font-semibold text-text-primary">'+tr(title)+'</span></div>'+inner+'</section>';
+}
+
+function crmAcctFileRowsHtml(){
+    if(!_crmAcctFiles.length){
+        return '<tr><td colspan="8" class="py-12 text-center text-text-muted">'+
+            '<svg class="w-10 h-10 mx-auto mb-2 text-surface-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>'+
+            '<div>'+tr('无数据')+'</div></td></tr>';
+    }
+    return _crmAcctFiles.map(function(f,i){
+        return '<tr class="border-t border-surface-100 hover:bg-primary-50/30">'+
+            '<td class="px-3 py-2 text-primary-700">'+(i+1)+'</td>'+
+            '<td class="px-3 py-2 text-text-primary">'+esc(f.name)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(f.type)+'</td>'+
+            '<td class="px-3 py-2"><span class="inline-flex items-center justify-center w-11 h-10 px-1 text-[10px] leading-tight text-center text-text-muted bg-surface-50 border border-surface-200 rounded">'+tr('暂无图片')+'</span></td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(f.size)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(f.by)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(f.time)+'</td>'+
+            '<td class="px-3 py-2 whitespace-nowrap"><button type="button" onclick="removeCrmAcctFile('+i+')" class="px-3 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded cursor-pointer">'+tr('删除')+'</button></td></tr>';
+    }).join('');
+}
+
+function renderCrmAcctFiles(){
+    var tb=document.getElementById('crm-acct-file-body');
+    if(tb)tb.innerHTML=crmAcctFileRowsHtml();
+}
+
+function removeCrmAcctFile(i){
+    _crmAcctFiles.splice(i,1);
+    renderCrmAcctFiles();
+}
+
+function handleCrmAcctUpload(input){
+    if(!input||!input.files)return;
+    var sel=document.getElementById('crm-acct-file-type');
+    var ftype=sel?sel.value:CRM_ACCT_FILE_TYPES[0];
+    var now=(typeof receiptNowStr==='function')?receiptNowStr():'';
+    Array.prototype.slice.call(input.files).forEach(function(file){
+        _crmAcctFiles.push({name:file.name,type:ftype,size:String(Math.max(0,Math.round(file.size/1024))),by:'当前操作员',time:now});
+    });
+    input.value='';
+    renderCrmAcctFiles();
+}
+
+function openCrmAccountApplyModal(id,rowIdx){
+    var c=TC[id]||{};
+    var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+    var row=data[rowIdx];
+    var g=function(n,fb){return getTableValueByHeader(c,row,n,fb||'');};
+    _crmAcctFiles=[];_crmAcctCtx={id:id,rowIdx:rowIdx};
+    var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    var roCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary cursor-not-allowed';
+    function fld(label,inner,req,span){
+        return '<div class="flex flex-col gap-1.5'+(span?' '+span:'')+'"><label class="text-sm font-medium text-text-secondary">'+(req?'<span class="text-red-500">*</span> ':'')+tr(label)+'</label>'+inner+'</div>';
+    }
+    function inp(val,ph,ro){return '<input type="text" class="'+(ro?roCls:inCls)+'" value="'+esc(val||'')+'" placeholder="'+esc(tr(ph||''))+'"'+(ro?' readonly':'')+'>';}
+    function sel(opts,val){return '<select class="'+inCls+'">'+selectOptionsHtml(opts,val)+'</select>';}
+
+    var h='<div class="space-y-4">';
+
+    /* 客户基础信息：从所选客户带出，不在本弹窗修改 */
+    var baseGrid='<div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
+    baseGrid+=fld('客户代码',inp(g('客户代码'),'',true));
+    baseGrid+=fld('客户简称',inp(g('客户简称'),'',true));
+    baseGrid+=fld('客户全称',inp(g('客户全称'),'',true),false,'md:col-span-2');
+    baseGrid+=fld('客户等级',sel(['A类','B类','C类','D类'],g('客户等级','A类')),true);
+    baseGrid+=fld('结算周期',sel(['出货票结','出货月结','签收月结'],g('结算周期','出货月结')),true);
+    baseGrid+=fld('结算周期天数','<input type="number" min="0" class="'+inCls+'" value="0">',true);
+    baseGrid+=fld('客服员',sel(getEmployeeNameOptions(),g('所属客服')),true);
+    baseGrid+=fld('结算员',sel(getEmployeeNameOptions(),g('所属操作')),true);
+    baseGrid+=fld('信用额度授信','<input type="number" min="0" class="'+inCls+'" value="0">',true);
+    baseGrid+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'"></textarea></div>';
+    baseGrid+='</div>';
+    h+=crmAcctSection('基本信息',baseGrid);
+
+    /* 企业资质信息 */
+    var qualGrid='<div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
+    qualGrid+=fld('统一社会信用代码',inp(g('公司营业执照'),'请输入统一社会信用代码'),true);
+    qualGrid+=fld('法人姓名',inp(g('法人姓名'),'请输入法人姓名'),true);
+    qualGrid+=fld('法人身份证',inp(g('法人身份证'),'请输入法人身份证号'),true);
+    qualGrid+=fld('法人电话',inp(g('法人电话'),'请输入法人电话'));
+    qualGrid+=fld('注册资金',inp(g('注册资金'),'如：500万'));
+    qualGrid+=fld('注册年限',inp(g('注册年限'),'如：10年'));
+    qualGrid+=fld('营业执照注册时间','<input type="date" class="'+inCls+'">');
+    qualGrid+=fld('开户名',inp(g('客户全称'),'请输入开户名'));
+    qualGrid+=fld('开户行',inp('','请输入开户行'));
+    qualGrid+=fld('银行账号',inp('','请输入银行账号'),false,'md:col-span-2');
+    qualGrid+='<div class="flex flex-col gap-1.5 md:col-span-4"><label class="text-sm font-medium text-text-secondary">'+tr('营业范围')+'</label><textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y">'+esc(g('营业范围'))+'</textarea></div>';
+    qualGrid+='</div>';
+    h+=crmAcctSection('企业资质信息',qualGrid);
+
+    /* 附件信息 */
+    var att='<div class="flex items-center gap-3 mb-3"><label class="text-sm text-text-secondary whitespace-nowrap">'+tr('请选择附件类型')+'</label>';
+    att+='<select id="crm-acct-file-type" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 w-48">'+selectOptionsHtml(CRM_ACCT_FILE_TYPES,CRM_ACCT_FILE_TYPES[0])+'</select></div>';
+    att+='<div class="rounded-lg border-2 border-dashed border-surface-200 bg-surface-50/60 py-8 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/20 transition-colors" onclick="document.getElementById(\'crm-acct-file-input\').click()">';
+    att+='<svg class="w-10 h-10 mx-auto text-text-muted mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>';
+    att+='<div class="text-sm text-text-secondary">'+tr('点击或者拖动文件到该区域来上传')+'</div>';
+    att+='<div class="text-xs text-text-muted mt-1">'+tr('请上传 大小不超过 25MB 格式为 doc/xls/xlsx/txt/pdf/zip/rar/jpg/jpeg/png/gif/bmp 的文件 最多上传10个附件')+'</div>';
+    att+='<input type="file" id="crm-acct-file-input" class="hidden" multiple onchange="handleCrmAcctUpload(this)"></div>';
+    att+='<div class="mt-3 border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm" style="min-width:900px"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    ['序号','文件名称','文件类型','缩略图','文件大小(kb)','上传人','上传时间','操作'].forEach(function(hd){
+        att+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(hd)+'</th>';
+    });
+    att+='</tr></thead><tbody id="crm-acct-file-body">'+crmAcctFileRowsHtml()+'</tbody></table></div>';
+    h+=crmAcctSection('附件信息',att);
+    h+='</div>';
+
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='78%';
+    document.getElementById('crud-modal-title').textContent=tr('申请开户');
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitCrmAccountApply()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('提交申请')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+/* 提交后进入审批中，列表刷新（写 _listData 副本，不污染种子数据） */
+function submitCrmAccountApply(){
+    if(!_crmAcctCtx){closeCrudModal();return;}
+    var id=_crmAcctCtx.id,rowIdx=_crmAcctCtx.rowIdx,c=TC[id]||{};
+    if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
+    var headers=c.h||[],row=_listData[id][rowIdx];
+    if(row){
+        var i=headers.indexOf('开户状态');
+        if(i>=0)row[i]='审批中';
+    }
+    closeCrudModal();
+    var mc=document.getElementById('main-content');
+    var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
+    var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
+    if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
+    showToast(tr('开户申请已提交，等待审批'));
+}
+
 function openCrmCustomerModal(mode,id,rowIdx,rowData){
     const c=TC[id];
     const L=_lang[_currentLang];

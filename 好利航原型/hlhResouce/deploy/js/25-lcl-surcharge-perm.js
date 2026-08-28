@@ -203,13 +203,14 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     html+=crmSelectFieldHtml('所属国家',COUNTRY_CODE_NAME_OPTIONS,country,readonly);
     html+=readonly?crmWarehouseDisplayHtml('海外提货偏好仓库',warehouseOptions,pickupWarehouse):checkedDropdownFieldHtml('海外提货偏好仓库',warehouseOptions,pickupWarehouse);
     html+=crmSelectFieldHtml('启用状态',['启用','禁用'],getTableValueByHeader(c,rowData,'启用状态','启用'),readonly);
-    html+=crmSelectFieldHtml('客户等级',['A类','B类','C类','D类'],getTableValueByHeader(c,rowData,'客户等级',''),readonly);
+    /* 客户等级与所属业务员位置对调 */
+    html+=crmSelectFieldHtml('所属业务员',getEmployeeNameOptions(),salesPerson,readonly);
     html+=crmInputFieldHtml('联系人',getTableValueByHeader(c,rowData,'联系人',''),'text',readonly);
     html+=crmInputFieldHtml('联系电话',contactPhone,'tel',readonly);
     html+=crmInputFieldHtml('客户邮箱',getTableValueByHeader(c,rowData,'客户邮箱',''),'email',readonly);
     html+=crmSelectFieldHtml('客户类型',['直客','同行','平台','代理'],getTableValueByHeader(c,rowData,'客户类型',''),readonly);
     html+=crmSelectFieldHtml('结算周期',['出货票结','出货月结','签收月结'],getTableValueByHeader(c,rowData,'结算周期',''),readonly);
-    html+=crmSelectFieldHtml('所属业务员',getEmployeeNameOptions(),salesPerson,readonly);
+    html+=crmSelectFieldHtml('客户等级',['A类','B类','C类','D类'],getTableValueByHeader(c,rowData,'客户等级',''),readonly);
     html+=crmSelectFieldHtml('所属操作',getEmployeeNameOptions(),settlementPerson,readonly);
     html+=crmSelectFieldHtml('所属客服',getEmployeeNameOptions(),csrPerson,readonly);
     html+='</div></div>';
@@ -229,11 +230,12 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     html+='</div></div>';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('企业资质信息')+'</div>'+
         '<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">'+
-            crmLeadingStarFieldHtml('是否签订合同','select',hasContract,readonly,true,{options:['是','否'],placeholder:'请选择'})+
-            crmLeadingStarFieldHtml('法人姓名','text',legalName,readonly,true)+
+            /* 企业资质信息全部非必填 */
+            crmLeadingStarFieldHtml('是否签订合同','select',hasContract,readonly,false,{options:['是','否'],placeholder:'请选择'})+
+            crmLeadingStarFieldHtml('法人姓名','text',legalName,readonly,false)+
             crmLeadingStarFieldHtml('法人身份证','text',legalIdCard,readonly,false)+
             crmLeadingStarFieldHtml('注册资本','text',regCapital,readonly,false)+
-            crmLeadingStarFieldHtml('营业执照注册时间','date',licenseRegDate,readonly,true,{placeholder:'请选择营业执照注册时间'})+
+            crmLeadingStarFieldHtml('营业执照注册时间','date',licenseRegDate,readonly,false,{placeholder:'请选择营业执照注册时间'})+
             crmLeadingStarFieldHtml('开户名','text',bankAccountName,readonly,false)+
             crmLeadingStarFieldHtml('开户行','text',bankName,readonly,false)+
             crmLeadingStarFieldHtml('银行账号','text',bankAccount,readonly,false)+

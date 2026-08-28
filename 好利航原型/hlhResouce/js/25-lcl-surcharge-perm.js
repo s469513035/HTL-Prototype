@@ -81,34 +81,33 @@ function openCrmAccountApplyModal(id,rowIdx){
 
     var h='<div class="space-y-4">';
 
-    /* 客户基础信息：从所选客户带出，不在本弹窗修改 */
-    var baseGrid='<div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
+    /* 客户基础信息：从所选客户带出，不在本弹窗修改。弹窗收窄后按三列排布 */
+    var baseGrid='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">';
     baseGrid+=fld('客户代码',inp(g('客户代码'),'',true));
-    baseGrid+=fld('客户简称',inp(g('客户简称'),'',true));
     baseGrid+=fld('客户全称',inp(g('客户全称'),'',true),false,'md:col-span-2');
+    baseGrid+=fld('客户简称',inp(g('客户简称'),'',true));
     baseGrid+=fld('客户等级',sel(['A类','B类','C类','D类'],g('客户等级','A类')),true);
     baseGrid+=fld('结算周期',sel(['出货票结','出货月结','签收月结'],g('结算周期','出货月结')),true);
-    baseGrid+=fld('结算周期天数','<input type="number" min="0" class="'+inCls+'" value="0">',true);
-    baseGrid+=fld('客服员',sel(getEmployeeNameOptions(),g('所属客服')),true);
-    baseGrid+=fld('结算员',sel(getEmployeeNameOptions(),g('所属操作')),true);
+    baseGrid+=fld('所属客服',sel(getEmployeeNameOptions(),g('所属客服')),true);
+    baseGrid+=fld('所属操作',sel(getEmployeeNameOptions(),g('所属操作')),true);
     baseGrid+=fld('信用额度授信','<input type="number" min="0" class="'+inCls+'" value="0">',true);
-    baseGrid+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'"></textarea></div>';
+    baseGrid+='<div class="flex flex-col gap-1.5 md:col-span-3"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'"></textarea></div>';
     baseGrid+='</div>';
     h+=crmAcctSection('基本信息',baseGrid);
 
-    /* 企业资质信息 */
-    var qualGrid='<div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
-    qualGrid+=fld('统一社会信用代码',inp(g('公司营业执照'),'请输入统一社会信用代码'),true);
-    qualGrid+=fld('法人姓名',inp(g('法人姓名'),'请输入法人姓名'),true);
-    qualGrid+=fld('法人身份证',inp(g('法人身份证'),'请输入法人身份证号'),true);
+    /* 企业资质信息：全部非必填，开户后可再补充 */
+    var qualGrid='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">';
+    qualGrid+=fld('统一社会信用代码',inp(g('公司营业执照'),'请输入统一社会信用代码'));
+    qualGrid+=fld('法人姓名',inp(g('法人姓名'),'请输入法人姓名'));
+    qualGrid+=fld('法人身份证',inp(g('法人身份证'),'请输入法人身份证号'));
     qualGrid+=fld('法人电话',inp(g('法人电话'),'请输入法人电话'));
     qualGrid+=fld('注册资金',inp(g('注册资金'),'如：500万'));
     qualGrid+=fld('注册年限',inp(g('注册年限'),'如：10年'));
     qualGrid+=fld('营业执照注册时间','<input type="date" class="'+inCls+'">');
     qualGrid+=fld('开户名',inp(g('客户全称'),'请输入开户名'));
     qualGrid+=fld('开户行',inp('','请输入开户行'));
-    qualGrid+=fld('银行账号',inp('','请输入银行账号'),false,'md:col-span-2');
-    qualGrid+='<div class="flex flex-col gap-1.5 md:col-span-4"><label class="text-sm font-medium text-text-secondary">'+tr('营业范围')+'</label><textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y">'+esc(g('营业范围'))+'</textarea></div>';
+    qualGrid+=fld('银行账号',inp('','请输入银行账号'));
+    qualGrid+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary">'+tr('营业范围')+'</label><textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y">'+esc(g('营业范围'))+'</textarea></div>';
     qualGrid+='</div>';
     h+=crmAcctSection('企业资质信息',qualGrid);
 
@@ -120,7 +119,7 @@ function openCrmAccountApplyModal(id,rowIdx){
     att+='<div class="text-sm text-text-secondary">'+tr('点击或者拖动文件到该区域来上传')+'</div>';
     att+='<div class="text-xs text-text-muted mt-1">'+tr('请上传 大小不超过 25MB 格式为 doc/xls/xlsx/txt/pdf/zip/rar/jpg/jpeg/png/gif/bmp 的文件 最多上传10个附件')+'</div>';
     att+='<input type="file" id="crm-acct-file-input" class="hidden" multiple onchange="handleCrmAcctUpload(this)"></div>';
-    att+='<div class="mt-3 border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm" style="min-width:900px"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    att+='<div class="mt-3 border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm" style="min-width:820px"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     ['序号','文件名称','文件类型','缩略图','文件大小(kb)','上传人','上传时间','操作'].forEach(function(hd){
         att+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(hd)+'</th>';
     });
@@ -129,7 +128,7 @@ function openCrmAccountApplyModal(id,rowIdx){
     h+='</div>';
 
     var panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='78%';
+    if(panel)panel.style.width='62%';
     document.getElementById('crud-modal-title').textContent=tr('申请开户');
     document.getElementById('crud-modal-body').innerHTML=h;
     document.getElementById('crud-modal-footer').innerHTML=

@@ -86,10 +86,11 @@ function openCrmAccountApplyModal(id,rowIdx){
     baseGrid+=fld('客户代码',inp(g('客户代码'),'',true));
     baseGrid+=fld('客户全称',inp(g('客户全称'),'',true),false,'md:col-span-2');
     baseGrid+=fld('客户简称',inp(g('客户简称'),'',true));
-    baseGrid+=fld('客户等级',sel(['A类','B类','C类','D类'],g('客户等级','A类')),true);
+    /* 客户等级 / 所属客服 / 所属操作 非必填 */
+    baseGrid+=fld('客户等级',sel(['A类','B类','C类','D类'],g('客户等级','A类')));
     baseGrid+=fld('结算周期',sel(['出货票结','出货月结','签收月结'],g('结算周期','出货月结')),true);
-    baseGrid+=fld('所属客服',sel(getEmployeeNameOptions(),g('所属客服')),true);
-    baseGrid+=fld('所属操作',sel(getEmployeeNameOptions(),g('所属操作')),true);
+    baseGrid+=fld('所属客服',sel(getEmployeeNameOptions(),g('所属客服')));
+    baseGrid+=fld('所属操作',sel(getEmployeeNameOptions(),g('所属操作')));
     baseGrid+=fld('信用额度授信','<input type="number" min="0" class="'+inCls+'" value="0">',true);
     baseGrid+='<div class="flex flex-col gap-1.5 md:col-span-3"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'"></textarea></div>';
     baseGrid+='</div>';

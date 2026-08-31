@@ -1,4 +1,13 @@
 var COUNTRY_CODE_NAME_OPTIONS=['CN 中国','US 美国','GB 英国','DE 德国','NL 荷兰','FR 法国','NG 尼日利亚','CI 科特迪瓦','SN 塞内加尔','GH 加纳','CM 喀麦隆','BJ 贝宁','TG 多哥','LR 利比里亚','GN 几内亚','SL 塞拉利昂','MR 毛里塔尼亚','GMB 冈比亚','AE 阿联酋'];
+/* 回填 07 里因加载顺序取不到常量的国家下拉 */
+(function(){
+    var c=TC&&TC['crm-cust'];
+    if(!c||!c.q)return;
+    c.q.forEach(function(q){
+        if(q.label==='所属国家'&&(!q.options||!q.options.length))q.options=COUNTRY_CODE_NAME_OPTIONS;
+    });
+})();
+
 function countryCodeName(value){
     const raw=String(value||'').trim();
     if(!raw)return raw;

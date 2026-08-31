@@ -3093,7 +3093,9 @@ TC['crm-cust'].statusMatch=function(row,tab,headers){
     var i=headers.indexOf('开户状态');
     return i>=0&&row[i]===tab;
 };
-TC['crm-cust'].q=[{label:'客户代码',type:'text'},{label:'客户简称',type:'text'},{label:'所属国家',type:'select',options:COUNTRY_CODE_NAME_OPTIONS},{label:'客户类型',type:'select',options:['直客','同行','平台','代理']},{label:'所属业务员',type:'select',options:['张三','李四','王五','赵六']},{label:'所属客服',type:'select',options:['陈七','周八','吴九']},{label:'启用状态',type:'select',options:['启用','禁用']},{label:'开户状态',type:'select',options:['待开户','审批中','已开户']},{label:'客户等级',type:'select',options:['A类','B类','C类','D类']},{label:'发件人',type:'text'},{label:'发件人公司',type:'text'},{label:'发件人电话',type:'text'}];
+TC['crm-cust'].q=[{label:'客户代码',type:'text'},{label:'客户简称',type:'text'},/* COUNTRY_CODE_NAME_OPTIONS 定义在 08，本文件先加载：此处不能直接引用，否则整段 throw、
+   本行之后的 base-provider 等定义都不会执行。选项由 08 加载后回填。 */
+{label:'所属国家',type:'select',options:(typeof COUNTRY_CODE_NAME_OPTIONS!=='undefined'?COUNTRY_CODE_NAME_OPTIONS:[])},{label:'客户类型',type:'select',options:['直客','同行','平台','代理']},{label:'所属业务员',type:'select',options:['张三','李四','王五','赵六']},{label:'所属客服',type:'select',options:['陈七','周八','吴九']},{label:'启用状态',type:'select',options:['启用','禁用']},{label:'开户状态',type:'select',options:['待开户','审批中','已开户']},{label:'客户等级',type:'select',options:['A类','B类','C类','D类']},{label:'发件人',type:'text'},{label:'发件人公司',type:'text'},{label:'发件人电话',type:'text'}];
 applyStandardSheetTable('base-provider','服务商管理',
     ['服务商代码','服务商全称','服务商全称（英文）','服务商类型','联系人','联系人手机','联系人邮箱','账期','营业执照号','银行账号','开户行','开票信息','是否启用','营业地址','备注'],
     [['SUP-2025-001','上海某某报关有限公司','Shanghai XX Customs Broker Co., Ltd.','报关','李某','13900000020','li@example.com','月结 30 天','91310115YYYYYYYYY2','6225 9900 0000 0000','中国银行上海浦东支行','上海某某报关有限公司 / 上海市浦东新区 XX 路 / 021-60000000','是','上海市浦东新区 XX 路 XX 号 X 楼','美西旺季优先档期'],

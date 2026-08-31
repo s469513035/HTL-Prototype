@@ -18,6 +18,27 @@ function markTransferOutbound(id){
     document.getElementById('main-content').innerHTML=generateListPage(id,_listPage[id]||1,_statusFilterVal||'');
 }
 
+/* 特价申请：计费量（按计重类型），供「调整总价」自动计算 */
+var _spQty={'重量':0,'体积':0};
+/* 调整总价 = 总价模式取申请价格；单价模式取 申请价格 × 计费量（重量或体积） */
+function recalcSpecialPriceTotal(){
+    var out=document.getElementById('sp-total');
+    if(!out)return;
+    var priceEl=document.getElementById('sp-price');
+    var price=parseFloat(String((priceEl&&priceEl.value)||'').replace(/,/g,''));
+    if(isNaN(price)){out.value='';return;}
+    var mode='单价模式';
+    var checked=document.querySelector('input[name="radio-申请类型"]:checked');
+    if(checked&&checked.value)mode=checked.value;
+    var total=price;
+    if(mode==='单价模式'){
+        var wtEl=document.getElementById('sp-weight-type');
+        var wt=(wtEl&&wtEl.value)||'重量';
+        total=price*((_spQty&&_spQty[wt])||0);
+    }
+    out.value=total.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
 function actionConfig(action,id,rowData){
     const c=TC[id]||{t:'当前页面',q:[],s:[]};
     const name=c.t||id;
@@ -39,7 +60,28 @@ function actionConfig(action,id,rowData){
     if(action==='mergeDeclaration')return {title:'合并报关 - '+name,fields:[{label:'报关方式',type:'select',required:true,options:['合并报关','买单报关']},{label:'报关主体',type:'select',options:['客户自有抬头','好利航代理','第三方报关行']},{label:'合并说明',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认合并报关'};
     if(action==='splitDeclaration')return {title:'拆分报关 - '+name,fields:[{label:'拆分方式',type:'select',required:true,options:['按品名拆分','按件数拆分','按客户要求拆分']},{label:'拆分票数',type:'number',value:'2'},{label:'拆分说明',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认拆分报关'};
     if(action==='mergeBilling')return {title:'合并计费 - '+name,fields:[{label:'合并费用项',type:'checkboxGroup',span:'md:col-span-2',options:['运费'],checkedOptions:['运费']},{label:'计费备注',type:'textarea',span:'md:col-span-2'}],confirm:'确认合并计费'};
-    if(action==='specialPrice')return {title:'特价申请 - '+name,fields:[{label:'申请类型',type:'radioGroup',required:true,options:['单价模式','总价模式'],value:'单价模式',span:'md:col-span-2'},{label:'计重类型',type:'select',required:true,options:['重量','体积'],value:'重量'},{label:'申请价格',required:true,placeholder:'请输入特价金额'},{label:'币别',type:'select',required:true,options:['CNY','USD','EUR']},{label:'申请原因',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'提交特价申请'};
+    if(action==='specialPrice'){
+        /* 报价币别 / 报价总金额 从运单「运费」列拆出（形如 CNY 8,580），只读展示 */
+        const spQuote=String(getTableValueByHeader(c,rowData,'运费','')||'').trim();
+        const spM=/^([A-Za-z]{2,4})?\s*([\d,.]+)$/.exec(spQuote)||[];
+        const spCur=spM[1]||'CNY';
+        const spAmt=spM[2]||'';
+        /* 单价模式下按计重类型取计费量，供「调整总价」自动计算 */
+        _spQty={
+            '重量':parseFloat(String(getTableValueByHeader(c,rowData,'重量(KG)',getTableValueByHeader(c,rowData,'重量','0'))||'0').replace(/,/g,''))||0,
+            '体积':parseFloat(String(getTableValueByHeader(c,rowData,'体积(CBM)',getTableValueByHeader(c,rowData,'体积','0'))||'0').replace(/,/g,''))||0
+        };
+        return {title:'特价申请 - '+name,cols:2,fields:[
+            {label:'报价币别',value:spCur,readonly:true,translateValue:false},
+            {label:'报价总金额',value:spAmt,readonly:true,translateValue:false},
+            {label:'申请类型',type:'radioGroup',required:true,options:['单价模式','总价模式'],value:'单价模式',span:'md:col-span-2',onchange:'recalcSpecialPriceTotal()'},
+            {label:'计重类型',type:'select',required:true,options:['重量','体积'],value:'重量',id:'sp-weight-type',onchange:'recalcSpecialPriceTotal()'},
+            {label:'申请价格',required:true,placeholder:'请输入特价金额',id:'sp-price',oninput:'recalcSpecialPriceTotal()'},
+            {label:'币别',type:'select',required:true,options:['CNY','USD','EUR']},
+            {label:'调整总价',readonly:true,id:'sp-total',placeholder:'自动计算',translateValue:false},
+            {label:'申请原因',type:'textarea',required:true,span:'md:col-span-2'}
+        ],confirm:'提交特价申请'};
+    }
     if(action==='sendInstruction')return {title:'发送指令',fields:[{label:'指令类型',type:'select',required:true,options:OP_INSTRUCTION_TYPES,span:'md:col-span-2'},{label:'指令内容',type:'textarea',required:true,span:'md:col-span-2'},{label:'备注',type:'textarea',span:'md:col-span-2'}],confirm:'确认'};
     if(action==='ticketManage'||action==='workOrder')return {title:'工单管理 - '+name,fields:[{label:'工单标题',required:true},{label:'工单类型',type:'select',required:true,options:['费用争议','资料补充','异常处理','客户咨询']},{label:'优先级',type:'select',options:['高','中','低']},{label:'工单内容',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'创建工单'};
     if(action==='cargoHold')return {title:'查货扣件 - '+name,fields:[{label:'查货标记',type:'checkboxGroup',span:'md:col-span-2',options:['敏感货','玩具','手机','危险品','易碎','带电','带磁','严禁品']},{label:'是否扣货',type:'checkboxGroup',options:['是']},{label:'产品备注',type:'textarea',required:true,span:'md:col-span-2'}],confirm:'确认'};
@@ -441,6 +483,8 @@ function addTab(id,title,type,langKey){
     renderTabs();
     if(type==='dashboard'){
         document.getElementById('main-content').innerHTML=dashboardHTML;
+    }else if(type==='mobile-app'&&typeof generateMobileAppPage==='function'){
+        document.getElementById('main-content').innerHTML=generateMobileAppPage(id);
     }else if(type==='list'){
         const content=renderTabContent(id);
         console.log('[addTab] content length='+content.length);
@@ -467,6 +511,8 @@ function switchTab(id){
     if(!tab)return;
     if(tab.type==='dashboard'){
         document.getElementById('main-content').innerHTML=dashboardHTML;
+    }else if(tab.type==='mobile-app'&&typeof generateMobileAppPage==='function'){
+        document.getElementById('main-content').innerHTML=generateMobileAppPage(id);
     }else if(tab.type==='list'){
         document.getElementById('main-content').innerHTML=renderTabContent(id);
     }
@@ -797,7 +843,9 @@ function selectMenuItem(el,evt){
     }
     const L=_lang[_currentLang];
     console.log('[selectMenuItem] id='+id+' page='+page+' TC_exists='+!!TC[id]+' langKey='+langKey);
-    if(id&&TC[id]){
+    if(page==='mobile-app'&&typeof isMobileAppTab==='function'&&isMobileAppTab(id)){
+        addTab(id,getMobileAppTitle(id),'mobile-app',langKey);
+    }else if(id&&TC[id]){
         addTab(id,langText(langKey,TC[id].t),'list',langKey);
         if(id==='wh-no-pre-in'){
             _activeTab=id;
@@ -826,6 +874,8 @@ function navigateToTab(page,tabId){
         var menuItems=document.querySelectorAll('[data-id]');
         menuItems.forEach(function(el){if(el.dataset.id===tabId)langKey=el.dataset.langkey||'';});
         addTab(tabId,langText(langKey,TC[tabId].t),'list',langKey);
+    }else if(typeof isMobileAppTab==='function'&&isMobileAppTab(tabId)){
+        addTab(tabId,getMobileAppTitle(tabId),'mobile-app','');
     }
 }
 
@@ -991,9 +1041,18 @@ function switchAccount(accountId){
     renderMenu();
     // 关闭下拉菜单
     closeUserDropdown();
-    // 重置到工作台
-    addTab('workspace',_lang[_currentLang].workspace,'dashboard','workspace');
-    document.getElementById('main-content').innerHTML=dashboardHTML;
+    // 重置到当前端首页
+    if(_currentTerminal==='oms'&&typeof mobileAppOpen==='function'){
+        mobileAppOpen('client-app-home');
+    }else if(_currentTerminal==='pda'&&typeof generateWarehousePdaPage==='function'){
+        _openTabs=[{id:'pda-app',title:'PDA 工作台',type:'list',langKey:''}];
+        _activeTab='pda-app';
+        renderTabs();
+        document.getElementById('main-content').innerHTML=generateWarehousePdaPage('pda-app');
+    }else{
+        addTab('workspace',_lang[_currentLang].workspace,'dashboard','workspace');
+        document.getElementById('main-content').innerHTML=dashboardHTML;
+    }
 }
 
 document.addEventListener('click',function(e){

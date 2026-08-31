@@ -490,7 +490,7 @@ function renderField(f){
         input='<div class="flex flex-wrap items-center gap-x-5 gap-y-2 min-h-10 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">';
         (f.options||[]).forEach(function(o,i){
             const checked=(f.value===o||(i===0&&(f.value===undefined||f.value===null||f.value==='')))?' checked':'';
-            input+='<label class="inline-flex items-center gap-1.5 text-sm text-text-secondary cursor-pointer"><input type="radio" name="'+esc(groupName)+'" value="'+esc(o)+'" class="border-surface-300 text-primary-600"'+checked+'><span>'+esc(tr(o))+'</span></label>';
+            input+='<label class="inline-flex items-center gap-1.5 text-sm text-text-secondary cursor-pointer"><input type="radio" name="'+esc(groupName)+'" value="'+esc(o)+'" class="border-surface-300 text-primary-600"'+checked+(f.onchange?' onchange="'+f.onchange+'"':'')+'><span>'+esc(tr(o))+'</span></label>';
         });
         input+='</div>';
     }else{

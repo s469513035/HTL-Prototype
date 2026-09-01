@@ -147,4 +147,36 @@ out.push('\n=== 6. 状态列定位（si 是否指向主状态列）===');
   out.push(`  ${ok ? '✓' : '✗'} ${pad(k, 22)} 状态列="${col}"  状态集=[${c.s.join('/')}]  数据值=[${[...new Set(vals)].join('/')}]`);
 });
 
+out.push('\n=== 7. 操作导航页（fcl-guide）===');
+const menuTabs = new Set(nodes.filter(n => n.tab).map(n => n.tab));
+if (!TC['fcl-guide']) out.push("  ✗ TC['fcl-guide'] 未注册");
+else out.push(`  ✓ TC['fcl-guide'] 已注册，pageMode=${TC['fcl-guide'].pageMode}`);
+
+let guideHtml = '';
+try {
+  guideHtml = vm.runInContext("generateFclGuidePage('fcl-guide')", sandbox);
+  out.push(`  ✓ generateFclGuidePage 渲染成功（${guideHtml.length} 字符）`);
+} catch (e) {
+  out.push(`  ✗ 渲染抛错：${e.name}: ${e.message}`);
+}
+
+const refs = [];
+const steps = vm.runInContext('typeof FCL_SOP_STEPS!=="undefined"?FCL_SOP_STEPS:[]', sandbox);
+const fmap = vm.runInContext('typeof FCL_FUNC_MAP!=="undefined"?FCL_FUNC_MAP:[]', sandbox);
+steps.forEach(s => (s.tabs || []).forEach(t => refs.push({ label: t[0], tab: t[1], from: `环节 ${s.no}` })));
+fmap.forEach(g => (g.items || []).forEach(it => refs.push({ label: it[0], tab: it[1], from: g.group })));
+const badRefs = refs.filter(r => !menuTabs.has(r.tab));
+out.push(`  导航共引用 ${refs.length} 个跳转目标（去重 ${new Set(refs.map(r => r.tab)).size} 个）`);
+if (badRefs.length === 0) out.push('  ✓ 全部指向真实存在的菜单 tab');
+else badRefs.forEach(r => out.push(`  ✗ ${r.from} → "${r.label}" 的 tab='${r.tab}' 不在菜单中`));
+
+out.push(`  ${steps.length === 15 ? '✓' : '✗'} SOP 环节数 ${steps.length}（应为 15）`);
+const noActions = steps.filter(s => !s.actions || !s.actions.length);
+out.push(noActions.length ? `  ✗ 缺操作要点：${noActions.map(s => s.no).join(',')}` : '  ✓ 15 个环节均有操作要点');
+
+if (guideHtml) {
+  ['端到端业务流程', '功能地图', '各环节操作说明', '关键业务规则速查', '异常处理速查', 'fcl-sop-0', 'fcl-sop-14']
+    .forEach(k => out.push(`  ${guideHtml.includes(k) ? '✓' : '✗'} 渲染含「${k}」`));
+}
+
 console.log(out.join('\n'));

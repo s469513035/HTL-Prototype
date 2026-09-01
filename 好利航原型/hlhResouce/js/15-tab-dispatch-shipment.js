@@ -9,6 +9,7 @@ function renderTabContent(id){
     if(c&&c.pageMode==='warehouseHeadlessInbound')return generateWarehouseHeadlessInboundPage(id);
     if(c&&c.pageMode==='warehousePda')return generateWarehousePdaPage(id);
     if(c&&c.pageMode==='fclTrialCalc')return generateFclTrialCalcPage(id);
+    if(c&&c.pageMode==='fclGuide')return generateFclGuidePage(id);
     if(c&&c.pageMode==='noPreClaim')return generateHeadlessClaimListPage(id,_listPage[id]||1);
     if(c&&c.pageMode==='inquiryQuoteEntry')return generateInquiryQuoteEntryPage(id);
     if(c&&c.pageMode==='palletPrint')return generatePalletPrintPage(id);

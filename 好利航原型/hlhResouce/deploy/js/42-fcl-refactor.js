@@ -489,6 +489,426 @@ function openFclOrderDetail(id,rowIdx){
     openSimpleInfoModal(tr('票单360')+' - '+esc(g('票单号')),html,'80%');
 }
 
+/* ==========================================================================
+ * 七、整柜业务操作导航（首页）—— SOP 全流程速查 + 功能地图
+ * 依据《好利航物流-整柜操作SOP V1.0》15 个环节 + 第19/21/22章
+ * ========================================================================== */
+
+TC['fcl-guide']={t:'整柜操作导航',pageMode:'fclGuide',h:[],q:[],s:[],d:[]};
+
+/* 三个阶段（对应 SOP 目录的「销售前端 / 订仓与操作 / 财务与结算」）*/
+var FCL_SOP_STAGES=[
+    {key:'sales',label:'销售前端',desc:'从客户询价到销售指示审核通过',color:'blue',range:[0,3]},
+    {key:'ops',label:'订仓与操作',desc:'从订仓到提单寄出的全部执行环节',color:'green',range:[3,11]},
+    {key:'fin',label:'财务与结算',desc:'账单、付款、应收放单与提成',color:'purple',range:[11,15]}
+];
+
+/* 15 个环节的操作说明（角色 / 触发 / 操作要点 / 系统产物 / SLA / 相关功能）*/
+var FCL_SOP_STEPS=[
+{no:'①',name:'询价 / 报价',sop:'SOP-FCL-01',stage:'sales',role:'业务员、商务（运价）',
+ trigger:'客户通过邮件 / 微信 / QQ 发来询盘',
+ actions:['在系统或小程序输入起运港、目的港、ETD、柜型，查询最新业务价','按客户类型与利润空间叠加销售利润，得出销售价',
+          '海外代理走邮件标准模板（自动套最新价 + 有效期）；国内同行/直客走微信、QQ 简版模板',
+          '报价单需备注 ETT 时间、询盘有效期、附加费说明与特殊事项'],
+ output:'报价单存档、报价历史留痕；订单状态 = 询价中',
+ sla:'≤ 30 分钟（价格已维护时）',
+ caution:'三级价格：预估成本价 → 业务价（+公关成本+管理费）→ 销售价（+业务员利润）。预付柜/特殊启运口岸/汽车柜加管理费，到付柜不加。',
+ tabs:[['整柜报价单','fcl-quote','fcl'],['整柜试算-业务','fcl-trial-calc-biz','fcl'],['整柜试算-客户','fcl-trial-calc','fcl'],['成本价','fcl-cost-price','fcl'],['附加费维护','fcl-surcharge','fcl']]},
+
+{no:'②',name:'客户建档与审核',sop:'SOP-FCL-02',stage:'sales',role:'业务员（发起）、商务/财务主管（审核）',
+ trigger:'识别为新客户，首次接洽',
+ actions:['进入「客户管理 → 申请开户」，录入营业执照号 / 客户名称','补充联系人、电话、邮箱、收件地址、付款方式偏好、销售备注并上传附件',
+          '提交审核 → 审核人对照背调结果（国内天眼查 + 同行历史；国外 Sea Net）','审核通过后客户方可下单；驳回需备注原因'],
+ output:'客户档案建立；状态 待开户 → 审批中 → 已开户',
+ sla:'—',
+ caution:'客户是全公司共享主数据，整柜模块不另建审核流，统一走客户管理的申请开户流程。',
+ tabs:[['客户管理','crm-cust','crm']]},
+
+{no:'③',name:'销售指示录入',sop:'SOP-FCL-03',stage:'sales',role:'业务员（主导）、商务（审核）',
+ trigger:'客户接受报价并发来托书',
+ actions:['将托书上传系统，自动提取发货人、收货人、通知人、品名、HS code、货重、柜型柜量、港口、ETD',
+          '核对识别结果，补充付款方式、保险要求、特殊操作备注','系统按 ETD / 起运港 / 目的港 / 渠道自动生成预估成本',
+          '填写应收客户费用（运费 + 附加费 + Local 费），系统算出预估毛利','提交销售指示 → 商务按成本价、应收价、毛利率审核'],
+ output:'销售指示 FSI；审核通过后自动生成订仓单 FBK；状态 待订仓',
+ sla:'托书 → 录入 ≤ 4 小时；审核 ≤ 2 小时',
+ caution:'预定仓无需审核（无费用产生）；实单订仓必须走价格与毛利审核。业务员在外可用移动端录入。',
+ tabs:[['销售指示','fcl-sales-instruction','fcl'],['业务询盘单','fcl-inquiry-order','fcl']]},
+
+{no:'④',name:'订仓作业',sop:'SOP-FCL-04',stage:'ops',role:'订仓员（主导）、商务（仓位协调）',
+ trigger:'销售指示审核通过，进入「待订仓」队列',
+ actions:['从待订仓列表领取订单，选择订仓方式：自有渠道 / 外配同行 / 一代',
+          '自有渠道走 EDI 推送或船公司官网；外配同行由系统生成剥离敏感信息的专属托书一键发邮件',
+          '可「复制相似订仓」（同公司/同船司/同港口）减少约 80% 重复录入',
+          '填写发货人、收货人、通知人、品名、HS code、货重、柜型柜量、约号','提交后登记船公司订仓回执号'],
+ output:'订仓单 FBK + 订仓回执号；状态 已订仓',
+ sla:'船公司订仓回执 ≤ 24 小时',
+ caution:'危险品必须勾选「是否危险品」并填 UN 编号、危险类别、包装类别、申报人，其船司结单时间早于普货，需提前规划、进仓与普货分开存放。',
+ tabs:[['订仓作业','fcl-booking','fcl'],['仓位管理','fcl-slot','fcl'],['订仓窗口提醒','fcl-booking-window','fcl']]},
+
+{no:'⑤',name:'放仓作业',sop:'SOP-FCL-05',stage:'ops',role:'订仓员（主导）、操作员（协同）',
+ trigger:'船公司确认舱位并发出放仓邮件（一般 1~2 个工作日）',
+ actions:['放仓邮件自动接入或人工上传，系统识别港口 + 船公司并匹配放仓模板',
+          '按模板自动删除船司价格等敏感信息、添加瞒报告示、套用客户放仓模板',
+          '自动填充船名航次、起运港、目的港、ETD、约号、关务联系人','核对后点击「放仓发送」发给客户'],
+ output:'客户专用放仓件；状态 已放仓；同时对内提醒拖车、报关、补料',
+ sla:'放仓邮件接收 ≤ 48 小时',
+ caution:'放仓模板是本环节核心，按「船公司 × 目的港」维护，含对外/对内结单时间（对内一般早 1 天）。危险品需单独一套模板。',
+ tabs:[['放仓作业','fcl-release','fcl'],['放仓模板','fcl-release-tpl','biz-cfg']]},
+
+{no:'⑥',name:'拖车安排',sop:'SOP-FCL-06',stage:'ops',role:'操作员（主导）、拖车行、财务（对账）',
+ trigger:'放仓完成',
+ actions:['录入拖车委托单：装柜时间、专柜地址、联系人、电话、备注','询价并选择拖车行（拼箱偏固定、整柜按 VIP 等级与摊位紧张度安排）',
+          '发送拖车委托单给拖车行','业务员录入向客户收取的拖车应收（毛利计算需要）','拖车行自助录入实际费用，或月底对账后录入实际成本'],
+ output:'拖车委托单 FTR；状态 拖车费用已确认',
+ sla:'—',
+ caution:'目标是让供应商自助录入，把财务对账工作量降低约 70%。',
+ tabs:[['拖车安排','fcl-truck','fcl']]},
+
+{no:'⑦',name:'进仓装柜',sop:'SOP-FCL-07',stage:'ops',role:'操作员（监督）、仓库操作员（执行）',
+ trigger:'拖车提柜到仓，货物到仓',
+ actions:['系统按时间节点自动提醒：进仓日 / 装柜日 / 报关截止日','货物到仓扫描入库，登记件数、毛重',
+          '装柜时用 PDA 逐件扫描，系统记录装柜清单','装柜完成拍照存档（封柜照、铅封号特写）','回填铅封号'],
+ output:'装柜单 FLD + 装柜清单 + 封柜照；状态 已进仓 / 已装柜',
+ sla:'—',
+ caution:'业务联系单不再打印，改由系统按时间节点自动生成任务与提醒，实现无纸化。',
+ tabs:[['进仓装柜','fcl-load','fcl'],['仓库PDA','pda-app','warehouse-pda']]},
+
+{no:'⑧',name:'补料与提单',sop:'SOP-FCL-08',stage:'ops',role:'操作员（主导）、单证员（制单）、客户（确认）',
+ trigger:'装柜完成，临近船公司补料截止日',
+ actions:['客户按对内截止日提供补料（SI + 装箱单 + 报关资料）','到内部截止时间仍未收到 → 系统自动发催料邮件并记录催料次数',
+          '核对补料完整性后录入 SI；已对接 API 的走 EDI 自动推送，未对接的手工登录船司官网',
+          '船公司预生成草稿件 → 下载转发客户核对 → 客户确认或提出改单（可能产生改单费）',
+          '开船后 7 天内船公司签发正本 / 电放件，正本提单存档（草稿件无需存档）'],
+ output:'补料单 FSB + 提单号 + 柜号；状态 已补料 → 提单已确认 → 提单已签发',
+ sla:'对内截止比对外提前 1 天（留 3~4 小时操作时间）；草稿件确认 ≤ 12 小时',
+ caution:'拆单（1 MBL 拆多 HBL）遵循船公司拆单逻辑；并单（多 HBL 合 1 MBL）可合并申报节省费用。拆单产生的 HBL 会打拆单标记，放单时强制转人工审核。',
+ tabs:[['补料与提单','fcl-si-bl','fcl'],['拆单并单管理','fcl-bl-split-merge','fcl']]},
+
+{no:'⑨',name:'报关申报',sop:'SOP-FCL-09',stage:'ops',role:'报关员（主导）、报关行（执行）',
+ trigger:'装柜完成',
+ actions:['整理客户提供的报关资料（合同、发票、装箱单、报关委托书）','上传报关资料到系统，客户可自行下载报关放行单',
+          '线下对接报关行，选择报关方式：单独 / 合并 / 拆分 / 买单','查验时登记查验信息并通知相关人员；放行后上传放行单',
+          '录入每票报关费（不固定，按报关类型标记收费逻辑）'],
+ output:'报关单 FCD + 放行单；状态 已申报 / 查验中 / 已放行',
+ sla:'—',
+ caution:'当前为线下对接、逐票录入费用；月结由财务统一与报关行对账。报关行 API 属远期规划。',
+ tabs:[['报关申报','fcl-customs','fcl']]},
+
+{no:'⑩',name:'开船与轨迹',sop:'SOP-FCL-10',stage:'ops',role:'操作员（监控）、客服（通知）、系统',
+ trigger:'船舶离港',
+ actions:['系统每日轮询船公司 API / 船讯网，抓取装船、开船、在途、抵港、卸船五类节点',
+          '对比预计与实际开船日期，偏差超阈值触发异常预警','自动推送进度邮件给客户（补料时已绑定客户邮箱）',
+          '船期变更（换船 / 推迟 / 跳港）时自动识别受影响订单，更新船名航次并一键群发通知','抵港后通知客户准备清关'],
+ output:'轨迹单 FTK + 轨迹节点记录；状态 已开船 / 在途 / 已到港',
+ sla:'—',
+ caution:'四类异常预警：开船延误、跳港、塞港、船公司换船。开船延误产生的额外费用可作为账单申诉依据。',
+ tabs:[['开船与轨迹','fcl-sailing-track','fcl'],['异常处理','fcl-exception','fcl']]},
+
+{no:'⑪',name:'寄单作业',sop:'SOP-FCL-11',stage:'ops',role:'操作员（发起）、深圳前台（执行）',
+ trigger:'提单已签发且应收已核销放单',
+ actions:['发起「寄单申请」，填写收件地址、收件人、电话，勾选快递公司与备注',
+          '系统以任务流自动通知深圳前台同事','前台打包提单寄出并回填快递单号','系统记录快递单号并自动通知客户'],
+ output:'寄单单 FDS + 快递单号；状态 待寄单 → 已寄出 → 已签收',
+ sla:'深圳前台当日寄出',
+ caution:'原流程靠邮件单向操作、深圳同事邮件量大；改为系统任务流后直接在系统看任务、回填单号并自动反馈客户。',
+ tabs:[['寄单作业','fcl-doc-send','fcl']]},
+
+{no:'⑫',name:'账单管理',sop:'SOP-FCL-12',stage:'fin',role:'操作员（录入）、财务（对账）',
+ trigger:'船公司账单送达（邮件 PDF 或官网下载）',
+ actions:['优先 OCR 识别上传的 PDF，自动提取费用项并映射到预设模板；API 对接后可自动获取；人工录入作兜底',
+          '对照预估成本识别差异（金额、附加费、汇率等），系统自动标记差异','差异在合理范围 → 确认入账；差异异常 → 走申诉流程',
+          '实际支付与负数费用录入（便于抵扣）'],
+ output:'实际费用 FBE / 导入批次 FBI / 对比单 FCMP / 申诉单 FAP；状态 账单已确认 或 申诉中',
+ sla:'船公司账单录入 ≤ 2 个工作日',
+ caution:'申诉务必「先付款后申诉」，避免逾期影响后续业务。MAC 申诉周期约 3 个月，系统在到期前 7/3/1 天三次提醒，超期自动置「超期未处理」。',
+ tabs:[['实际费用管理','fcl-bill-entry','fcl'],['账单导入','fcl-actual-bill-import','fcl'],['船公司账单对比','fcl-carrier-bill-compare','fcl'],['账单申诉','fcl-appeal','fcl']]},
+
+{no:'⑬',name:'付款管理',sop:'SOP-FCL-13',stage:'fin',role:'操作员（请款）、财务（审核与付款）',
+ trigger:'账单确认无误',
+ actions:['录入请款单：船东、币种、金额、付款用途、期望付款时间、收款账号','财务审核请款单（金额、付款期限、资金计划）',
+          '同一船东 + 同一币种的多笔请款合并付款，节省手续费','付款后录入实际付款时间 + 银行水单','系统自动核销该笔应付并通知操作员'],
+ output:'请款单 FPR → 付款单 FPY；状态 已付款 → 已核销',
+ sla:'CMA 开船日 +10 天；其他船公司约 +14 天',
+ caution:'期望付款时间由操作录入、提交后不可改；实际付款时间由财务录入。系统按两者差异做资金盘点。票结由操作部逐票发起，月结由财务按月汇总。',
+ tabs:[['请款单管理','fcl-payment-request','fcl'],['付款管理','fcl-payment','fcl'],['整柜应付账单','fcl-bill','fcl']]},
+
+{no:'⑭',name:'应收与放单',sop:'SOP-FCL-14',stage:'fin',role:'财务（应收）、操作员（发起放单）',
+ trigger:'客户付款到账 / 操作员发起放单申请',
+ actions:['银行流水自动接入并与应收单匹配，不能自动匹配的由财务手工认领','核销应收并标记已收款',
+          '发起放单申请时系统展示该客户的应收、已收、未收与历史核销情况',
+          '无欠款且当票应收已核销 → 自动放单；有历史未核销 → 转财务人工审核；黑名单客户 → 强拦截'],
+ output:'放单单 FAR；状态 已核销 / 已放单，随后进入寄单流程',
+ sla:'客户付款 → 自动放单 ≤ 2 小时',
+ caution:'避免循环扣单：拆单后部分核销、分批付款等特殊情况必须识别出来转人工并高亮提醒。',
+ tabs:[['应收与放单','fcl-ar-release','fcl'],['银行流水管理','fcl-bank-flow','fcl']]},
+
+{no:'⑮',name:'业绩与提成',sop:'SOP-FCL-15',stage:'fin',role:'深圳财务（核算与发放）、业务员（查看）',
+ trigger:'毛利结算完成、收款到位',
+ actions:['系统按「毛利 = 应收 − 成本」核算，成本取实际账单金额','校验发放三条件：收款到位 + 财务对账完成 + 该票无未关闭申诉',
+          '满足条件的置为「可发放」，由深圳财务确认发放','业务员随时查看应收款、公司成本、利润与提成预估，并可逐票与自己的记账核对'],
+ output:'提成单 FCM；状态 待核算 → 已核算 → 已发放',
+ sla:'—',
+ caution:'存在未关闭申诉的票单不可核算提成。业绩可视化的目的是让业务员能对照核对，简化工作并加深对财务的信任。',
+ tabs:[['业绩与提成','fcl-commission','fcl'],['整柜业务总览','fcl-order','fcl']]}
+];
+
+/* 功能地图：6 个分组 + 每项一句话说明 */
+var FCL_FUNC_MAP=[
+{group:'① 报价与价格',hint:'商务维护价格，业务员对外报价',items:[
+    ['整柜报价单','fcl-quote','fcl','对客户正式发出的报价，含成本、附加费、加价与报价金额'],
+    ['成本价','fcl-cost-price','fcl','船东表价，系统内部计算成本的基础'],
+    ['业务成本价','fcl-business-cost','fcl','预估成本价 + 公关成本 + 运营成本，业务员对外报价底价'],
+    ['业务销售价','fcl-sales-price','fcl','业务价 + 业务员利润，按旺淡季动态调整'],
+    ['附加费维护','fcl-surcharge','fcl','码头费、文件费等，标记是否已包含在报价内'],
+    ['加价维护','fcl-markup','fcl','按客户/分公司/柜型/航线维护加价规则'],
+    ['整柜试算-客户','fcl-trial-calc','fcl','客户口径试算，可一键生成报价'],
+    ['整柜试算-业务','fcl-trial-calc-biz','fcl','业务成本口径试算，供业务员判断利润空间'],
+    ['航司路线配置','fcl-carrier-route','fcl','航司、路线代码、中转港与航程天数']]},
+{group:'② 询盘与销售指示',hint:'业务员的完整工作面',items:[
+    ['业务询盘单','fcl-inquiry-order','fcl','商机台账，记录询盘、报价渠道与失单原因'],
+    ['销售指示','fcl-sales-instruction','fcl','订仓的唯一前置单据，审核通过后生成订仓单']]},
+{group:'③ 订仓与仓位',hint:'订仓员的完整工作面',items:[
+    ['订仓作业','fcl-booking','fcl','全链路主档，预定仓与实单订仓、危险品申报都在这里'],
+    ['仓位管理','fcl-slot','fcl','预定仓/实单/已放仓/未放仓统计，放仓上限与商务统一调配'],
+    ['订仓窗口提醒','fcl-booking-window','fcl','窗口开始前 60 分钟、截止前 30 分钟自动提醒'],
+    ['放仓作业','fcl-release','fcl','船司放仓邮件解析、敏感信息剥离与放仓件发送']]},
+{group:'④ 操作执行',hint:'操作员、单证员、报关员分岗作业',items:[
+    ['拖车安排','fcl-truck','fcl','拖车委托单、拖车行选择与实际费用登记'],
+    ['进仓装柜','fcl-load','fcl','进仓登记、PDA 扫描装柜、封柜照与铅封号'],
+    ['补料与提单','fcl-si-bl','fcl','SI 录入、催料、草稿件确认、实单绑定与费用重算'],
+    ['拆单并单管理','fcl-bl-split-merge','fcl','M 单拆 H 单 / H 单合 M 单，含费用分摊'],
+    ['报关申报','fcl-customs','fcl','报关资料、报关方式、查验登记与放行单'],
+    ['开船与轨迹','fcl-sailing-track','fcl','ETD/ATD/ETA、轨迹节点与四类异常预警'],
+    ['寄单作业','fcl-doc-send','fcl','寄单任务流、快递单号回填与客户通知']]},
+{group:'⑤ 财务与结算',hint:'应付链 → 应收链 → 提成',items:[
+    ['实际费用管理','fcl-bill-entry','fcl','船司实际费用逐项录入与确认'],
+    ['账单导入','fcl-actual-bill-import','fcl','按模板批量导入船司账单，显示匹配数与差异数'],
+    ['船公司账单对比','fcl-carrier-bill-compare','fcl','系统应付 vs 船司账单，自动标记差异'],
+    ['账单申诉','fcl-appeal','fcl','争议金额、申诉周期、到期提醒与超期未处理'],
+    ['整柜应付账单','fcl-bill','fcl','按服务商汇总的应付账单'],
+    ['请款单管理','fcl-payment-request','fcl','期望付款时间、最晚付款期限与合并付款'],
+    ['付款管理','fcl-payment','fcl','付款执行、实际付款时间与银行水单'],
+    ['应收与放单','fcl-ar-release','fcl','放单判定：自动放单 / 人工审核 / 黑名单强拦截'],
+    ['银行流水管理','fcl-bank-flow','fcl','流水自动匹配与手工认领'],
+    ['业绩与提成','fcl-commission','fcl','毛利、提成预估与发放三条件校验']]},
+{group:'⑥ 监控与看板',hint:'跨环节视角',items:[
+    ['整柜业务总览','fcl-order','fcl','一票一行 + 15 节点进度灯，双击查看票单360'],
+    ['异常处理','fcl-exception','fcl','订仓失败、报关异常等业务链路异常单'],
+    ['SLA与KPI','fcl-sla-kpi','fcl','各环节时效达成率与岗位 KPI 监控']]},
+{group:'⚙ 整柜规则（业务配置）',hint:'规则外置，业务可自行维护',items:[
+    ['关键业务规则','fcl-rule','biz-cfg','订仓、财务等各类规则的启用与优先级'],
+    ['放仓模板','fcl-release-tpl','biz-cfg','船公司 × 目的港，结单时间、瞒报告示与敏感信息剥离'],
+    ['服务商API配置','fcl-provider-api','biz-cfg','船期、订舱、补料、轨迹接口地址与授权'],
+    ['EDI/API对接','fcl-edi-api','biz-cfg','各接口同步状态与失败次数监控']]}
+];
+
+/* 关键业务规则速查（SOP 第十九章）*/
+var FCL_KEY_RULES=[
+{t:'价格加价规则',items:['预付柜：船东价 + 管理费','到付柜：不加管理费，价格公开透明','特殊启运口岸（如厦门）：增加管理费','汽车柜：增加管理费且需提前囤仓']},
+{t:'仓位上限规则',items:['船公司维度：按船公司维护放仓上限','业务员维度：单个业务员最大预定仓数量上限','业务之间仓位默认不可见，商务/订仓员可见全量','释放的仓位回到「已释放」，由商务统一调配']},
+{t:'放单规则',items:['自动放单：无历史欠款 + 当票应收已核销','手动放单：有历史未核销单据 → 财务审核','拒放规则：客户在黑名单 → 系统强拦截','拆单部分核销 / 分批付款 → 转人工并高亮，避免循环扣单']},
+{t:'申诉规则',items:['先付款后申诉，避免逾期影响后续业务','申诉周期：MAC 约 3 个月，其他船公司类似','到期前 7 天 / 3 天 / 1 天三次提醒','超期未处理需在申诉界面显著呈现']}
+];
+
+/* 异常处理速查（SOP 第二十一章）*/
+var FCL_EXCEPTIONS=[
+['客户取消订单','业务员','订仓部系统取消 → 退仓 → 退仓成本录入客户历史单或新建费用单'],
+['船公司换船 / 推迟','系统 + 操作员','系统识别变更邮件 → 更新船名航次 → 群发邮件通知受影响客户'],
+['爆舱无法订仓','订仓员','立即通知业务员 → 协调客户改期或改船公司'],
+['账单差异','财务','先付款 → 走申诉流程，记录争议金额与到期日'],
+['报关查验','报关员','系统登记查验信息 → 通知客户与业务员'],
+['客户拒收草稿件','操作员','通知船公司改单，记录改单次数与改单费'],
+['客户欠款逾期','财务','系统催收提醒 → 业务员跟进 → 期间放单请求转人工或拒放'],
+['邮件退信','业务员','系统反馈 → 核实邮箱或改用其他渠道'],
+['接口对接失败','IT','30 分钟未恢复 → 告警 → 暂时人工录入']
+];
+
+function fclGuideStats(){
+    var c=TC['fcl-order']||{},rows=c.d||[],si=(c.h||[]).indexOf('主状态');
+    var cnt=function(s){return si<0?0:rows.filter(function(r){return r[si]===s;}).length;};
+    return [
+        {label:'在途票单总数',val:rows.length,cls:'text-primary-700'},
+        {label:'待订仓',val:cnt('待订仓'),cls:'text-orange-600'},
+        {label:'操作中',val:cnt('操作中'),cls:'text-blue-600'},
+        {label:'异常挂起',val:cnt('异常挂起'),cls:'text-red-600'}
+    ];
+}
+
+function fclGuideJump(page,tab){
+    if(typeof navigateToTab==='function')navigateToTab(page,tab);
+    else showToast(tr('无法跳转'));
+}
+
+function fclGuideScrollTo(i){
+    var el=document.getElementById('fcl-sop-'+i);
+    if(!el)return;
+    el.scrollIntoView({behavior:'smooth',block:'start'});
+    el.classList.add('ring-2','ring-primary-400');
+    setTimeout(function(){el.classList.remove('ring-2','ring-primary-400');},1600);
+}
+
+function fclGuideChip(label,tab,page){
+    return '<button type="button" class="h-7 px-3 text-xs rounded-full border border-primary-200 text-primary-700 bg-primary-50/50 hover:bg-primary-100 cursor-pointer whitespace-nowrap" '+
+           'onclick="fclGuideJump(\''+page+'\',\''+tab+'\')">'+esc(tr(label))+' →</button>';
+}
+
+function generateFclGuidePage(id){
+    var h='';
+    var stageColor={sales:'blue',ops:'green',fin:'purple'};
+    var badgeCls={blue:'bg-blue-50 text-blue-700 border-blue-200',green:'bg-green-50 text-green-700 border-green-200',purple:'bg-purple-50 text-purple-700 border-purple-200'};
+
+    h+='<div class="p-6 space-y-5">';
+
+    /* ===== 头部 ===== */
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-6">';
+    h+='<div class="flex items-start justify-between gap-6 flex-wrap">';
+    h+='<div class="min-w-[420px] flex-1">';
+    h+='<h2 class="text-xl font-bold text-text-primary mb-1.5">'+tr('整柜业务操作导航')+'</h2>';
+    h+='<p class="text-sm text-text-secondary leading-relaxed">'+
+       tr('本页是整柜（FCL）业务的入口地图与操作说明。上方按 SOP 的 15 个环节串联全流程，点击任一环节可跳到对应的操作说明；下方「功能地图」按 6 个业务分组列出全部功能页面，点击直接打开。')+'</p>';
+    h+='<p class="text-xs text-text-muted mt-2">'+tr('依据《好利航物流 · 整柜操作 SOP V1.0》（SOP-FCL-V1.0）与《整柜业务功能重构设计方案》（DES-FCL-V1.0）')+'</p>';
+    h+='</div>';
+    h+='<div class="grid grid-cols-4 gap-3">';
+    fclGuideStats().forEach(function(s){
+        h+='<div class="px-4 py-3 rounded-xl border border-surface-200 bg-surface-50 min-w-[92px] text-center">'+
+           '<div class="text-2xl font-bold '+s.cls+'">'+s.val+'</div>'+
+           '<div class="text-[11px] text-text-muted mt-0.5 whitespace-nowrap">'+esc(tr(s.label))+'</div></div>';
+    });
+    h+='</div></div></div>';
+
+    /* ===== 全流程 15 环节 ===== */
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-6">';
+    h+='<div class="flex items-center gap-2 mb-4"><span class="w-1 h-4 bg-primary-600 rounded"></span>'+
+       '<span class="text-base font-semibold text-text-primary">'+tr('端到端业务流程')+'</span>'+
+       '<span class="text-xs text-text-muted">'+tr('点击环节查看该环节的操作说明')+'</span></div>';
+    FCL_SOP_STAGES.forEach(function(st){
+        h+='<div class="mb-3 last:mb-0">';
+        h+='<div class="flex items-center gap-2 mb-2">';
+        h+='<span class="text-xs font-semibold px-2 py-0.5 rounded border '+badgeCls[st.color]+'">'+esc(tr(st.label))+'</span>';
+        h+='<span class="text-xs text-text-muted">'+esc(tr(st.desc))+'</span></div>';
+        h+='<div class="flex items-center gap-1.5 flex-wrap">';
+        for(var i=st.range[0];i<st.range[1];i++){
+            var s=FCL_SOP_STEPS[i];
+            h+='<button type="button" onclick="fclGuideScrollTo('+i+')" '+
+               'class="px-3 py-2 rounded-lg border border-surface-200 bg-surface-50 hover:border-primary-300 hover:bg-primary-50 cursor-pointer text-left">'+
+               '<div class="text-xs font-semibold text-text-primary whitespace-nowrap">'+s.no+' '+esc(tr(s.name))+'</div>'+
+               '<div class="text-[10px] text-text-muted">'+s.sop+'</div></button>';
+            if(i<st.range[1]-1)h+='<span class="text-surface-300 text-xs">→</span>';
+        }
+        h+='</div></div>';
+    });
+    h+='</div>';
+
+    /* ===== 功能地图 ===== */
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-6">';
+    h+='<div class="flex items-center gap-2 mb-4"><span class="w-1 h-4 bg-primary-600 rounded"></span>'+
+       '<span class="text-base font-semibold text-text-primary">'+tr('功能地图')+'</span>'+
+       '<span class="text-xs text-text-muted">'+tr('点击功能名直接打开对应页面')+'</span></div>';
+    h+='<div class="grid grid-cols-2 gap-4">';
+    FCL_FUNC_MAP.forEach(function(g){
+        h+='<div class="border border-surface-200 rounded-xl p-4">';
+        h+='<div class="flex items-baseline gap-2 mb-3">';
+        h+='<span class="text-sm font-semibold text-text-primary">'+esc(tr(g.group))+'</span>';
+        h+='<span class="text-[11px] text-text-muted">'+esc(tr(g.hint))+'</span></div>';
+        h+='<div class="space-y-1.5">';
+        g.items.forEach(function(it){
+            h+='<div class="flex items-start gap-2 group">';
+            h+='<button type="button" onclick="fclGuideJump(\''+it[2]+'\',\''+it[1]+'\')" '+
+               'class="shrink-0 text-xs font-medium text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer text-left w-[104px]">'+esc(tr(it[0]))+'</button>';
+            h+='<span class="text-[11px] text-text-muted leading-[18px] flex-1">'+esc(tr(it[3]))+'</span>';
+            h+='</div>';
+        });
+        h+='</div></div>';
+    });
+    h+='</div></div>';
+
+    /* ===== 15 环节操作说明 ===== */
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-6">';
+    h+='<div class="flex items-center gap-2 mb-4"><span class="w-1 h-4 bg-primary-600 rounded"></span>'+
+       '<span class="text-base font-semibold text-text-primary">'+tr('各环节操作说明')+'</span>'+
+       '<span class="text-xs text-text-muted">'+tr('角色 · 触发条件 · 操作要点 · 系统产物 · 时效')+'</span></div>';
+    h+='<div class="space-y-3">';
+    FCL_SOP_STEPS.forEach(function(s,i){
+        h+='<div id="fcl-sop-'+i+'" class="border border-surface-200 rounded-xl p-4 transition-all" style="scroll-margin-top:12px">';
+        /* 标题行 */
+        h+='<div class="flex items-center gap-2.5 flex-wrap mb-3">';
+        h+='<span class="text-base font-bold text-primary-700">'+s.no+'</span>';
+        h+='<span class="text-sm font-semibold text-text-primary">'+esc(tr(s.name))+'</span>';
+        h+='<span class="text-[11px] px-2 py-0.5 rounded border '+badgeCls[stageColor[s.stage]]+'">'+s.sop+'</span>';
+        h+='<span class="text-[11px] text-text-muted">'+tr('角色')+'：'+esc(tr(s.role))+'</span>';
+        if(s.sla&&s.sla!=='—')h+='<span class="text-[11px] px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200">SLA '+esc(tr(s.sla))+'</span>';
+        h+='</div>';
+        /* 触发 + 产物 */
+        h+='<div class="grid grid-cols-2 gap-4 mb-3">';
+        h+='<div><div class="text-[11px] text-text-muted mb-1">'+tr('触发条件')+'</div>'+
+           '<div class="text-xs text-text-secondary leading-relaxed">'+esc(tr(s.trigger))+'</div></div>';
+        h+='<div><div class="text-[11px] text-text-muted mb-1">'+tr('系统产物与状态')+'</div>'+
+           '<div class="text-xs text-text-secondary leading-relaxed">'+esc(tr(s.output))+'</div></div>';
+        h+='</div>';
+        /* 操作要点 */
+        h+='<div class="mb-3"><div class="text-[11px] text-text-muted mb-1.5">'+tr('操作要点')+'</div><ol class="space-y-1">';
+        s.actions.forEach(function(a,ai){
+            h+='<li class="flex items-start gap-2 text-xs text-text-secondary leading-relaxed">'+
+               '<span class="shrink-0 w-4 h-4 rounded-full bg-primary-50 text-primary-700 text-[10px] font-semibold flex items-center justify-center mt-0.5">'+(ai+1)+'</span>'+
+               '<span>'+esc(tr(a))+'</span></li>';
+        });
+        h+='</ol></div>';
+        /* 注意事项 */
+        if(s.caution){
+            h+='<div class="mb-3 px-3 py-2 rounded-lg bg-amber-50 border-l-[3px] border-amber-400">'+
+               '<span class="text-[11px] font-semibold text-amber-800">'+tr('注意')+'：</span>'+
+               '<span class="text-xs text-amber-800 leading-relaxed">'+esc(tr(s.caution))+'</span></div>';
+        }
+        /* 相关功能 */
+        h+='<div class="flex items-center gap-2 flex-wrap pt-2 border-t border-surface-100">';
+        h+='<span class="text-[11px] text-text-muted">'+tr('相关功能')+'</span>';
+        s.tabs.forEach(function(t){h+=fclGuideChip(t[0],t[1],t[2]);});
+        h+='</div></div>';
+    });
+    h+='</div></div>';
+
+    /* ===== 关键业务规则 ===== */
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-6">';
+    h+='<div class="flex items-center gap-2 mb-4"><span class="w-1 h-4 bg-primary-600 rounded"></span>'+
+       '<span class="text-base font-semibold text-text-primary">'+tr('关键业务规则速查')+'</span>'+
+       '<span class="text-xs text-text-muted">'+tr('SOP 第十九章；具体数值在「业务配置 → 整柜规则」维护')+'</span></div>';
+    h+='<div class="grid grid-cols-4 gap-4">';
+    FCL_KEY_RULES.forEach(function(r){
+        h+='<div class="border border-surface-200 rounded-xl p-4">';
+        h+='<div class="text-sm font-semibold text-text-primary mb-2">'+esc(tr(r.t))+'</div><ul class="space-y-1.5">';
+        r.items.forEach(function(x){
+            h+='<li class="flex items-start gap-1.5 text-[11px] text-text-secondary leading-relaxed">'+
+               '<span class="shrink-0 w-1 h-1 rounded-full bg-primary-400 mt-1.5"></span><span>'+esc(tr(x))+'</span></li>';
+        });
+        h+='</ul></div>';
+    });
+    h+='</div>';
+    h+='<div class="mt-3 flex gap-2">'+fclGuideChip('关键业务规则','fcl-rule','biz-cfg')+fclGuideChip('放仓模板','fcl-release-tpl','biz-cfg')+'</div>';
+    h+='</div>';
+
+    /* ===== 异常处理 ===== */
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-6">';
+    h+='<div class="flex items-center gap-2 mb-4"><span class="w-1 h-4 bg-primary-600 rounded"></span>'+
+       '<span class="text-base font-semibold text-text-primary">'+tr('异常处理速查')+'</span>'+
+       '<span class="text-xs text-text-muted">'+tr('SOP 第二十一章；异常登记入口见「监控与看板 → 异常处理」')+'</span></div>';
+    h+='<table class="w-full text-xs"><thead><tr class="bg-primary-50/60">'+
+       '<th class="text-left px-3 py-2 font-semibold text-primary-800 w-[18%]">'+tr('异常类型')+'</th>'+
+       '<th class="text-left px-3 py-2 font-semibold text-primary-800 w-[14%]">'+tr('首问责任')+'</th>'+
+       '<th class="text-left px-3 py-2 font-semibold text-primary-800">'+tr('处理流程')+'</th></tr></thead><tbody>';
+    FCL_EXCEPTIONS.forEach(function(e,i){
+        h+='<tr class="'+(i%2?'bg-surface-50/60':'')+' border-b border-surface-100">'+
+           '<td class="px-3 py-2 text-text-primary font-medium">'+esc(tr(e[0]))+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(tr(e[1]))+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary leading-relaxed">'+esc(tr(e[2]))+'</td></tr>';
+    });
+    h+='</tbody></table>';
+    h+='<div class="mt-3 flex gap-2">'+fclGuideChip('异常处理','fcl-exception','fcl')+fclGuideChip('SLA与KPI','fcl-sla-kpi','fcl')+'</div>';
+    h+='</div>';
+
+    h+='</div>';
+    return h;
+}
+
 /* 工具栏「票单360」：取勾选行；未勾选则提示 */
 function openSelectedFclOrderDetail(id){
     var idx=getSelectedRowIndex();

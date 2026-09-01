@@ -27,6 +27,8 @@ const menuData=[
 ]},
 
 {id:'fcl',label:'整柜业务',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7M8 11h2m4 0h2M8 15h2m4 0h2"/></svg>',children:[
+// ===== 首页：操作导航（全流程 SOP 速查 + 功能地图）=====
+{id:'fcl-guide',label:'操作导航',page:'fcl',tab:'fcl-guide'},
 // ===== ① 报价与价格（SOP-FCL-01）=====
 {id:'fcl-price',label:'报价与价格',children:[
     {id:'fcl-quote',label:'整柜报价单',page:'fcl',tab:'fcl-quote'},

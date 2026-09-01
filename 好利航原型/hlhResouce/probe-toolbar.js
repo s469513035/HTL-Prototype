@@ -76,12 +76,21 @@ function printFields(id) {
     const isDate = fType ? fType === 'date' : /日期|时间/.test(hd);
     const isAttach = fType ? fType === 'attachment' : hd.includes('附件');
     const isLong = fType ? fType === 'textarea' : /备注|说明|描述|地址|职能/.test(hd);
-    const opts = (c.fieldOptions && c.fieldOptions[hd])
-      ? '下拉[' + c.fieldOptions[hd].slice(0, 3).join('/') + (c.fieldOptions[hd].length > 3 ? '…' : '') + ']'
+    // fieldOptions 可以是数组，也可以是函数（弹窗打开时才求值）
+    let rawOpts = c.fieldOptions && c.fieldOptions[hd];
+    let dynamic = false;
+    if (typeof rawOpts === 'function') {
+      dynamic = true;
+      try { rawOpts = vm.runInContext(`TC[${JSON.stringify(id)}].fieldOptions[${JSON.stringify(hd)}]()`, sandbox); }
+      catch (e) { rawOpts = null; }
+    }
+    const opts = (rawOpts && rawOpts.length)
+      ? (dynamic ? '动态下拉[' : '下拉[') + rawOpts.slice(0, 3).join('/') + (rawOpts.length > 3 ? '…' : '') + ']'
       : '';
-    // 渲染优先级：selectOptions > 状态 > 日期 > 编号 > 附件 > 长文本 > 文本
+    // 渲染优先级：selectOptions > 状态 > 当前登录人 > 日期 > 编号 > 附件 > 长文本 > 文本
     const kind = opts ? opts
       : hd.includes('状态') ? '状态下拉'
+      : fType === 'currentUser' ? '当前登录人(只读)'
       : isDate ? '日期控件'
       : isCode ? '自动生成(只读)'
       : isAttach ? '附件上传控件'

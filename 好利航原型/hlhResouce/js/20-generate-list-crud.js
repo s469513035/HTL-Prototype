@@ -496,18 +496,21 @@ function openCrudModal(mode,id,rowIdx){
             const isRequired=isImportantRequiredField(hd,id);
             const reqMark=isRequired?' <span class="text-red-500">*</span>':'';
             const reqAttr=isRequired?' required':'';
-            html+='<div class="'+fieldWrapClass+'">';
+            const anchor=crudFieldAnchorAttrs(hd,c);
+            html+='<div class="'+fieldWrapClass+'" data-field-box="'+esc(hd)+'">';
             html+='<label class="text-sm font-medium text-text-secondary mb-1.5 block">'+esc(tr(hd))+reqMark+'</label>';
             if(selectOptions){
-                html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+reqAttr+'>';
+                html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+anchor+reqAttr+'>';
                 selectOptions.forEach(function(o){html+='<option value="'+esc(o)+'">'+esc(tr(o))+'</option>';});
                 html+='</select>';
             }else if(isStatus){
-                html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+reqAttr+'>';
+                html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+anchor+reqAttr+'>';
                 if(c.s)c.s.forEach(s=>{html+='<option value="'+esc(s)+'">'+esc(tr(s))+'</option>';});
                 html+='</select>';
+            }else if(fType==='currentUser'){
+                html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+esc(getCurrentUserName())+'"'+anchor+' readonly>';
             }else if(isDate){
-                html+='<input type="date" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+reqAttr+'>';
+                html+='<input type="date" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+anchor+reqAttr+'>';
             }else if(isCode){
                 const data=_listData[id]||expandData(id);
                 const lastCode=(data[data.length-1]&&data[data.length-1][field.index])||'';
@@ -515,19 +518,20 @@ function openCrudModal(mode,id,rowIdx){
                 let autoCode='';
                 if(lm){autoCode=lm[1]+String(parseInt(lm[2])+1).padStart(lm[2].length,'0');}
                 else{autoCode=lastCode+'-001';}
-                html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+autoCode+'" placeholder="'+tr('自动生成')+'" readonly'+reqAttr+'>';
+                html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+autoCode+'" placeholder="'+tr('自动生成')+'"'+anchor+' readonly'+reqAttr+'>';
             }else if(isAttachment){
                 html+=crudAttachmentFieldHtml(hd,'');
             }else if(isLongText){
-                html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+reqAttr+'></textarea>';
+                html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'></textarea>';
             }else{
-                html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+reqAttr+'>';
+                html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'>';
             }
             html+='</div>';
         });
         html+='</div>';
         bodyEl.innerHTML=html;
         footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr('新增成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
+        runCrudAfterModalRender(id,'add',null);
     }else{
         let html='<div class="'+colClass+'">';
         modalFields.forEach(function(field){
@@ -545,27 +549,30 @@ function openCrudModal(mode,id,rowIdx){
             const isRequired=isImportantRequiredField(hd,id);
             const reqMark=isRequired?' <span class="text-red-500">*</span>':'';
             const reqAttr=isRequired?' required':'';
-            html+='<div class="'+fieldWrapClass+'">';
+            const anchor=crudFieldAnchorAttrs(hd,c);
+            html+='<div class="'+fieldWrapClass+'" data-field-box="'+esc(hd)+'">';
             html+='<label class="text-sm font-medium text-text-secondary mb-1.5 block">'+esc(tr(hd))+reqMark+'</label>';
             if(selectOptions){
-                html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+reqAttr+'>';
+                html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+anchor+reqAttr+'>';
                 selectOptions.forEach(function(o){html+='<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(tr(o))+'</option>';});
                 html+='</select>';
             }else if(isStatus){
-                html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+reqAttr+'>';
+                html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+anchor+reqAttr+'>';
                 if(c.s)c.s.forEach(s=>{html+='<option value="'+esc(s)+'"'+(val===s?' selected':'')+'>'+esc(tr(s))+'</option>';});
                 html+='</select>';
+            }else if(fType==='currentUser'){
+                html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+esc(val||getCurrentUserName())+'"'+anchor+' readonly>';
             }else if(isDate){
                 const dv=val?val.replace(/ .*/,''):'';
-                html+='<input type="date" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+dv+'"'+reqAttr+'>';
+                html+='<input type="date" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+dv+'"'+anchor+reqAttr+'>';
             }else if(isAttachment){
                 html+=crudAttachmentFieldHtml(hd,val);
             }else if(isLongText){
-                html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+reqAttr+'>'+esc(val)+'</textarea>';
+                html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'>'+esc(val)+'</textarea>';
             }else if(isCode&&mode==='edit'){
-                html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+val+'" readonly>';
+                html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+val+'"'+anchor+' readonly>';
             }else{
-                html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+val+'" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+reqAttr+'>';
+                html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+val+'" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'>';
             }
             html+='</div>';
         });
@@ -576,8 +583,69 @@ function openCrudModal(mode,id,rowIdx){
         }else{
             footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr('保存成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('保存修改')+'</button>';
         }
+        runCrudAfterModalRender(id,mode,rowData);
     }
     document.getElementById('crud-modal').classList.add('show');
+}
+
+/* ===== CRUD 弹窗字段定位与联动 =====
+ * 每个字段容器带 data-field-box="表头"，输入控件带 data-field="表头"，
+ * 页面脚本可用 crudField(hd) / crudFieldBox(hd) 精确取到，用于字段联动、显隐、赋值。
+ * TC[id].fieldChangeHandlers={'字段名':'jsExpr'} → 挂到该控件的 onchange（this 指向控件）
+ * TC[id].afterModalRender='函数名'                → 弹窗渲染完调用一次，用于设置初始显隐状态 */
+function crudFieldAnchorAttrs(hd,c){
+    let a=' data-field="'+esc(hd)+'"';
+    const h=c&&c.fieldChangeHandlers&&c.fieldChangeHandlers[hd];
+    if(h)a+=' onchange="'+esc(h)+'"';
+    return a;
+}
+function crudField(hd){
+    const body=document.getElementById('crud-modal-body');
+    return body?body.querySelector('[data-field="'+(window.CSS&&CSS.escape?CSS.escape(hd):hd)+'"]'):null;
+}
+function crudFieldBox(hd){
+    const body=document.getElementById('crud-modal-body');
+    return body?body.querySelector('[data-field-box="'+(window.CSS&&CSS.escape?CSS.escape(hd):hd)+'"]'):null;
+}
+function crudSetField(hd,val){
+    const el=crudField(hd);
+    if(!el)return false;
+    el.value=val==null?'':String(val);
+    return true;
+}
+/* 显隐一个字段，并同步 required（隐藏时必须去掉 required，否则表单校验会卡在看不见的字段上） */
+function crudToggleField(hd,show,required){
+    const box=crudFieldBox(hd);
+    if(!box)return;
+    box.classList.toggle('hidden',!show);
+    const el=box.querySelector('input,select,textarea');
+    if(!el)return;
+    if(show&&required)el.setAttribute('required','required');
+    else el.removeAttribute('required');
+    const label=box.querySelector('label');
+    if(label){
+        const mark=label.querySelector('[data-cond-mark]');
+        if(show&&required&&!mark)label.insertAdjacentHTML('beforeend',' <span data-cond-mark class="text-red-500">*</span>');
+        if((!show||!required)&&mark)mark.remove();
+    }
+}
+function runCrudAfterModalRender(id,mode,rowData){
+    const c=TC[id]||{};
+    if(!c.afterModalRender)return;
+    const fn=window[c.afterModalRender];
+    if(typeof fn!=='function')return;
+    setTimeout(function(){try{fn(id,mode,rowData);}catch(e){console.warn('[afterModalRender]',c.afterModalRender,e);}},0);
+}
+
+/* 当前登录人姓名（DEMO_ACCOUNTS + _currentAccount） */
+function getCurrentUserName(){
+    try{
+        if(typeof DEMO_ACCOUNTS!=='undefined'&&typeof _currentAccount!=='undefined'){
+            const a=DEMO_ACCOUNTS.find(function(x){return x.id===_currentAccount;});
+            if(a)return a.name;
+        }
+    }catch(e){}
+    return 'admin';
 }
 
 function closeCrudModal(){

@@ -760,7 +760,13 @@ function handleWarehouseProductNameInput(input){
 }
 
 function fieldSelectOptions(id,hd,c){
-    if(c&&c.fieldOptions&&c.fieldOptions[hd])return c.fieldOptions[hd];
+    /* fieldOptions[hd] 支持数组或函数：写函数时在弹窗打开的那一刻才求值，
+     * 适合选项来自另一张表的动态数据（如 订舱管理 的「委托订单号」取自委托订单管理）。 */
+    if(c&&c.fieldOptions&&c.fieldOptions[hd]){
+        var _o=c.fieldOptions[hd];
+        if(typeof _o==='function'){try{_o=_o(id,hd);}catch(e){console.warn('[fieldOptions]',hd,e);_o=null;}}
+        if(_o&&_o.length)return _o;
+    }
     if(id==='wh-no-pre-in'&&hd==='所属客户')return getNoPreCustomerOptions();
     if(id==='wh-no-pre-in'&&hd==='所属业务员')return getNoPreSalesOptions();
     if(id==='wh-no-pre-in'&&hd==='到货仓库')return getWarehouseNameOptions();
@@ -797,7 +803,7 @@ function fieldSelectOptions(id,hd,c){
     if(hd==='认证方式')return ['OAuth2','Token','Basic Auth','签名认证'];
     if(hd==='船司'||hd==='船公司')return ['MAERSK','COSCO','MSC','CMA CGM','Hapag-Lloyd'];
     if(hd==='报关方式')return ['买单报关','客户抬头','一般贸易','转关'];
-    if(hd==='订仓方式')return ['EDI','官网','邮件','人工'];
+    if(hd==='订舱方式')return ['EDI','官网','邮件','人工'];
     if(hd==='接口类型')return ['EDI','API','邮件解析','手工导入'];
     if(hd==='启用状态')return ['启用','禁用'];
     if(hd==='是否调整')return ['是','否'];
@@ -1459,7 +1465,7 @@ function getToolbarActions(id){
         if(id==='fcl-slot')base.push({key:'slotRelease',label:'释放仓位'},{key:'slotReassign',label:'调配仓位'},{key:'slotStat',label:'仓位统计'});
         if(id==='fcl-booking-window')base.push({key:'windowTest',label:'测试提醒'});
         if(id==='fcl-release-tpl')base.push({key:'tplImport',label:'批量导入'},{key:'copy',label:'复制模板'});
-        if(id==='fcl-booking')base.push({key:'copyBooking',label:'复制相似订仓'},{key:'genAgentBooking',label:'生成外配托书'},{key:'bookingReceipt',label:'登记订仓回执'});
+        if(id==='fcl-booking')base.push({key:'copyBooking',label:'复制相似订舱'},{key:'genAgentBooking',label:'生成外配托书'},{key:'bookingReceipt',label:'登记订舱回执'});
         if(id==='fcl-si-bl')base.push({key:'urgeDoc',label:'催料'},{key:'draftBl',label:'草稿件处理'},{key:'bindCustomerOrder',label:'绑定客户实单'},{key:'recalcFee',label:'重算费用'});
         if(id==='fcl-bl-split-merge')base.push({key:'doSplit',label:'拆单'},{key:'doMerge',label:'并单'},{key:'feeAllocate',label:'费用分摊'});
         if(id==='fcl-appeal')base.push({key:'submitAppeal',label:'提交申诉'},{key:'appealResult',label:'登记结果'},{key:'genOffsetFee',label:'生成抵扣费用'});

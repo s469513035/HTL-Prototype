@@ -44,13 +44,11 @@ const menuData=[
 // 销售指示即客户委托单（预录单/实单都是委托），故更名为「委托订单管理」。
 {id:'fcl-inquiry-order',label:'业务询盘单',page:'fcl',tab:'fcl-inquiry-order'},
 {id:'fcl-sales-instruction',label:'委托订单管理',page:'fcl',tab:'fcl-sales-instruction'},
-// ===== ③ 订仓与仓位（SOP-FCL-04/05）=====
-{id:'fcl-booking-grp',label:'订仓与仓位',children:[
-    {id:'fcl-booking',label:'订仓作业',page:'fcl',tab:'fcl-booking'},
-    {id:'fcl-slot',label:'仓位管理',page:'fcl',tab:'fcl-slot'},
-    {id:'fcl-booking-window',label:'订仓窗口提醒',page:'fcl',tab:'fcl-booking-window'},
-    {id:'fcl-release',label:'放仓作业',page:'fcl',tab:'fcl-release'}
-]},
+// ===== ③ 订舱与放舱（SOP-FCL-04/05）=====
+// 「订舱与仓位」二级分组已去掉，两项直接挂在整柜业务下。
+// 仓位管理、订舱窗口提醒已下线（TC 注册保留，仅不挂菜单）。
+{id:'fcl-booking',label:'订舱管理',page:'fcl',tab:'fcl-booking'},
+{id:'fcl-release',label:'放仓作业',page:'fcl',tab:'fcl-release'},
 // ===== ④ 操作执行（SOP-FCL-06~11）=====
 {id:'fcl-ops',label:'操作执行',children:[
     {id:'fcl-truck',label:'拖车安排',page:'fcl',tab:'fcl-truck'},

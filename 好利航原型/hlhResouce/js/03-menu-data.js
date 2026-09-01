@@ -27,25 +27,58 @@ const menuData=[
 ]},
 
 {id:'fcl',label:'整柜业务',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7h18M5 7v10a2 2 0 002 2h10a2 2 0 002-2V7M8 11h2m4 0h2M8 15h2m4 0h2"/></svg>',children:[
-{id:'fcl-price-cost',label:'报价与成本',children:[
+// ===== ① 报价与价格（SOP-FCL-01）=====
+{id:'fcl-price',label:'报价与价格',children:[
+    {id:'fcl-quote',label:'整柜报价单',page:'fcl',tab:'fcl-quote'},
     {id:'fcl-cost-price',label:'成本价',page:'fcl',tab:'fcl-cost-price'},
     {id:'fcl-business-cost',label:'业务成本价',page:'fcl',tab:'fcl-business-cost'},
     {id:'fcl-sales-price',label:'业务销售价',page:'fcl',tab:'fcl-sales-price'},
+    {id:'fcl-surcharge',label:'附加费维护',page:'fcl',tab:'fcl-surcharge'},
+    {id:'fcl-markup',label:'加价维护',page:'fcl',tab:'fcl-markup'},
     {id:'fcl-trial-calc',label:'整柜试算-客户',page:'fcl',tab:'fcl-trial-calc'},
     {id:'fcl-trial-calc-biz',label:'整柜试算-业务',page:'fcl',tab:'fcl-trial-calc-biz'},
     {id:'fcl-carrier-route',label:'航司路线配置',page:'fcl',tab:'fcl-carrier-route'}
 ]},
-{id:'fcl-inquiry-order',label:'业务询盘单管理',page:'fcl',tab:'fcl-inquiry-order'},
-{id:'fcl-draft-preorder',label:'预录单',page:'fcl',tab:'fcl-draft-preorder'},
-{id:'fcl-booking-order',label:'订舱单管理',page:'fcl',tab:'fcl-booking-order'},
-{id:'fcl-order',label:'订单管理',page:'fcl',tab:'fcl-order'},
-{id:'fcl-actual-order-entry',label:'实际录单',page:'fcl',tab:'fcl-actual-order-entry'},
+// ===== ② 询盘与销售指示（SOP-FCL-01/03）=====
+{id:'fcl-sales',label:'询盘与销售指示',children:[
+    {id:'fcl-inquiry-order',label:'业务询盘单',page:'fcl',tab:'fcl-inquiry-order'},
+    {id:'fcl-sales-instruction',label:'销售指示',page:'fcl',tab:'fcl-sales-instruction'}
+]},
+// ===== ③ 订仓与仓位（SOP-FCL-04/05）=====
+{id:'fcl-booking-grp',label:'订仓与仓位',children:[
+    {id:'fcl-booking',label:'订仓作业',page:'fcl',tab:'fcl-booking'},
+    {id:'fcl-slot',label:'仓位管理',page:'fcl',tab:'fcl-slot'},
+    {id:'fcl-booking-window',label:'订仓窗口提醒',page:'fcl',tab:'fcl-booking-window'},
+    {id:'fcl-release',label:'放仓作业',page:'fcl',tab:'fcl-release'}
+]},
+// ===== ④ 操作执行（SOP-FCL-06~11）=====
+{id:'fcl-ops',label:'操作执行',children:[
+    {id:'fcl-truck',label:'拖车安排',page:'fcl',tab:'fcl-truck'},
+    {id:'fcl-load',label:'进仓装柜',page:'fcl',tab:'fcl-load'},
+    {id:'fcl-si-bl',label:'补料与提单',page:'fcl',tab:'fcl-si-bl'},
+    {id:'fcl-bl-split-merge',label:'拆单并单管理',page:'fcl',tab:'fcl-bl-split-merge'},
+    {id:'fcl-customs',label:'报关申报',page:'fcl',tab:'fcl-customs'},
+    {id:'fcl-sailing-track',label:'开船与轨迹',page:'fcl',tab:'fcl-sailing-track'},
+    {id:'fcl-doc-send',label:'寄单作业',page:'fcl',tab:'fcl-doc-send'}
+]},
+// ===== ⑤ 财务与结算（SOP-FCL-12~15）=====
 {id:'fcl-finance-settle',label:'财务与结算',children:[
     {id:'fcl-bill-entry',label:'实际费用管理',page:'fcl',tab:'fcl-bill-entry'},
+    {id:'fcl-actual-bill-import',label:'账单导入',page:'fcl',tab:'fcl-actual-bill-import'},
+    {id:'fcl-carrier-bill-compare',label:'船公司账单对比',page:'fcl',tab:'fcl-carrier-bill-compare'},
+    {id:'fcl-appeal',label:'账单申诉',page:'fcl',tab:'fcl-appeal'},
     {id:'fcl-bill',label:'整柜应付账单',page:'fcl',tab:'fcl-bill'},
-    {id:'fcl-payment',label:'应付管理',page:'fcl',tab:'fcl-payment'},
-    {id:'fcl-ar-release',label:'应收管理',page:'fcl',tab:'fcl-ar-release'},
-    {id:'fcl-bank-flow',label:'银行流水管理',page:'fcl',tab:'fcl-bank-flow'}
+    {id:'fcl-payment-request',label:'请款单管理',page:'fcl',tab:'fcl-payment-request'},
+    {id:'fcl-payment',label:'付款管理',page:'fcl',tab:'fcl-payment'},
+    {id:'fcl-ar-release',label:'应收与放单',page:'fcl',tab:'fcl-ar-release'},
+    {id:'fcl-bank-flow',label:'银行流水管理',page:'fcl',tab:'fcl-bank-flow'},
+    {id:'fcl-commission',label:'业绩与提成',page:'fcl',tab:'fcl-commission'}
+]},
+// ===== ⑥ 监控与看板（SOP 第19/21/22章）=====
+{id:'fcl-monitor',label:'监控与看板',children:[
+    {id:'fcl-order',label:'整柜业务总览',page:'fcl',tab:'fcl-order'},
+    {id:'fcl-exception',label:'异常处理',page:'fcl',tab:'fcl-exception'},
+    {id:'fcl-sla-kpi',label:'SLA与KPI',page:'fcl',tab:'fcl-sla-kpi'}
 ]}
 ]},
 
@@ -129,9 +162,15 @@ const menuData=[
 {id:'cfg-risk',label:'风控规则',langKey:'cfg_risk',page:'biz-cfg',tab:'cfg-risk'},
 {id:'cfg-i18n',label:'多语言配置',langKey:'cfg_i18n',page:'biz-cfg',tab:'cfg-i18n'},
 {id:'cfg-coding-rule',label:'编码规则管理',page:'biz-cfg',tab:'cfg-coding-rule'},
-{id:'fcl-provider-api',label:'服务商API配置',page:'biz-cfg',tab:'fcl-provider-api'},
 {id:'biz-msg-flow',label:'消息流程管理',page:'biz-cfg',tab:'biz-msg-flow'},
 {id:'biz-approval-flow',label:'审批流程管理',page:'biz-cfg',tab:'biz-approval-flow'}
+]},
+// ===== 整柜规则（SOP 第19/20章：规则外置，业务可维护）=====
+{id:'fcl-rules',label:'整柜规则',children:[
+{id:'fcl-rule',label:'关键业务规则',page:'biz-cfg',tab:'fcl-rule'},
+{id:'fcl-release-tpl',label:'放仓模板',page:'biz-cfg',tab:'fcl-release-tpl'},
+{id:'fcl-provider-api',label:'服务商API配置',page:'biz-cfg',tab:'fcl-provider-api'},
+{id:'fcl-edi-api',label:'EDI/API对接',page:'biz-cfg',tab:'fcl-edi-api'}
 ]}
 ]},
 

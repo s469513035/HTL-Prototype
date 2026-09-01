@@ -974,6 +974,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='voucherRate')click='bankVoucherAction(\'rate\',\''+id+'\')';
     else if(action.key==='voucherRemark')click='bankVoucherAction(\'remark\',\''+id+'\')';
     else if(action.key==='voucherVoid')click='bankVoucherAction(\'void\',\''+id+'\')';
+    else if(action.key==='fclOrderDetail')click='openSelectedFclOrderDetail(\''+id+'\')';
     else click='openActionModal(\''+action.key+'\',\''+id+'\',-1)';
     const widthStyle=action.fixedWidth?'width:'+(action.width||'104px'):'min-width:'+(action.width||'96px');
     return '<button onclick="'+click+'" class="toolbar-action font-medium rounded-lg cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap '+color+'" style="'+widthStyle+'">'+esc(tr(action.label))+'</button>';
@@ -1423,6 +1424,14 @@ function getToolbarActions(id){
             {key:'export',label:'导出数据'}
         ];
     }
+    /* 整柜业务总览：只读看板，不提供新增/编辑/删除（DES-FCL 10.1） */
+    if(id==='fcl-order'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'fclOrderDetail',label:'票单360',variant:'primary'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
     if(id.indexOf('fcl-')===0){
         const base=[
             {key:'search',label:'查询数据',variant:'primary'},
@@ -1430,29 +1439,28 @@ function getToolbarActions(id){
             {type:'edit',label:'编辑数据'},
             {type:'view',label:'查看详情'}
         ];
+        /* ===== DES-FCL 一期新增/改造模块的专属操作 ===== */
+        if(id==='fcl-slot')base.push({key:'slotRelease',label:'释放仓位'},{key:'slotReassign',label:'调配仓位'},{key:'slotStat',label:'仓位统计'});
+        if(id==='fcl-booking-window')base.push({key:'windowTest',label:'测试提醒'});
+        if(id==='fcl-release-tpl')base.push({key:'tplImport',label:'批量导入'},{key:'copy',label:'复制模板'});
+        if(id==='fcl-booking')base.push({key:'copyBooking',label:'复制相似订仓'},{key:'genAgentBooking',label:'生成外配托书'},{key:'bookingReceipt',label:'登记订仓回执'});
+        if(id==='fcl-si-bl')base.push({key:'urgeDoc',label:'催料'},{key:'draftBl',label:'草稿件处理'},{key:'bindCustomerOrder',label:'绑定客户实单'},{key:'recalcFee',label:'重算费用'});
+        if(id==='fcl-bl-split-merge')base.push({key:'doSplit',label:'拆单'},{key:'doMerge',label:'并单'},{key:'feeAllocate',label:'费用分摊'});
+        if(id==='fcl-appeal')base.push({key:'submitAppeal',label:'提交申诉'},{key:'appealResult',label:'登记结果'},{key:'genOffsetFee',label:'生成抵扣费用'});
+        if(id==='fcl-payment-request')base.push({key:'submitPr',label:'提交审批'},{key:'mergePay',label:'合并付款'},{key:'genPayment',label:'生成付款单'});
+        if(id==='fcl-ar-release')base.push({key:'releaseJudge',label:'放单判定'});
+        if(id==='fcl-commission')base.push({key:'calcCommission',label:'核算提成'},{key:'grantCommission',label:'确认发放'},{key:'perfBoard',label:'业绩看板'});
         if(id==='fcl-quote')base.push({key:'copyQuote',label:'复制报价'},{key:'markupMaintain',label:'加价维护'});
         if(['fcl-cost-price','fcl-business-cost','fcl-sales-price'].includes(id))base.push({key:'copyAdd',label:'复制新增'});
         if(id==='fcl-trial-calc'||id==='fcl-trial-calc-biz')base.push({key:'trialGenerateQuote',label:'生成报价'});
         if(id==='fcl-inquiry-order')base.push({key:'convertPreorder',label:'转化草稿/预录单'});
         if(id==='fcl-draft-preorder')base.push({key:'bindCustomerOrder',label:'绑定客户实单'});
-        if(id==='fcl-order')base.push(
-            {key:'fclMergeOrder',label:'整柜合单'},
-            {key:'fclSplitOrder',label:'拆单'},
-            {key:'fclBookingWork',label:'订仓作业'},
-            {key:'fclReleaseWork',label:'放仓作业'},
-            {key:'fclTruckWork',label:'拖车安排'},
-            {key:'fclLoadWork',label:'进仓装柜'},
-            {key:'fclSiBlWork',label:'补料与提单'},
-            {key:'fclCustomsWork',label:'报关申报'},
-            {key:'fclSailingWork',label:'开船与轨迹'},
-            {key:'fclDocSendWork',label:'寄单作业'}
-        );
+        /* 原 fcl-order 上的 10 个作业弹窗按钮已移除：各环节改为 ④操作执行 分组下的独立单据页面（DES-FCL 10.1） */
         if(id==='fcl-actual-order-entry')base.push({key:'bindCustomerOrder',label:'绑定客户实单'},{key:'recalcFee',label:'重算费用'});
-        if(id==='fcl-si-bl')base.push({key:'recalcFee',label:'重算费用'});
         if(id==='fcl-bill-entry')base.push({key:'downloadTemplate',label:'下载导入模版'},{key:'fileRecognize',label:'图片和文件识别'},{key:'genBill',label:'生成账单'});
         if(id==='fcl-bill')base.push({key:'payDetail',label:'查看明细'});
         if(id==='fcl-bank-flow')base.push({key:'genReceivable',label:'生成收款管理'},{key:'genPayable',label:'生成付款管理'});
-        if(['fcl-customer-audit','fcl-sales-instruction','fcl-payment','fcl-ar-release'].includes(id))base.push({key:'audit',label:'审核数据'});
+        if(['fcl-customer-audit','fcl-sales-instruction','fcl-payment','fcl-payment-request','fcl-ar-release'].includes(id))base.push({key:'audit',label:'审核数据'});
         if(['fcl-booking','fcl-si-bl','fcl-edi-api','fcl-provider-api'].includes(id))base.push({key:'sync',label:'同步数据'});
         if(['fcl-bill','fcl-ar-release'].includes(id))base.push({key:'genPdf',label:'下载PDF'});
         if(id==='fcl-payment')base.push({key:'downloadReceipt',label:'下载水单'});
@@ -1594,8 +1602,8 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction'];
-var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl','biz-track-cfg','wh-stock-check','approval-mine','approval-msg','cs-issue-track','cs-issue-type','wb-op-instruction','crm-cust','wb-manage'];
+var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fcl-order'];
+var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl','biz-track-cfg','wh-stock-check','approval-mine','approval-msg','cs-issue-track','cs-issue-type','wb-op-instruction','crm-cust','wb-manage','fcl-order'];
 function listRowCanEdit(id){return _rowNoEditIds.indexOf(id)<0;}
 function listRowCanDelete(id){return _rowNoDeleteIds.indexOf(id)<0;}
 

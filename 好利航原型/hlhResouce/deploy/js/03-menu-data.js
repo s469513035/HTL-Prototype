@@ -39,11 +39,11 @@ const menuData=[
     {id:'fcl-trial-calc-biz',label:'整柜试算-业务',page:'fcl',tab:'fcl-trial-calc-biz'},
     {id:'fcl-carrier-route',label:'航司路线配置',page:'fcl',tab:'fcl-carrier-route'}
 ]},
-// ===== ② 询盘与销售指示（SOP-FCL-01/03）=====
-{id:'fcl-sales',label:'询盘与销售指示',children:[
-    {id:'fcl-inquiry-order',label:'业务询盘单',page:'fcl',tab:'fcl-inquiry-order'},
-    {id:'fcl-sales-instruction',label:'销售指示',page:'fcl',tab:'fcl-sales-instruction'}
-]},
+// ===== ② 询盘与委托订单（SOP-FCL-01/03）=====
+// 「询盘与销售指示」二级分组已去掉，两项直接挂在整柜业务下。
+// 销售指示即客户委托单（预录单/实单都是委托），故更名为「委托订单管理」。
+{id:'fcl-inquiry-order',label:'业务询盘单',page:'fcl',tab:'fcl-inquiry-order'},
+{id:'fcl-sales-instruction',label:'委托订单管理',page:'fcl',tab:'fcl-sales-instruction'},
 // ===== ③ 订仓与仓位（SOP-FCL-04/05）=====
 {id:'fcl-booking-grp',label:'订仓与仓位',children:[
     {id:'fcl-booking',label:'订仓作业',page:'fcl',tab:'fcl-booking'},

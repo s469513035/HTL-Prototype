@@ -482,12 +482,17 @@ function openCrudModal(mode,id,rowIdx){
         let html='<div class="'+colClass+'">';
         modalFields.forEach(function(field){
             const hd=field.hd;
-            const isCode=hd.includes('编码')||hd.includes('编号')||hd.includes('代码')||hd.includes('单号');
-            const isDate=hd.includes('日期')||hd.includes('时间');
+            /* 字段控件类型：默认按表头文字启发式判断；
+             * 某页需要偏离默认时用 TC[id].modalFieldTypes={'字段名':'text|date|code|textarea|attachment'} 覆写。
+             * 例：委托订单管理的「托书编号」是客户给的号，不能按 isCode 渲染成只读自动生成。 */
+            const fType=(c.modalFieldTypes&&c.modalFieldTypes[hd])||'';
+            const isCode=fType?fType==='code':(hd.includes('编码')||hd.includes('编号')||hd.includes('代码')||hd.includes('单号'));
+            const isDate=fType?fType==='date':(hd.includes('日期')||hd.includes('时间'));
             const isStatus=hd.includes('状态');
             const selectOptions=fieldSelectOptions(id,hd,c);
-            const isLongText=hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能');
-            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
+            const isLongText=fType?fType==='textarea':(hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能'));
+            const isAttachment=fType?fType==='attachment':hd.includes('附件');
+            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
             const isRequired=isImportantRequiredField(hd,id);
             const reqMark=isRequired?' <span class="text-red-500">*</span>':'';
             const reqAttr=isRequired?' required':'';
@@ -511,6 +516,8 @@ function openCrudModal(mode,id,rowIdx){
                 if(lm){autoCode=lm[1]+String(parseInt(lm[2])+1).padStart(lm[2].length,'0');}
                 else{autoCode=lastCode+'-001';}
                 html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+autoCode+'" placeholder="'+tr('自动生成')+'" readonly'+reqAttr+'>';
+            }else if(isAttachment){
+                html+=crudAttachmentFieldHtml(hd,'');
             }else if(isLongText){
                 html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+reqAttr+'></textarea>';
             }else{
@@ -526,12 +533,15 @@ function openCrudModal(mode,id,rowIdx){
         modalFields.forEach(function(field){
             const hd=field.hd;
             const val=rowData?rowData[field.index]:'';
-            const isCode=hd.includes('编码')||hd.includes('编号')||hd.includes('代码')||hd.includes('单号')||hd.includes('类型');
-            const isDate=hd.includes('日期')||hd.includes('时间');
+            /* 同上：TC[id].modalFieldTypes 可逐字段覆写控件类型 */
+            const fType=(c.modalFieldTypes&&c.modalFieldTypes[hd])||'';
+            const isCode=fType?fType==='code':(hd.includes('编码')||hd.includes('编号')||hd.includes('代码')||hd.includes('单号')||hd.includes('类型'));
+            const isDate=fType?fType==='date':(hd.includes('日期')||hd.includes('时间'));
             const isStatus=hd.includes('状态');
             const selectOptions=fieldSelectOptions(id,hd,c);
-            const isLongText=hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能');
-            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
+            const isLongText=fType?fType==='textarea':(hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能'));
+            const isAttachment=fType?fType==='attachment':hd.includes('附件');
+            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
             const isRequired=isImportantRequiredField(hd,id);
             const reqMark=isRequired?' <span class="text-red-500">*</span>':'';
             const reqAttr=isRequired?' required':'';
@@ -548,6 +558,8 @@ function openCrudModal(mode,id,rowIdx){
             }else if(isDate){
                 const dv=val?val.replace(/ .*/,''):'';
                 html+='<input type="date" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+dv+'"'+reqAttr+'>';
+            }else if(isAttachment){
+                html+=crudAttachmentFieldHtml(hd,val);
             }else if(isLongText){
                 html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+reqAttr+'>'+esc(val)+'</textarea>';
             }else if(isCode&&mode==='edit'){
@@ -573,5 +585,41 @@ function closeCrudModal(){
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='';
     closeExpressionModal();
+}
+
+/* ===== 通用「附件」字段控件 =====
+ * CRUD 弹窗里凡表头含「附件」的字段都用它渲染（托书附件 / 放仓附件 等）。
+ * 原型阶段只做文件选择与已选列表展示，不做真实上传。 */
+function crudAttachmentFieldHtml(hd,val){
+    const boxId='attach-'+Math.random().toString(36).slice(2,9);
+    const files=String(val||'').split(/[;,，]/).map(function(s){return s.trim();}).filter(Boolean);
+    let h='<div class="w-full border border-dashed border-surface-300 rounded-lg bg-surface-50 px-3 py-2.5">';
+    h+='<div class="flex items-center gap-2 flex-wrap">';
+    h+='<label class="h-8 px-3 inline-flex items-center text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">';
+    h+='<input type="file" multiple class="hidden" onchange="onCrudAttachmentPick(this,\''+boxId+'\')">'+esc(tr('选择文件'))+'</label>';
+    h+='<span class="text-[11px] text-text-muted">'+esc(tr('支持 PDF / JPG / PNG / Word / Excel，单个不超过 10MB，可多选'))+'</span>';
+    h+='</div>';
+    h+='<div id="'+boxId+'" class="flex flex-wrap gap-1.5 mt-2'+(files.length?'':' hidden')+'">';
+    files.forEach(function(f){h+=crudAttachmentChipHtml(f);});
+    h+='</div></div>';
+    return h;
+}
+
+function crudAttachmentChipHtml(name){
+    const clip='<svg class="w-3 h-3 text-primary-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>';
+    return '<span class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-white border border-surface-200 text-[11px] text-text-secondary">'+
+           clip+esc(name)+
+           '<button type="button" class="text-text-muted hover:text-red-500 cursor-pointer" onclick="this.parentElement.remove()">&times;</button></span>';
+}
+
+function onCrudAttachmentPick(input,boxId){
+    const box=document.getElementById(boxId);
+    if(!box)return;
+    const names=Array.prototype.map.call(input.files||[],function(f){return f.name;});
+    if(!names.length)return;
+    box.classList.remove('hidden');
+    names.forEach(function(n){box.insertAdjacentHTML('beforeend',crudAttachmentChipHtml(n));});
+    input.value='';
+    showToast(tr('已选择')+' '+names.length+' '+tr('个文件'));
 }
 

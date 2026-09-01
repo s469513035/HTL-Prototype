@@ -154,6 +154,15 @@ function actionConfig(action,id,rowData){
     if(action==='resetEntry')return {title:'重置录入',fields:[{label:'重置范围',type:'select',options:['当前表单','当前分组','全部字段']},{label:'确认说明',type:'textarea',value:tr('重置后会清空当前录入内容。'),readonly:true,span:'md:col-span-2'}],confirm:'确认重置'};
     if(action==='inboundSave')return {title:'保存入仓 - '+name,fields:[{label:'入仓状态',type:'select',options:['待入仓','已入仓','异常']},{label:'复核人',value:'李强'},{label:'保存备注',type:'textarea',span:'md:col-span-2'}],confirm:'保存入仓'};
     /* ===== DES-FCL-V1.0 一期：整柜重构新增操作弹窗 ===== */
+    /* ② 委托订单 */
+    if(action==='entrustCancel')return {title:'取消委托 - '+name,fields:[
+        {label:'委托订单号',readonly:true,required:true,value:(rowData&&getTableValueByHeader(c,rowData,'委托订单号',''))||'FEO-20260613001'},
+        {label:'委托类型',readonly:true,value:(rowData&&getTableValueByHeader(c,rowData,'委托类型',''))||'实单'},
+        {label:'取消原因',type:'select',required:true,options:['客户取消出运','客户改期','改走其他货代','爆舱无法订仓','重复录入','其他']},
+        {label:'是否已订仓',type:'select',options:['否','是'],value:'否'},
+        {label:'退仓成本',type:'number',value:'0'},
+        {label:'取消说明',type:'textarea',span:'md:col-span-2',value:'取消后委托订单状态置为「已取消」。若已订仓，需同步到订仓部办理退仓，退仓产生的成本请录入客户历史单或新建费用单（SOP 第二十一章）。'}
+    ],confirm:'确认取消委托'};
     /* ③ 订仓与仓位 */
     if(action==='slotRelease')return {title:'释放仓位 - '+name,fields:[{label:'释放数量',type:'number',required:true},{label:'释放后归属',type:'select',options:['商务统一调配'],value:'商务统一调配',readonly:true},{label:'释放原因',type:'select',options:['客户取消','预定仓未转实单','船期变更','其他']},{label:'释放说明',type:'textarea',span:'md:col-span-2',value:'释放后仓位置为「已释放」，由商务按 SLOT-04 统一二次分配。'}],confirm:'确认释放'};
     if(action==='slotReassign')return {title:'调配仓位 - '+name,fields:[{label:'调出业务员',type:'select',required:true,options:FCL_SALES_OPTIONS},{label:'调入业务员',type:'select',required:true,options:FCL_SALES_OPTIONS},{label:'调配数量',type:'number',required:true},{label:'调配依据',type:'select',options:['实单优先','VIP业务员优先','主管指定']},{label:'调配说明',type:'textarea',span:'md:col-span-2',value:'商务对仓位有统一管理权（SOP 7.5），调配过程全程留痕。'}],confirm:'确认调配'};

@@ -505,9 +505,14 @@ function modalFieldLabel(field){
     return field?(field.label||field.hd||field.name||''):'';
 }
 
+/* 必填判定：默认走下面的全局正则启发式；
+ * 某页需要偏离默认时，用 TC[id].requiredOverrides={'字段名':true|false} 逐字段覆写，优先级最高。
+ * 例：委托订单管理 客户名称/托书编号 改非必填、起运港 改必填。 */
 function isImportantRequiredField(label,id){
     const text=String(label||'');
     if(!text)return false;
+    const _c=(typeof TC!=='undefined'&&id)?TC[id]:null;
+    if(_c&&_c.requiredOverrides&&Object.prototype.hasOwnProperty.call(_c.requiredOverrides,text))return !!_c.requiredOverrides[text];
     if(/备注|说明|描述|附件|图片|地址|电话|邮箱|人数|数量|范围|Remark|Note|Description|Attachment|Image|Address|Phone|Email|Remarque|Observação|Anexo|Imagem|Endereço|Telefone/.test(text))return false;
     if(/创建|修改|最后登录|操作时间|操作人|Created|Modified|Last Login|Operation|Créé|Modifié|Criado|Modificado/.test(text))return false;
     if(id==='perm-user'&&/密码|最后登录/.test(text))return false;
@@ -1424,6 +1429,17 @@ function getToolbarActions(id){
             {key:'export',label:'导出数据'}
         ];
     }
+    /* 委托订单管理：销售指示即委托单（预录单/实单都是委托），新增按钮改为「新增委托」，并提供取消委托 */
+    if(id==='fcl-sales-instruction'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {type:'add',label:'新增委托',variant:'primary'},
+            {type:'edit',label:'编辑数据'},
+            {type:'view',label:'查看详情'},
+            {key:'audit',label:'审核数据'},
+            {key:'entrustCancel',label:'取消委托',variant:'danger'}
+        ];
+    }
     /* 整柜业务总览：只读看板，不提供新增/编辑/删除（DES-FCL 10.1） */
     if(id==='fcl-order'){
         return [
@@ -1460,7 +1476,8 @@ function getToolbarActions(id){
         if(id==='fcl-bill-entry')base.push({key:'downloadTemplate',label:'下载导入模版'},{key:'fileRecognize',label:'图片和文件识别'},{key:'genBill',label:'生成账单'});
         if(id==='fcl-bill')base.push({key:'payDetail',label:'查看明细'});
         if(id==='fcl-bank-flow')base.push({key:'genReceivable',label:'生成收款管理'},{key:'genPayable',label:'生成付款管理'});
-        if(['fcl-customer-audit','fcl-sales-instruction','fcl-payment','fcl-payment-request','fcl-ar-release'].includes(id))base.push({key:'audit',label:'审核数据'});
+        /* fcl-sales-instruction 已在上面早返回（含审核数据），此处不再列入 */
+        if(['fcl-customer-audit','fcl-payment','fcl-payment-request','fcl-ar-release'].includes(id))base.push({key:'audit',label:'审核数据'});
         if(['fcl-booking','fcl-si-bl','fcl-edi-api','fcl-provider-api'].includes(id))base.push({key:'sync',label:'同步数据'});
         if(['fcl-bill','fcl-ar-release'].includes(id))base.push({key:'genPdf',label:'下载PDF'});
         if(id==='fcl-payment')base.push({key:'downloadReceipt',label:'下载水单'});

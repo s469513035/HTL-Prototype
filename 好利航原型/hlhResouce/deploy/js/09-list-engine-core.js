@@ -1605,20 +1605,34 @@ function getToolbarActions(id){
 var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fcl-order'];
 var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl','biz-track-cfg','wh-stock-check','approval-mine','approval-msg','cs-issue-track','cs-issue-type','wb-op-instruction','crm-cust','wb-manage','fcl-order'];
 function listRowCanEdit(id){return _rowNoEditIds.indexOf(id)<0;}
+/* _rowNoDeleteIds / listRowCanDelete：自 2026-09 全局取消通用删除后已无调用点，
+ * 保留作为“哪些页面本就只读”的清单，若将来恢复按页删除可直接复用。 */
 function listRowCanDelete(id){return _rowNoDeleteIds.indexOf(id)<0;}
+
+/* ===== 全局约定（2026-09 起）：列表页不再提供「导出数据」与通用「删除」 =====
+ * 判定为“通用”的动作：
+ *   - 通用导出： key === 'export'
+ *   - 通用删除： key === 'batchDelete'（走 deleteSelectedRows）/ key === 'delete' / type === 'delete'
+ * 页面自定义、带业务前置条件的删除不在此列，继续保留，例如：
+ *   - finalAllocDelete（配舱计划：仅允许删「待出仓」）
+ * 集中在这里过滤，getActionConfig 各分支里已有的 export / 删除 定义无需逐个摘除。
+ * 若某页确需恢复，请在该页写一个带业务校验的专用 key，不要复用 export / batchDelete。 */
+function isGenericToolbarAction(a){
+    if(!a)return false;
+    if(a.type==='delete')return true;
+    return a.key==='export'||a.key==='batchDelete'||a.key==='delete';
+}
 
 function renderToolbarActions(id){
     var actions=getToolbarActions(id).slice();
     var hasEdit=actions.some(function(a){return a.type==='edit'||a.key==='edit'||(a.key&&/edit/i.test(a.key))||(a.label&&(a.label.indexOf('编辑')>=0||a.label.indexOf('修改')>=0));});
-    var hasDelete=actions.some(function(a){return a.type==='delete'||a.key==='delete'||a.key==='batchDelete'||(a.label&&a.label.indexOf('删除')>=0);});
     if(listRowCanEdit(id)&&!hasEdit){
         var addIdx=-1;
         for(var i=0;i<actions.length;i++){if(actions[i].type==='add'){addIdx=i;break;}}
         actions.splice(addIdx>=0?addIdx+1:actions.length,0,{type:'edit',label:'编辑数据'});
     }
-    if(listRowCanDelete(id)&&!hasDelete){
-        actions.push({key:'batchDelete',label:'删除',variant:'danger'});
-    }
+    /* 通用删除不再自动追加（原 listRowCanDelete 追加逻辑已移除） */
+    actions=actions.filter(function(a){return !isGenericToolbarAction(a);});
     return actions.map(function(action){return renderToolbarAction(action,id);}).join('');
 }
 

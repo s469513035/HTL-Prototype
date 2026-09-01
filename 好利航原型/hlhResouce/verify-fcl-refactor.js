@@ -183,4 +183,28 @@ if (guideHtml) {
   out.push(`  ${scrollOk ? '✓' : '✗'} 根节点可滚动（class="${rootTag}"）`);
 }
 
+out.push('\n=== 8. 全局约定：工具栏不再出现「导出数据」与通用删除 ===');
+// 允许保留的、带业务前置条件的自定义删除
+const KEEP_DELETE = { 'wh-final-alloc': 'finalAllocDelete（仅删「待出仓」）' };
+const exportHit = [], delHit = [], renderFail = [];
+Object.keys(TC).forEach(k => {
+  let html = '';
+  try {
+    html = vm.runInContext(`renderToolbarActions(${JSON.stringify(k)})`, sandbox);
+  } catch (e) { renderFail.push(`${k}: ${e.message}`); return; }
+  if (typeof html !== 'string') return;
+  if (html.includes('导出数据') || html.includes('exportData(')) exportHit.push(k);
+  if (/>\s*(删除|批量删除|批量删除汇率)\s*</.test(html) || html.includes('deleteSelectedRows(')) delHit.push(k);
+});
+out.push(`  已渲染 ${Object.keys(TC).length - renderFail.length} 个页面的工具栏` + (renderFail.length ? `（${renderFail.length} 个渲染异常，已跳过）` : ''));
+out.push(exportHit.length === 0 ? '  ✓ 无页面再出现「导出数据」' : `  ✗ 仍有导出按钮：${exportHit.join(', ')}`);
+const unexpectedDel = delHit.filter(k => !KEEP_DELETE[k]);
+if (unexpectedDel.length === 0) {
+  out.push('  ✓ 无页面再出现通用删除');
+  delHit.forEach(k => out.push(`    · 保留的自定义删除：${k} — ${KEEP_DELETE[k]}`));
+} else {
+  unexpectedDel.forEach(k => out.push(`  ✗ 仍有通用删除：${k}`));
+}
+if (renderFail.length) renderFail.slice(0, 5).forEach(e => out.push(`    (渲染异常) ${e}`));
+
 console.log(out.join('\n'));

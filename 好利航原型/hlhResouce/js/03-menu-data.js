@@ -35,8 +35,6 @@ const menuData=[
     {id:'fcl-cost-price',label:'成本价',page:'fcl',tab:'fcl-cost-price'},
     {id:'fcl-business-cost',label:'业务成本价',page:'fcl',tab:'fcl-business-cost'},
     {id:'fcl-sales-price',label:'业务销售价',page:'fcl',tab:'fcl-sales-price'},
-    {id:'fcl-surcharge',label:'附加费维护',page:'fcl',tab:'fcl-surcharge'},
-    {id:'fcl-markup',label:'加价维护',page:'fcl',tab:'fcl-markup'},
     {id:'fcl-trial-calc',label:'整柜试算-客户',page:'fcl',tab:'fcl-trial-calc'},
     {id:'fcl-trial-calc-biz',label:'整柜试算-业务',page:'fcl',tab:'fcl-trial-calc-biz'},
     {id:'fcl-carrier-route',label:'航司路线配置',page:'fcl',tab:'fcl-carrier-route'}

@@ -513,7 +513,7 @@ var FCL_SOP_STEPS=[
  output:'报价单存档、报价历史留痕；订单状态 = 询价中',
  sla:'≤ 30 分钟（价格已维护时）',
  caution:'三级价格：预估成本价 → 业务价（+公关成本+管理费）→ 销售价（+业务员利润）。预付柜/特殊启运口岸/汽车柜加管理费，到付柜不加。',
- tabs:[['整柜报价单','fcl-quote','fcl'],['整柜试算-业务','fcl-trial-calc-biz','fcl'],['整柜试算-客户','fcl-trial-calc','fcl'],['成本价','fcl-cost-price','fcl'],['附加费维护','fcl-surcharge','fcl']]},
+ tabs:[['整柜报价单','fcl-quote','fcl'],['整柜试算-业务','fcl-trial-calc-biz','fcl'],['整柜试算-客户','fcl-trial-calc','fcl'],['成本价','fcl-cost-price','fcl'],['业务成本价','fcl-business-cost','fcl']]},
 
 {no:'②',name:'客户建档与审核',sop:'SOP-FCL-02',stage:'sales',role:'业务员（发起）、商务/财务主管（审核）',
  trigger:'识别为新客户，首次接洽',
@@ -659,8 +659,6 @@ var FCL_FUNC_MAP=[
     ['成本价','fcl-cost-price','fcl','船东表价，系统内部计算成本的基础'],
     ['业务成本价','fcl-business-cost','fcl','预估成本价 + 公关成本 + 运营成本，业务员对外报价底价'],
     ['业务销售价','fcl-sales-price','fcl','业务价 + 业务员利润，按旺淡季动态调整'],
-    ['附加费维护','fcl-surcharge','fcl','码头费、文件费等，标记是否已包含在报价内'],
-    ['加价维护','fcl-markup','fcl','按客户/分公司/柜型/航线维护加价规则'],
     ['整柜试算-客户','fcl-trial-calc','fcl','客户口径试算，可一键生成报价'],
     ['整柜试算-业务','fcl-trial-calc-biz','fcl','业务成本口径试算，供业务员判断利润空间'],
     ['航司路线配置','fcl-carrier-route','fcl','航司、路线代码、中转港与航程天数']]},

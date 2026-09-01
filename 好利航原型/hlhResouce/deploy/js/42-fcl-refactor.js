@@ -757,7 +757,9 @@ function generateFclGuidePage(id){
     var stageColor={sales:'blue',ops:'green',fin:'purple'};
     var badgeCls={blue:'bg-blue-50 text-blue-700 border-blue-200',green:'bg-green-50 text-green-700 border-green-200',purple:'bg-purple-50 text-purple-700 border-purple-200'};
 
-    h+='<div class="p-6 space-y-5">';
+    /* main#main-content 是 overflow-hidden 的 flex 容器，
+     * 自定义页必须自己带 h-full overflow-auto 才能滚动（与 generateFclTrialCalcPage / generateTrackQueryPage 一致） */
+    h+='<div class="h-full overflow-auto bg-surface-50 p-6 space-y-5">';
 
     /* ===== 头部 ===== */
     h+='<div class="bg-white rounded-xl border border-surface-200 p-6">';

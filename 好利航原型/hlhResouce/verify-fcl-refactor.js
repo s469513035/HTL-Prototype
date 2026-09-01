@@ -177,6 +177,10 @@ out.push(noActions.length ? `  ✗ 缺操作要点：${noActions.map(s => s.no).
 if (guideHtml) {
   ['端到端业务流程', '功能地图', '各环节操作说明', '关键业务规则速查', '异常处理速查', 'fcl-sop-0', 'fcl-sop-14']
     .forEach(k => out.push(`  ${guideHtml.includes(k) ? '✓' : '✗'} 渲染含「${k}」`));
+  // main#main-content 是 overflow-hidden 的 flex 容器：自定义页根节点必须自带滚动，否则内容被裁掉
+  const rootTag = (guideHtml.match(/^\s*<div class="([^"]*)"/) || [])[1] || '';
+  const scrollOk = /h-full/.test(rootTag) && /overflow-auto|overflow-y-auto/.test(rootTag);
+  out.push(`  ${scrollOk ? '✓' : '✗'} 根节点可滚动（class="${rootTag}"）`);
 }
 
 console.log(out.join('\n'));

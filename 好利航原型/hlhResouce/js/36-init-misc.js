@@ -3,6 +3,7 @@ function getInitialTabFromUrl(){
         const params=new URLSearchParams(window.location.search||'');
         const tab=params.get('tab')||params.get('menu')||params.get('page')||'';
         if(tab&&TC[tab])return tab;
+        if(tab&&typeof isMobileAppTab==='function'&&isMobileAppTab(tab))return tab;
         if(params.get('v')==='20260606')return 'wh-no-pre-in';
     }catch(e){}
     return '';
@@ -49,12 +50,13 @@ function initApp(){
         return;
     }
     if(_currentTerminal==='oms'){
-        // OMS 端：默认进入「我的运单」，并展开唯一的「客户中心」L1
+        // OMS 端：默认进入客户端 APP 首页，并展开客户端菜单
         applyRuntimeEnhancements(document);
         setTimeout(function(){
             var l1=document.querySelector('#sidebar-nav .menu-l1');
             if(l1 && !l1.classList.contains('expanded'))toggleL1(l1);
-            navigateToTab('','wb-client-manage');
+            const initialTab=getInitialTabFromUrl();
+            navigateToTab('',initialTab||'client-app-home');
         },0);
         return;
     }

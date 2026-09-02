@@ -7,18 +7,23 @@
     <title>好利航国际物流 - 管理系统原型</title>
     <script src="inline-editor.js" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: {50:'#EFF6FF',100:'#DBEAFE',200:'#BFDBFE',300:'#93C5FD',400:'#60A5FA',500:'#3B82F6',600:'#2563EB',700:'#1D4ED8',800:'#1E40AF',900:'#1E3A8A'},
-                        surface: {50:'#F8FAFC',100:'#F1F5F9',200:'#E2E8F0',300:'#CBD5E1'},
-                        text: {primary:'#1E293B',secondary:'#475569',muted:'#94A3B8'}
+                        primary: {50:'#EAF3F9',100:'#D5E7F3',200:'#A9CFE6',300:'#7DB3D6',400:'#4D8FBE',500:'#2E7CB0',600:'#1F6FA8',700:'#1A5C89',800:'#17475E',900:'#12384A'},
+                        gold: {50:'#FAF3E3',100:'#F5E7C8',400:'#E5B65A',500:'#D9A441',600:'#B8892F'},
+                        brand: {deep:'#17475E'},
+                        surface: {50:'#F3F5F8',100:'#EBEFF5',200:'#E3E8EF',300:'#C6D0DC'},
+                        text: {primary:'#16233A',secondary:'#4A5B73',muted:'#8593A9'}
                     },
-                    fontFamily: {sans:['Plus Jakarta Sans','system-ui','sans-serif']}
+                    fontFamily: {
+                        sans:['Plus Jakarta Sans','PingFang SC','Microsoft YaHei','Noto Sans SC','system-ui','sans-serif'],
+                        mono:['JetBrains Mono','Consolas','SF Mono','monospace']
+                    }
                 }
             }
         }

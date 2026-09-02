@@ -912,11 +912,15 @@ function openSelectedCrud(mode,id){
 function renderToolbarAction(action,id){
     const isDanger=action.key==='enable'||action.key==='delete'||action.key==='cancel'||action.key==='csRevokeRelease'||action.key==='setDisable'||action.key==='batchDelete'||action.variant==='danger';
     const isSuccess=action.variant==='success';
-    const color=isSuccess
-        ?'text-white bg-green-500 hover:bg-green-600'
+    /* UI 分级：新增=唯一实心主按钮；业务操作=描边次级；成功/危险=描边信号色 */
+    const isPrimary=action.type==='add';
+    const color=isPrimary
+        ?'text-white bg-primary-600 hover:bg-primary-700'
+        :isSuccess
+        ?'text-green-700 border border-green-300 bg-white hover:bg-green-50'
         :isDanger
-        ?'text-white bg-red-500 hover:bg-red-600'
-        :'text-white bg-blue-600 hover:bg-blue-700';
+        ?'text-red-600 border border-red-200 bg-white hover:bg-red-50'
+        :'text-primary-700 border border-primary-200 bg-white hover:bg-primary-50';
     if(action.dropdown){
         var ddMenuId='tbdd-'+id+'-'+action.key;
         var ddItems=action.dropdown.map(function(it){return '<button type="button" onclick="'+it.onclick+'" class="w-full text-left px-3 py-2 text-sm text-text-secondary hover:bg-primary-50 hover:text-primary-600 cursor-pointer whitespace-nowrap">'+esc(tr(it.label))+'</button>';}).join('');

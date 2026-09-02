@@ -958,6 +958,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='copy')click='openSelectedCrud(\'copy\',\''+id+'\')';
     else if(action.key==='copyWaybill')click='openActionModal(\'copyWaybill\',\''+id+'\',-1)';
     else if(action.key==='copyBooking')click='openFclBookingCopy(\''+id+'\')';
+    else if(action.key==='freightRecalc')click='openFreightRecalcConfirm(\''+id+'\')';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
     else if(action.key==='finalAllocAdjust')click='openFinalAllocAdjustModal(\''+id+'\')';
     else if(action.key==='finalAllocLinkBL')click='openFinalAllocLinkBLModal(\''+id+'\')';
@@ -1265,6 +1266,7 @@ function getToolbarActions(id){
             {key:'subOrderInfo',label:'子单信息'},
             {key:'labelPrint',label:'标签打印'},
             {key:'mergeBilling',label:'合并计费'},
+            {key:'freightRecalc',label:'运费重算'},
             {key:'specialPrice',label:'特价申请'},
             {key:'sendInstruction',label:'发送指令'},
             /* 「手改运费」按钮已去掉（manualFreight 弹窗实现保留备用）；「删除」由 _rowNoDeleteIds 阻止自动追加 */

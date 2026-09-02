@@ -1,3 +1,28 @@
+/* ===== 运单管理 · 运费重算 =====
+ * 不走表单弹窗，直接按勾选条数弹「是否确认」提示窗（复用 shell 的 #confirm-tip）：
+ * 未勾选 → 提示先勾选；勾一条 → 带出运单号；勾多条 → 提示批量条数。 */
+function openFreightRecalcConfirm(id){
+    const idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选需要重算运费的数据'));return;}
+    const c=TC[id]||{};
+    const data=_listData[id]||(typeof expandData==='function'?expandData(id):(c.d||[]));
+    const hArr=c.h||[];
+    let noIdx=hArr.indexOf('运单号');
+    if(noIdx<0)noIdx=hArr.indexOf('物流单号');
+    if(noIdx<0)noIdx=0;
+    const first=(data[idxs[0]]&&data[idxs[0]][noIdx])||'';
+    let msg;
+    if(idxs.length===1){
+        msg=tr('已勾选')+' 1 '+tr('条数据')+(first?('（'+tr('运单号')+' '+first+'）'):'')+'，'+tr('是否确认执行运费重算？');
+    }else{
+        msg=tr('已勾选')+' '+idxs.length+' '+tr('条数据')+'，'+tr('是否确认批量执行运费重算？');
+    }
+    msg+=tr('重算将按最新产品价格与计费重重新计算，手改过的运费不会被覆盖。');
+    openConfirmTip(msg,function(){
+        showToast(tr('运费重算已提交')+'，'+tr('共')+' '+idxs.length+' '+tr('条'));
+    });
+}
+
 function selectedDataSummary(id,rowData){
     if(rowData)return '<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 mb-4 text-sm text-text-secondary">'+tr('当前数据')+'：<span class="font-medium text-text-primary">'+esc(rowData[0])+'</span></div>';
     const count=document.querySelectorAll('.row-check:checked').length;

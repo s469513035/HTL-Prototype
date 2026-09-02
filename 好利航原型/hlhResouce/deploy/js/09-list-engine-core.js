@@ -1,12 +1,15 @@
+/* 状态信号章（S6）：色点+浅底，语义四档 成功绿/危险红/警告琥珀/信息蓝。
+ * 「已登记」原在绿/琥珀两表重复（琥珀支路永不命中），归绿；「在途」由绿改信息蓝 */
 function statusBadge(val){
-    const g=['启用','已通过','已入仓','已确认','已完成','已放行','已同步','已对齐','已生效','已出库','已作废','已结算','已开具','已登记','已补录','已处理','已验证','已付款','已开票','正常','运行中','已领取','已复核','在途','全部放行','已解决','全部抵扣','正式','已启用'];
+    const g=['启用','已通过','已入仓','已确认','已完成','已放行','已同步','已对齐','已生效','已出库','已作废','已结算','已开具','已登记','已补录','已处理','已验证','已付款','已开票','正常','运行中','已领取','已复核','全部放行','已解决','全部抵扣','正式','已启用'];
     const r=['停用','禁用','已驳回','异常','已销毁','已过期','冻结','熔断','未通过','作废','已禁用'];
-    const a=['待审核','待审批','待入仓','待定','待处理','待确认','待补录','待领取','待到港','待预约','待出库','待开票','待同步','有差异','告警中','告警','维护中','待抢单','待结算','预警','待通知','已登记','待认领','待抵扣','部分抵扣','草稿'];
+    const a=['待审核','待审批','待入仓','待定','待处理','待确认','待补录','待领取','待到港','待预约','待出库','待开票','待同步','有差异','告警中','告警','维护中','待抢单','待结算','预警','待通知','待认领','待抵扣','部分抵扣','草稿'];
     const label=_statusLangMap[val]&&_lang[_currentLang][_statusLangMap[val]]?_lang[_currentLang][_statusLangMap[val]]:tr(val);
-    if(g.includes(val))return '<span class="badge bg-green-50 text-green-700">'+label+'</span>';
-    if(r.includes(val))return '<span class="badge bg-red-50 text-red-700">'+label+'</span>';
-    if(a.includes(val))return '<span class="badge bg-amber-50 text-amber-700">'+label+'</span>';
-    return '<span class="badge bg-primary-50 text-primary-700">'+label+'</span>';
+    const chip=(bg,tx,dot)=>'<span class="badge '+bg+' '+tx+'"><span class="status-dot" style="background:'+dot+'"></span>'+label+'</span>';
+    if(g.includes(val))return chip('bg-success-50','text-success-700','#1F9D66');
+    if(r.includes(val))return chip('bg-danger-50','text-danger-700','#DC2626');
+    if(a.includes(val))return chip('bg-warning-50','text-warning-700','#D97706');
+    return chip('bg-info-50','text-info-700','#1F6FA8');
 }
 
 var _listData={};

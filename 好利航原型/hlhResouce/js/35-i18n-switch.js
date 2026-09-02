@@ -102,13 +102,10 @@ function updateLoginPageLang(){
     const el19=document.getElementById('login-password');if(el19)el19.placeholder=L.loginPhPassword;
     const langBtns=document.querySelectorAll('.login-lang-btn');
     langBtns.forEach(btn=>{
-        const id=btn.id;
-        btn.classList.remove('bg-white/20','text-white','border-white/60');
-        btn.classList.add('text-white/70','border-white/30');
-        if(id==='login-lang-zh'&&_currentLang==='zh'){btn.classList.add('bg-white/20','text-white','border-white/60');btn.classList.remove('text-white/70','border-white/30');}
-        if(id==='login-lang-fr'&&_currentLang==='fr'){btn.classList.add('bg-white/20','text-white','border-white/60');btn.classList.remove('text-white/70','border-white/30');}
-        if(id==='login-lang-en'&&_currentLang==='en'){btn.classList.add('bg-white/20','text-white','border-white/60');btn.classList.remove('text-white/70','border-white/30');}
-        if(id==='login-lang-pt'&&_currentLang==='pt'){btn.classList.add('bg-white/20','text-white','border-white/60');btn.classList.remove('text-white/70','border-white/30');}
+        const isActive=(btn.id==='login-lang-'+_currentLang);
+        btn.classList.remove('border-primary-600','text-primary-700','bg-primary-50','text-text-secondary');
+        if(isActive){btn.classList.add('border-primary-600','text-primary-700','bg-primary-50');}
+        else{btn.classList.add('text-text-secondary');}
     });
 }
 

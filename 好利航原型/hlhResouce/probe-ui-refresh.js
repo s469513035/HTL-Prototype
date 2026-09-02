@@ -85,5 +85,14 @@ const thHit = numPages.some(pid => {
 });
 check(thHit, '数字列表头右对齐');
 
+// S6 语义地基：信号章 + Toast 分型
+const sbOk = String(vm.runInContext(`statusBadge('已确认')`, sandbox));
+check(sbOk.includes('status-dot') && sbOk.includes('bg-success-50'), 'statusBadge: 已确认=信号章+success 绿');
+const sbInfo = String(vm.runInContext(`statusBadge('在途')`, sandbox));
+check(sbInfo.includes('bg-info-50'), 'statusBadge: 在途=info 蓝');
+const sbDup = String(vm.runInContext(`statusBadge('已登记')`, sandbox));
+check(sbDup.includes('bg-success-50'), 'statusBadge: 已登记=success（绿/琥珀重复已清理）');
+check(typeof vm.runInContext(`showToast`, sandbox) === 'function', 'showToast 存在（type 参数可选，旧调用兼容）');
+
 console.log(fail === 0 ? '\nALL UI CHECKS PASSED' : '\nFAILURES: ' + fail);
 process.exit(fail === 0 ? 0 : 1);

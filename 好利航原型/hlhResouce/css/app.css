@@ -1,3 +1,8 @@
+        /* ============ 设计档位表（S6 语义地基） ============
+         * 遮罩：统一 bg-black/40（旧 /35 /70 档待 S7 归并）
+         * z 轴：overlay 40-50 < popover 60 < panel 80 < login 100 < toast 200
+         * 圆角：卡片 10px / 弹窗 16px(rounded-2xl) / 控件 8px(rounded-lg) / 状态章 6px
+         * 语义色：success #1F9D66 / warning #D97706 / danger #DC2626 / info #1F6FA8（tailwind.config 已注册 50/100/600/700 四档） */
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{margin:0;padding:0;height:100%;overflow:hidden}
         body{font-family:'Plus Jakarta Sans','PingFang SC','Microsoft YaHei','Noto Sans SC',system-ui,sans-serif;background:#F3F5F8}
@@ -8,6 +13,7 @@
         .card-hover{transition:all .2s ease}
         .card-hover:hover{transform:translateY(-2px);box-shadow:0 8px 25px -5px rgba(31,111,168,.14)}
         .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:500}
+        .status-dot{display:inline-block;width:6px;height:6px;border-radius:9999px;margin-right:5px;flex-shrink:0}
         .modal-overlay{opacity:0;pointer-events:none;transition:opacity .2s ease}
         .modal-overlay.show{opacity:1;pointer-events:auto}
         .modal-content{transform:scale(.95);transition:transform .2s ease}

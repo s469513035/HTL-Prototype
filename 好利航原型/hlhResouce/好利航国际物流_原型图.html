@@ -18,7 +18,12 @@
                         gold: {50:'#FAF3E3',100:'#F5E7C8',400:'#E5B65A',500:'#D9A441',600:'#B8892F'},
                         brand: {deep:'#17475E'},
                         surface: {50:'#F3F5F8',100:'#EBEFF5',200:'#E3E8EF',300:'#C6D0DC'},
-                        text: {primary:'#16233A',secondary:'#4A5B73',muted:'#8593A9'}
+                        text: {primary:'#16233A',secondary:'#4A5B73',muted:'#8593A9'},
+                        /* 信号语义色（S6）：成功绿 / 警告琥珀 / 危险红 / 信息蓝——全站状态语言统一走这组 */
+                        success: {50:'#E9F7F0',100:'#D2EFE0',600:'#1F9D66',700:'#17794F'},
+                        warning: {50:'#FCF3E3',100:'#F8E6C4',600:'#D97706',700:'#B45309'},
+                        danger:  {50:'#FBEBEB',100:'#F5D5D5',600:'#DC2626',700:'#B91C1C'},
+                        info:    {50:'#EAF3F9',100:'#D5E7F3',600:'#1F6FA8',700:'#1A5C89'}
                     },
                     fontFamily: {
                         sans:['Plus Jakarta Sans','PingFang SC','Microsoft YaHei','Noto Sans SC','system-ui','sans-serif'],
@@ -359,8 +364,9 @@
 </div>
 
 <div id="toast" class="fixed top-6 right-6 z-[200]">
-    <div class="bg-white rounded-xl shadow-lg border border-surface-200 px-5 py-3 flex items-center gap-3">
-        <svg class="w-5 h-5 text-primary-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <div class="bg-white rounded-xl shadow-lg border border-surface-200 pl-4 pr-5 py-3 flex items-center gap-3 relative overflow-hidden">
+        <span id="toast-bar" class="absolute left-0 top-0 bottom-0 w-1" style="background:#1F6FA8"></span>
+        <svg id="toast-icon" class="w-5 h-5 flex-shrink-0" style="color:#1F6FA8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         <span id="toast-message" class="text-sm text-text-primary"></span>
     </div>
 </div>

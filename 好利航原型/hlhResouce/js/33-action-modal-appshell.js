@@ -1270,10 +1270,29 @@ function checkPwdStrength(pwd){
     });
 }
 
-function showToast(message){
+/* Toast 分型（S6）：showToast(msg, type?)，type ∈ info/success/warning/danger；
+ * type 缺省时按文案关键词推断，旧调用 showToast(msg) 行为不变、自动获得语义色 */
+function showToast(message,type){
     const toast=document.getElementById('toast');
     document.getElementById('toast-message').textContent=message;
+    if(!type){
+        if(/失败|错误|异常|不能|无法|不可/.test(message))type='danger';
+        else if(/成功|已完成|已保存|已提交|已通过|已发送|已生成|已更新|已删除|已确认/.test(message))type='success';
+        else type='info';
+    }
+    const conf={
+        info:{color:'#1F6FA8',icon:'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'},
+        success:{color:'#1F9D66',icon:'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'},
+        warning:{color:'#D97706',icon:'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'},
+        danger:{color:'#DC2626',icon:'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'}
+    };
+    const c=conf[type]||conf.info;
+    const bar=document.getElementById('toast-bar');
+    const icon=document.getElementById('toast-icon');
+    if(bar)bar.style.background=c.color;
+    if(icon){icon.style.color=c.color;const p=icon.querySelector('path');if(p)p.setAttribute('d',c.icon);}
     toast.classList.add('show');
-    setTimeout(()=>toast.classList.remove('show'),3000);
+    clearTimeout(toast._t);
+    toast._t=setTimeout(()=>toast.classList.remove('show'),3000);
 }
 

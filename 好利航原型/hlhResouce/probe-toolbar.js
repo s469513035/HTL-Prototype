@@ -6,7 +6,7 @@ const vm = require('vm');
 
 const root = __dirname;
 const shell = fs.readFileSync(path.join(root, '好利航国际物流_原型图.html'), 'utf8');
-const order = [...shell.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]);
+const order = [...shell.matchAll(/<script src="(js\/[^"]+)"><\/script>/g)].map(m => m[1]).filter(p => !p.startsWith('js/vendor/'));
 
 const noop = () => {};
 const fakeEl = new Proxy({}, {

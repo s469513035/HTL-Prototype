@@ -6,9 +6,10 @@
     <meta name="ed-project" content="hlh-prototype">
     <title>好利航国际物流 - 管理系统原型</title>
     <script src="inline-editor.js" defer></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <!-- 外部依赖本地化（2026-09-02 修复线上 CDN 不可达导致的全站无样式）：tailwind/qrcode 走本地 js/vendor；Google Fonts 非阻塞加载，失败时回落系统中文字体栈 -->
+    <script src="js/vendor/tailwind.play.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <script src="js/vendor/qrcode.min.js"></script>
     <script>
         tailwind.config = {
             theme: {

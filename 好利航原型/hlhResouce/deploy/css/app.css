@@ -219,3 +219,6 @@
         .pt-cnl{font-family:Consolas,monospace;font-size:9.5px;letter-spacing:.06em;fill:#4A5B73}
         .pt-cnl.strong{fill:#17475E;font-weight:700}
         .coord{font-family:Consolas,monospace;font-size:9px;fill:rgba(23,71,94,.4);letter-spacing:.1em}
+
+        /* 消息通知下拉：内容两行截断 */
+        .notif-clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}

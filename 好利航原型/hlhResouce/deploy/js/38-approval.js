@@ -218,5 +218,6 @@ function submitApprovalAudit(id,rowIdx){
     var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
     var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
     if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
+    if(typeof updateNotifBadge==='function')updateNotifBadge();
     showToast(tr('审核已提交')+'：'+status);
 }

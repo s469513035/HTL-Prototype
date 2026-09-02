@@ -1,5 +1,6 @@
 const menuData=[
 {id:'workspace',label:'工作台',langKey:'workspace',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>',page:'dashboard',tab:null,children:[
+{id:'ws-home',label:'公共工作台',page:'dashboard',tab:'ws-home'},
 {id:'ws-sales',label:'业务工作台',page:'dashboard',tab:'ws-sales'},
 {id:'ws-cs',label:'客服工作台',page:'dashboard',tab:'ws-cs'},
 {id:'ws-ops',label:'操作工作台',page:'dashboard',tab:'ws-ops'}

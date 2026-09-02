@@ -91,8 +91,6 @@ function generateListPage(id,page,statusFilter){
         h+='<div class="list-toolbar mt-1 pt-1 border-t border-surface-100 text-xs">';
         h+='<div class="list-toolbar-actions">';
         h+=renderToolbarActions(id);
-        h+='<button onclick="showRequirementDoc(\''+id+'\')" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer flex items-center gap-1.5" style="min-width:84px"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'+tr('需求说明')+'</button>';
-        h+='<button onclick="showFeatureIntro(\''+id+'\')" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer flex items-center gap-1.5" style="min-width:84px"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'+tr('功能说明')+'</button>';
         h+='</div>';
         h+='<div class="list-toolbar-settings">';
         h+='<span class="inline-flex items-center font-medium text-text-secondary leading-[22px]">'+tr('列表设置')+'</span>';
@@ -101,18 +99,24 @@ function generateListPage(id,page,statusFilter){
         h+='</select></label>';
         h+='<button type="button" class="list-setting-link" onclick="openListConfigModal(\''+id+'\',\'query\')">'+tr('查询条件')+'</button>';
         h+='<button type="button" class="list-setting-link" onclick="openListConfigModal(\''+id+'\',\'columns\')">'+tr('列表字段')+'</button>';
+        h+='<span class="ml-auto inline-flex items-center gap-3">';
+        h+='<button type="button" class="list-setting-link inline-flex items-center gap-1" onclick="showRequirementDoc(\''+id+'\')"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'+tr('需求说明')+'</button>';
+        h+='<button type="button" class="list-setting-link inline-flex items-center gap-1" onclick="showFeatureIntro(\''+id+'\')"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'+tr('功能说明')+'</button>';
+        h+='</span>';
         h+='</div>';
         h+='</div>';
     }else if(hideQueryPanel){
         h+='<div class="list-toolbar text-xs">';
         h+='<div class="list-toolbar-actions">';
         h+=renderToolbarActions(id);
-        h+='<button onclick="showRequirementDoc(\''+id+'\')" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('需求说明')+'</button>';
-        h+='<button onclick="showFeatureIntro(\''+id+'\')" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('功能说明')+'</button>';
         h+='</div>';
         h+='<div class="list-toolbar-settings">';
         h+='<span class="inline-flex items-center font-medium text-text-secondary leading-[22px]">'+tr('列表设置')+'</span>';
         h+='<button type="button" class="list-setting-link" onclick="openListConfigModal(\''+id+'\',\'columns\')">'+tr('列表字段')+'</button>';
+        h+='<span class="ml-auto inline-flex items-center gap-3">';
+        h+='<button type="button" class="list-setting-link inline-flex items-center gap-1" onclick="showRequirementDoc(\''+id+'\')"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'+tr('需求说明')+'</button>';
+        h+='<button type="button" class="list-setting-link inline-flex items-center gap-1" onclick="showFeatureIntro(\''+id+'\')"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'+tr('功能说明')+'</button>';
+        h+='</span>';
         h+='</div>';
         h+='</div>';
     }else{
@@ -126,12 +130,14 @@ function generateListPage(id,page,statusFilter){
         }
         h+='<button class="h-8 px-3 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.reset+'</button>';
         h+=renderToolbarActions(id);
-        h+='<button onclick="showRequirementDoc(\''+id+'\')" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('需求说明')+'</button>';
-        h+='<button onclick="showFeatureIntro(\''+id+'\')" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('功能说明')+'</button>';
         h+='</div>';
         h+='<div class="list-toolbar-settings">';
         h+='<span class="inline-flex items-center font-medium text-text-secondary leading-[22px]">'+tr('列表设置')+'</span>';
         h+='<button type="button" class="list-setting-link" onclick="openListConfigModal(\''+id+'\',\'columns\')">'+tr('列表字段')+'</button>';
+        h+='<span class="ml-auto inline-flex items-center gap-3">';
+        h+='<button type="button" class="list-setting-link inline-flex items-center gap-1" onclick="showRequirementDoc(\''+id+'\')"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'+tr('需求说明')+'</button>';
+        h+='<button type="button" class="list-setting-link inline-flex items-center gap-1" onclick="showFeatureIntro(\''+id+'\')"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'+tr('功能说明')+'</button>';
+        h+='</span>';
         h+='</div>';
         h+='</div>';
     }
@@ -155,15 +161,15 @@ function generateListPage(id,page,statusFilter){
     h+='<div class="list-table-region" id="table-scroll-area">';
     h+='<div class="list-table-card bg-white rounded-xl border border-surface-200">';
     h+='<div class="top-scroll-wrapper" id="top-scroll"><div style="height:1px"></div></div>';
-    h+='<div class="list-table-scroll" id="bottom-scroll"><table class="w-full data-table" style="table-layout:auto;min-width:100%;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF]">';
+    const numKeywords=/金额|数量|重量|费用|额度|价格|收入|成本|运费|单价|总价|体积|件数|税|汇率|利润|折扣|比例|费率|重量\(KG\)|体积\(CBM\)/;
+    h+='<div class="list-table-scroll" id="bottom-scroll"><table class="w-full data-table" style="table-layout:auto;min-width:100%;border-collapse:separate;border-spacing:0"><thead><tr class="bg-white">';
     h+='<th class="text-left text-xs font-semibold text-text-secondary px-4 py-3 whitespace-nowrap relative" style="width:40px"><input type="checkbox" id="checkAll" onchange="toggleCheckAll(this)"></th>';
-    visibleDataCols.forEach(function(col){const th=col.label;const ci=col.index;const dragAttr=' draggable="true" data-col="'+ci+'" ondragstart="thDragStart(event,'+ci+')" ondragend="thDragEnd(event)" ondragover="thDragOver(event,'+ci+')" ondragleave="thDragLeave(event)" ondrop="thDrop(event,'+ci+',\''+id+'\')"';h+='<th class="text-left text-xs font-semibold text-text-secondary px-4 py-3 whitespace-nowrap relative"'+dragAttr+'>'+th+'<button class="col-filter-btn ml-1 inline-flex items-center justify-center w-4 h-4 text-text-muted hover:text-primary-600" onclick="showColumnFilter(event,\''+id+'\','+ci+')"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg></button><div class="col-resizer" onmousedown="startColResize(event,this)"></div></th>';});
+    visibleDataCols.forEach(function(col){const th=col.label;const ci=col.index;const dragAttr=' draggable="true" data-col="'+ci+'" ondragstart="thDragStart(event,'+ci+')" ondragend="thDragEnd(event)" ondragover="thDragOver(event,'+ci+')" ondragleave="thDragLeave(event)" ondrop="thDrop(event,'+ci+',\''+id+'\')"';h+='<th class="'+(numKeywords.test(th)?'text-right':'text-left')+' text-xs font-semibold text-text-secondary px-4 py-3 whitespace-nowrap relative"'+dragAttr+'>'+th+'<button class="col-filter-btn ml-1 inline-flex items-center justify-center w-4 h-4 text-text-muted hover:text-primary-600" onclick="showColumnFilter(event,\''+id+'\','+ci+')"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg></button><div class="col-resizer" onmousedown="startColResize(event,this)"></div></th>';});
     if(showRowActions){
         const actionHeader=thArr.find(function(th){return isActionHeaderText(th);})||tr('操作');
-        h+='<th class="text-left text-xs font-semibold text-text-secondary px-4 py-3 whitespace-nowrap relative" style="position:sticky;right:0;z-index:20;background:#EFF6FF;white-space:nowrap;box-shadow:-4px 0 8px -4px rgba(0,0,0,0.1)">'+actionHeader+'</th>';
+        h+='<th class="text-left text-xs font-semibold text-text-secondary px-4 py-3 whitespace-nowrap relative" style="position:sticky;right:0;z-index:20;background:#FFFFFF;white-space:nowrap;box-shadow:-4px 0 8px -4px rgba(0,0,0,0.1)">'+actionHeader+'</th>';
     }
     h+='</tr></thead><tbody>';
-    const numKeywords=/金额|数量|重量|费用|额度|价格|收入|成本|运费|单价|总价|体积|件数|税|汇率|利润|折扣|比例|费率|重量\(KG\)|体积\(CBM\)/;
     pageData.forEach((row,idx)=>{
         const gi=start+idx;
         h+='<tr class="'+(gi%2===1?'bg-surface-50/50':'')+' hover:bg-primary-50/30 border-b border-surface-100">';
@@ -176,13 +182,13 @@ function generateListPage(id,page,statusFilter){
             const displayCell=tr(rawCell);
             const titleCell=esc(displayCell);
             if(ci===si||(c.statusBadgeCols&&c.statusBadgeCols.indexOf(th)>=0)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap">'+statusBadge(rawCell)+'</td>';}
-            else if((id==='wb-manage'||id==='wb-client-manage')&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold" onclick="openWaybillDetail(\''+id+'\','+gi+')">'+esc(displayCell)+'</button></td>';}
-            else if(id==='fin-fee-mgmt'&&th==='运单号'){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold" ondblclick="openFeeMgmtDetail(\''+id+'\','+gi+')" title="'+esc(tr('双击进入详情'))+'">'+esc(displayCell)+'</button></td>';}
-            else if(id==='fcl-bill'&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold" ondblclick="openBillDetailModal(\''+id+'\','+gi+')" title="'+esc(tr('双击进入详情'))+'">'+esc(displayCell)+'</button></td>';}
-            else if(ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium text-primary-700" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}
+            else if((id==='wb-manage'||id==='wb-client-manage')&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold font-mono" onclick="openWaybillDetail(\''+id+'\','+gi+')">'+esc(displayCell)+'</button></td>';}
+            else if(id==='fin-fee-mgmt'&&th==='运单号'){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold font-mono" ondblclick="openFeeMgmtDetail(\''+id+'\','+gi+')" title="'+esc(tr('双击进入详情'))+'">'+esc(displayCell)+'</button></td>';}
+            else if(id==='fcl-bill'&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold font-mono" ondblclick="openBillDetailModal(\''+id+'\','+gi+')" title="'+esc(tr('双击进入详情'))+'">'+esc(displayCell)+'</button></td>';}
+            else if(ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium font-mono text-primary-700" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}
             else if(th.includes('图片')){h+='<td class="px-4 py-3 text-sm whitespace-nowrap">'+renderNoPreImageThumbs(rawCell)+'</td>';}
             else if(id==='fin-fee-mgmt'&&['操作审核','海外确认','财务审核'].includes(th)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-bold text-primary-700 bg-primary-50/50" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}
-            else if(numKeywords.test(th)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-semibold text-blue-700" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}
+            else if(numKeywords.test(th)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-semibold font-mono text-right text-text-primary" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}
             else if(['停用','锁定','异常','已取消','已驳回','已过期','冻结','否'].includes(rawCell)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap text-red-500 font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}
             else if(['启用','正常','已完成','已通过','是','已确认','已审核'].includes(rawCell)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap text-green-600 font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}
             else{h+='<td class="px-4 py-3 text-sm text-text-secondary" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}
@@ -190,7 +196,7 @@ function generateListPage(id,page,statusFilter){
         if(showRowActions){
             var deleteLabel=(id==='wb-manage'||id==='wb-client-manage')?'取消':L.delete;
             var deleteAction=(id==='wb-manage'||id==='wb-client-manage')?'cancel':'delete';
-            const rowBg=gi%2===1?'#F8FAFC':'#FFFFFF';
+            const rowBg=gi%2===1?'#F9FAFB':'#FFFFFF';
             const airScanIds=['wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan'];
             const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc'].concat(airScanIds).includes(id);
             const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc'].concat(airScanIds).includes(id);
@@ -308,7 +314,7 @@ function openAirScanModal(mode,id,rowIdx){
     html+='</div>';
     document.getElementById('crud-modal-body').innerHTML=html;
     if(readonly){
-        document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 cursor-pointer">'+L.close+'</button>';
+        document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+L.close+'</button>';
     }else{
         document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr(mode==='add'?'新增成功':'保存成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
     }
@@ -477,7 +483,7 @@ function openCrudModal(mode,id,rowIdx){
             html+='</div></div>';
         }
         bodyEl.innerHTML=html;
-        footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 cursor-pointer">'+L.close+'</button>';
+        footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+L.close+'</button>';
     }else if(mode==='add'){
         let html='<div class="'+colClass+'">';
         modalFields.forEach(function(field){

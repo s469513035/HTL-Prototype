@@ -186,12 +186,12 @@ TC['fcl-payment-request'].fieldOptions={
  *      移除环形外键（不再存订单号），并入危险品区块（SOP 7.4）。
  *      订舱单号自动生成；选委托订单号自动带出委托信息；危险品明细随勾选显隐。 */
 addPrototypeTable('fcl-booking','订舱管理',
-    '订舱单号|委托订单号|委托类型|客户名称|船司|航线|起运港|目的港|柜型柜量|船名航次|ETD|订舱回执号|约号|截补料时间|订舱方式|是否危险品|UN编号|危险类别|包装类别|危险品申报人|订舱员|备注|订舱状态|操作',
+    '订舱单号|委托订单号|委托类型|客户名称|船司|航线|起运港|目的港|柜型柜量|船名航次|ETD|订舱回执号|回执附件|约号|截补料时间|订舱方式|是否危险品|UN编号|危险类别|包装类别|危险品申报人|订舱员|备注|订舱状态|操作',
     ['待订舱','已订舱','订舱失败','取消订舱'],[
-    ['FBK-20260613001','FEO-20260613001','实单','深圳市华运达国际货运','MAERSK','西非线','深圳盐田','拉各斯','40HQ×1','MAERSK LAGOS 026W','2026-06-20','','MSK-CN-2026-8891','2026-06-17 12:00','EDI','否','','','','','刘订舱','客户要求本航次务必装出','待订舱'],
-    ['FBK-20260612002','FEO-20260612002','实单','广州远洋进出口贸易','COSCO','西非线','广州南沙','达喀尔','20GP×2','COSCO AFRICA 118W','2026-06-22','COSU778812','COS-CN-2026-4412','2026-06-18 18:00','官网','否','','','','','赵订舱','船司已确认舱位','已订舱'],
-    ['FBK-20260611003','FEO-20260611003','实单','东莞市鑫海物流','CMA CGM','地中海线','上海洋山','阿比让','40HQ×1','CMA MARSEILLE 09W','2026-06-25','','CMA-CN-2026-3320','2026-06-21 12:00','EDI','是','UN3480','9类 锂电池','PI965','李申报','刘订舱','危险品，结单时间早于普货48小时','待订舱'],
-    ['FBK-20260610004','FEO-20260613004','预录单','','MSC','西非线','深圳盐田','特马','40HQ×2','MSC ACCRA 23W','2026-07-02','MSCU334455','','2026-06-28 12:00','官网','否','','','','','赵订舱','预录单委托，无费用产生、无需财务审核','已订舱']
+    ['FBK-20260613001','FEO-20260613001','实单','深圳市华运达国际货运','MAERSK','西非线','深圳盐田','拉各斯','40HQ×1','MAERSK LAGOS 026W','2026-06-20','','','MSK-CN-2026-8891','2026-06-17 12:00','EDI','否','','','','','刘订舱','客户要求本航次务必装出','待订舱'],
+    ['FBK-20260612002','FEO-20260612002','实单','广州远洋进出口贸易','COSCO','西非线','广州南沙','达喀尔','20GP×2','COSCO AFRICA 118W','2026-06-22','COSU778812','COSCO订舱确认书.pdf;舱位确认邮件.png','COS-CN-2026-4412','2026-06-18 18:00','官网','否','','','','','赵订舱','船司已确认舱位','已订舱'],
+    ['FBK-20260611003','FEO-20260611003','实单','东莞市鑫海物流','CMA CGM','地中海线','上海洋山','阿比让','40HQ×1','CMA MARSEILLE 09W','2026-06-25','','','CMA-CN-2026-3320','2026-06-21 12:00','EDI','是','UN3480','9类 锂电池','PI965','李申报','刘订舱','危险品，结单时间早于普货48小时','待订舱'],
+    ['FBK-20260610004','FEO-20260613004','预录单','','MSC','西非线','深圳盐田','特马','40HQ×2','MSC ACCRA 23W','2026-07-02','MSCU334455','MSC_booking_confirm.pdf','','2026-06-28 12:00','官网','否','','','','','赵订舱','预录单委托，无费用产生、无需财务审核','已订舱']
 ],[
     {label:'订舱单号',type:'text'},
     {label:'委托订单号',type:'text'},
@@ -205,7 +205,9 @@ addPrototypeTable('fcl-booking','订舱管理',
     {label:'ETD',type:'date'},
     {label:'订舱状态',type:'select',options:['待订舱','已订舱','订舱失败','取消订舱']}
 ]);
-TC['fcl-booking'].modalExcludedFields=['订舱回执号','订舱状态'];
+TC['fcl-booking'].modalExcludedFields=['订舱状态'];
+/* 订舱回执号 / 回执附件由「登记订舱回执」写入，不由人工在新增/编辑里录：只在查看明细里成板块展示 */
+TC['fcl-booking'].modalFieldModes={'订舱回执号':['view'],'回执附件':['view']};
 TC['fcl-booking'].fieldOptions={
     '委托订单号':fclEntrustOrderNoOptions,   /* 函数：弹窗打开时才求值，始终跟随委托订单管理的最新数据 */
     '委托类型':['预录单','实单'],
@@ -221,8 +223,8 @@ TC['fcl-booking'].fieldOptions={
     '包装类别':['I类','II类','III类','PI965','PI967']
 };
 /* 订舱单号含「单号」→ 引擎渲染为只读自动生成；订舱员固定为当前登录人不可改；
- * UN编号含「编号」会被误判为自动生成，强制回文本 */
-TC['fcl-booking'].modalFieldTypes={'订舱员':'currentUser','ETD':'date','截补料时间':'date','UN编号':'text'};
+ * UN编号含「编号」会被误判为自动生成，强制回文本；是否危险品改勾选框 */
+TC['fcl-booking'].modalFieldTypes={'订舱员':'currentUser','ETD':'date','截补料时间':'date','UN编号':'text','是否危险品':'checkbox','回执附件':'attachment'};
 /* 必填覆写：起运港（全局正则只收录了目的港，属遗漏）；
  * 客户名称非必填 —— 预录单性质的订舱此时可能还没有确定客户 */
 TC['fcl-booking'].requiredOverrides={'起运港':true,'客户名称':false};
@@ -234,8 +236,16 @@ TC['fcl-booking'].fieldChangeHandlers={
 /* 弹窗渲染完设置危险品区块初始显隐 */
 TC['fcl-booking'].afterModalRender='fclBookingAfterModalRender';
 
-/* 危险品明细字段：勾选「是否危险品=是」时才显示并必填（SOP 7.4） */
+/* 危险品明细字段：勾选「是否危险品」时才显示并必填（SOP 7.4） */
 var FCL_DG_FIELDS=['UN编号','危险类别','包装类别','危险品申报人'];
+
+/* 弹窗分组板块：危险品明细单独成板块排在基本信息下方，随勾选整块显隐；
+ * 订舱回执信息只在查看明细里出现（见上面的 modalFieldModes）。
+ * 注意：必须写在 FCL_DG_FIELDS 赋值之后 —— var 只提升声明不提升值。 */
+TC['fcl-booking'].modalSections=[
+    {key:'dg',title:'危险品信息',fields:FCL_DG_FIELDS},
+    {key:'receipt',title:'订舱回执信息',fields:['订舱回执号','回执附件']}
+];
 
 /* 委托订单号下拉选项：取委托订单管理里未取消的单 */
 function fclEntrustOrderNoOptions(){
@@ -263,15 +273,45 @@ function fclBookingLoadEntrust(sel){
     showToast(tr('已带出委托信息')+'：'+esc(no));
 }
 
-/* 是否危险品 → 危险品明细显隐 + 必填 */
+/* 是否危险品（勾选框）→ 危险品信息板块整块显隐 + 明细字段必填 */
 function fclBookingToggleDangerous(){
-    var sel=crudField('是否危险品');
-    var on=!!sel&&sel.value==='是';
+    var on=crudFieldValue('是否危险品')==='是';
+    var sec=crudSection('dg');
+    if(sec)sec.classList.toggle('hidden',!on);
     FCL_DG_FIELDS.forEach(function(h){crudToggleField(h,on,true);});
 }
 
+/* ===== 复制相似订舱 =====
+ * 弹窗跟「编辑」完全一样，只是重新生成订舱单号、清空委托订单号，其余字段原样保留。
+ * 实现上直接复用 edit 弹窗，再在渲染完成后改这两个字段与标题/按钮，避免重写一套表单。 */
+var _fclBookingCopyPending=false;
+function openFclBookingCopy(id){
+    var idx=getSelectedRowIndex();
+    if(idx<0){openActionModal('selectRequired',id,-1);return;}
+    _fclBookingCopyPending=true;
+    openCrudModal('edit',id,idx);
+}
+
+/* 下一个订舱单号：与引擎新增时的自动编号规则一致（末尾数字段 +1，保持位数） */
+function fclNextBookingNo(id){
+    var c=TC[id]||{},data=_listData[id]||expandData(id);
+    var i=(c.h||[]).indexOf('订舱单号');
+    var last=(i>=0&&data.length&&data[data.length-1][i])||'';
+    var m=String(last).match(/^(.*?)(\d+)$/);
+    return m?m[1]+String(parseInt(m[2],10)+1).padStart(m[2].length,'0'):(last+'-001');
+}
+
 function fclBookingAfterModalRender(id,mode,rowData){
-    /* 新增时委托订单号下拉可能已变化，刷新一次选项 */
+    if(_fclBookingCopyPending){
+        _fclBookingCopyPending=false;
+        var t=document.getElementById('crud-modal-title');
+        if(t)t.textContent=tr('复制相似订舱');
+        crudSetField('订舱单号',fclNextBookingNo(id));
+        crudSetField('委托订单号','');
+        var f=document.getElementById('crud-modal-footer');
+        if(f)f.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+                         '<button onclick="closeCrudModal();showToast(\''+tr('复制成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
+    }
     fclBookingToggleDangerous();
 }
 

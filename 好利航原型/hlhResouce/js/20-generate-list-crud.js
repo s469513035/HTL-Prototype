@@ -341,6 +341,10 @@ function openCrudModal(mode,id,rowIdx){
     (c.modalExcludedFields||[]).forEach(function(label){modalExcludedFields[label]=true;});
     const auditHeaders=['创建人','创建时间','创建网点','修改人','修改时间','修改网点'];
     let modalFields=c.h.slice(0,-1).map(function(h,i){return {hd:h,index:i};}).filter(function(f){return f.hd!=='序号'&&!f.hd.endsWith('序号')&&!modalExcludedFields[f.hd]&&!auditHeaders.includes(f.hd);});
+    /* TC[id].modalFieldModes={'字段名':['view']} → 该字段只在列出的模式里出现。
+     * 用于「登记后才有值、不由人工录入」的字段（如订舱回执号/回执附件）：查看要显示，新增/编辑不该出现。 */
+    const fieldModes=c.modalFieldModes||{};
+    modalFields=modalFields.filter(function(f){const m=fieldModes[f.hd];return !m||m.indexOf(mode)>=0;});
     modalFields=modalFields.slice().sort(function(a,b){
         const aw=isBottomModalField(a.hd);
         const bw=isBottomModalField(b.hd);
@@ -465,28 +469,29 @@ function openCrudModal(mode,id,rowIdx){
     }
     const colClass=modalGridFullClass(modalFields,'modal');
     if(mode==='view'){
-        let html='';
-        if(modalFields.length>0){
-            html+='<div class="mb-4"><div class="text-sm font-semibold text-text-primary mb-3 pb-2 border-b border-surface-200">'+tr('基本信息')+'</div>';
-            html+='<div class="'+colClass+'">';
-            modalFields.forEach(function(field){
+        const buckets=crudNewSectionBuckets(c);
+        modalFields.forEach(function(field){
                 const hd=field.hd;
                 const val=rowData?rowData[field.index]:'';
+                const fType=(c.modalFieldTypes&&c.modalFieldTypes[hd])||'';
                 const isCode=hd.includes('编码')||hd.includes('编号')||hd.includes('代码');
-                html+='<div class="flex flex-col gap-1 p-3 rounded-lg border border-surface-100 bg-surface-50/50">';
+                let html='<div class="flex flex-col gap-1 p-3 rounded-lg border border-surface-100 bg-surface-50/50" data-field-box="'+esc(hd)+'">';
                 html+='<label class="text-xs font-medium text-text-muted uppercase tracking-wide">'+esc(tr(hd))+'</label>';
-                if(hd.includes('状态')){html+='<div class="text-sm text-text-primary mt-0.5">'+statusBadge(val)+'</div>';}
+                if(fType==='checkbox'){html+='<div class="mt-0.5">'+crudCheckboxFieldHtml(hd,val,' data-field="'+esc(hd)+'"',true)+'</div>';}
+                else if(fType==='attachment'||hd.includes('附件')){html+='<div class="mt-0.5">'+crudAttachmentViewHtml(val)+'</div>';}
+                else if(hd.includes('状态')){html+='<div class="text-sm text-text-primary mt-0.5">'+statusBadge(val)+'</div>';}
                 else if(isCode){html+='<div class="text-sm font-semibold text-primary-700 mt-0.5">'+(val||'\u2014')+'</div>';}
                 else{html+='<div class="text-sm text-text-primary mt-0.5">'+(val||'\u2014')+'</div>';}
                 html+='</div>';
-            });
-            html+='</div></div>';
-        }
-        bodyEl.innerHTML=html;
+                buckets[crudSectionKeyOf(hd,c)]+=html;
+        });
+        bodyEl.innerHTML=modalFields.length>0?crudAssembleSections(buckets,colClass,c,tr('基本信息')):'';
         footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+L.close+'</button>';
+        runCrudAfterModalRender(id,'view',rowData);
     }else if(mode==='add'){
-        let html='<div class="'+colClass+'">';
+        const buckets=crudNewSectionBuckets(c);
         modalFields.forEach(function(field){
+            let html='';
             const hd=field.hd;
             /* 字段控件类型：默认按表头文字启发式判断；
              * 某页需要偏离默认时用 TC[id].modalFieldTypes={'字段名':'text|date|code|textarea|attachment'} 覆写。
@@ -495,7 +500,8 @@ function openCrudModal(mode,id,rowIdx){
             const isCode=fType?fType==='code':(hd.includes('编码')||hd.includes('编号')||hd.includes('代码')||hd.includes('单号'));
             const isDate=fType?fType==='date':(hd.includes('日期')||hd.includes('时间'));
             const isStatus=hd.includes('状态');
-            const selectOptions=fieldSelectOptions(id,hd,c);
+            /* modalFieldTypes 指定 checkbox 时优先级最高：不再退回下拉渲染 */
+            const selectOptions=fType==='checkbox'?null:fieldSelectOptions(id,hd,c);
             const isLongText=fType?fType==='textarea':(hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能'));
             const isAttachment=fType?fType==='attachment':hd.includes('附件');
             const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
@@ -527,20 +533,23 @@ function openCrudModal(mode,id,rowIdx){
                 html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+autoCode+'" placeholder="'+tr('自动生成')+'"'+anchor+' readonly'+reqAttr+'>';
             }else if(isAttachment){
                 html+=crudAttachmentFieldHtml(hd,'');
+            }else if(fType==='checkbox'){
+                html+=crudCheckboxFieldHtml(hd,'',anchor,false);
             }else if(isLongText){
                 html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'></textarea>';
             }else{
                 html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'>';
             }
             html+='</div>';
+            buckets[crudSectionKeyOf(hd,c)]+=html;
         });
-        html+='</div>';
-        bodyEl.innerHTML=html;
+        bodyEl.innerHTML=crudAssembleSections(buckets,colClass,c,'');
         footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr('新增成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
         runCrudAfterModalRender(id,'add',null);
     }else{
-        let html='<div class="'+colClass+'">';
+        const buckets=crudNewSectionBuckets(c);
         modalFields.forEach(function(field){
+            let html='';
             const hd=field.hd;
             const val=rowData?rowData[field.index]:'';
             /* 同上：TC[id].modalFieldTypes 可逐字段覆写控件类型 */
@@ -548,7 +557,8 @@ function openCrudModal(mode,id,rowIdx){
             const isCode=fType?fType==='code':(hd.includes('编码')||hd.includes('编号')||hd.includes('代码')||hd.includes('单号')||hd.includes('类型'));
             const isDate=fType?fType==='date':(hd.includes('日期')||hd.includes('时间'));
             const isStatus=hd.includes('状态');
-            const selectOptions=fieldSelectOptions(id,hd,c);
+            /* modalFieldTypes 指定 checkbox 时优先级最高：不再退回下拉渲染 */
+            const selectOptions=fType==='checkbox'?null:fieldSelectOptions(id,hd,c);
             const isLongText=fType?fType==='textarea':(hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能'));
             const isAttachment=fType?fType==='attachment':hd.includes('附件');
             const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
@@ -573,6 +583,8 @@ function openCrudModal(mode,id,rowIdx){
                 html+='<input type="date" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+dv+'"'+anchor+reqAttr+'>';
             }else if(isAttachment){
                 html+=crudAttachmentFieldHtml(hd,val);
+            }else if(fType==='checkbox'){
+                html+=crudCheckboxFieldHtml(hd,val,anchor,false);
             }else if(isLongText){
                 html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'>'+esc(val)+'</textarea>';
             }else if(isCode&&mode==='edit'){
@@ -581,9 +593,9 @@ function openCrudModal(mode,id,rowIdx){
                 html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+val+'" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'>';
             }
             html+='</div>';
+            buckets[crudSectionKeyOf(hd,c)]+=html;
         });
-        html+='</div>';
-        bodyEl.innerHTML=html;
+        bodyEl.innerHTML=crudAssembleSections(buckets,colClass,c,'');
         if(mode==='add'){
             footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr('新增成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
         }else{
@@ -592,6 +604,64 @@ function openCrudModal(mode,id,rowIdx){
         runCrudAfterModalRender(id,mode,rowData);
     }
     document.getElementById('crud-modal').classList.add('show');
+}
+
+/* ===== CRUD 弹窗分组板块 =====
+ * TC[id].modalSections=[{key:'dg',title:'危险品信息',fields:['UN编号','危险类别',...]}]
+ * 列在 fields 里的表头会从主栅格里摘出来，按声明顺序渲染成「标题 + 独立栅格」的板块排在下方。
+ * 板块容器带 data-modal-section="key"，页面脚本用 crudSection(key) 拿到后可整体显隐
+ * （例：订舱管理勾选「是否危险品」才展开危险品信息板块）。空板块不渲染。 */
+function crudSectionKeyOf(hd,c){
+    const secs=(c&&c.modalSections)||[];
+    for(let i=0;i<secs.length;i++){
+        if((secs[i].fields||[]).indexOf(hd)>=0)return secs[i].key;
+    }
+    return '__main__';
+}
+function crudNewSectionBuckets(c){
+    const b={__main__:''};
+    ((c&&c.modalSections)||[]).forEach(function(s){b[s.key]='';});
+    return b;
+}
+function crudAssembleSections(buckets,colClass,c,mainTitle){
+    let html='';
+    if(buckets.__main__){
+        if(mainTitle)html+='<div class="mb-4"><div class="text-sm font-semibold text-text-primary mb-3 pb-2 border-b border-surface-200">'+esc(mainTitle)+'</div>';
+        html+='<div class="'+colClass+'">'+buckets.__main__+'</div>';
+        if(mainTitle)html+='</div>';
+    }
+    ((c&&c.modalSections)||[]).forEach(function(s){
+        if(!buckets[s.key])return;
+        html+='<div class="mt-5" data-modal-section="'+esc(s.key)+'">';
+        html+='<div class="text-sm font-semibold text-text-primary mb-3 pb-2 border-b border-surface-200">'+esc(tr(s.title))+'</div>';
+        html+='<div class="'+colClass+'">'+buckets[s.key]+'</div></div>';
+    });
+    return html;
+}
+function crudSection(key){
+    const body=document.getElementById('crud-modal-body');
+    return body?body.querySelector('[data-modal-section="'+(window.CSS&&CSS.escape?CSS.escape(key):key)+'"]'):null;
+}
+
+/* ===== 通用「是/否」勾选框控件 =====
+ * TC[id].modalFieldTypes={'是否危险品':'checkbox'} 时用它渲染。
+ * 值域仍是列表里的 '是'/'否' 字符串，勾选态与之互转，列表列不用改。 */
+function crudCheckboxFieldHtml(hd,val,anchor,readonly){
+    const on=(val==='是'||val==='Y'||val===true||val==='已勾选');
+    const text=String(hd||'').replace(/^是否/,'')||tr('是');
+    return '<label class="w-full h-10 inline-flex items-center gap-2 px-3 text-sm border border-surface-200 rounded-lg '+(readonly?'bg-surface-100 cursor-not-allowed':'bg-surface-50 cursor-pointer')+'">'+
+           '<input type="checkbox" class="rounded border-surface-300 text-primary-600"'+(on?' checked':'')+(readonly?' disabled':'')+(anchor||'')+'>'+
+           '<span class="text-text-secondary">'+esc(tr(text))+'</span></label>';
+}
+
+/* 查看模式下的附件展示：把「a.pdf;b.jpg」渲染成只读文件标签 */
+function crudAttachmentViewHtml(val){
+    const files=String(val||'').split(/[;,，]/).map(function(s){return s.trim();}).filter(Boolean);
+    if(!files.length)return '<div class="text-sm text-text-muted">'+tr('暂无附件')+'</div>';
+    return '<div class="flex flex-wrap gap-1.5">'+files.map(function(f){
+        return '<a href="javascript:void(0)" onclick="showToast(\''+esc(tr('附件下载中'))+'\')" class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-white border border-surface-200 text-[11px] text-primary-700 hover:bg-primary-50 cursor-pointer">'+
+               '<svg class="w-3 h-3 text-primary-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>'+esc(f)+'</a>';
+    }).join('')+'</div>';
 }
 
 /* ===== CRUD 弹窗字段定位与联动 =====
@@ -616,8 +686,20 @@ function crudFieldBox(hd){
 function crudSetField(hd,val){
     const el=crudField(hd);
     if(!el)return false;
+    if(el.type==='checkbox'){el.checked=(val==='是'||val===true||val==='Y');return true;}
+    /* select 被要求清空时补一个空选项，否则 value='' 会让它落到 selectedIndex=-1 的诡异状态 */
+    if(el.tagName==='SELECT'&&(val==null||val==='')&&!el.querySelector('option[value=""]')){
+        el.insertAdjacentHTML('afterbegin','<option value="">'+tr('请选择')+'</option>');
+    }
     el.value=val==null?'':String(val);
     return true;
+}
+/* 读字段值：勾选框回 '是'/'否'，其余回 value，调用方不用关心控件类型 */
+function crudFieldValue(hd){
+    const el=crudField(hd);
+    if(!el)return '';
+    if(el.type==='checkbox')return el.checked?'是':'否';
+    return el.value;
 }
 /* 显隐一个字段，并同步 required（隐藏时必须去掉 required，否则表单校验会卡在看不见的字段上） */
 function crudToggleField(hd,show,required){

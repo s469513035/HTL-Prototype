@@ -488,6 +488,9 @@ function renderField(f){
             input+='<label class="flex items-center gap-1.5 text-sm text-text-secondary cursor-pointer"><input type="checkbox" class="rounded border-surface-300 text-primary-600" data-cb-label="'+esc(optionLabel)+'"'+checked+onCheck+'><span>'+esc(tr(optionLabel))+'</span>'+marker+'</label>';
         });
         input+='</div>';
+    }else if(f.type==='attachment'){
+        /* 复用 CRUD 弹窗的附件上传控件（定义在 20-generate-list-crud.js，运行期才调用，加载顺序无碍） */
+        input=(typeof crudAttachmentFieldHtml==='function')?crudAttachmentFieldHtml(rawLabel,f.value||''):'';
     }else if(f.type==='radioGroup'){
         const groupName=f.name||('radio-'+String(rawLabel).replace(/\s+/g,'-'));
         input='<div class="flex flex-wrap items-center gap-x-5 gap-y-2 min-h-10 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2">';
@@ -954,6 +957,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='export')click='exportData(\''+id+'\')';
     else if(action.key==='copy')click='openSelectedCrud(\'copy\',\''+id+'\')';
     else if(action.key==='copyWaybill')click='openActionModal(\'copyWaybill\',\''+id+'\',-1)';
+    else if(action.key==='copyBooking')click='openFclBookingCopy(\''+id+'\')';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
     else if(action.key==='finalAllocAdjust')click='openFinalAllocAdjustModal(\''+id+'\')';
     else if(action.key==='finalAllocLinkBL')click='openFinalAllocLinkBLModal(\''+id+'\')';

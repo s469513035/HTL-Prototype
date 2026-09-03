@@ -478,6 +478,7 @@ function openCrudModal(mode,id,rowIdx){
                 let html='<div class="flex flex-col gap-1 p-3 rounded-lg border border-surface-100 bg-surface-50/50" data-field-box="'+esc(hd)+'">';
                 html+='<label class="text-xs font-medium text-text-muted uppercase tracking-wide">'+esc(tr(hd))+'</label>';
                 if(fType==='checkbox'){html+='<div class="mt-0.5">'+crudCheckboxFieldHtml(hd,val,' data-field="'+esc(hd)+'"',true)+'</div>';}
+                else if(fType==='pickerText'){html+='<div class="text-sm text-text-primary mt-0.5 whitespace-pre-line" data-field="'+esc(hd)+'">'+(val?esc(val):'—')+'</div>';}
                 else if(fType==='attachment'||hd.includes('附件')){html+='<div class="mt-0.5">'+crudAttachmentViewHtml(val)+'</div>';}
                 else if(hd.includes('状态')){html+='<div class="text-sm text-text-primary mt-0.5">'+statusBadge(val)+'</div>';}
                 else if(isCode){html+='<div class="text-sm font-semibold text-primary-700 mt-0.5">'+(val||'\u2014')+'</div>';}
@@ -500,11 +501,12 @@ function openCrudModal(mode,id,rowIdx){
             const isCode=fType?fType==='code':(hd.includes('编码')||hd.includes('编号')||hd.includes('代码')||hd.includes('单号'));
             const isDate=fType?fType==='date':(hd.includes('日期')||hd.includes('时间'));
             const isStatus=hd.includes('状态');
-            /* modalFieldTypes 指定 checkbox 时优先级最高：不再退回下拉渲染 */
-            const selectOptions=fType==='checkbox'?null:fieldSelectOptions(id,hd,c);
+            /* modalFieldTypes 指定 checkbox / pickerText 时优先级最高：不再退回普通下拉渲染
+             * （pickerText 自己要用 fieldSelectOptions 的选项，但渲染成「选择框 + 多行文本框」） */
+            const selectOptions=(fType==='checkbox'||fType==='pickerText')?null:fieldSelectOptions(id,hd,c);
             const isLongText=fType?fType==='textarea':(hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能'));
             const isAttachment=fType?fType==='attachment':hd.includes('附件');
-            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
+            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(fType==='pickerText'?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
             const isRequired=isImportantRequiredField(hd,id);
             const reqMark=isRequired?' <span class="text-red-500">*</span>':'';
             const reqAttr=isRequired?' required':'';
@@ -535,6 +537,8 @@ function openCrudModal(mode,id,rowIdx){
                 html+=crudAttachmentFieldHtml(hd,'');
             }else if(fType==='checkbox'){
                 html+=crudCheckboxFieldHtml(hd,'',anchor,false);
+            }else if(fType==='pickerText'){
+                html+=crudPickerTextFieldHtml(id,hd,'',c,reqAttr);
             }else if(isLongText){
                 html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'></textarea>';
             }else{
@@ -557,11 +561,12 @@ function openCrudModal(mode,id,rowIdx){
             const isCode=fType?fType==='code':(hd.includes('编码')||hd.includes('编号')||hd.includes('代码')||hd.includes('单号')||hd.includes('类型'));
             const isDate=fType?fType==='date':(hd.includes('日期')||hd.includes('时间'));
             const isStatus=hd.includes('状态');
-            /* modalFieldTypes 指定 checkbox 时优先级最高：不再退回下拉渲染 */
-            const selectOptions=fType==='checkbox'?null:fieldSelectOptions(id,hd,c);
+            /* modalFieldTypes 指定 checkbox / pickerText 时优先级最高：不再退回普通下拉渲染
+             * （pickerText 自己要用 fieldSelectOptions 的选项，但渲染成「选择框 + 多行文本框」） */
+            const selectOptions=(fType==='checkbox'||fType==='pickerText')?null:fieldSelectOptions(id,hd,c);
             const isLongText=fType?fType==='textarea':(hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能'));
             const isAttachment=fType?fType==='attachment':hd.includes('附件');
-            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
+            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(fType==='pickerText'?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
             const isRequired=isImportantRequiredField(hd,id);
             const reqMark=isRequired?' <span class="text-red-500">*</span>':'';
             const reqAttr=isRequired?' required':'';
@@ -585,6 +590,8 @@ function openCrudModal(mode,id,rowIdx){
                 html+=crudAttachmentFieldHtml(hd,val);
             }else if(fType==='checkbox'){
                 html+=crudCheckboxFieldHtml(hd,val,anchor,false);
+            }else if(fType==='pickerText'){
+                html+=crudPickerTextFieldHtml(id,hd,val,c,reqAttr);
             }else if(isLongText){
                 html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'>'+esc(val)+'</textarea>';
             }else if(isCode&&mode==='edit'){
@@ -652,6 +659,22 @@ function crudCheckboxFieldHtml(hd,val,anchor,readonly){
     return '<label class="w-full h-10 inline-flex items-center gap-2 px-3 text-sm border border-surface-200 rounded-lg '+(readonly?'bg-surface-100 cursor-not-allowed':'bg-surface-50 cursor-pointer')+'">'+
            '<input type="checkbox" class="rounded border-surface-300 text-primary-600"'+(on?' checked':'')+(readonly?' disabled':'')+(anchor||'')+'>'+
            '<span class="text-text-secondary">'+esc(tr(text))+'</span></label>';
+}
+
+/* ===== 「选择框 + 多行文本框」控件 =====
+ * TC[id].modalFieldTypes={'Shipper':'pickerText'} 时用它渲染。
+ * 上面的下拉只是「挑一条基础资料带出来」的入口（选项来自 fieldOptions，
+ * 联动写在 fieldChangeHandlers 里），真正存值的是下面那个可多行录入的 textarea，
+ * data-field 挂在 textarea 上，所以 crudField/crudSetField 拿到的就是文本框。 */
+function crudPickerTextFieldHtml(id,hd,val,c,reqAttr){
+    const opts=fieldSelectOptions(id,hd,c)||[];
+    const handler=(c&&c.fieldChangeHandlers&&c.fieldChangeHandlers[hd])||'';
+    let h='<select class="w-full h-9 px-3 mb-1.5 text-sm border border-surface-200 rounded-lg bg-surface-50" data-picker="'+esc(hd)+'"'+(handler?' onchange="'+esc(handler)+'"':'')+'>';
+    h+='<option value="">'+tr('选择发件人带出信息')+'</option>';
+    opts.forEach(function(o){h+='<option value="'+esc(o)+'">'+esc(tr(o))+'</option>';});
+    h+='</select>';
+    h+='<textarea rows="4" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('可直接录入，支持多行'))+'" data-field="'+esc(hd)+'"'+(reqAttr||'')+'>'+esc(val||'')+'</textarea>';
+    return h;
 }
 
 /* 查看模式下的附件展示：把「a.pdf;b.jpg」渲染成只读文件标签 */

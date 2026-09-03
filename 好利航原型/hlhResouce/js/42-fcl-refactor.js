@@ -186,12 +186,18 @@ TC['fcl-payment-request'].fieldOptions={
  *      移除环形外键（不再存订单号），并入危险品区块（SOP 7.4）。
  *      订舱单号自动生成；选委托订单号自动带出委托信息；危险品明细随勾选显隐。 */
 addPrototypeTable('fcl-booking','订舱管理',
-    '订舱单号|委托订单号|委托类型|客户名称|船司|航线|起运港|目的港|柜型柜量|船名航次|ETD|订舱回执号|回执附件|约号|截补料时间|订舱方式|是否危险品|UN编号|危险类别|包装类别|危险品申报人|订舱员|备注|订舱状态|操作',
-    ['待订舱','已订舱','订舱失败','取消订舱'],[
-    ['FBK-20260613001','FEO-20260613001','实单','深圳市华运达国际货运','MAERSK','西非线','深圳盐田','拉各斯','40HQ×1','MAERSK LAGOS 026W','2026-06-20','','','MSK-CN-2026-8891','2026-06-17 12:00','EDI','否','','','','','刘订舱','客户要求本航次务必装出','待订舱'],
-    ['FBK-20260612002','FEO-20260612002','实单','广州远洋进出口贸易','COSCO','西非线','广州南沙','达喀尔','20GP×2','COSCO AFRICA 118W','2026-06-22','COSU778812','COSCO订舱确认书.pdf;舱位确认邮件.png','COS-CN-2026-4412','2026-06-18 18:00','官网','否','','','','','赵订舱','船司已确认舱位','已订舱'],
-    ['FBK-20260611003','FEO-20260611003','实单','东莞市鑫海物流','CMA CGM','地中海线','上海洋山','阿比让','40HQ×1','CMA MARSEILLE 09W','2026-06-25','','','CMA-CN-2026-3320','2026-06-21 12:00','EDI','是','UN3480','9类 锂电池','PI965','李申报','刘订舱','危险品，结单时间早于普货48小时','待订舱'],
-    ['FBK-20260610004','FEO-20260613004','预录单','','MSC','西非线','深圳盐田','特马','40HQ×2','MSC ACCRA 23W','2026-07-02','MSCU334455','MSC_booking_confirm.pdf','','2026-06-28 12:00','官网','否','','','','','赵订舱','预录单委托，无费用产生、无需财务审核','已订舱']
+    '订舱单号|委托订单号|委托类型|客户名称|船司|航线|起运港|目的港|柜型柜量|船名航次|ETD|订舱回执号|回执附件|约号|截补料时间|订舱方式|是否危险品|UN编号|危险类别|包装类别|危险品申报人|Shipper|Consignee|Notify|订舱员|备注|订舱状态|操作',
+    ['待订舱','订舱中','已订舱','取消订舱'],[
+    ['FBK-20260613001','FEO-20260613001','实单','深圳市华运达国际货运','MAERSK','西非线','深圳盐田','拉各斯','40HQ×1','MAERSK LAGOS 026W','2026-06-20','','','MSK-CN-2026-8891','2026-06-17 12:00','EDI','否','','','','',
+        '联系人：张明\n联系公司：深圳市华运达国际货运\n联系人地址：深圳市盐田区盐田路 88 号\n联系人电话：13800138000',
+        '联系人：Mr. Okonkwo\n联系公司：Lagos Import Ltd\n联系人地址：12 Apapa Wharf Road, Lagos, Nigeria\n联系人电话：+234 802 111 2222',
+        '联系人：Same as consignee','刘订舱','客户要求本航次务必装出','待订舱'],
+    ['FBK-20260612002','FEO-20260612002','实单','广州远洋进出口贸易','COSCO','西非线','广州南沙','达喀尔','20GP×2','COSCO AFRICA 118W','2026-06-22','COSU778812','COSCO订舱确认书.pdf;舱位确认邮件.png','COS-CN-2026-4412','2026-06-18 18:00','官网','否','','','','',
+        '联系人：李经理\n联系公司：广州远洋进出口贸易\n联系人地址：广州市南沙区港前大道 168 号\n联系人电话：13900139002',
+        '联系人：M. Diop\n联系公司：Dakar Trading SARL\n联系人地址：Rue 12, Zone Portuaire, Dakar, Senegal\n联系人电话：+221 77 333 4444',
+        '联系人：Dakar Notify','赵订舱','船司已确认舱位','已订舱'],
+    ['FBK-20260611003','FEO-20260611003','实单','东莞市鑫海物流','CMA CGM','地中海线','上海洋山','阿比让','40HQ×1','CMA MARSEILLE 09W','2026-06-25','','','CMA-CN-2026-3320','2026-06-21 12:00','EDI','是','UN3480','9类 锂电池','PI965','李申报','','','','刘订舱','危险品，结单时间早于普货48小时','待订舱'],
+    ['FBK-20260610004','FEO-20260613004','预录单','','MSC','西非线','深圳盐田','特马','40HQ×2','MSC ACCRA 23W','2026-07-02','MSCU334455','MSC_booking_confirm.pdf','','2026-06-28 12:00','官网','否','','','','','','','','赵订舱','预录单委托，无费用产生、无需财务审核','已订舱']
 ],[
     {label:'订舱单号',type:'text'},
     {label:'委托订单号',type:'text'},
@@ -203,7 +209,7 @@ addPrototypeTable('fcl-booking','订舱管理',
     {label:'目的港',type:'select',options:FCL_POD_OPTIONS},
     {label:'是否危险品',type:'select',options:['是','否']},
     {label:'ETD',type:'date'},
-    {label:'订舱状态',type:'select',options:['待订舱','已订舱','订舱失败','取消订舱']}
+    {label:'订舱状态',type:'select',options:['待订舱','订舱中','已订舱','取消订舱']}
 ]);
 TC['fcl-booking'].modalExcludedFields=['订舱状态'];
 /* 订舱回执号 / 回执附件由「登记订舱回执」写入，不由人工在新增/编辑里录：只在查看明细里成板块展示 */
@@ -220,18 +226,25 @@ TC['fcl-booking'].fieldOptions={
     '订舱方式':['EDI','官网','邮件','电话','外配同行','一代'],
     '是否危险品':['是','否'],
     '危险类别':['1类 爆炸品','3类 易燃液体','8类 腐蚀品','9类 锂电池'],
-    '包装类别':['I类','II类','III类','PI965','PI967']
+    '包装类别':['I类','II类','III类','PI965','PI967'],
+    /* 函数：弹窗打开时才求值，跟随发件人信息(base-sender)的最新数据 */
+    'Shipper':fclSenderOptions,'Consignee':fclSenderOptions,'Notify':fclSenderOptions
 };
 /* 订舱单号含「单号」→ 引擎渲染为只读自动生成；订舱员固定为当前登录人不可改；
  * UN编号含「编号」会被误判为自动生成，强制回文本；是否危险品改勾选框 */
-TC['fcl-booking'].modalFieldTypes={'订舱员':'currentUser','ETD':'date','截补料时间':'date','UN编号':'text','是否危险品':'checkbox','回执附件':'attachment'};
+TC['fcl-booking'].modalFieldTypes={'订舱员':'currentUser','ETD':'date','截补料时间':'date','UN编号':'text','是否危险品':'checkbox','回执附件':'attachment',
+    /* Shipper/Consignee/Notify：上面一个发件人选择框，下面一个可多行录入的文本框 */
+    'Shipper':'pickerText','Consignee':'pickerText','Notify':'pickerText'};
 /* 必填覆写：起运港（全局正则只收录了目的港，属遗漏）；
  * 客户名称非必填 —— 预录单性质的订舱此时可能还没有确定客户 */
 TC['fcl-booking'].requiredOverrides={'起运港':true,'客户名称':false};
 /* 选择委托订单号后自动带出委托信息 */
 TC['fcl-booking'].fieldChangeHandlers={
     '委托订单号':'fclBookingLoadEntrust(this)',
-    '是否危险品':'fclBookingToggleDangerous()'
+    '是否危险品':'fclBookingToggleDangerous()',
+    'Shipper':'fclBookingFillParty(this)',
+    'Consignee':'fclBookingFillParty(this)',
+    'Notify':'fclBookingFillParty(this)'
 };
 /* 弹窗渲染完设置危险品区块初始显隐 */
 TC['fcl-booking'].afterModalRender='fclBookingAfterModalRender';
@@ -243,9 +256,36 @@ var FCL_DG_FIELDS=['UN编号','危险类别','包装类别','危险品申报人'
  * 订舱回执信息只在查看明细里出现（见上面的 modalFieldModes）。
  * 注意：必须写在 FCL_DG_FIELDS 赋值之后 —— var 只提升声明不提升值。 */
 TC['fcl-booking'].modalSections=[
+    {key:'party',title:'收发货人信息',fields:['Shipper','Consignee','Notify']},
     {key:'dg',title:'危险品信息',fields:FCL_DG_FIELDS},
     {key:'receipt',title:'订舱回执信息',fields:['订舱回执号','回执附件']}
 ];
+
+/* 发件人下拉：取「发件人信息」(base-sender) 的联系公司 */
+function fclSenderOptions(){
+    var c=TC['base-sender'];
+    if(!c||!c.d)return [];
+    var i=(c.h||[]).indexOf('联系公司');
+    if(i<0)i=0;
+    return c.d.map(function(r){return r[i];}).filter(Boolean);
+}
+/* 选中发件人 → 把联系人 / 联系公司 / 联系人地址 / 联系人电话 带进下面的多行文本框 */
+function fclBookingFillParty(sel){
+    var name=sel&&sel.value;
+    if(!name)return;
+    var c=TC['base-sender'];
+    if(!c||!c.d)return;
+    var g=function(row,label){var i=(c.h||[]).indexOf(label);return i>=0?(row[i]||''):'';};
+    var iCo=(c.h||[]).indexOf('联系公司');
+    var row=c.d.find(function(r){return r[iCo>=0?iCo:0]===name;});
+    if(!row){showToast(tr('未找到该发件人'));return;}
+    var hd=sel.getAttribute('data-picker')||'';
+    var text=[tr('联系人')+'：'+g(row,'联系人'),
+              tr('联系公司')+'：'+g(row,'联系公司'),
+              tr('联系人地址')+'：'+g(row,'地址'),
+              tr('联系人电话')+'：'+g(row,'联系电话')].join('\n');
+    if(crudSetField(hd,text))showToast(tr('已带出发件人信息'));
+}
 
 /* 委托订单号下拉选项：取委托订单管理里未取消的单 */
 function fclEntrustOrderNoOptions(){
@@ -301,7 +341,134 @@ function fclNextBookingNo(id){
     return m?m[1]+String(parseInt(m[2],10)+1).padStart(m[2].length,'0'):(last+'-001');
 }
 
+/* ===== 订舱操作（待订舱 → 订舱中）=====
+ * 复用编辑弹窗补充订舱信息，保存后把订舱状态推到「订舱中」。 */
+var _fclBookingDoIdx=-1;
+function openFclBookingDo(id){
+    id=id||'fcl-booking';
+    var idx=getSelectedRowIndex();
+    if(idx<0){openActionModal('selectRequired',id,-1);return;}
+    var row=fclBookingRowAt(id,idx);
+    if(fclBookingStatusOf(id,row)!=='待订舱'){showToast(tr('只有「待订舱」的数据可以做订舱操作'));return;}
+    _fclBookingDoIdx=idx;
+    openCrudModal('edit',id,idx);
+}
+function fclBookingRowAt(id,idx){
+    var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:((TC[id]||{}).d||[]);
+    return data[idx];
+}
+function fclBookingStatusOf(id,row){
+    var h=(TC[id]||{}).h||[],i=h.indexOf('订舱状态');
+    return (row&&i>=0)?String(row[i]||''):'';
+}
+function submitFclBookingDo(id,idx){
+    var row=fclBookingRowAt(id,idx);
+    var h=(TC[id]||{}).h||[],i=h.indexOf('订舱状态');
+    if(row&&i>=0)setRowOverride(id,row,i,'订舱中');
+    _fclBookingDoIdx=-1;
+    closeCrudModal();
+    fclBookingRefreshList(id);
+    showToast(tr('订舱信息已保存，状态转为「订舱中」'));
+}
+function fclBookingRefreshList(id){
+    var mc=document.getElementById('main-content');
+    var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
+    var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
+    if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
+}
+
+/* ===== 取消订舱（订舱中 → 取消订舱，支持多选）===== */
+function openFclBookingCancel(id){
+    id=id||'fcl-booking';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选需要取消订舱的数据'));return;}
+    var h=(TC[id]||{}).h||[],iNo=h.indexOf('订舱单号');
+    var eligible=[],blocked=[];
+    idxs.forEach(function(i){
+        var row=fclBookingRowAt(id,i);
+        if(!row)return;
+        if(fclBookingStatusOf(id,row)==='订舱中')eligible.push(i);
+        else blocked.push(iNo>=0?row[iNo]:'');
+    });
+    if(!eligible.length){showToast(tr('只有「订舱中」的数据可以取消订舱'));return;}
+    var msg=tr('已勾选')+' '+idxs.length+' '+tr('条数据')+'，'+tr('其中')+' '+eligible.length+' '+tr('条可取消订舱');
+    if(blocked.length)msg+='，'+blocked.length+' '+tr('条非「订舱中」将跳过');
+    msg+='。'+tr('取消后该票需重新订舱，是否确认？');
+    openConfirmTip(msg,function(){confirmFclBookingCancel(id,eligible);});
+}
+function confirmFclBookingCancel(id,idxs){
+    var h=(TC[id]||{}).h||[],i=h.indexOf('订舱状态');
+    var n=0;
+    idxs.forEach(function(k){
+        var row=fclBookingRowAt(id,k);
+        if(row&&i>=0){setRowOverride(id,row,i,'取消订舱');n++;}
+    });
+    fclBookingRefreshList(id);
+    showToast(tr('已取消订舱')+' '+n+' '+tr('条'));
+}
+
+/* ===== 委托订单审核通过 → 自动生成待订舱的订舱单 ===== */
+function fclActionFieldValue(label){
+    var box=document.querySelector('[data-field-label="'+label+'"]');
+    if(!box)return '';
+    var el=box.querySelector('select,textarea,input');
+    return el?el.value:'';
+}
+function submitEntrustAudit(id){
+    id=id||'fcl-sales-instruction';
+    var result=fclActionFieldValue('审核结果');
+    if(!result){showToast(tr('请选择审核结果'));return false;}
+    var idx=getSelectedRowIndex();
+    var row=fclBookingRowAt(id,idx);
+    if(!row){showToast(tr('请先勾选一条委托订单'));return false;}
+    var c=TC[id]||{},h=c.h||[];
+    var set=function(label,val){var i=h.indexOf(label);if(i>=0)setRowOverride(id,row,i,val);};
+    var get=function(label){var i=h.indexOf(label);return i>=0?(row[i]||''):'';};
+    var now=(typeof receiptNowStr==='function')?receiptNowStr():'';
+    var who=(typeof getCurrentUserName==='function')?getCurrentUserName():'admin';
+    if(result==='通过'){
+        var bookingNo=fclNextBookingNo('fcl-booking');
+        set('状态','已转订舱');set('审核人',who);set('审核时间',now);set('生成订舱单号',bookingNo);
+        createBookingFromEntrust(bookingNo,c,row);
+        closeCrudModal();
+        fclBookingRefreshList(id);
+        showToast(tr('审核通过，已生成订舱单')+' '+bookingNo+'（'+tr('待订舱')+'）');
+    }else if(result==='驳回'){
+        set('状态','已驳回');set('审核人',who);set('审核时间',now);
+        closeCrudModal();
+        fclBookingRefreshList(id);
+        showToast(tr('已驳回'));
+    }else{
+        closeCrudModal();
+        showToast(tr('已退回补充，委托订单仍为「待审核」'));
+    }
+    return true;
+}
+/* 用委托订单的信息生成一条「待订舱」的订舱单 */
+function createBookingFromEntrust(bookingNo,ec,erow){
+    var bid='fcl-booking',bc=TC[bid];
+    if(!bc)return;
+    var eg=function(label){var i=(ec.h||[]).indexOf(label);return i>=0?(erow[i]||''):'';};
+    var seedWidth=(bc.d&&bc.d.length)?bc.d[0].length:(bc.h||[]).length-1;
+    var map={'订舱单号':bookingNo,'委托订单号':eg('委托订单号'),'委托类型':eg('委托类型'),
+        '客户名称':eg('客户名称'),'船司':eg('船司'),'起运港':eg('起运港'),'目的港':eg('目的港'),
+        '柜型柜量':eg('柜型柜量'),'ETD':eg('预计开船日'),'是否危险品':'否',
+        '订舱员':(typeof getCurrentUserName==='function')?getCurrentUserName():'admin',
+        '备注':tr('由委托订单审核通过自动生成'),'订舱状态':'待订舱'};
+    bc.d.push((bc.h||[]).slice(0,seedWidth).map(function(name){return map[name]!==undefined?map[name]:'';}));
+    if(typeof _listData!=='undefined')delete _listData[bid];   /* 下次渲染重新展开，带上新订舱单 */
+}
+
 function fclBookingAfterModalRender(id,mode,rowData){
+    /* 订舱操作：标题与底部按钮改成「订舱」语义，保存后推进状态 */
+    if(_fclBookingDoIdx>=0&&mode==='edit'){
+        var doIdx=_fclBookingDoIdx;
+        var t0=document.getElementById('crud-modal-title');
+        if(t0)t0.textContent=tr('订舱')+' - '+tr('补充订舱信息');
+        var f0=document.getElementById('crud-modal-footer');
+        if(f0)f0.innerHTML='<button onclick="cancelFclBookingDo()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+                           '<button onclick="submitFclBookingDo(\''+id+'\','+doIdx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('保存并提交订舱')+'</button>';
+    }
     if(_fclBookingCopyPending){
         _fclBookingCopyPending=false;
         var t=document.getElementById('crud-modal-title');
@@ -313,6 +480,10 @@ function fclBookingAfterModalRender(id,mode,rowData){
                          '<button onclick="closeCrudModal();showToast(\''+tr('复制成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
     }
     fclBookingToggleDangerous();
+}
+function cancelFclBookingDo(){
+    _fclBookingDoIdx=-1;
+    closeCrudModal();
 }
 
 /* 10.3 补料与提单 —— 吸收原「实际录单」，并入催料字段（SOP 11.3）*/

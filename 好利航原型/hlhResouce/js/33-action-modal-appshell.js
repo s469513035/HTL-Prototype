@@ -341,6 +341,11 @@ function openActionModal(action,id,rowIdx){
 }
 
 function confirmAction(action,id){
+    /* 委托订单审核：通过时要写回状态并自动生成一张「待订舱」的订舱单 */
+    if(action==='audit'&&id==='fcl-sales-instruction'&&typeof submitEntrustAudit==='function'){
+        submitEntrustAudit(id);
+        return;
+    }
     if((id==='fin-fee-mgmt')&&['opAudit','overseasConfirm','financeAudit'].includes(action)){
         const count=updateFeeAuditStatus(id,action);
         closeCrudModal();

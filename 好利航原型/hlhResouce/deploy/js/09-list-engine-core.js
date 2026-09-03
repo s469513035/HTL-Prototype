@@ -958,6 +958,8 @@ function renderToolbarAction(action,id){
     else if(action.key==='copy')click='openSelectedCrud(\'copy\',\''+id+'\')';
     else if(action.key==='copyWaybill')click='openActionModal(\'copyWaybill\',\''+id+'\',-1)';
     else if(action.key==='copyBooking')click='openFclBookingCopy(\''+id+'\')';
+    else if(action.key==='doBooking')click='openFclBookingDo(\''+id+'\')';
+    else if(action.key==='cancelBooking')click='openFclBookingCancel(\''+id+'\')';
     else if(action.key==='freightRecalc')click='openFreightRecalcConfirm(\''+id+'\')';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
     else if(action.key==='finalAllocAdjust')click='openFinalAllocAdjustModal(\''+id+'\')';
@@ -1482,7 +1484,7 @@ function getToolbarActions(id){
         if(id==='fcl-slot')base.push({key:'slotRelease',label:'释放仓位'},{key:'slotReassign',label:'调配仓位'},{key:'slotStat',label:'仓位统计'});
         if(id==='fcl-booking-window')base.push({key:'windowTest',label:'测试提醒'});
         if(id==='fcl-release-tpl')base.push({key:'tplImport',label:'批量导入'},{key:'copy',label:'复制模板'});
-        if(id==='fcl-booking')base.push({key:'copyBooking',label:'复制相似订舱'},{key:'genAgentBooking',label:'生成外配托书'},{key:'bookingReceipt',label:'登记订舱回执'});
+        if(id==='fcl-booking')base.push({key:'doBooking',label:'订舱',variant:'primary'},{key:'copyBooking',label:'复制相似订舱'},{key:'genAgentBooking',label:'生成外配托书'},{key:'bookingReceipt',label:'登记订舱回执'},{key:'cancelBooking',label:'取消订舱',variant:'danger'});
         if(id==='fcl-si-bl')base.push({key:'urgeDoc',label:'催料'},{key:'draftBl',label:'草稿件处理'},{key:'bindCustomerOrder',label:'绑定客户实单'},{key:'recalcFee',label:'重算费用'});
         if(id==='fcl-bl-split-merge')base.push({key:'doSplit',label:'拆单'},{key:'doMerge',label:'并单'},{key:'feeAllocate',label:'费用分摊'});
         if(id==='fcl-appeal')base.push({key:'submitAppeal',label:'提交申诉'},{key:'appealResult',label:'登记结果'},{key:'genOffsetFee',label:'生成抵扣费用'});

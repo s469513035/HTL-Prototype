@@ -3088,6 +3088,10 @@ TC['crm-cust'].d=[
     (c.d||[]).forEach(function(r,k){r.splice(i+1,0,seed[k%seed.length]);});
 })();
 TC['crm-cust'].s=['待开户','审批中','已开户'];
+/* 这几项要非必填。光在弹窗 HTML 里不画星号没用：openCrudModal 之后会跑
+ * markCustomModalRequired -> applyModalRequiredMarks，按 isImportantRequiredField 的
+ * 全局正则给标签补红星（「所属」「姓名」「时间」都会命中），必须用 requiredOverrides 覆写。 */
+TC['crm-cust'].requiredOverrides={'客户等级':false,'所属客服':false,'所属操作':false,'法人姓名':false,'营业执照注册时间':false};
 /* 默认取数规则会先命中「启用状态」，必须显式指定按开户状态过滤 */
 TC['crm-cust'].statusMatch=function(row,tab,headers){
     var i=headers.indexOf('开户状态');

@@ -65,6 +65,26 @@ function handleCrmAcctUpload(input){
     renderCrmAcctFiles();
 }
 
+/* 开户币别：多选。币种沿用整柜那套业务币种（含西非法郎 XOF / 奈拉 NGN） */
+function crmAcctCurrencyOptions(){
+    return (typeof FCL_CURRENCY_OPTIONS!=='undefined'&&FCL_CURRENCY_OPTIONS.length)?FCL_CURRENCY_OPTIONS:['USD','CNY','EUR','XOF','NGN'];
+}
+function crmAcctCurrencyHtml(){
+    var checked={'CNY':1,'USD':1};
+    var h='<div class="grid grid-cols-3 sm:grid-cols-5 gap-2 min-h-10 rounded-lg border border-surface-200 bg-surface-50 p-2">';
+    crmAcctCurrencyOptions().forEach(function(o){
+        h+='<label class="flex items-center gap-1.5 text-sm text-text-secondary cursor-pointer">'+
+           '<input type="checkbox" class="crm-acct-currency rounded border-surface-300 text-primary-600" value="'+esc(o)+'"'+(checked[o]?' checked':'')+'>'+
+           '<span>'+esc(tr(o))+'</span></label>';
+    });
+    return h+'</div>';
+}
+function getCrmAcctCurrencies(){
+    var out=[];
+    document.querySelectorAll('.crm-acct-currency:checked').forEach(function(cb){out.push(cb.value);});
+    return out;
+}
+
 function openCrmAccountApplyModal(id,rowIdx){
     var c=TC[id]||{};
     var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
@@ -92,23 +112,24 @@ function openCrmAccountApplyModal(id,rowIdx){
     baseGrid+=fld('所属客服',sel(getEmployeeNameOptions(),g('所属客服')));
     baseGrid+=fld('所属操作',sel(getEmployeeNameOptions(),g('所属操作')));
     baseGrid+=fld('信用额度授信','<input type="number" min="0" class="'+inCls+'" value="0">',true);
+    baseGrid+=fld('开户币别',crmAcctCurrencyHtml(),true,'md:col-span-3');
     baseGrid+='<div class="flex flex-col gap-1.5 md:col-span-3"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'"></textarea></div>';
     baseGrid+='</div>';
     h+=crmAcctSection('基本信息',baseGrid);
 
-    /* 企业资质信息：全部非必填，开户后可再补充 */
+    /* 企业资质信息：开户审批要看齐资质，这里整块标必填 */
     var qualGrid='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">';
-    qualGrid+=fld('统一社会信用代码',inp(g('公司营业执照'),'请输入统一社会信用代码'));
-    qualGrid+=fld('法人姓名',inp(g('法人姓名'),'请输入法人姓名'));
-    qualGrid+=fld('法人身份证',inp(g('法人身份证'),'请输入法人身份证号'));
-    qualGrid+=fld('法人电话',inp(g('法人电话'),'请输入法人电话'));
-    qualGrid+=fld('注册资金',inp(g('注册资金'),'如：500万'));
-    qualGrid+=fld('注册年限',inp(g('注册年限'),'如：10年'));
-    qualGrid+=fld('营业执照注册时间','<input type="date" class="'+inCls+'">');
-    qualGrid+=fld('开户名',inp(g('客户全称'),'请输入开户名'));
-    qualGrid+=fld('开户行',inp('','请输入开户行'));
-    qualGrid+=fld('银行账号',inp('','请输入银行账号'));
-    qualGrid+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary">'+tr('营业范围')+'</label><textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y">'+esc(g('营业范围'))+'</textarea></div>';
+    qualGrid+=fld('统一社会信用代码',inp(g('公司营业执照'),'请输入统一社会信用代码'),true);
+    qualGrid+=fld('法人姓名',inp(g('法人姓名'),'请输入法人姓名'),true);
+    qualGrid+=fld('法人身份证',inp(g('法人身份证'),'请输入法人身份证号'),true);
+    qualGrid+=fld('法人电话',inp(g('法人电话'),'请输入法人电话'),true);
+    qualGrid+=fld('注册资金',inp(g('注册资金'),'如：500万'),true);
+    qualGrid+=fld('注册年限',inp(g('注册年限'),'如：10年'),true);
+    qualGrid+=fld('营业执照注册时间','<input type="date" class="'+inCls+'">',true);
+    qualGrid+=fld('开户名',inp(g('客户全称'),'请输入开户名'),true);
+    qualGrid+=fld('开户行',inp('','请输入开户行'),true);
+    qualGrid+=fld('银行账号',inp('','请输入银行账号'),true);
+    qualGrid+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500">*</span> '+tr('营业范围')+'</label><textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y">'+esc(g('营业范围'))+'</textarea></div>';
     qualGrid+='</div>';
     h+=crmAcctSection('企业资质信息',qualGrid);
 
@@ -141,19 +162,23 @@ function openCrmAccountApplyModal(id,rowIdx){
 /* 提交后进入审批中，列表刷新（写 _listData 副本，不污染种子数据） */
 function submitCrmAccountApply(){
     if(!_crmAcctCtx){closeCrudModal();return;}
+    var currencies=getCrmAcctCurrencies();
+    if(!currencies.length){showToast(tr('请至少选择一个开户币别'));return;}
     var id=_crmAcctCtx.id,rowIdx=_crmAcctCtx.rowIdx,c=TC[id]||{};
     if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
     var headers=c.h||[],row=_listData[id][rowIdx];
     if(row){
         var i=headers.indexOf('开户状态');
-        if(i>=0)row[i]='审批中';
+        /* 必须走 setRowOverride：紧接着的 generateListPage 会 _listData[id]=expandData(id)
+         * 从种子重新展开，直接改 _listData 的话这次提交下一帧就被冲掉了 */
+        if(i>=0)setRowOverride(id,row,i,'审批中');
     }
     closeCrudModal();
     var mc=document.getElementById('main-content');
     var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
     var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
     if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
-    showToast(tr('开户申请已提交，等待审批'));
+    showToast(tr('开户申请已提交，等待审批')+'（'+tr('开户币别')+'：'+currencies.join('、')+'）');
 }
 
 function openCrmCustomerModal(mode,id,rowIdx,rowData){

@@ -201,7 +201,7 @@ addPrototypeTable('fcl-booking','订舱管理',
 ],[
     {label:'订舱单号',type:'text'},
     {label:'委托订单号',type:'text'},
-    {label:'委托类型',type:'select',options:['预录单','实单']},
+    {label:'委托类型',type:'select',options:['预录单','实单','无单']},
     {label:'客户名称',type:'select',options:FCL_CUSTOMER_OPTIONS},
     {label:'船司',type:'select',options:FCL_CARRIER_OPTIONS},
     {label:'航线',type:'select',options:FCL_ROUTE_OPTIONS},
@@ -216,7 +216,7 @@ TC['fcl-booking'].modalExcludedFields=['订舱状态'];
 TC['fcl-booking'].modalFieldModes={'订舱回执号':['view'],'回执附件':['view']};
 TC['fcl-booking'].fieldOptions={
     '委托订单号':fclEntrustOrderNoOptions,   /* 函数：弹窗打开时才求值，始终跟随委托订单管理的最新数据 */
-    '委托类型':['预录单','实单'],
+    '委托类型':['预录单','实单','无单'],     /* 无单 = 不走委托单直接开的订舱 */
     '客户名称':FCL_CUSTOMER_OPTIONS,
     '船司':FCL_CARRIER_OPTIONS,
     '航线':FCL_ROUTE_OPTIONS,
@@ -361,14 +361,47 @@ function fclBookingStatusOf(id,row){
     var h=(TC[id]||{}).h||[],i=h.indexOf('订舱状态');
     return (row&&i>=0)?String(row[i]||''):'';
 }
+/* 找到列表行对应的种子行：_listData 里的行是 expandData 拷贝出来的副本，改它不落库。
+ * 订舱单号非空时按单号找；为空说明是委托单带过来还没编号的那条（expandData 补的行一定有号），
+ * 退而按委托订单号找。 */
+function fclBookingSeedRow(id,row){
+    var c=TC[id]||{},h=c.h||[],iNo=h.indexOf('订舱单号'),iEo=h.indexOf('委托订单号');
+    if(!row)return null;
+    var no=iNo>=0?String(row[iNo]||''):'';
+    var eo=iEo>=0?String(row[iEo]||''):'';
+    return (c.d||[]).find(function(r){
+        if(no)return String(r[iNo]||'')===no;
+        return !!eo&&String(r[iEo]||'')===eo&&!String(r[iNo]||'');
+    })||null;
+}
+/* 订舱单号生成后回写到对应委托订单的「生成订舱单号」 */
+function fclBackfillEntrustBookingNo(entrustNo,bookingNo){
+    if(!entrustNo)return;
+    var eid='fcl-sales-instruction',c=TC[eid];
+    if(!c||!c.d)return;
+    var h=c.h||[],iNo=h.indexOf('委托订单号'),iGen=h.indexOf('生成订舱单号');
+    if(iNo<0||iGen<0)return;
+    var row=c.d.find(function(r){return String(r[iNo]||'')===entrustNo;});
+    if(row)setRowOverride(eid,row,iGen,bookingNo);
+}
 function submitFclBookingDo(id,idx){
     var row=fclBookingRowAt(id,idx);
-    var h=(TC[id]||{}).h||[],i=h.indexOf('订舱状态');
-    if(row&&i>=0)setRowOverride(id,row,i,'订舱中');
+    var h=(TC[id]||{}).h||[],iSt=h.indexOf('订舱状态'),iNo=h.indexOf('订舱单号'),iEo=h.indexOf('委托订单号');
+    if(!row){showToast(tr('未找到订舱数据'));return;}
+    /* 委托单带过来的数据还没有订舱单号，点订舱时才生成 */
+    var no=iNo>=0?String(row[iNo]||''):'';
+    if(iNo>=0&&!no){
+        no=fclNextBookingNo(id);
+        var seed=fclBookingSeedRow(id,row);
+        if(seed)seed[iNo]=no;
+        row[iNo]=no;
+        fclBackfillEntrustBookingNo(iEo>=0?String(row[iEo]||''):'',no);
+    }
+    if(iSt>=0)setRowOverride(id,row,iSt,'订舱中');
     _fclBookingDoIdx=-1;
     closeCrudModal();
     fclBookingRefreshList(id);
-    showToast(tr('订舱信息已保存，状态转为「订舱中」'));
+    showToast(tr('订舱单号')+' '+no+' '+tr('已生成，状态转为「订舱中」'));
 }
 function fclBookingRefreshList(id){
     var mc=document.getElementById('main-content');
@@ -427,12 +460,12 @@ function submitEntrustAudit(id){
     var now=(typeof receiptNowStr==='function')?receiptNowStr():'';
     var who=(typeof getCurrentUserName==='function')?getCurrentUserName():'admin';
     if(result==='通过'){
-        var bookingNo=fclNextBookingNo('fcl-booking');
-        set('状态','已转订舱');set('审核人',who);set('审核时间',now);set('生成订舱单号',bookingNo);
-        createBookingFromEntrust(bookingNo,c,row);
+        /* 订舱单号不在这里生成 —— 委托单过来的数据先落到「待订舱」，点订舱按钮时才编号 */
+        set('状态','已转订舱');set('审核人',who);set('审核时间',now);
+        createBookingFromEntrust(c,row);
         closeCrudModal();
         fclBookingRefreshList(id);
-        showToast(tr('审核通过，已生成订舱单')+' '+bookingNo+'（'+tr('待订舱')+'）');
+        showToast(tr('审核通过，已生成待订舱数据（订舱时自动编号）'));
     }else if(result==='驳回'){
         set('状态','已驳回');set('审核人',who);set('审核时间',now);
         closeCrudModal();
@@ -444,13 +477,13 @@ function submitEntrustAudit(id){
     }
     return true;
 }
-/* 用委托订单的信息生成一条「待订舱」的订舱单 */
-function createBookingFromEntrust(bookingNo,ec,erow){
+/* 用委托订单的信息生成一条「待订舱」的订舱单（订舱单号留空，订舱时才生成） */
+function createBookingFromEntrust(ec,erow){
     var bid='fcl-booking',bc=TC[bid];
     if(!bc)return;
     var eg=function(label){var i=(ec.h||[]).indexOf(label);return i>=0?(erow[i]||''):'';};
     var seedWidth=(bc.d&&bc.d.length)?bc.d[0].length:(bc.h||[]).length-1;
-    var map={'订舱单号':bookingNo,'委托订单号':eg('委托订单号'),'委托类型':eg('委托类型'),
+    var map={'订舱单号':'','委托订单号':eg('委托订单号'),'委托类型':eg('委托类型'),
         '客户名称':eg('客户名称'),'船司':eg('船司'),'起运港':eg('起运港'),'目的港':eg('目的港'),
         '柜型柜量':eg('柜型柜量'),'ETD':eg('预计开船日'),'是否危险品':'否',
         '订舱员':(typeof getCurrentUserName==='function')?getCurrentUserName():'admin',
@@ -460,6 +493,18 @@ function createBookingFromEntrust(bookingNo,ec,erow){
 }
 
 function fclBookingAfterModalRender(id,mode,rowData){
+    /* 无单订舱（新增）：不挂委托单，委托订单号留空、委托类型固定「无单」 */
+    if(mode==='add'){
+        var t=document.getElementById('crud-modal-title');
+        if(t)t.textContent=tr('无单订舱');
+        var eo=crudField('委托订单号');
+        if(eo){
+            if(eo.tagName==='SELECT'&&!eo.querySelector('option[value=""]'))
+                eo.insertAdjacentHTML('afterbegin','<option value=""></option>');
+            eo.value='';
+        }
+        crudSetField('委托类型','无单');
+    }
     /* 订舱操作：标题与底部按钮改成「订舱」语义，保存后推进状态 */
     if(_fclBookingDoIdx>=0&&mode==='edit'){
         var doIdx=_fclBookingDoIdx;

@@ -1484,7 +1484,17 @@ function getToolbarActions(id){
         if(id==='fcl-slot')base.push({key:'slotRelease',label:'释放仓位'},{key:'slotReassign',label:'调配仓位'},{key:'slotStat',label:'仓位统计'});
         if(id==='fcl-booking-window')base.push({key:'windowTest',label:'测试提醒'});
         if(id==='fcl-release-tpl')base.push({key:'tplImport',label:'批量导入'},{key:'copy',label:'复制模板'});
-        if(id==='fcl-booking')base.push({key:'doBooking',label:'订舱',variant:'primary'},{key:'copyBooking',label:'复制相似订舱'},{key:'genAgentBooking',label:'生成外配托书'},{key:'bookingReceipt',label:'登记订舱回执'},{key:'cancelBooking',label:'取消订舱',variant:'danger'});
+        if(id==='fcl-booking'){
+            /* 订舱管理：订舱是主操作，紧跟在查询后面；不要「查看详情」和「同步数据」；
+             * 新增=无单订舱（不走委托单直接开的订舱），编辑=修改数据 */
+            base.splice(base.findIndex(function(a){return a.type==='view';}),1);
+            base.forEach(function(a){
+                if(a.type==='add')a.label='无单订舱';
+                if(a.type==='edit')a.label='修改数据';
+            });
+            base.splice(1,0,{key:'doBooking',label:'订舱',variant:'primary'});
+            base.push({key:'copyBooking',label:'复制相似订舱'},{key:'genAgentBooking',label:'生成外配托书'},{key:'bookingReceipt',label:'登记订舱回执'},{key:'cancelBooking',label:'取消订舱',variant:'danger'});
+        }
         if(id==='fcl-si-bl')base.push({key:'urgeDoc',label:'催料'},{key:'draftBl',label:'草稿件处理'},{key:'bindCustomerOrder',label:'绑定客户实单'},{key:'recalcFee',label:'重算费用'});
         if(id==='fcl-bl-split-merge')base.push({key:'doSplit',label:'拆单'},{key:'doMerge',label:'并单'},{key:'feeAllocate',label:'费用分摊'});
         if(id==='fcl-appeal')base.push({key:'submitAppeal',label:'提交申诉'},{key:'appealResult',label:'登记结果'},{key:'genOffsetFee',label:'生成抵扣费用'});
@@ -1503,7 +1513,7 @@ function getToolbarActions(id){
         if(id==='fcl-bank-flow')base.push({key:'genReceivable',label:'生成收款管理'},{key:'genPayable',label:'生成付款管理'});
         /* fcl-sales-instruction 已在上面早返回（含审核数据），此处不再列入 */
         if(['fcl-customer-audit','fcl-payment','fcl-payment-request','fcl-ar-release'].includes(id))base.push({key:'audit',label:'审核数据'});
-        if(['fcl-booking','fcl-si-bl','fcl-edi-api','fcl-provider-api'].includes(id))base.push({key:'sync',label:'同步数据'});
+        if(['fcl-si-bl','fcl-edi-api','fcl-provider-api'].includes(id))base.push({key:'sync',label:'同步数据'});
         if(['fcl-bill','fcl-ar-release'].includes(id))base.push({key:'genPdf',label:'下载PDF'});
         if(id==='fcl-payment')base.push({key:'downloadReceipt',label:'下载水单'});
         base.push({key:'export',label:'导出数据'});

@@ -6,9 +6,9 @@
     <meta name="ed-project" content="hlh-prototype">
     <title>好利航国际物流 - 管理系统原型</title>
     <script src="inline-editor.js" defer></script>
-    <!-- 外部依赖本地化（2026-09-02 修复线上 CDN 不可达导致的全站无样式）：tailwind/qrcode 走本地 js/vendor；Google Fonts 非阻塞加载，失败时回落系统中文字体栈 -->
+    <!-- 外部依赖本地化（2026-09-02 修复线上 CDN 不可达导致的全站无样式）：tailwind/qrcode 走本地 js/vendor。
+         2026-09-03 起全站改用系统字体（各端原生 UI 字体），不再引 Google Fonts，也就没有网络字体可下载失败的问题。 -->
     <script src="js/vendor/tailwind.play.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <script src="js/vendor/qrcode.min.js"></script>
     <script>
         tailwind.config = {
@@ -26,9 +26,10 @@
                         danger:  {50:'#FBEBEB',100:'#F5D5D5',600:'#DC2626',700:'#B91C1C'},
                         info:    {50:'#EAF3F9',100:'#D5E7F3',600:'#1F6FA8',700:'#1A5C89'}
                     },
+                    /* 系统字体：Win 走 Segoe UI / 微软雅黑，Mac 走 SF / 苹方，各端都用原生 UI 字体，不下载网络字体 */
                     fontFamily: {
-                        sans:['Plus Jakarta Sans','PingFang SC','Microsoft YaHei','Noto Sans SC','system-ui','sans-serif'],
-                        mono:['JetBrains Mono','Consolas','SF Mono','monospace']
+                        sans:['system-ui','-apple-system','Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans SC','Helvetica Neue','Arial','sans-serif'],
+                        mono:['ui-monospace','SFMono-Regular','Menlo','Consolas','Courier New','monospace']
                     }
                 }
             }

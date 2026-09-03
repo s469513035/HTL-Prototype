@@ -5,7 +5,8 @@
          * 语义色：success #1F9D66 / warning #D97706 / danger #DC2626 / info #1F6FA8（tailwind.config 已注册 50/100/600/700 四档） */
         *{margin:0;padding:0;box-sizing:border-box}
         html,body{margin:0;padding:0;height:100%;overflow:hidden}
-        body{font-family:'Plus Jakarta Sans','PingFang SC','Microsoft YaHei','Noto Sans SC',system-ui,sans-serif;background:#F3F5F8}
+        /* 系统字体栈：与 tailwind.config 的 fontFamily.sans 保持一致 */
+        body{font-family:system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans SC','Helvetica Neue',Arial,sans-serif;background:#F3F5F8}
         ::-webkit-scrollbar{width:6px;height:6px}
         ::-webkit-scrollbar-track{background:transparent}
         ::-webkit-scrollbar-thumb{background:#C6D0DC;border-radius:3px}
@@ -91,7 +92,7 @@
         .status-tab.active{background:transparent;color:#1F6FA8;border-bottom-color:#D9A441;font-weight:600}
         input[type="checkbox"]{width:16px;height:16px;accent-color:#1F6FA8;cursor:pointer}
         input[type="checkbox"]:checked{background-color:#1F6FA8}
-        .status-tab .tab-count{margin-left:4px;font-size:11px;padding:1px 6px;border-radius:10px;background:#EAF3F9;color:#1F6FA8;font-family:'JetBrains Mono',Consolas,monospace}
+        .status-tab .tab-count{margin-left:4px;font-size:11px;padding:1px 6px;border-radius:10px;background:#EAF3F9;color:#1F6FA8;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace}
         .status-tab:not(.active) .tab-count{background:#EDF1F6;color:#8593A9}
         .top-scroll-wrapper{overflow-x:auto;overflow-y:hidden;height:6px}
         .top-scroll-wrapper::-webkit-scrollbar{height:6px}
@@ -101,7 +102,7 @@
         .summary-bar{display:flex;align-items:center;gap:16px;padding:8px 16px;background:#EAF3F9;border-radius:8px;font-size:13px;flex-wrap:wrap}
         .summary-item{display:inline-flex;align-items:center;gap:4px}
         .summary-label{color:#8593A9;font-weight:400}
-        .summary-value{color:#16233A;font-weight:600;font-family:'JetBrains Mono',Consolas,monospace}
+        .summary-value{color:#16233A;font-weight:600;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace}
         .clearable-field{position:relative;display:inline-flex;align-items:center}
         .clearable-field.w-full{display:flex}
         .clearable-field>input,.clearable-field>textarea{width:100%}

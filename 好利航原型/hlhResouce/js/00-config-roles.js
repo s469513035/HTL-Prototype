@@ -1,10 +1,12 @@
 // ========== 角色权限系统 ==========
 // 定义角色：每个角色有对应的菜单ID列表（允许访问的菜单）
 var ROLE_MENUS={
-    'role-admin':['workspace','staff-mobile-app','customer-mgmt','waybill-mgmt','fcl','warehouse','overseas-wh','cs','approval','finance','biz-config','perm'],
-    'role-sales':['workspace','staff-mobile-app','customer-mgmt','waybill-mgmt','fcl','biz-config'],
-    'role-quote':['workspace','staff-mobile-app','biz-config'],
-    'role-finance':['workspace','staff-mobile-app','fcl','approval','finance'],
+    /* 菜单调整：customer-mgmt + waybill-mgmt 合并为 cust-waybill；
+     * staff-mobile-app 不再是 L1（员工端APP 演示入口收进 workspace 下） */
+    'role-admin':['workspace','cust-waybill','fcl','warehouse','overseas-wh','cs','approval','finance','biz-config','perm'],
+    'role-sales':['workspace','cust-waybill','fcl','biz-config'],
+    'role-quote':['workspace','biz-config'],
+    'role-finance':['workspace','fcl','approval','finance'],
     // OMS / PDA 占位（TERMINAL_MENUS 已经把可见 L1 收窄到 OMS/PDA 专属范围，角色 filter 退化为不过滤）
     'role-customer':['client-mobile-app','oms-client'],
     'role-pda':[]
@@ -14,7 +16,7 @@ var ROLE_MENUS={
 // 每个端只能看到自己的 L1 集合；PDA 端走特殊渲染（直达工作台）所以列表为空
 var TERMINAL_MENUS={
     'oms':['client-mobile-app','oms-client'],
-    'tms':['workspace','staff-mobile-app','customer-mgmt','waybill-mgmt','fcl','warehouse','overseas-wh','cs','approval','finance','biz-config','perm'],
+    'tms':['workspace','cust-waybill','fcl','warehouse','overseas-wh','cs','approval','finance','biz-config','perm'],
     'pda':[]
 };
 var TERMINAL_LABELS={'oms':'OMS 客户端','tms':'TMS 管理端','pda':'PDA 仓库端'};

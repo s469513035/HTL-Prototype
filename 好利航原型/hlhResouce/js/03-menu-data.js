@@ -3,25 +3,16 @@ const menuData=[
 {id:'ws-home',label:'公共工作台',page:'dashboard',tab:'ws-home'},
 {id:'ws-sales',label:'业务工作台',page:'dashboard',tab:'ws-sales'},
 {id:'ws-cs',label:'客服工作台',page:'dashboard',tab:'ws-cs'},
-{id:'ws-ops',label:'操作工作台',page:'dashboard',tab:'ws-ops'}
+{id:'ws-ops',label:'操作工作台',page:'dashboard',tab:'ws-ops'},
+/* 员工端APP 原本是独立 L1 挂 8 条菜单，但它是移动端原型演示、不是管理端功能。
+ * APP 页面自带 mobilePrototypeNav 可在页内切换全部 8 个原型（同 PDA 的做法），
+ * 所以主导航只留一个入口。 */
+{id:'staff-app-home',label:'员工端APP',page:'mobile-app',tab:'staff-app-home'}
 ]},
 
-{id:'staff-mobile-app',label:'员工端APP',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2" stroke-width="1.5"/><path stroke-linecap="round" stroke-width="1.5" d="M11 18h2"/></svg>',children:[
-{id:'staff-app-home',label:'APP工作台',page:'mobile-app',tab:'staff-app-home'},
-{id:'staff-app-chat',label:'聊天转业务',page:'mobile-app',tab:'staff-app-chat'},
-{id:'staff-app-customer',label:'客户360',page:'mobile-app',tab:'staff-app-customer'},
-{id:'staff-app-demand',label:'需求卡',page:'mobile-app',tab:'staff-app-demand'},
-{id:'staff-app-quote',label:'报价处理',page:'mobile-app',tab:'staff-app-quote'},
-{id:'staff-app-tasks',label:'任务SLA',page:'mobile-app',tab:'staff-app-tasks'},
-{id:'staff-app-orders',label:'订单协同',page:'mobile-app',tab:'staff-app-orders'},
-{id:'staff-app-service',label:'服务工单',page:'mobile-app',tab:'staff-app-service'}
-]},
-
-{id:'customer-mgmt',label:'客户管理',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',children:[
-{id:'crm-cust',label:'客户管理',langKey:'crm_cust',page:'crm',tab:'crm-cust'}
-]},
-
-{id:'waybill-mgmt',label:'运单管理',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>',children:[
+/* 原「客户管理」L1 只挂 1 个叶子（纯层级浪费），与「运单管理」L1 合并为散货接单侧的统一入口 */
+{id:'cust-waybill',label:'客户与运单',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',children:[
+{id:'crm-cust',label:'客户管理',langKey:'crm_cust',page:'crm',tab:'crm-cust'},
 {id:'wb-special',label:'下单录入',langKey:'wb_special',page:'waybill',tab:'wb-special'},
 {id:'wb-manage',label:'运单管理（管理端）',langKey:'wb_manage',page:'waybill',tab:'wb-manage'},
 {id:'wb-op-instruction',label:'操作指令',page:'waybill',tab:'wb-op-instruction'}
@@ -40,16 +31,16 @@ const menuData=[
     {id:'fcl-trial-calc-biz',label:'整柜试算-业务',page:'fcl',tab:'fcl-trial-calc-biz'},
     {id:'fcl-carrier-route',label:'航司路线配置',page:'fcl',tab:'fcl-carrier-route'}
 ]},
-// ===== ② 询盘与委托订单（SOP-FCL-01/03）=====
-// 「询盘与销售指示」二级分组已去掉，两项直接挂在整柜业务下。
+// ===== ②③ 接单与订舱（SOP-FCL-01/03/04/05）=====
+// 原来这 4 项直接挂在整柜业务下，与相邻的分组混排、层级不齐，现收进一个分组。
 // 销售指示即客户委托单（预录单/实单都是委托），故更名为「委托订单管理」。
-{id:'fcl-inquiry-order',label:'业务询盘单',page:'fcl',tab:'fcl-inquiry-order'},
-{id:'fcl-sales-instruction',label:'委托订单管理',page:'fcl',tab:'fcl-sales-instruction'},
-// ===== ③ 订舱与放舱（SOP-FCL-04/05）=====
-// 「订舱与仓位」二级分组已去掉，两项直接挂在整柜业务下。
 // 仓位管理、订舱窗口提醒已下线（TC 注册保留，仅不挂菜单）。
-{id:'fcl-booking',label:'订舱管理',page:'fcl',tab:'fcl-booking'},
-{id:'fcl-release',label:'放仓作业',page:'fcl',tab:'fcl-release'},
+{id:'fcl-intake',label:'接单与订舱',children:[
+    {id:'fcl-inquiry-order',label:'业务询盘单',page:'fcl',tab:'fcl-inquiry-order'},
+    {id:'fcl-sales-instruction',label:'委托订单管理',page:'fcl',tab:'fcl-sales-instruction'},
+    {id:'fcl-booking',label:'订舱管理',page:'fcl',tab:'fcl-booking'},
+    {id:'fcl-release',label:'放仓作业',page:'fcl',tab:'fcl-release'}
+]},
 // ===== ④ 操作执行（SOP-FCL-06~11）=====
 {id:'fcl-ops',label:'操作执行',children:[
     {id:'fcl-truck',label:'拖车安排',page:'fcl',tab:'fcl-truck'},
@@ -82,23 +73,36 @@ const menuData=[
 ]},
 
 {id:'warehouse',label:'仓储作业',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',children:[
-{id:'wh-in-one',label:'手动入仓',page:'wh-domestic',tab:'wh-in-one'},
-{id:'wh-in-multi',label:'入仓操作（一票多件）',page:'wh-domestic',tab:'wh-in-multi'},
-{id:'wh-headless',label:'无头件',langKey:'wh_headless',page:'wh-domestic',tab:'wh-headless'},
-{id:'wh-no-pre-in',label:'无头件认领',langKey:'wh_no_pre_in',page:'wh-domestic',tab:'wh-no-pre-in'},
-{id:'wh-transfer-in',label:'调拨入库',page:'wh-domestic',tab:'wh-transfer-in'},
-{id:'wh-transfer-out',label:'调拨出库',page:'wh-domestic',tab:'wh-transfer-out'},
-{id:'wh-transfer-fee',label:'调拨费用查询',page:'wh-domestic',tab:'wh-transfer-fee'},
-{id:'wh-pack-rule',label:'配舱规则',page:'wh-domestic',tab:'wh-pack-rule'},
-{id:'wh-final-alloc',label:'配舱计划',page:'wh-domestic',tab:'wh-final-alloc'},
-{id:'wh-cargo-search',label:'查货管理',page:'wh-domestic',tab:'wh-cargo-search'},
-{id:'wh-stock-check',label:'国内库存盘点',page:'wh-domestic',tab:'wh-stock-check'},
-{id:'wh-sort-bag',label:'分拣装袋管理',page:'wh-domestic',tab:'wh-sort-bag'},
-{id:'wh-replenish-drop',label:'补货落货管理',page:'wh-domestic',tab:'wh-replenish-drop'},
-{id:'wh-pallet-info',label:'托盘信息查询',page:'wh-domestic',tab:'wh-pallet-info'},
-{id:'wh-pallet-print',label:'托盘打印',page:'wh-domestic',tab:'wh-pallet-print'},
-{id:'wh-express-sort',label:'快递分拣方案管理',page:'wh-domestic',tab:'wh-express-sort'},
-{id:'wh-express-inbound',label:'快递入仓(分拣装板)',page:'wh-domestic',tab:'wh-express-inbound'},
+/* 原本 17 项全平铺，是侧边栏最难扫的一块，按作业阶段分 5 组。
+ * 分组只影响菜单层级，不动任何 tab / 页面；PDA 任务清单走递归 collect，分组后照常取到。 */
+{id:'wh-inbound-grp',label:'入库作业',children:[
+    {id:'wh-in-one',label:'手动入仓',page:'wh-domestic',tab:'wh-in-one'},
+    {id:'wh-in-multi',label:'入仓操作（一票多件）',page:'wh-domestic',tab:'wh-in-multi'},
+    {id:'wh-headless',label:'无头件',langKey:'wh_headless',page:'wh-domestic',tab:'wh-headless'},
+    {id:'wh-no-pre-in',label:'无头件认领',langKey:'wh_no_pre_in',page:'wh-domestic',tab:'wh-no-pre-in'},
+    {id:'wh-express-inbound',label:'快递入仓(分拣装板)',page:'wh-domestic',tab:'wh-express-inbound'}
+]},
+{id:'wh-instock-grp',label:'库内管理',children:[
+    {id:'wh-stock-check',label:'国内库存盘点',page:'wh-domestic',tab:'wh-stock-check'},
+    {id:'wh-cargo-search',label:'查货管理',page:'wh-domestic',tab:'wh-cargo-search'},
+    {id:'wh-replenish-drop',label:'补货落货管理',page:'wh-domestic',tab:'wh-replenish-drop'}
+]},
+{id:'wh-outbound-grp',label:'出库与配舱',children:[
+    {id:'wh-pack-rule',label:'配舱规则',page:'wh-domestic',tab:'wh-pack-rule'},
+    {id:'wh-final-alloc',label:'配舱计划',page:'wh-domestic',tab:'wh-final-alloc'},
+    {id:'wh-sort-bag',label:'分拣装袋管理',page:'wh-domestic',tab:'wh-sort-bag'},
+    {id:'wh-express-sort',label:'快递分拣方案管理',page:'wh-domestic',tab:'wh-express-sort'}
+]},
+{id:'wh-transfer-grp',label:'调拨管理',children:[
+    {id:'wh-transfer-in',label:'调拨入库',page:'wh-domestic',tab:'wh-transfer-in'},
+    {id:'wh-transfer-out',label:'调拨出库',page:'wh-domestic',tab:'wh-transfer-out'},
+    {id:'wh-transfer-fee',label:'调拨费用查询',page:'wh-domestic',tab:'wh-transfer-fee'}
+]},
+{id:'wh-pallet-grp',label:'托盘管理',children:[
+    {id:'wh-pallet-info',label:'托盘信息查询',page:'wh-domestic',tab:'wh-pallet-info'},
+    {id:'wh-pallet-print',label:'托盘打印',page:'wh-domestic',tab:'wh-pallet-print'}
+]},
+/* 仓库PDA 带 terminalOnly:'pda'，只在 PDA 端显示，保持原样不并入托盘管理 */
 {id:'warehouse-pda',label:'仓库PDA',terminalOnly:'pda',children:[
 {id:'pda-app',label:'仓库PDA',page:'warehouse-pda',tab:'pda-app'}
 ]}
@@ -150,17 +154,23 @@ const menuData=[
 {id:'prod-surcharge',label:'附加杂费配置',langKey:'prod_surcharge',page:'product',tab:'prod-surcharge'},
 {id:'cfg-label-template',label:'标签模板',page:'product',tab:'cfg-label-template'}
 ]},
-{id:'biz-cfg',label:'业务设置',langKey:'biz_cfg',children:[
-{id:'cfg-dict',label:'数据字典',langKey:'cfg_dict',page:'biz-cfg',tab:'cfg-dict'},
-{id:'cfg-rate',label:'汇率管理',langKey:'cfg_rate',page:'biz-cfg',tab:'cfg-rate'},
+/* 原「业务设置」12 项混了三类东西（地理字典 / 平台配置 / 流程规则），常用项被淹没，拆成 3 组。
+ * 「汇率管理」(cfg-rate) 与 财务结算→汇率管理(fin-rate) 同名不同表、数据还不一致，
+ * 保留字段更全的 fin-rate，这里去掉菜单入口（TC['cfg-rate'] 仍注册，供其他地方引用）。 */
+{id:'cfg-geo',label:'地理数据',children:[
 {id:'cfg-country',label:'国家列表',langKey:'cfg_country',page:'biz-cfg',tab:'cfg-country'},
 {id:'cfg-province',label:'州/省列表',langKey:'cfg_province',page:'biz-cfg',tab:'cfg-province'},
 {id:'cfg-city',label:'城市列表',langKey:'cfg_city',page:'biz-cfg',tab:'cfg-city'},
-{id:'cfg-port',label:'港口机场列表',langKey:'cfg_port',page:'biz-cfg',tab:'cfg-port'},
+{id:'cfg-port',label:'港口机场列表',langKey:'cfg_port',page:'biz-cfg',tab:'cfg-port'}
+]},
+{id:'cfg-platform',label:'平台设置',children:[
+{id:'cfg-dict',label:'数据字典',langKey:'cfg_dict',page:'biz-cfg',tab:'cfg-dict'},
 {id:'cfg-product-name',label:'品名库管理',langKey:'cfg_product_name',page:'biz-cfg',tab:'cfg-product-name'},
-{id:'cfg-risk',label:'风控规则',langKey:'cfg_risk',page:'biz-cfg',tab:'cfg-risk'},
 {id:'cfg-i18n',label:'多语言配置',langKey:'cfg_i18n',page:'biz-cfg',tab:'cfg-i18n'},
-{id:'cfg-coding-rule',label:'编码规则管理',page:'biz-cfg',tab:'cfg-coding-rule'},
+{id:'cfg-coding-rule',label:'编码规则管理',page:'biz-cfg',tab:'cfg-coding-rule'}
+]},
+{id:'cfg-flow',label:'流程与风控',children:[
+{id:'cfg-risk',label:'风控规则',langKey:'cfg_risk',page:'biz-cfg',tab:'cfg-risk'},
 {id:'biz-msg-flow',label:'消息流程管理',page:'biz-cfg',tab:'biz-msg-flow'},
 {id:'biz-approval-flow',label:'审批流程管理',page:'biz-cfg',tab:'biz-approval-flow'}
 ]},
@@ -178,7 +188,8 @@ const menuData=[
 {id:'perm-role',label:'角色管理',langKey:'perm_role',page:'perm',tab:'perm-role'},
 {id:'perm-menu',label:'菜单管理',langKey:'perm_menu',page:'perm',tab:'perm-menu'},
 {id:'perm-log',label:'日志查询',langKey:'perm_log',page:'perm',tab:'perm-log'},
-{id:'perm-org',label:'组织架构',langKey:'perm_org',children:[{id:'perm-hq',label:'总部管理',langKey:'perm_hq',page:'perm',tab:'perm-org'},{id:'perm-region',label:'大区管理',langKey:'perm_region',page:'perm',tab:'perm-org'},{id:'perm-branch',label:'分公司',langKey:'perm_branch',page:'perm',tab:'perm-org'},{id:'perm-wh',label:'仓库',langKey:'perm_wh',page:'perm',tab:'perm-org'},{id:'perm-dept',label:'部门管理',langKey:'perm_dept',page:'perm',tab:'perm-org'},{id:'perm-team',label:'小组管理',langKey:'perm_team',page:'perm',tab:'perm-org'}]}
+/* 6 个子项原本 tab 全写成了未注册的 'perm-org'，点开都是兜底页；改指各自真实表 */
+{id:'perm-org',label:'组织架构',langKey:'perm_org',children:[{id:'perm-hq',label:'总部管理',langKey:'perm_hq',page:'perm',tab:'perm-hq'},{id:'perm-region',label:'大区管理',langKey:'perm_region',page:'perm',tab:'perm-region'},{id:'perm-branch',label:'分公司',langKey:'perm_branch',page:'perm',tab:'perm-branch'},{id:'perm-wh',label:'仓库',langKey:'perm_wh',page:'perm',tab:'perm-wh'},{id:'perm-dept',label:'部门管理',langKey:'perm_dept',page:'perm',tab:'perm-dept'},{id:'perm-team',label:'小组管理',langKey:'perm_team',page:'perm',tab:'perm-team'}]}
 ]},
 
 // ========== OMS 客户端 L1（terminal=oms 时显示） ==========

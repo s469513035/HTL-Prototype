@@ -65,24 +65,17 @@ function handleCrmAcctUpload(input){
     renderCrmAcctFiles();
 }
 
-/* 开户币别：多选。币种沿用整柜那套业务币种（含西非法郎 XOF / 奈拉 NGN） */
+/* 开户币别：单选下拉。币种沿用整柜那套业务币种（含西非法郎 XOF / 奈拉 NGN） */
 function crmAcctCurrencyOptions(){
     return (typeof FCL_CURRENCY_OPTIONS!=='undefined'&&FCL_CURRENCY_OPTIONS.length)?FCL_CURRENCY_OPTIONS:['USD','CNY','EUR','XOF','NGN'];
 }
 function crmAcctCurrencyHtml(){
-    var checked={'CNY':1,'USD':1};
-    var h='<div class="grid grid-cols-3 sm:grid-cols-5 gap-2 min-h-10 rounded-lg border border-surface-200 bg-surface-50 p-2">';
-    crmAcctCurrencyOptions().forEach(function(o){
-        h+='<label class="flex items-center gap-1.5 text-sm text-text-secondary cursor-pointer">'+
-           '<input type="checkbox" class="crm-acct-currency rounded border-surface-300 text-primary-600" value="'+esc(o)+'"'+(checked[o]?' checked':'')+'>'+
-           '<span>'+esc(tr(o))+'</span></label>';
-    });
-    return h+'</div>';
+    return '<select id="crm-acct-currency" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+
+        selectOptionsHtml(crmAcctCurrencyOptions(),'CNY')+'</select>';
 }
-function getCrmAcctCurrencies(){
-    var out=[];
-    document.querySelectorAll('.crm-acct-currency:checked').forEach(function(cb){out.push(cb.value);});
-    return out;
+function getCrmAcctCurrency(){
+    var el=document.getElementById('crm-acct-currency');
+    return el?String(el.value||''):'';
 }
 
 function openCrmAccountApplyModal(id,rowIdx){
@@ -112,7 +105,7 @@ function openCrmAccountApplyModal(id,rowIdx){
     baseGrid+=fld('所属客服',sel(getEmployeeNameOptions(),g('所属客服')));
     baseGrid+=fld('所属操作',sel(getEmployeeNameOptions(),g('所属操作')));
     baseGrid+=fld('信用额度授信','<input type="number" min="0" class="'+inCls+'" value="0">',true);
-    baseGrid+=fld('开户币别',crmAcctCurrencyHtml(),true,'md:col-span-3');
+    baseGrid+=fld('开户币别',crmAcctCurrencyHtml(),true);
     baseGrid+='<div class="flex flex-col gap-1.5 md:col-span-3"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'"></textarea></div>';
     baseGrid+='</div>';
     h+=crmAcctSection('基本信息',baseGrid);
@@ -162,8 +155,8 @@ function openCrmAccountApplyModal(id,rowIdx){
 /* 提交后进入审批中，列表刷新（写 _listData 副本，不污染种子数据） */
 function submitCrmAccountApply(){
     if(!_crmAcctCtx){closeCrudModal();return;}
-    var currencies=getCrmAcctCurrencies();
-    if(!currencies.length){showToast(tr('请至少选择一个开户币别'));return;}
+    var currency=getCrmAcctCurrency();
+    if(!currency){showToast(tr('请选择开户币别'));return;}
     var id=_crmAcctCtx.id,rowIdx=_crmAcctCtx.rowIdx,c=TC[id]||{};
     if(!_listData[id])_listData[id]=(c.d||[]).map(function(r){return r.slice();});
     var headers=c.h||[],row=_listData[id][rowIdx];
@@ -178,7 +171,7 @@ function submitCrmAccountApply(){
     var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
     var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
     if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
-    showToast(tr('开户申请已提交，等待审批')+'（'+tr('开户币别')+'：'+currencies.join('、')+'）');
+    showToast(tr('开户申请已提交，等待审批')+'（'+tr('开户币别')+'：'+currency+'）');
 }
 
 function openCrmCustomerModal(mode,id,rowIdx,rowData){

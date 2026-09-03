@@ -993,6 +993,8 @@ function renderToolbarAction(action,id){
     else if(action.key==='owViewCode')click='openSelectedOverseasOutboundCode(\''+id+'\')';
     else if(action.key==='viewWaybillDetail')click='openSelectedWaybillDetail(\''+id+'\')';
     else if(action.key==='cancelWaybill')click='cancelSelectedWaybill(\''+id+'\')';
+    else if(action.key==='adjustCredit')click='openCustAccountCreditModal(\''+id+'\')';
+    else if(action.key==='adjustLock')click='openCustAccountLockModal(\''+id+'\')';
     else if(action.key==='voucherImport')click='openBankVoucherImportModal(\''+id+'\')';
     else if(action.key==='voucherDetail')click='bankVoucherAction(\'detail\',\''+id+'\')';
     else if(action.key==='voucherClaim')click='bankVoucherAction(\'claim\',\''+id+'\')';
@@ -1165,6 +1167,14 @@ function getToolbarActions(id){
             {type:'add',label:'新增',variant:'primary'},
             {type:'edit',label:'修改'},
             {key:'batchDelete',label:'批量删除汇率',variant:'danger'}
+        ];
+    }
+    /* 客户账户：只读台账，只有查询 + 两个批量调整 */
+    if(id==='fin-cust-account'){
+        return [
+            {key:'search',label:'查询',variant:'primary'},
+            {key:'adjustCredit',label:'调整信用额度',variant:'primary'},
+            {key:'adjustLock',label:'调整超额锁定'}
         ];
     }
     if(id==='fin-bank-voucher'||id==='fin-ar-receipt'){
@@ -1654,7 +1664,7 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fcl-order'];
+var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fcl-order','fin-cust-account'];
 var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl','biz-track-cfg','wh-stock-check','approval-mine','approval-msg','cs-issue-track','cs-issue-type','wb-op-instruction','crm-cust','wb-manage','fcl-order'];
 function listRowCanEdit(id){return _rowNoEditIds.indexOf(id)<0;}
 /* _rowNoDeleteIds / listRowCanDelete：自 2026-09 全局取消通用删除后已无调用点，

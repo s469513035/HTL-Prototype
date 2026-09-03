@@ -734,6 +734,166 @@ function openRateModal(mode,id,rowIdx,rowData){
     document.getElementById('crud-modal').classList.add('show');
 }
 
+/* ================= 财务结算 · 客户账户 =================
+ * 只读台账 + 两个批量操作：调整信用额度 / 调整超额锁定。
+ * 不提供新增/编辑/删除（fin-cust-account 已加入 _rowNoEditIds，避免引擎自动追加「编辑数据」）。 */
+addPrototypeTable('fin-cust-account','客户账户',
+    '客户代码|客户名称|所属业务|所属客服|所属操作|所属公司|账户币别|余额|未核销金额|信用额度|超额是否锁定客户|操作',
+    [],[
+    ['C10001','深圳市华运达国际货运','张三','陈七','刘操作','深圳总部','CNY','128,500.00','36,800.00','200,000.00','否'],
+    ['C10002','广州远洋进出口贸易','李四','周八','王操作','广州业务分部','USD','-12,400.00','48,600.00','50,000.00','是'],
+    ['C10003','东莞市鑫海物流','王五','吴九','刘操作','深圳总部','CNY','86,200.00','12,000.00','150,000.00','否'],
+    ['C10004','上海锦程国际贸易','赵六','陈七','李操作','义乌分部','USD','0.00','0.00','80,000.00','否'],
+    ['C10005','佛山恒通货运代理','张三','周八','王操作','广州业务分部','CNY','-5,600.00','62,300.00','60,000.00','是'],
+    ['C10006','星星玩具电商','李四','吴九','李操作','宁波分部','EUR','23,100.00','4,500.00','40,000.00','否']
+],[
+    {label:'客户代码',type:'text'},
+    {label:'客户名称',type:'text'},
+    {label:'所属业务',type:'select',options:['张三','李四','王五','赵六']},
+    {label:'所属客服',type:'select',options:['陈七','周八','吴九']},
+    {label:'所属公司',type:'select',options:['深圳总部','广州业务分部','义乌分部','宁波分部','武汉分部']},
+    {label:'账户币别',type:'select',options:['CNY','USD','EUR','XOF','NGN']},
+    {label:'超额是否锁定客户',type:'select',options:['是','否']}
+]);
+TC['fin-cust-account'].readonlyList=true;
+
+function custAccountRows(id){
+    var c=TC[id]||{};
+    return (typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+}
+function custAccountVal(id,row,label){
+    var h=(TC[id]||{}).h||[],i=h.indexOf(label);
+    return (i>=0&&row&&row[i]!=null)?String(row[i]):'';
+}
+/* 取勾选行；一条都没勾时提示并返回空数组 */
+function custAccountPicked(id){
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选需要操作的客户账户'));return [];}
+    var data=custAccountRows(id);
+    return idxs.filter(function(i){return !!data[i];});
+}
+/* 勾选客户一览：条数 + 前几个客户，超出折叠 */
+function custAccountPickedSummary(id,idxs){
+    var data=custAccountRows(id);
+    var names=idxs.map(function(i){return custAccountVal(id,data[i],'客户代码')+' '+custAccountVal(id,data[i],'客户名称');});
+    var shown=names.slice(0,5).join('、')+(names.length>5?('… '+tr('等')+' '+names.length+' '+tr('个客户')):'');
+    return '<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 mb-4 text-sm text-text-secondary">'+
+        tr('已勾选')+'：<span class="font-medium text-text-primary">'+idxs.length+'</span> '+tr('个客户账户')+
+        '<div class="mt-1 text-xs text-text-muted break-all">'+esc(shown)+'</div></div>';
+}
+function custAccountNum(v){
+    var n=parseFloat(String(v||'').replace(/,/g,''));
+    return isNaN(n)?0:n;
+}
+function custAccountFmt(n){
+    return n.toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function custAccountRefresh(id){
+    var mc=document.getElementById('main-content');
+    var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
+    var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
+    if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
+}
+
+/* ---- 调整信用额度（支持批量） ---- */
+function openCustAccountCreditModal(id){
+    id=id||'fin-cust-account';
+    var idxs=custAccountPicked(id);
+    if(!idxs.length)return;
+    var data=custAccountRows(id);
+    var curs=[];
+    idxs.forEach(function(i){var v=custAccountVal(id,data[i],'账户币别');if(v&&curs.indexOf(v)<0)curs.push(v);});
+    var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    var h=custAccountPickedSummary(id,idxs);
+    h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500">*</span> '+tr('调整方式')+'</label>'+
+       '<select id="cust-acct-credit-mode" class="'+inCls+'">'+selectOptionsHtml(['设置为','增加','减少'],'设置为')+'</select></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500">*</span> '+tr('调整金额')+'</label>'+
+       '<input type="number" min="0" step="0.01" id="cust-acct-credit-amount" class="'+inCls+'" placeholder="'+esc(tr('请输入金额'))+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('币别')+'</label>'+
+       '<input type="text" id="cust-acct-credit-currency" class="'+inCls+' bg-surface-100 cursor-not-allowed" value="'+esc(curs.length>1?tr('多币别（按各账户原币别调整）'):(curs[0]||''))+'" readonly></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('生效时间')+'</label>'+
+       '<input type="date" id="cust-acct-credit-date" class="'+inCls+'"></div>';
+    h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500">*</span> '+tr('调整原因')+'</label>'+
+       '<textarea id="cust-acct-credit-reason" rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入调整原因'))+'"></textarea></div>';
+    h+='</div>';
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='52%';
+    document.getElementById('crud-modal-title').textContent=tr('调整信用额度');
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitCustAccountCredit(\''+id+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认调整')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function submitCustAccountCredit(id){
+    var mode=(document.getElementById('cust-acct-credit-mode')||{}).value||'设置为';
+    var amtEl=document.getElementById('cust-acct-credit-amount');
+    var amt=parseFloat((amtEl&&amtEl.value)||'');
+    if(isNaN(amt)){showToast(tr('请输入调整金额'));return;}
+    var reasonEl=document.getElementById('cust-acct-credit-reason');
+    if(!reasonEl||!String(reasonEl.value||'').trim()){showToast(tr('请填写调整原因'));return;}
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    var data=custAccountRows(id),h=(TC[id]||{}).h||[],iCredit=h.indexOf('信用额度');
+    var n=0;
+    idxs.forEach(function(i){
+        var row=data[i];
+        if(!row||iCredit<0)return;
+        var cur=custAccountNum(row[iCredit]);
+        var next=mode==='增加'?cur+amt:(mode==='减少'?cur-amt:amt);
+        if(next<0)next=0;
+        setRowOverride(id,row,iCredit,custAccountFmt(next));
+        n++;
+    });
+    closeCrudModal();
+    custAccountRefresh(id);
+    showToast(tr('已调整')+' '+n+' '+tr('个客户的信用额度'));
+}
+
+/* ---- 调整超额锁定（支持批量） ---- */
+function openCustAccountLockModal(id){
+    id=id||'fin-cust-account';
+    var idxs=custAccountPicked(id);
+    if(!idxs.length)return;
+    var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    var h=custAccountPickedSummary(id,idxs);
+    h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500">*</span> '+tr('超额是否锁定客户')+'</label>'+
+       '<select id="cust-acct-lock-value" class="'+inCls+'">'+selectOptionsHtml(['是','否'],'是')+'</select></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('生效时间')+'</label>'+
+       '<input type="date" id="cust-acct-lock-date" class="'+inCls+'"></div>';
+    h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500">*</span> '+tr('调整原因')+'</label>'+
+       '<textarea id="cust-acct-lock-reason" rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入调整原因'))+'"></textarea></div>';
+    h+='<div class="md:col-span-2 text-xs text-text-muted">'+tr('锁定后，该客户应收超过信用额度时将禁止继续下单，直至回款或调高额度。')+'</div>';
+    h+='</div>';
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='52%';
+    document.getElementById('crud-modal-title').textContent=tr('调整超额锁定');
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitCustAccountLock(\''+id+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认调整')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function submitCustAccountLock(id){
+    var val=(document.getElementById('cust-acct-lock-value')||{}).value||'';
+    if(!val){showToast(tr('请选择是否锁定'));return;}
+    var reasonEl=document.getElementById('cust-acct-lock-reason');
+    if(!reasonEl||!String(reasonEl.value||'').trim()){showToast(tr('请填写调整原因'));return;}
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    var data=custAccountRows(id),h=(TC[id]||{}).h||[],iLock=h.indexOf('超额是否锁定客户');
+    var n=0;
+    idxs.forEach(function(i){
+        var row=data[i];
+        if(!row||iLock<0)return;
+        setRowOverride(id,row,iLock,val);
+        n++;
+    });
+    closeCrudModal();
+    custAccountRefresh(id);
+    showToast(tr('已将')+' '+n+' '+tr('个客户的超额锁定设为')+'「'+val+'」');
+}
+
 function openBankAccountModal(mode,id,rowIdx,rowData){
     const L=_lang[_currentLang];
     const titleEl=document.getElementById('crud-modal-title');

@@ -1080,6 +1080,12 @@ var _lang={
 
 var _manualI18n={
     en:{
+        /* 菜单分组名：tr() 对词典里没有的整串会逐个子串替换，会拼出
+         * 「LCLPayment Collection管理」这种半中半英，故整串在此显式指定 */
+        '散货收款管理':'LCL Receivables','整柜财务':'FCL Finance','客户与运单':'Customers & Waybills',
+        '接单与订舱':'Order Intake & Booking','入库作业':'Inbound','库内管理':'In-Warehouse',
+        '出库与配舱':'Outbound & Loading Plan','调拨管理':'Transfers','托盘管理':'Pallets',
+        '地理数据':'Geo Data','平台设置':'Platform Settings','流程与风控':'Workflow & Risk Control',
         '查询数据':'Search Data','新增数据':'Add Data','编辑数据':'Edit Data','查看详情':'View Details','启用数据':'Enable Data','禁用数据':'Disable Data','审核数据':'Audit Data','角色管理':'Role Management','转化公海客户':'Convert to Pool','开始导出':'Start Export','确认启用':'Confirm Enable','确认禁用':'Confirm Disable','提交审核':'Submit Audit','保存角色':'Save Roles','确认转化':'Confirm Convert','确认打印':'Confirm Print','提交异常':'Submit Exception','开始同步':'Start Sync','确认复制':'Confirm Copy','确认分派':'Confirm Assign','发送回复':'Send Reply','确认关闭':'Confirm Close','保存入仓':'Save Inbound','保存草稿':'Save Draft','确认上传':'Confirm Upload','确认重置':'Confirm Reset',
         '请输入当前密码':'Enter current password','请输入新密码（8-20位，含字母和数字）':'Enter new password (8-20 chars, letters and numbers)','请再次输入新密码':'Enter new password again','密码强度：至少8位，包含字母和数字':'Password strength: at least 8 chars with letters and numbers','重置密码说明':'Password Reset Notes','重置后密码将恢复为默认密码，请登录后及时修改。':'After reset, the password returns to default. Please change it after login.','当前账号：admin':'Current account: admin','重置后默认密码：Haolihang@2026':'Default after reset: Haolihang@2026',
         '导出数据':'Export Data','打印标签':'Print Label','异常登记':'Exception Entry','同步数据':'Sync Data','财务复核':'Finance Review','生成账单':'Generate Bill','复制配置':'Copy Config','权限配置':'Permission Config','分派处理':'Assign','回复客户':'Reply Customer','关闭工单':'Close Ticket','当前数据':'Current Data','已勾选':'Selected','条数据':'items','未勾选数据，将按当前页面或筛选条件处理。':'No data selected. The operation will use the current page or filters.',
@@ -1099,6 +1105,11 @@ var _manualI18n={
         '本人数据':'Own Data','本部门数据':'Department Data','全公司数据':'Company Data','全部字段':'All Fields','隐藏财务字段':'Hide Finance Fields','隐藏联系人字段':'Hide Contact Fields'
     },
     fr:{
+        /* 菜单分组名整串指定，理由同 en */
+        '散货收款管理':'Encaissements LCL','整柜财务':'Finance FCL','客户与运单':'Clients & Expéditions',
+        '接单与订舱':'Prise de commande & Réservation','入库作业':'Réception','库内管理':'Gestion en entrepôt',
+        '出库与配舱':'Sortie & Plan de chargement','调拨管理':'Transferts','托盘管理':'Palettes',
+        '地理数据':'Données géographiques','平台设置':'Paramètres plateforme','流程与风控':'Flux & Contrôle des risques',
         '查询数据':'Rechercher','新增数据':'Ajouter','编辑数据':'Modifier','查看详情':'Voir détails','启用数据':'Activer','禁用数据':'Désactiver','审核数据':'Auditer','角色管理':'Gestion rôles','转化公海客户':'Convertir au pool','开始导出':'Démarrer export','确认启用':'Confirmer activation','确认禁用':'Confirmer désactivation','提交审核':'Soumettre audit','保存角色':'Enregistrer rôles','确认转化':'Confirmer conversion','确认打印':'Confirmer impression','提交异常':'Soumettre anomalie','开始同步':'Démarrer synchro','确认复制':'Confirmer copie','确认分派':'Confirmer affectation','发送回复':'Envoyer réponse','确认关闭':'Confirmer fermeture','保存入仓':'Enregistrer réception','保存草稿':'Enregistrer brouillon','确认上传':'Confirmer téléversement','确认重置':'Confirmer réinit.',
         '请输入当前密码':'Saisir le mot de passe actuel','请输入新密码（8-20位，含字母和数字）':'Saisir le nouveau mot de passe (8-20 caractères, lettres et chiffres)','请再次输入新密码':'Ressaisir le nouveau mot de passe','密码强度：至少8位，包含字母和数字':'Force du mot de passe : au moins 8 caractères avec lettres et chiffres','重置密码说明':'Notes de réinitialisation','重置后密码将恢复为默认密码，请登录后及时修改。':'Après réinitialisation, le mot de passe revient par défaut. Veuillez le modifier après connexion.','当前账号：admin':'Compte actuel : admin','重置后默认密码：Haolihang@2026':'Mot de passe par défaut : Haolihang@2026',
         '导出数据':'Exporter','打印标签':'Imprimer étiquette','异常登记':'Saisir anomalie','同步数据':'Synchroniser','财务复核':'Revue finance','生成账单':'Générer facture','复制配置':'Copier config','权限配置':'Configurer droits','分派处理':'Affecter','回复客户':'Répondre client','关闭工单':'Fermer ticket','当前数据':'Donnée actuelle','已勾选':'Sélectionné','条数据':'éléments','未勾选数据，将按当前页面或筛选条件处理。':'Aucune donnée sélectionnée. L’opération utilisera la page ou les filtres actuels.',
@@ -1117,6 +1128,8 @@ var _manualI18n={
         '草稿名称':'Nom brouillon','保存位置':'Emplacement','草稿备注':'Note brouillon','附件类型':'Type pièce jointe','附件说明':'Description pièce jointe','重置录入':'Réinitialiser saisie','重置范围':'Portée réinit.','确认说明':'Note confirmation','入仓状态':'Statut réception','复核人':'Réviseur','保存备注':'Note enregistrement',
         '本人数据':'Mes données','本部门数据':'Données département','全公司数据':'Données société','全部字段':'Tous champs','隐藏财务字段':'Masquer champs finance','隐藏联系人字段':'Masquer contacts'
     }
+    /* pt 不在此处声明：文件后面有 _manualI18n.pt=Object.assign({},_manualI18n.en,{...})
+     * 会整体覆盖，写在这里会被丢掉。pt 的补充统一加在文件末尾那几个 Object.assign 里。 */
 };
 
 Object.assign(_manualI18n.en,{
@@ -1344,5 +1357,12 @@ Object.assign(_manualI18n.fr,{
 });
 Object.assign(_manualI18n.pt,{
     "业务成本价":"Preço de custo comercial","整柜试算-客户":"Simulação FCL - cliente","整柜试算-业务":"Simulação FCL - negócio","业务成本编号":"Nº custo comercial","使用航司":"Transportadora","使用业务员":"Vendedor","销售变化":"Alteração de venda","加价类型":"Tipo de margem","加价金额":"Valor da margem","开始时间":"Hora inicial","结束时间":"Hora final","路线柜型信息":"Informações de rota e contêiner","同一航司可维护多条始发港、目的港线路，并在柜型列维护可用柜型，支持自定义多个柜型。":"Uma transportadora pode manter várias rotas de origem/destino e editar os tipos de contêiner na coluna de contêiner.","至少保留一条路线柜型信息":"Mantenha pelo menos uma linha de rota/contêiner","航司路线配置":"Configuração de rota da transportadora","输入柜型，多个用逗号分隔":"Insira os tipos de contêiner, separados por vírgulas"
+});
+/* 菜单分组名（pt）：必须写在 _manualI18n.pt 被整体重建之后，否则会被覆盖 */
+Object.assign(_manualI18n.pt,{
+    '散货收款管理':'Recebimentos LCL','整柜财务':'Financeiro FCL','客户与运单':'Clientes e Expedições',
+    '接单与订舱':'Captação e Reserva','入库作业':'Entrada','库内管理':'Gestão em armazém',
+    '出库与配舱':'Saída e Plano de carga','调拨管理':'Transferências','托盘管理':'Paletes',
+    '地理数据':'Dados geográficos','平台设置':'Configurações da plataforma','流程与风控':'Fluxos e Controlo de risco'
 });
 

@@ -125,7 +125,8 @@ const menuData=[
 {id:'fin-account',label:'财务科目',page:'finance',tab:'fin-account'},
 {id:'fin-bank-voucher',label:'银行凭证',page:'finance',tab:'fin-bank-voucher'},
 {id:'fin-rate',label:'汇率管理',page:'finance',tab:'fin-rate'},
-{id:'fin-ar',label:'应收管理',children:[
+/* 与下面的「整柜财务」对称：这一组是散货侧的应收/收款 */
+{id:'fin-ar',label:'散货收款管理',children:[
 {id:'fin-ar-detail',label:'应收明细',page:'finance',tab:'fin-ar-detail'},
 {id:'fin-ar-bill',label:'应收账单管理',page:'finance',tab:'fin-ar-bill'},
 {id:'fin-ar-receipt',label:'收款管理',page:'finance',tab:'fin-ar-receipt'}

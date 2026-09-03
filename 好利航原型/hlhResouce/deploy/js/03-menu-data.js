@@ -52,18 +52,7 @@ const menuData=[
     {id:'fcl-doc-send',label:'寄单作业',page:'fcl',tab:'fcl-doc-send'}
 ]},
 // ===== ⑤ 财务与结算（SOP-FCL-12~15）=====
-{id:'fcl-finance-settle',label:'财务与结算',children:[
-    {id:'fcl-bill-entry',label:'实际费用管理',page:'fcl',tab:'fcl-bill-entry'},
-    {id:'fcl-actual-bill-import',label:'账单导入',page:'fcl',tab:'fcl-actual-bill-import'},
-    {id:'fcl-carrier-bill-compare',label:'船公司账单对比',page:'fcl',tab:'fcl-carrier-bill-compare'},
-    {id:'fcl-appeal',label:'账单申诉',page:'fcl',tab:'fcl-appeal'},
-    {id:'fcl-bill',label:'整柜应付账单',page:'fcl',tab:'fcl-bill'},
-    {id:'fcl-payment-request',label:'请款单管理',page:'fcl',tab:'fcl-payment-request'},
-    {id:'fcl-payment',label:'付款管理',page:'fcl',tab:'fcl-payment'},
-    {id:'fcl-ar-release',label:'应收与放单',page:'fcl',tab:'fcl-ar-release'},
-    {id:'fcl-bank-flow',label:'银行流水管理',page:'fcl',tab:'fcl-bank-flow'},
-    {id:'fcl-commission',label:'业绩与提成',page:'fcl',tab:'fcl-commission'}
-]},
+// 这一组已整体移到「财务结算 → 整柜财务」，整柜业务下不再重复挂一份。
 // ===== ⑥ 监控与看板（SOP 第19/21/22章）=====
 {id:'fcl-monitor',label:'监控与看板',children:[
     {id:'fcl-order',label:'整柜业务总览',page:'fcl',tab:'fcl-order'},
@@ -121,7 +110,9 @@ const menuData=[
 {id:'cs-issue-track',label:'问题件跟踪',page:'cs',tab:'cs-issue-track'},
 {id:'cs-issue-type',label:'问题件类型',page:'cs',tab:'cs-issue-type'},
 {id:'cs-track-query',label:'轨迹查询',page:'cs',tab:'cs-track-query'},
-{id:'cs-track-maint',label:'轨迹维护',page:'cs',tab:'cs-track-maint'}
+{id:'cs-track-maint',label:'轨迹维护',page:'cs',tab:'cs-track-maint'},
+/* 原挂在 业务配置 → 基础资料 下，与轨迹查询/轨迹维护分家；移到客服模块归拢 */
+{id:'biz-track-cfg',label:'轨迹配置',page:'cs',tab:'biz-track-cfg'}
 ]},
 
 {id:'approval',label:'审批',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>',children:[
@@ -139,21 +130,19 @@ const menuData=[
 {id:'fin-ar-bill',label:'应收账单管理',page:'finance',tab:'fin-ar-bill'},
 {id:'fin-ar-receipt',label:'收款管理',page:'finance',tab:'fin-ar-receipt'}
 ]},
-/* 整柜的应付/请款/付款/应收放单/银行流水/提成本体在「整柜业务 → 财务与结算」下，
- * 财务岗原本要在两个 L1 之间来回跳，这里做一组快捷入口：
- * 菜单 id 加 fin- 前缀保证唯一（角色菜单权限树按 id 勾选），tab 指向同一批页面 ——
- * 是同一个页面的第二个入口，不是数据副本，两边看到的永远一致。 */
+/* 整柜的应付/请款/付款/应收放单/银行流水/提成，唯一入口在这里
+ * （原「整柜业务 → 财务与结算」已撤掉，不再两处重复）。 */
 {id:'fin-fcl',label:'整柜财务',children:[
-{id:'fin-fcl-bill-entry',label:'实际费用管理',page:'fcl',tab:'fcl-bill-entry'},
-{id:'fin-fcl-actual-bill-import',label:'账单导入',page:'fcl',tab:'fcl-actual-bill-import'},
-{id:'fin-fcl-carrier-bill-compare',label:'船公司账单对比',page:'fcl',tab:'fcl-carrier-bill-compare'},
-{id:'fin-fcl-appeal',label:'账单申诉',page:'fcl',tab:'fcl-appeal'},
-{id:'fin-fcl-bill',label:'整柜应付账单',page:'fcl',tab:'fcl-bill'},
-{id:'fin-fcl-payment-request',label:'请款单管理',page:'fcl',tab:'fcl-payment-request'},
-{id:'fin-fcl-payment',label:'付款管理',page:'fcl',tab:'fcl-payment'},
-{id:'fin-fcl-ar-release',label:'应收与放单',page:'fcl',tab:'fcl-ar-release'},
-{id:'fin-fcl-bank-flow',label:'银行流水管理',page:'fcl',tab:'fcl-bank-flow'},
-{id:'fin-fcl-commission',label:'业绩与提成',page:'fcl',tab:'fcl-commission'}
+{id:'fcl-bill-entry',label:'实际费用管理',page:'fcl',tab:'fcl-bill-entry'},
+{id:'fcl-actual-bill-import',label:'账单导入',page:'fcl',tab:'fcl-actual-bill-import'},
+{id:'fcl-carrier-bill-compare',label:'船公司账单对比',page:'fcl',tab:'fcl-carrier-bill-compare'},
+{id:'fcl-appeal',label:'账单申诉',page:'fcl',tab:'fcl-appeal'},
+{id:'fcl-bill',label:'整柜应付账单',page:'fcl',tab:'fcl-bill'},
+{id:'fcl-payment-request',label:'请款单管理',page:'fcl',tab:'fcl-payment-request'},
+{id:'fcl-payment',label:'付款管理',page:'fcl',tab:'fcl-payment'},
+{id:'fcl-ar-release',label:'应收与放单',page:'fcl',tab:'fcl-ar-release'},
+{id:'fcl-bank-flow',label:'银行流水管理',page:'fcl',tab:'fcl-bank-flow'},
+{id:'fcl-commission',label:'业绩与提成',page:'fcl',tab:'fcl-commission'}
 ]}
 ]},
 
@@ -161,8 +150,8 @@ const menuData=[
 {id:'basedata',label:'基础资料',langKey:'basedata',children:[
 {label:'服务商管理',id:'base-provider',langKey:'base_provider',page:'basedata',tab:'base-provider'},
 {label:'员工管理',id:'base-employee',langKey:'base_employee',page:'basedata',tab:'base-employee'},
-{label:'发件人信息',id:'base-sender',langKey:'base_sender',page:'basedata',tab:'base-sender'},
-{id:'biz-track-cfg',label:'轨迹配置',page:'basedata',tab:'biz-track-cfg'}
+{label:'发件人信息',id:'base-sender',langKey:'base_sender',page:'basedata',tab:'base-sender'}
+/* 轨迹配置已移到「客服」下，与轨迹查询/轨迹维护放在一起 */
 ]},
 {id:'product',label:'产品配置',langKey:'product',children:[
 {id:'prod-manage',label:'产品管理',langKey:'prod_manage',page:'product',tab:'prod-manage'},

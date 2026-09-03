@@ -475,7 +475,7 @@ function renderMenu(){
                     if(l3.terminalOnly && l3.terminalOnly !== _currentTerminal)return; // 端 filter L3
                     const l3Label=langText(l3.langKey,l3.label);
                     const l3Events=l3.id==='wh-no-pre-in'?' onmousedown="return openHeadlessClaimMenu(this,event)" onclick="return openHeadlessClaimMenu(this,event)"':' onclick="selectMenuItem(this,event)"';
-                    html+='<div class="menu-l3 flex items-center pl-[68px] pr-4 py-1.5 rounded-lg cursor-pointer" data-id="'+l3.id+'" data-page="'+l3.page+'" data-l1="'+l1Label+'" data-l2="'+l2Label+'" data-l3="'+l3Label+'" data-langkey="'+(l3.langKey||'')+'"'+l3Events+'>';
+                    html+='<div class="menu-l3 flex items-center pl-[68px] pr-4 py-1.5 rounded-lg cursor-pointer" data-id="'+l3.id+'" data-tab="'+(l3.tab||'')+'" data-page="'+l3.page+'" data-l1="'+l1Label+'" data-l2="'+l2Label+'" data-l3="'+l3Label+'" data-langkey="'+(l3.langKey||'')+'"'+l3Events+'>';
                     html+='<span class="l3-dot w-1.5 h-1.5 rounded-full bg-text-muted mr-2.5 flex-shrink-0"></span>';
                     html+='<span class="l3-label text-sm text-text-secondary">'+l3Label+'</span>';
                     html+='</div>';
@@ -483,7 +483,7 @@ function renderMenu(){
                 html+='</div>';
             }else{
                 const l2Events=l2.id==='wh-no-pre-in'?' onmousedown="return openHeadlessClaimMenu(this,event)" onclick="return openHeadlessClaimMenu(this,event)"':' onclick="selectMenuItem(this,event)"';
-                html+='<div class="menu-l2-direct flex items-center pl-11 pr-4 py-2 rounded-lg cursor-pointer" data-id="'+l2.id+'" data-page="'+l2.page+'" data-l1="'+l1Label+'" data-l2="'+l2Label+'" data-langkey="'+(l2.langKey||'')+'"'+l2Events+'>';
+                html+='<div class="menu-l2-direct flex items-center pl-11 pr-4 py-2 rounded-lg cursor-pointer" data-id="'+l2.id+'" data-tab="'+(l2.tab||'')+'" data-page="'+l2.page+'" data-l1="'+l1Label+'" data-l2="'+l2Label+'" data-langkey="'+(l2.langKey||'')+'"'+l2Events+'>';
                 html+='<span class="l2d-label text-sm font-medium text-text-secondary flex-1">'+l2Label+'</span>';
                 html+='</div>';
             }
@@ -866,7 +866,12 @@ function selectMenuItem(el,evt){
     document.querySelectorAll('.menu-l3.active,.menu-l2-direct.active,.menu-l1-direct.active').forEach(i=>i.classList.remove('active'));
     el.classList.add('active');
     const page=el.dataset.page;
-    let id=el.dataset.id||el.dataset.tab||'';
+    /* 以 data-tab 为准、data-id 兜底：
+     * 菜单节点的 id 是「这条菜单」的身份，tab 才是「打开哪个页面」。
+     * 二者原本恒等（120 个叶子无一例外），所以这里改优先级对老菜单是等价的；
+     * 但快捷入口（如 财务结算→整柜财务 指向整柜的页面）需要 id 唯一而 tab 复用，
+     * 必须按 tab 解析，否则会拿 id 去查 TC 查不到而落到兜底页。 */
+    let id=el.dataset.tab||el.dataset.id||'';
     let langKey=el.dataset.langkey||'';
     const clickedText=(el.textContent||'').replace(/\s+/g,'');
     if(id==='wh-no-pre-in'||langKey==='wh_no_pre_in'||clickedText.indexOf('无头件认领')>=0||clickedText.indexOf('HeadlessPieceClaim')>=0){

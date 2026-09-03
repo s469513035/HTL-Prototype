@@ -138,6 +138,22 @@ const menuData=[
 {id:'fin-ar-detail',label:'应收明细',page:'finance',tab:'fin-ar-detail'},
 {id:'fin-ar-bill',label:'应收账单管理',page:'finance',tab:'fin-ar-bill'},
 {id:'fin-ar-receipt',label:'收款管理',page:'finance',tab:'fin-ar-receipt'}
+]},
+/* 整柜的应付/请款/付款/应收放单/银行流水/提成本体在「整柜业务 → 财务与结算」下，
+ * 财务岗原本要在两个 L1 之间来回跳，这里做一组快捷入口：
+ * 菜单 id 加 fin- 前缀保证唯一（角色菜单权限树按 id 勾选），tab 指向同一批页面 ——
+ * 是同一个页面的第二个入口，不是数据副本，两边看到的永远一致。 */
+{id:'fin-fcl',label:'整柜财务',children:[
+{id:'fin-fcl-bill-entry',label:'实际费用管理',page:'fcl',tab:'fcl-bill-entry'},
+{id:'fin-fcl-actual-bill-import',label:'账单导入',page:'fcl',tab:'fcl-actual-bill-import'},
+{id:'fin-fcl-carrier-bill-compare',label:'船公司账单对比',page:'fcl',tab:'fcl-carrier-bill-compare'},
+{id:'fin-fcl-appeal',label:'账单申诉',page:'fcl',tab:'fcl-appeal'},
+{id:'fin-fcl-bill',label:'整柜应付账单',page:'fcl',tab:'fcl-bill'},
+{id:'fin-fcl-payment-request',label:'请款单管理',page:'fcl',tab:'fcl-payment-request'},
+{id:'fin-fcl-payment',label:'付款管理',page:'fcl',tab:'fcl-payment'},
+{id:'fin-fcl-ar-release',label:'应收与放单',page:'fcl',tab:'fcl-ar-release'},
+{id:'fin-fcl-bank-flow',label:'银行流水管理',page:'fcl',tab:'fcl-bank-flow'},
+{id:'fin-fcl-commission',label:'业绩与提成',page:'fcl',tab:'fcl-commission'}
 ]}
 ]},
 

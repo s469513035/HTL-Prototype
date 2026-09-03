@@ -991,6 +991,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='owViewCode')click='openSelectedOverseasOutboundCode(\''+id+'\')';
     else if(action.key==='viewWaybillDetail')click='openSelectedWaybillDetail(\''+id+'\')';
     else if(action.key==='cancelWaybill')click='cancelSelectedWaybill(\''+id+'\')';
+    else if(action.key==='voucherImport')click='openBankVoucherImportModal(\''+id+'\')';
     else if(action.key==='voucherDetail')click='bankVoucherAction(\'detail\',\''+id+'\')';
     else if(action.key==='voucherClaim')click='bankVoucherAction(\'claim\',\''+id+'\')';
     else if(action.key==='voucherUnclaim')click='bankVoucherAction(\'unclaim\',\''+id+'\')';
@@ -1165,7 +1166,7 @@ function getToolbarActions(id){
         ];
     }
     if(id==='fin-bank-voucher'||id==='fin-ar-receipt'){
-        return [
+        const vBase=[
             {key:'search',label:'查询',variant:'primary'},
             {type:'add',label:'新增',variant:'primary'},
             {type:'edit',label:'修改'},
@@ -1176,6 +1177,9 @@ function getToolbarActions(id){
             {key:'voucherRemark',label:'修改财务备注'},
             {key:'voucherVoid',label:'凭证作废',variant:'danger'}
         ];
+        /* 「导入」只给银行凭证；收款管理(fin-ar-receipt) 共用这段工具栏但不需要 */
+        if(id==='fin-bank-voucher')vBase.splice(2,0,{key:'voucherImport',label:'导入'});
+        return vBase;
     }
     if(id==='base-provider'){
         return [

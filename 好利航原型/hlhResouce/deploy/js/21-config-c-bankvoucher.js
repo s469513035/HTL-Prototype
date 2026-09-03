@@ -165,6 +165,168 @@ var VOUCHER_CLAIMABLE_STATUS='待认领';
 function voucherRowClaimable(id,row){
     return !!row&&voucherVal(id,row,'凭证状态')===VOUCHER_CLAIMABLE_STATUS;
 }
+/* ===== 银行凭证 · 导入 =====
+ * 弹窗两块：模板信息（下载模板 + 拖拽/点击上传 + 校验提示）、导入数据（校验结果列表）。
+ * 「导入数据」的列不写死，直接取查询列表 TC['fin-bank-voucher'].h（去掉「操作」），
+ * 末尾再加一列「校验结果」——上传后每行是否通过校验就展示在这里。 */
+var VOUCHER_IMPORT_REQUIRED=['认领账户类型','交割方式','金额(原币)','币别','汇率','我方账户','对方账户','交易流水号','费用时间'];
+var _voucherImportRows=[];   /* [{cells:[...], ok:bool, msg:''}] */
+var _voucherImportFile='';
+
+function voucherImportColumns(id){
+    const c=TC[id||'fin-bank-voucher']||{};
+    return (c.h||[]).filter(function(h){return h!=='操作';});
+}
+function openBankVoucherImportModal(id){
+    id=id||'fin-bank-voucher';
+    _voucherImportRows=[];_voucherImportFile='';
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='86%';
+    document.getElementById('crud-modal-title').textContent=tr('导入');
+    document.getElementById('crud-modal-body').innerHTML=voucherImportBodyHtml(id);
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="confirmBankVoucherImport(\''+id+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认导入')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function voucherImportSectionTitle(text){
+    return '<div class="flex items-center gap-2 mb-3"><span class="w-1 h-4 bg-primary-500 rounded"></span>'+
+           '<span class="text-base font-semibold text-text-primary">'+tr(text)+'</span></div>';
+}
+function voucherImportBodyHtml(id){
+    let h='<div class="space-y-5">';
+    /* ① 模板信息 */
+    h+='<section>'+voucherImportSectionTitle('模板信息');
+    h+='<div class="rounded-lg border border-surface-200 bg-white p-4">';
+    h+='<button type="button" onclick="downloadVoucherImportTemplate()" class="h-9 px-4 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg cursor-pointer">'+tr('下载银行凭证导入模板')+'</button>';
+    h+='<label class="mt-4 flex flex-col items-center justify-center gap-2 h-32 border-2 border-dashed border-surface-300 rounded-lg bg-surface-50/60 hover:border-primary-300 hover:bg-primary-50/30 cursor-pointer">';
+    h+='<input type="file" accept=".xls,.xlsx" class="hidden" onchange="onVoucherImportPick(this,\''+id+'\')">';
+    h+='<svg class="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14 3v5h5M9.5 12.5l5 5m0-5l-5 5"/></svg>';
+    h+='<div class="text-sm text-text-secondary">'+tr('将文件拖到此处，')+'<span class="text-amber-600 underline">'+tr('或点击上传')+'</span></div>';
+    h+='<div data-voucher-import-file class="text-xs text-text-muted'+(_voucherImportFile?'':' hidden')+'">'+esc(_voucherImportFile)+'</div>';
+    h+='</label>';
+    h+='<div class="mt-3 text-xs text-red-500">'+tr('注意：模板上传后下方列表展示当前模板数据的校验信息')+'</div>';
+    h+='</div></section>';
+    /* ② 导入数据 */
+    h+='<section>'+voucherImportSectionTitle('导入数据');
+    h+='<div data-voucher-import-summary class="mb-2 text-xs text-text-secondary'+(_voucherImportRows.length?'':' hidden')+'"></div>';
+    h+='<div data-voucher-import-table class="rounded-lg border border-surface-200 bg-white overflow-hidden">'+voucherImportTableHtml(id)+'</div>';
+    h+='</section>';
+    h+='</div>';
+    return h;
+}
+function voucherImportTableHtml(id){
+    const cols=voucherImportColumns(id);
+    let h='<div class="overflow-auto" style="max-height:360px">';
+    h+='<table class="w-full data-table" style="table-layout:auto;min-width:100%;border-collapse:separate;border-spacing:0"><thead><tr class="bg-white">';
+    h+='<th class="px-3 py-2 text-xs font-medium text-text-secondary text-center whitespace-nowrap border-b border-surface-200">#</th>';
+    h+='<th class="px-3 py-2 border-b border-surface-200"><input type="checkbox" class="rounded border-surface-300 text-primary-600" onchange="toggleAllVoucherImportRows(this)"></th>';
+    cols.forEach(function(c){
+        const req=VOUCHER_IMPORT_REQUIRED.indexOf(c)>=0;
+        h+='<th class="px-3 py-2 text-xs font-medium whitespace-nowrap border-b border-surface-200 '+(req?'text-red-500':'text-text-secondary')+'">'+esc(tr(c))+'</th>';
+    });
+    h+='<th class="px-3 py-2 text-xs font-medium text-text-secondary whitespace-nowrap border-b border-surface-200">'+tr('校验结果')+'</th>';
+    h+='</tr></thead><tbody>';
+    if(!_voucherImportRows.length){
+        h+='<tr><td colspan="'+(cols.length+3)+'" class="px-3 py-16 text-center text-sm text-text-muted">'+tr('请先上传模板文件')+'</td></tr>';
+    }else{
+        _voucherImportRows.forEach(function(r,i){
+            h+='<tr class="border-b border-surface-100 '+(r.ok?'':'bg-red-50/50')+'">';
+            h+='<td class="px-3 py-2 text-sm text-text-muted text-center">'+(i+1)+'</td>';
+            h+='<td class="px-3 py-2"><input type="checkbox" class="voucher-import-check rounded border-surface-300 text-primary-600" value="'+i+'"'+(r.ok?' checked':'')+(r.ok?'':' disabled')+'></td>';
+            cols.forEach(function(c,ci){
+                h+='<td class="px-3 py-2 text-sm text-text-primary whitespace-nowrap">'+esc(r.cells[ci]||'')+'</td>';
+            });
+            h+='<td class="px-3 py-2 text-sm whitespace-nowrap '+(r.ok?'text-green-600':'text-red-600')+'">'+esc(r.ok?tr('校验通过'):r.msg)+'</td>';
+            h+='</tr>';
+        });
+    }
+    h+='</tbody></table></div>';
+    return h;
+}
+function downloadVoucherImportTemplate(){
+    showToast(tr('银行凭证导入模板下载中'));
+}
+function toggleAllVoucherImportRows(cb){
+    document.querySelectorAll('.voucher-import-check:not([disabled])').forEach(function(x){x.checked=cb.checked;});
+}
+/* 上传：原型阶段不解析真实 Excel，按查询列表的列结构造几条示例数据跑通校验展示 */
+function onVoucherImportPick(input,id){
+    const f=(input.files||[])[0];
+    if(!f)return;
+    _voucherImportFile=f.name;
+    _voucherImportRows=buildVoucherImportPreview(id);
+    const body=document.getElementById('crud-modal-body');
+    if(body)body.innerHTML=voucherImportBodyHtml(id);
+    const okCount=_voucherImportRows.filter(function(r){return r.ok;}).length;
+    const sum=document.querySelector('[data-voucher-import-summary]');
+    if(sum){
+        sum.classList.remove('hidden');
+        sum.innerHTML=tr('已解析')+' <span class="font-semibold text-text-primary">'+_voucherImportRows.length+'</span> '+tr('条')+
+            '，'+tr('校验通过')+' <span class="font-semibold text-green-600">'+okCount+'</span> '+tr('条')+
+            '，'+tr('校验失败')+' <span class="font-semibold text-red-600">'+(_voucherImportRows.length-okCount)+'</span> '+tr('条')+
+            '（'+esc(f.name)+'）';
+    }
+    showToast(tr('已解析')+' '+_voucherImportRows.length+' '+tr('条'));
+}
+/* 种子数据里有些必填列是空的，直接拿来当示例会满屏校验失败；
+ * 这里给必填列兜底一个合理值，只在最后一行故意留空「币别」演示校验列。 */
+var VOUCHER_IMPORT_DEMO={'认领账户类型':'客户','交割方式':'电汇','金额(原币)':'1000','币别':'人民币',
+    '汇率':'1','我方账户':'4222827128731113','对方账户':'6222021001100000000','费用时间':'2026-09-03 10:00:00'};
+function buildVoucherImportPreview(id){
+    id=id||'fin-bank-voucher';
+    const c=TC[id]||{};
+    const cols=voucherImportColumns(id);
+    const src=(c.d||[]).slice(0,3);
+    const idx=function(name){return cols.indexOf(name);};
+    return src.map(function(row,i){
+        const cells=cols.map(function(h,ci){return row[ci]==null?'':String(row[ci]);});
+        /* 凭证编号由系统生成，模板里不带；凭证状态一律以「待认领」入库 */
+        if(idx('凭证编号')>=0)cells[idx('凭证编号')]='';
+        if(idx('凭证状态')>=0)cells[idx('凭证状态')]='待认领';
+        if(idx('数据来源')>=0)cells[idx('数据来源')]='导入';
+        if(idx('交易流水号')>=0)cells[idx('交易流水号')]='IMP'+(202609030001+i);
+        VOUCHER_IMPORT_REQUIRED.forEach(function(name){
+            const k=idx(name);
+            if(k>=0&&!String(cells[k]||'').trim()&&VOUCHER_IMPORT_DEMO[name])cells[k]=VOUCHER_IMPORT_DEMO[name];
+        });
+        /* 最后一行故意缺一个必填项，演示校验结果列 */
+        if(i===src.length-1&&idx('币别')>=0)cells[idx('币别')]='';
+        const missing=VOUCHER_IMPORT_REQUIRED.filter(function(name){
+            const k=idx(name);
+            return k>=0&&!String(cells[k]||'').trim();
+        });
+        return {cells:cells,ok:missing.length===0,msg:missing.length?(tr('必填项为空')+'：'+missing.join('、')):''};
+    });
+}
+function confirmBankVoucherImport(id){
+    id=id||'fin-bank-voucher';
+    if(!_voucherImportRows.length){showToast(tr('请先上传模板文件'));return;}
+    const picked=[];
+    document.querySelectorAll('.voucher-import-check:checked').forEach(function(x){picked.push(parseInt(x.value,10));});
+    const rows=picked.map(function(i){return _voucherImportRows[i];}).filter(function(r){return r&&r.ok;});
+    if(!rows.length){showToast(tr('没有可导入的数据，请先勾选校验通过的行'));return;}
+    const c=TC[id]||{};
+    const cols=voucherImportColumns(id);
+    const noIdx=cols.indexOf('凭证编号');
+    /* 必须写进 TC[id].d（种子）而不是 _listData：
+     * generateListPage 每次渲染都会 _listData[id]=expandData(id) 从种子重新展开，
+     * 只往 _listData 里 push 的话，刚导入的行下一次渲染就被冲掉了。 */
+    let seq=(c.d||[]).length;
+    rows.forEach(function(r){
+        const cells=r.cells.slice();
+        if(noIdx>=0&&!cells[noIdx])cells[noIdx]='P'+(2609030000+(++seq));
+        c.d.push(cells);
+    });
+    delete _listData[id];   /* 让下次渲染重新展开，带上新导入的行 */
+    closeCrudModal();
+    const mc=document.getElementById('main-content');
+    const pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
+    const sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
+    if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
+    showToast(tr('导入成功')+' '+rows.length+' '+tr('条'));
+}
+
 function openSelectedVoucherEdit(id){
     const idx=getSelectedRowIndex();
     if(idx<0){openActionModal('selectRequired',id,-1);return;}

@@ -166,22 +166,29 @@ function voucherRowClaimable(id,row){
     return !!row&&voucherVal(id,row,'凭证状态')===VOUCHER_CLAIMABLE_STATUS;
 }
 /* ===== 银行凭证 · 导入 =====
- * 弹窗两块：模板信息（下载模板 + 拖拽/点击上传 + 校验提示）、导入数据（校验结果列表）。
- * 「导入数据」的列不写死，直接取查询列表 TC['fin-bank-voucher'].h（去掉「操作」），
- * 末尾再加一列「校验结果」——上传后每行是否通过校验就展示在这里。 */
+ * 弹窗两块：模板信息（下载模板 + 上传 + 校验提示）、导入数据（校验结果列表）。
+ * 「导入数据」的列不写死，直接取查询列表 TC['fin-bank-voucher'].h，
+ * 再去掉系统生成/导入后才产生的列（见 VOUCHER_IMPORT_EXCLUDE 与审计列），
+ * 末尾加一列「校验结果」——上传后每行是否通过校验就展示在这里。 */
 var VOUCHER_IMPORT_REQUIRED=['认领账户类型','交割方式','金额(原币)','币别','汇率','我方账户','对方账户','交易流水号','费用时间'];
+/* 这些列不该出现在导入模板里：凭证编号系统补号、凭证状态固定「待认领」、
+ * 已用/未用金额由核销产生、数据来源固定「导入」、审计列由系统写入 */
+var VOUCHER_IMPORT_EXCLUDE=['操作','凭证编号','凭证状态','已使用金额(本位币)','未使用金额(本位币)','数据来源'];
 var _voucherImportRows=[];   /* [{cells:[...], ok:bool, msg:''}] */
 var _voucherImportFile='';
 
 function voucherImportColumns(id){
     const c=TC[id||'fin-bank-voucher']||{};
-    return (c.h||[]).filter(function(h){return h!=='操作';});
+    return (c.h||[]).filter(function(h){
+        if(VOUCHER_IMPORT_EXCLUDE.indexOf(h)>=0)return false;
+        return !/^(创建|修改)(人|时间|网点)$/.test(h);   /* 创建人/修改人等审计信息 */
+    });
 }
 function openBankVoucherImportModal(id){
     id=id||'fin-bank-voucher';
     _voucherImportRows=[];_voucherImportFile='';
     const panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='86%';
+    if(panel)panel.style.width='70%';
     document.getElementById('crud-modal-title').textContent=tr('导入');
     document.getElementById('crud-modal-body').innerHTML=voucherImportBodyHtml(id);
     document.getElementById('crud-modal-footer').innerHTML=
@@ -198,13 +205,17 @@ function voucherImportBodyHtml(id){
     /* ① 模板信息 */
     h+='<section>'+voucherImportSectionTitle('模板信息');
     h+='<div class="rounded-lg border border-surface-200 bg-white p-4">';
-    h+='<button type="button" onclick="downloadVoucherImportTemplate()" class="h-9 px-4 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg cursor-pointer">'+tr('下载银行凭证导入模板')+'</button>';
-    h+='<label class="mt-4 flex flex-col items-center justify-center gap-2 h-32 border-2 border-dashed border-surface-300 rounded-lg bg-surface-50/60 hover:border-primary-300 hover:bg-primary-50/30 cursor-pointer">';
-    h+='<input type="file" accept=".xls,.xlsx" class="hidden" onchange="onVoucherImportPick(this,\''+id+'\')">';
-    h+='<svg class="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14 3v5h5M9.5 12.5l5 5m0-5l-5 5"/></svg>';
-    h+='<div class="text-sm text-text-secondary">'+tr('将文件拖到此处，')+'<span class="text-amber-600 underline">'+tr('或点击上传')+'</span></div>';
-    h+='<div data-voucher-import-file class="text-xs text-text-muted'+(_voucherImportFile?'':' hidden')+'">'+esc(_voucherImportFile)+'</div>';
-    h+='</label>';
+    h+='<button type="button" onclick="downloadVoucherImportTemplate()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg cursor-pointer">'+tr('下载银行凭证导入模板')+'</button>';
+    /* 上传控件与全站「附件」字段（crudAttachmentFieldHtml）保持同一套样式 */
+    h+='<div class="mt-3 w-full border border-dashed border-surface-300 rounded-lg bg-surface-50 px-3 py-2.5">';
+    h+='<div class="flex items-center gap-2 flex-wrap">';
+    h+='<label class="h-8 px-3 inline-flex items-center text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">';
+    h+='<input type="file" accept=".xls,.xlsx" class="hidden" onchange="onVoucherImportPick(this,\''+id+'\')">'+esc(tr('选择文件'))+'</label>';
+    h+='<span class="text-[11px] text-text-muted">'+esc(tr('仅支持 Excel（.xls / .xlsx），单个不超过 10MB'))+'</span>';
+    h+='</div>';
+    h+='<div data-voucher-import-file class="flex flex-wrap gap-1.5 mt-2'+(_voucherImportFile?'':' hidden')+'">'+
+       (_voucherImportFile&&typeof crudAttachmentChipHtml==='function'?crudAttachmentChipHtml(_voucherImportFile):'')+'</div>';
+    h+='</div>';
     h+='<div class="mt-3 text-xs text-red-500">'+tr('注意：模板上传后下方列表展示当前模板数据的校验信息')+'</div>';
     h+='</div></section>';
     /* ② 导入数据 */
@@ -277,14 +288,15 @@ function buildVoucherImportPreview(id){
     id=id||'fin-bank-voucher';
     const c=TC[id]||{};
     const cols=voucherImportColumns(id);
+    const full=c.h||[];
     const src=(c.d||[]).slice(0,3);
     const idx=function(name){return cols.indexOf(name);};
     return src.map(function(row,i){
-        const cells=cols.map(function(h,ci){return row[ci]==null?'':String(row[ci]);});
-        /* 凭证编号由系统生成，模板里不带；凭证状态一律以「待认领」入库 */
-        if(idx('凭证编号')>=0)cells[idx('凭证编号')]='';
-        if(idx('凭证状态')>=0)cells[idx('凭证状态')]='待认领';
-        if(idx('数据来源')>=0)cells[idx('数据来源')]='导入';
+        /* 导入列是查询列表列的子集，取值要按「完整表头」的下标去种子行里拿 */
+        const cells=cols.map(function(name){
+            const k=full.indexOf(name);
+            return (k>=0&&row[k]!=null)?String(row[k]):'';
+        });
         if(idx('交易流水号')>=0)cells[idx('交易流水号')]='IMP'+(202609030001+i);
         VOUCHER_IMPORT_REQUIRED.forEach(function(name){
             const k=idx(name);
@@ -308,15 +320,29 @@ function confirmBankVoucherImport(id){
     if(!rows.length){showToast(tr('没有可导入的数据，请先勾选校验通过的行'));return;}
     const c=TC[id]||{};
     const cols=voucherImportColumns(id);
-    const noIdx=cols.indexOf('凭证编号');
+    /* 列表引擎渲染时会往 c.h 里插入审计列（创建人/创建时间/… 插在「操作」之前），
+     * 但不会给 c.d 的行补格子 —— 审计值是渲染时现算的。
+     * 所以新行要按「种子行的宽度」来拼，跟其他行保持同样形状，多补 6 个空格子反而会串位。 */
+    const seedWidth=(c.d&&c.d.length)?c.d[0].length:(c.h||[]).length-1;
+    const full=(c.h||[]).slice(0,seedWidth);
     /* 必须写进 TC[id].d（种子）而不是 _listData：
      * generateListPage 每次渲染都会 _listData[id]=expandData(id) 从种子重新展开，
      * 只往 _listData 里 push 的话，刚导入的行下一次渲染就被冲掉了。 */
     let seq=(c.d||[]).length;
     rows.forEach(function(r){
-        const cells=r.cells.slice();
-        if(noIdx>=0&&!cells[noIdx])cells[noIdx]='P'+(2609030000+(++seq));
-        c.d.push(cells);
+        /* 导入列 -> 完整行：模板里没有的列由系统补 */
+        const amount=String(r.cells[cols.indexOf('金额(本位币)')]||r.cells[cols.indexOf('金额(原币)')]||'');
+        const row=full.map(function(name){
+            const k=cols.indexOf(name);
+            if(k>=0)return r.cells[k]||'';
+            if(name==='凭证编号')return 'P'+(2609030000+(++seq));
+            if(name==='凭证状态')return '待认领';
+            if(name==='数据来源')return '导入';
+            if(name==='已使用金额(本位币)')return '0';
+            if(name==='未使用金额(本位币)')return amount;
+            return '';
+        });
+        c.d.push(row);
     });
     delete _listData[id];   /* 让下次渲染重新展开，带上新导入的行 */
     closeCrudModal();

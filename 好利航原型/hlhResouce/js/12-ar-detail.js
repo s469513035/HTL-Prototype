@@ -90,10 +90,11 @@ function arLeftListHtml(){
 
 function arStatusTabsHtml(){
     var defs=[['','全部'],['待确认','待确认'],['待核销','待核销'],['部分核销','部分核销'],['全部核销','全部核销'],['作废','作废']];
+    /* 与全站列表页一致：status-tab 下划线式页签 + tab-count 计数气泡 */
     return defs.map(function(d){
         var cnt=d[0]===''?_arDetailRows.length:_arDetailRows.filter(function(r){return r.st===d[0];}).length;
         var on=_arStatusFilter===d[0];
-        return '<button type="button" onclick="filterArByStatus(\''+d[0]+'\')" class="px-3 py-1.5 rounded-lg text-sm cursor-pointer '+(on?'bg-primary-600 text-white':'bg-surface-100 text-text-secondary hover:bg-surface-200')+'">'+tr(d[1])+' ('+cnt+')</button>';
+        return '<button type="button" onclick="filterArByStatus(\''+d[0]+'\')" class="status-tab'+(on?' active':'')+'">'+tr(d[1])+'<span class="tab-count">'+cnt+'</span></button>';
     }).join('');
 }
 
@@ -111,32 +112,44 @@ function arVisibleRows(){
     });
 }
 
+/* 列定义只写一份：列表表头、行渲染、导入弹窗都从这里取，避免三处各写一遍对不上。
+ * num=右对齐数字列；sys=系统生成，导入模板不收；req=导入必填 */
+var AR_DETAIL_COLUMNS=[
+    {label:'运单号',key:'wb',req:true},
+    {label:'客户名称',key:'cust',req:true},
+    {label:'业务员名称',key:'sales'},
+    {label:'费用名称',key:'fee',req:true},
+    {label:'金额(原币)',key:'amt',num:true,req:true},
+    {label:'币别编号',key:'cur',req:true},
+    {label:'已核销金额',key:'used',num:true,sys:true},
+    {label:'未核销金额',key:'unused',num:true,sys:true},
+    {label:'核销标识',key:'st',sys:true},
+    {label:'费用时间',key:'ftime',req:true},
+    {label:'结算周期',key:'cyc'},
+    {label:'账单到期时间',key:'due',sys:true},
+    {label:'制账单标识',key:'bf',sys:true},
+    {label:'账单编号',key:'bn',sys:true},
+    {label:'账单批次号',key:'batch',sys:true},
+    {label:'备注',key:'rk'},
+    {label:'数据来源',key:'src',sys:true},
+    {label:'创建时间',key:'ct',sys:true},
+    {label:'创建员工编号',key:'cb',sys:true}
+];
+
 function renderArDetailRows(){
     var rows=arVisibleRows();
-    if(!rows.length)return '<tr><td colspan="21" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    if(!rows.length)return '<tr><td colspan="'+(AR_DETAIL_COLUMNS.length+2)+'" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
     return rows.map(function(r,i){
-        var h='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
-        h+='<td class="px-3 py-2.5 text-text-muted">'+(i+1)+'</td>';
-        h+='<td class="px-3 py-2.5"><input type="checkbox" class="ar-detail-check" value="'+i+'"></td>';
-        h+='<td class="px-3 py-2.5 font-medium text-primary-700 whitespace-nowrap">'+esc(r.wb)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.cust)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.sales)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.fee)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(r.amt)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.cur)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.used)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.unused)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap">'+arStatusBadge(r.st)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.ftime)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.cyc)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.due||'')+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.bf)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.bn)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.batch||'')+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.rk)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.src)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.ct)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(r.cb)+'</td>';
+        var h='<tr class="'+(i%2===1?'bg-surface-50/50':'')+' hover:bg-primary-50/30 border-b border-surface-100">';
+        h+='<td class="px-4 py-3 text-sm whitespace-nowrap"><input type="checkbox" class="ar-detail-check" value="'+i+'"></td>';
+        AR_DETAIL_COLUMNS.forEach(function(col){
+            var v=r[col.key]==null?'':String(r[col.key]);
+            var cls='px-4 py-3 text-sm whitespace-nowrap '+(col.num?'text-right ':'');
+            if(col.key==='wb')h+='<td class="'+cls+'font-medium text-primary-700">'+esc(v)+'</td>';
+            else if(col.key==='st')h+='<td class="'+cls+'">'+arStatusBadge(v)+'</td>';
+            else if(col.key==='amt')h+='<td class="'+cls+'font-semibold text-text-primary">'+esc(v)+'</td>';
+            else h+='<td class="'+cls+'text-text-secondary">'+esc(v)+'</td>';
+        });
         h+='</tr>';
         return h;
     }).join('');
@@ -366,37 +379,207 @@ function openArDetailModal(editRow){
     document.getElementById('crud-modal').classList.add('show');
 }
 
+/* 工具栏按钮：沿用 renderToolbarAction 的分级配色（新增=实心主色，其余描边） */
+function arToolbarBtn(label,onclick,variant){
+    var color=variant==='primary'
+        ?'text-white bg-primary-600 hover:bg-primary-700'
+        :variant==='success'
+        ?'text-green-700 border border-green-300 bg-white hover:bg-green-50'
+        :variant==='danger'
+        ?'text-red-600 border border-red-200 bg-white hover:bg-red-50'
+        :'text-primary-700 border border-primary-200 bg-white hover:bg-primary-50';
+    return '<button type="button" onclick="'+onclick+'" class="toolbar-action font-medium rounded-lg cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap '+color+'" style="min-width:96px">'+esc(tr(label))+'</button>';
+}
+function arQueryField(label,inner){
+    return '<div class="query-field-box flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+esc(tr(label))+'</label>'+inner+'</div>';
+}
+
 function generateArDetailPage(id){
     _arDetailRows=_arDetailSeed.slice();_arStatusFilter='';_arCustFilter='';_arLeftTab='cust';
-    /* 左侧「客户 / 业务员」快捷选择板块已整体移除，筛选统一走右侧查询区的客户、业务员条件 */
-    let h='<div class="h-full flex overflow-hidden bg-surface-50">';
-    h+='<div class="flex-1 flex flex-col overflow-hidden min-w-0">';
-    h+='<div class="px-4 py-3 border-b border-surface-200 bg-white">';
-    h+='<div class="flex items-end gap-3 mb-3 flex-wrap">';
-    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('运单号')+'</label><input class="h-8 px-3 text-xs border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('运单号'))+'"></div>';
-    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('提单号')+'</label><input class="h-8 px-3 text-xs border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('提单号'))+'"></div>';
-    /* 客户 / 业务员：由左侧搜索框迁移过来，数据源同左侧列表 */
-    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('客户')+'</label><select id="ar-q-cust" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50 min-w-[140px]"><option value="">'+tr('全部')+'</option>'+_arCustomers.map(function(c){return '<option>'+esc(c.name)+'</option>';}).join('')+'</select></div>';
-    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('业务员')+'</label><select id="ar-q-sales" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50 min-w-[140px]"><option value="">'+tr('全部')+'</option>'+_arSales.map(function(s){return '<option>'+esc(s.name)+'</option>';}).join('')+'</select></div>';
-    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('结算周期')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('全部')+'</option><option>出货票结</option><option>出货月结</option><option>签收月结</option></select></div>';
-    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('财务科目')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('全部')+'</option><option>运费</option><option>报关费</option><option>应收附加费</option><option>客户理赔费</option></select></div>';
-    h+='</div>';
-    h+='<div class="flex items-center gap-2">';
-    h+='<button type="button" onclick="filterArByStatus(_arStatusFilter)" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';
-    h+='<button type="button" onclick="openArDetailModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">+ '+tr('新增')+'</button>';
-    h+='<button type="button" onclick="openArAdjustModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('调整')+'</button>';
-    h+='<button type="button" onclick="openArConfirmModal()" class="h-9 px-4 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 cursor-pointer">'+tr('费用确认')+'</button>';
-    h+='<button type="button" onclick="arDetailAction(\'genBill\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('生成账单')+'</button>';
-    h+='<button type="button" onclick="arDetailAction(\'void\')" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('作废')+'</button>';
-    h+='</div>';
-    h+='<div id="ar-status-tabs" class="flex items-center gap-2 mt-3 flex-wrap">'+arStatusTabsHtml()+'</div>';
-    h+='</div>';
-    h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto"><table class="w-full text-sm" style="min-width:2000px;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
-    h+='<th class="px-3 py-3 text-left font-semibold" style="width:40px">#</th><th class="px-3 py-3 text-left font-semibold" style="width:40px"><input type="checkbox" onchange="document.querySelectorAll(\'.ar-detail-check\').forEach(function(c){c.checked=this.checked;}.bind(this))"></th>';
-    ['运单号','客户名称','业务员名称','费用名称','金额(原币)','币别编号','已核销金额','未核销金额','核销标识','费用时间','结算周期','账单到期时间','制账单标识','账单编号','账单批次号','备注','数据来源','创建时间','创建员工编号'].forEach(function(c){h+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
-    h+='</tr></thead><tbody id="ar-detail-tbody">'+renderArDetailRows()+'</tbody></table></div></div>';
+    /* 左侧「客户 / 业务员」快捷选择板块已整体移除，筛选统一走查询区的客户、业务员条件。
+     * 版式对齐全站列表页：list-page-shell / 查询卡片 / list-toolbar / status-tab / list-table-card */
+    var selCls='h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50';
+    var inpCls='h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50';
+    let h='<div class="list-page-shell">';
+    h+='<div class="list-filter-wrap px-5 pt-3 pb-2">';
+    h+='<div class="bg-white rounded-lg border border-surface-200 p-3">';
+    h+='<div class="flex flex-col xl:flex-row gap-3 xl:gap-4">';
+    h+='<div class="flex-1 min-w-0">';
+    h+='<div class="grid gap-x-2 gap-y-2" style="grid-template-columns:repeat(5,minmax(0,1fr))">';
+    h+=arQueryField('运单号','<input id="ar-q-wb" class="'+inpCls+'" placeholder="'+esc(tr('请输入运单号'))+'">');
+    h+=arQueryField('提单号','<input id="ar-q-bl" class="'+inpCls+'" placeholder="'+esc(tr('请输入提单号'))+'">');
+    h+=arQueryField('客户','<select id="ar-q-cust" class="'+selCls+'"><option value="">'+tr('全部')+'</option>'+_arCustomers.map(function(c){return '<option>'+esc(c.name)+'</option>';}).join('')+'</select>');
+    h+=arQueryField('业务员','<select id="ar-q-sales" class="'+selCls+'"><option value="">'+tr('全部')+'</option>'+_arSales.map(function(s){return '<option>'+esc(s.name)+'</option>';}).join('')+'</select>');
+    h+=arQueryField('结算周期','<select id="ar-q-cyc" class="'+selCls+'"><option value="">'+tr('全部')+'</option><option>出货票结</option><option>出货月结</option><option>签收月结</option></select>');
+    h+=arQueryField('财务科目','<select id="ar-q-fee" class="'+selCls+'"><option value="">'+tr('全部')+'</option><option>运费</option><option>报关费</option><option>应收附加费</option><option>客户理赔费</option><option>派送费</option></select>');
     h+='</div></div>';
+    h+='<div class="flex flex-row xl:flex-col gap-1 flex-shrink-0 xl:pt-4 xl:min-w-[96px]">';
+    h+='<button type="button" onclick="resetArQuery()" class="h-8 px-3 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" style="min-width:72px">'+tr('重置')+'</button>';
+    h+='</div>';
+    h+='</div>';
+    h+='<div class="list-toolbar mt-1 pt-1 border-t border-surface-100 text-xs"><div class="list-toolbar-actions">';
+    h+=arToolbarBtn('查询','filterArByStatus(_arStatusFilter)');
+    h+=arToolbarBtn('新增','openArDetailModal()','primary');
+    h+=arToolbarBtn('导入','openArDetailImportModal()');
+    h+=arToolbarBtn('调整','openArAdjustModal()');
+    h+=arToolbarBtn('费用确认','openArConfirmModal()','success');
+    h+=arToolbarBtn('生成账单','arDetailAction(\'genBill\')');
+    h+=arToolbarBtn('作废','arDetailAction(\'void\')','danger');
+    h+='</div></div>';
+    h+='<div id="ar-status-tabs" class="flex items-center gap-2 mt-4 flex-wrap">'+arStatusTabsHtml()+'</div>';
+    h+='</div></div>';
+    h+='<div class="list-table-region">';
+    h+='<div class="list-table-card bg-white rounded-xl border border-surface-200">';
+    h+='<div class="list-table-scroll"><table class="w-full data-table" style="table-layout:auto;min-width:100%;border-collapse:separate;border-spacing:0"><thead><tr class="bg-white">';
+    h+='<th class="text-left text-xs font-semibold text-text-secondary px-4 py-3 whitespace-nowrap" style="width:40px"><input type="checkbox" onchange="toggleArDetailCheckAll(this)"></th>';
+    AR_DETAIL_COLUMNS.forEach(function(col){
+        h+='<th class="'+(col.num?'text-right':'text-left')+' text-xs font-semibold text-text-secondary px-4 py-3 whitespace-nowrap">'+esc(tr(col.label))+'</th>';
+    });
+    h+='</tr></thead><tbody id="ar-detail-tbody">'+renderArDetailRows()+'</tbody></table></div>';
+    h+='</div></div></div>';
     return h;
+}
+function toggleArDetailCheckAll(cb){
+    document.querySelectorAll('.ar-detail-check').forEach(function(c){c.checked=cb.checked;});
+}
+function resetArQuery(){
+    ['ar-q-wb','ar-q-bl','ar-q-cust','ar-q-sales','ar-q-cyc','ar-q-fee'].forEach(function(i){
+        var el=document.getElementById(i);
+        if(el)el.value='';
+    });
+    filterArByStatus(_arStatusFilter);
+}
+
+/* ===== 应收明细 · 导入（版式与银行凭证导入一致）=====
+ * 导入列取自 AR_DETAIL_COLUMNS，去掉系统生成项（核销金额/账单相关/数据来源/创建信息）。 */
+var _arImportRows=[];
+var _arImportFile='';
+function arImportColumns(){
+    return AR_DETAIL_COLUMNS.filter(function(c){return !c.sys;});
+}
+function openArDetailImportModal(){
+    _arImportRows=[];_arImportFile='';
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='70%';
+    document.getElementById('crud-modal-title').textContent=tr('导入');
+    document.getElementById('crud-modal-body').innerHTML=arImportBodyHtml();
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="confirmArDetailImport()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认导入')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function arImportSectionTitle(text){
+    return '<div class="flex items-center gap-2 mb-3"><span class="w-1 h-4 bg-primary-500 rounded"></span>'+
+           '<span class="text-base font-semibold text-text-primary">'+tr(text)+'</span></div>';
+}
+function arImportBodyHtml(){
+    let h='<div class="space-y-5">';
+    h+='<section>'+arImportSectionTitle('模板信息');
+    h+='<div class="rounded-lg border border-surface-200 bg-white p-4">';
+    h+='<button type="button" onclick="showToast(\''+esc(tr('应收明细导入模板下载中'))+'\')" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg cursor-pointer">'+tr('下载应收明细导入模板')+'</button>';
+    h+='<div class="mt-3 w-full border border-dashed border-surface-300 rounded-lg bg-surface-50 px-3 py-2.5">';
+    h+='<div class="flex items-center gap-2 flex-wrap">';
+    h+='<label class="h-8 px-3 inline-flex items-center text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">';
+    h+='<input type="file" accept=".xls,.xlsx" class="hidden" onchange="onArImportPick(this)">'+esc(tr('选择文件'))+'</label>';
+    h+='<span class="text-[11px] text-text-muted">'+esc(tr('仅支持 Excel（.xls / .xlsx），单个不超过 10MB'))+'</span>';
+    h+='</div>';
+    h+='<div data-ar-import-file class="flex flex-wrap gap-1.5 mt-2'+(_arImportFile?'':' hidden')+'">'+
+       (_arImportFile&&typeof crudAttachmentChipHtml==='function'?crudAttachmentChipHtml(_arImportFile):'')+'</div>';
+    h+='</div>';
+    h+='<div class="mt-3 text-xs text-red-500">'+tr('注意：模板上传后下方列表展示当前模板数据的校验信息')+'</div>';
+    h+='</div></section>';
+    h+='<section>'+arImportSectionTitle('导入数据');
+    h+='<div data-ar-import-summary class="mb-2 text-xs text-text-secondary'+(_arImportRows.length?'':' hidden')+'"></div>';
+    h+='<div class="rounded-lg border border-surface-200 bg-white overflow-hidden">'+arImportTableHtml()+'</div>';
+    h+='</section></div>';
+    return h;
+}
+function arImportTableHtml(){
+    var cols=arImportColumns();
+    let h='<div class="overflow-auto" style="max-height:360px">';
+    h+='<table class="w-full data-table" style="table-layout:auto;min-width:100%;border-collapse:separate;border-spacing:0"><thead><tr class="bg-white">';
+    h+='<th class="px-3 py-2 text-xs font-medium text-text-secondary text-center whitespace-nowrap border-b border-surface-200">#</th>';
+    h+='<th class="px-3 py-2 border-b border-surface-200"><input type="checkbox" class="rounded border-surface-300 text-primary-600" onchange="toggleAllArImportRows(this)"></th>';
+    cols.forEach(function(c){
+        h+='<th class="px-3 py-2 text-xs font-medium whitespace-nowrap border-b border-surface-200 '+(c.req?'text-red-500':'text-text-secondary')+'">'+esc(tr(c.label))+'</th>';
+    });
+    h+='<th class="px-3 py-2 text-xs font-medium text-text-secondary whitespace-nowrap border-b border-surface-200">'+tr('校验结果')+'</th>';
+    h+='</tr></thead><tbody>';
+    if(!_arImportRows.length){
+        h+='<tr><td colspan="'+(cols.length+3)+'" class="px-3 py-16 text-center text-sm text-text-muted">'+tr('请先上传模板文件')+'</td></tr>';
+    }else{
+        _arImportRows.forEach(function(r,i){
+            h+='<tr class="border-b border-surface-100 '+(r.ok?'':'bg-red-50/50')+'">';
+            h+='<td class="px-3 py-2 text-sm text-text-muted text-center">'+(i+1)+'</td>';
+            h+='<td class="px-3 py-2"><input type="checkbox" class="ar-import-check rounded border-surface-300 text-primary-600" value="'+i+'"'+(r.ok?' checked':'')+(r.ok?'':' disabled')+'></td>';
+            cols.forEach(function(c){
+                h+='<td class="px-3 py-2 text-sm text-text-primary whitespace-nowrap'+(c.num?' text-right':'')+'">'+esc(r.cells[c.key]||'')+'</td>';
+            });
+            h+='<td class="px-3 py-2 text-sm whitespace-nowrap '+(r.ok?'text-green-600':'text-red-600')+'">'+esc(r.ok?tr('校验通过'):r.msg)+'</td>';
+            h+='</tr>';
+        });
+    }
+    h+='</tbody></table></div>';
+    return h;
+}
+function toggleAllArImportRows(cb){
+    document.querySelectorAll('.ar-import-check:not([disabled])').forEach(function(x){x.checked=cb.checked;});
+}
+function onArImportPick(input){
+    var f=(input.files||[])[0];
+    if(!f)return;
+    _arImportFile=f.name;
+    _arImportRows=buildArImportPreview();
+    var body=document.getElementById('crud-modal-body');
+    if(body)body.innerHTML=arImportBodyHtml();
+    var okCount=_arImportRows.filter(function(r){return r.ok;}).length;
+    var sum=document.querySelector('[data-ar-import-summary]');
+    if(sum){
+        sum.classList.remove('hidden');
+        sum.innerHTML=tr('已解析')+' <span class="font-semibold text-text-primary">'+_arImportRows.length+'</span> '+tr('条')+
+            '，'+tr('校验通过')+' <span class="font-semibold text-green-600">'+okCount+'</span> '+tr('条')+
+            '，'+tr('校验失败')+' <span class="font-semibold text-red-600">'+(_arImportRows.length-okCount)+'</span> '+tr('条')+
+            '（'+esc(f.name)+'）';
+    }
+    showToast(tr('已解析')+' '+_arImportRows.length+' '+tr('条'));
+}
+/* 原型阶段不解析真实 Excel：按导入列结构造几条示例，最后一行故意缺币别演示校验 */
+function buildArImportPreview(){
+    var cols=arImportColumns();
+    return _arDetailSeed.slice(0,3).map(function(r,i){
+        var cells={};
+        cols.forEach(function(c){cells[c.key]=r[c.key]==null?'':String(r[c.key]);});
+        cells.wb='IMP'+(2609040001+i);
+        if(i===2)cells.cur='';
+        var missing=cols.filter(function(c){return c.req&&!String(cells[c.key]||'').trim();}).map(function(c){return c.label;});
+        return {cells:cells,ok:missing.length===0,msg:missing.length?(tr('必填项为空')+'：'+missing.join('、')):''};
+    });
+}
+function confirmArDetailImport(){
+    if(!_arImportRows.length){showToast(tr('请先上传模板文件'));return;}
+    var picked=[];
+    document.querySelectorAll('.ar-import-check:checked').forEach(function(x){picked.push(parseInt(x.value,10));});
+    var rows=picked.map(function(i){return _arImportRows[i];}).filter(function(r){return r&&r.ok;});
+    if(!rows.length){showToast(tr('没有可导入的数据，请先勾选校验通过的行'));return;}
+    var now=(typeof receiptNowStr==='function')?receiptNowStr():'';
+    var who=(typeof getCurrentUserName==='function')?getCurrentUserName():'admin';
+    rows.forEach(function(r){
+        var row={};
+        AR_DETAIL_COLUMNS.forEach(function(c){row[c.key]=r.cells[c.key]||'';});
+        /* 系统生成项由这里补：未核销=金额、状态待核销、来源导入、创建信息 */
+        row.used='0';
+        row.unused=r.cells.amt||'0';
+        row.st='待核销';
+        row.bf='否';
+        row.src='导入';
+        row.ct=now;
+        row.cb=who;
+        _arDetailSeed.push(row);
+    });
+    closeCrudModal();
+    var mc=document.getElementById('main-content');
+    if(mc)mc.innerHTML=generateArDetailPage('fin-ar-detail');
+    showToast(tr('导入成功')+' '+rows.length+' '+tr('条'));
 }
 
 /* ===== 角色工作台首页（业务/客服/操作） ===== */

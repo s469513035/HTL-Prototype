@@ -113,11 +113,12 @@ function arVisibleRows(){
 }
 
 /* 列定义只写一份：列表表头、行渲染、导入弹窗都从这里取，避免三处各写一遍对不上。
- * num=右对齐数字列；sys=系统生成，导入模板不收；req=导入必填 */
+ * num=右对齐数字列；sys=系统生成，导入模板不收；
+ * byWaybill=由运单号带出，导入模板同样不收；req=导入必填 */
 var AR_DETAIL_COLUMNS=[
     {label:'运单号',key:'wb',req:true},
-    {label:'客户名称',key:'cust',req:true},
-    {label:'业务员名称',key:'sales'},
+    {label:'客户名称',key:'cust',byWaybill:true},
+    {label:'业务员名称',key:'sales',byWaybill:true},
     {label:'费用名称',key:'fee',req:true},
     {label:'金额(原币)',key:'amt',num:true,req:true},
     {label:'币别编号',key:'cur',req:true},
@@ -125,7 +126,7 @@ var AR_DETAIL_COLUMNS=[
     {label:'未核销金额',key:'unused',num:true,sys:true},
     {label:'核销标识',key:'st',sys:true},
     {label:'费用时间',key:'ftime',req:true},
-    {label:'结算周期',key:'cyc'},
+    {label:'结算周期',key:'cyc',byWaybill:true},
     {label:'账单到期时间',key:'due',sys:true},
     {label:'制账单标识',key:'bf',sys:true},
     {label:'账单编号',key:'bn',sys:true},
@@ -455,7 +456,12 @@ function resetArQuery(){
 var _arImportRows=[];
 var _arImportFile='';
 function arImportColumns(){
-    return AR_DETAIL_COLUMNS.filter(function(c){return !c.sys;});
+    return AR_DETAIL_COLUMNS.filter(function(c){return !c.sys&&!c.byWaybill;});
+}
+/* 客户名称 / 业务员名称 / 结算周期不在模板里，导入时按运单号从已有数据带出 */
+function arLookupByWaybill(wb){
+    if(!wb)return null;
+    return _arDetailSeed.filter(function(r){return r.wb===wb;})[0]||null;
 }
 function openArDetailImportModal(){
     _arImportRows=[];_arImportFile='';
@@ -543,13 +549,14 @@ function onArImportPick(input){
     }
     showToast(tr('已解析')+' '+_arImportRows.length+' '+tr('条'));
 }
-/* 原型阶段不解析真实 Excel：按导入列结构造几条示例，最后一行故意缺币别演示校验 */
+/* 原型阶段不解析真实 Excel：按导入列结构造几条示例，最后一行故意缺币别演示校验。
+ * 运单号沿用已有单号，好让导入时「按运单号带出客户/业务员/结算周期」跑得通。 */
 function buildArImportPreview(){
     var cols=arImportColumns();
     return _arDetailSeed.slice(0,3).map(function(r,i){
         var cells={};
         cols.forEach(function(c){cells[c.key]=r[c.key]==null?'':String(r[c.key]);});
-        cells.wb='IMP'+(2609040001+i);
+        cells.fee=['运费','报关费','应收附加费'][i]||cells.fee;
         if(i===2)cells.cur='';
         var missing=cols.filter(function(c){return c.req&&!String(cells[c.key]||'').trim();}).map(function(c){return c.label;});
         return {cells:cells,ok:missing.length===0,msg:missing.length?(tr('必填项为空')+'：'+missing.join('、')):''};
@@ -566,6 +573,11 @@ function confirmArDetailImport(){
     rows.forEach(function(r){
         var row={};
         AR_DETAIL_COLUMNS.forEach(function(c){row[c.key]=r.cells[c.key]||'';});
+        /* 模板里没有的三项按运单号带出（带不到就留空，不臆造） */
+        var ref=arLookupByWaybill(row.wb);
+        AR_DETAIL_COLUMNS.filter(function(c){return c.byWaybill;}).forEach(function(c){
+            row[c.key]=ref?(ref[c.key]||''):'';
+        });
         /* 系统生成项由这里补：未核销=金额、状态待核销、来源导入、创建信息 */
         row.used='0';
         row.unused=r.cells.amt||'0';

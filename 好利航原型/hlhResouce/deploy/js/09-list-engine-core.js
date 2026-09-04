@@ -964,6 +964,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
     else if(action.key==='finalAllocAdjust')click='openFinalAllocAdjustModal(\''+id+'\')';
     else if(action.key==='finalAllocLinkBL')click='openFinalAllocLinkBLModal(\''+id+'\')';
+    else if(action.key==='allocBarcode')click='openFinalAllocBarcodeModal(\''+id+'\')';
     else if(action.key==='finalAllocDelete')click='deleteFinalAllocSelected(\''+id+'\')';
     else if(action.key==='finalAllocRename')click='openFinalAllocRenameModal(\''+id+'\')';
     else if(action.key==='finalAllocAutoReplenish')click='runFinalAllocAutoReplenish(\''+id+'\')';
@@ -1254,6 +1255,7 @@ function getToolbarActions(id){
             {type:'add',label:'新增',variant:'primary'},
             {key:'finalAllocAdjust',label:'调整',variant:'primary'},
             {key:'finalAllocLinkBL',label:'关联提单'},
+            {key:'allocBarcode',label:'配舱条码打印'},
             {key:'finalAllocDelete',label:'删除',variant:'danger'},
             {key:'export',label:'导出'}
         ];

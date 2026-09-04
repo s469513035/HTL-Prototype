@@ -374,6 +374,96 @@ function deleteFinalAllocSelected(id){
     });
 }
 
+/* ===== 配舱条码打印 =====
+ * 给勾选的配舱单打条形码标签（条码内容 = 配舱单号）。
+ * 条码渲染复用托盘条码打印的 renderPalletBarcodeSvg（10-express-sort.js）。 */
+var _allocBarcodeCtx={id:'',rows:[]};
+function openFinalAllocBarcodeModal(id){
+    id=id||'wh-final-alloc';
+    var indices=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!indices.length){showToast(tr('请先勾选需要打印条码的配舱单'));return;}
+    var c=TC[id]||{},h=c.h||[];
+    var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+    var g=function(row,label){var i=h.indexOf(label);return (i>=0&&row&&row[i]!=null)?String(row[i]):'';};
+    var rows=[];
+    indices.forEach(function(i){
+        var row=data[i];
+        if(!row)return;
+        var no=g(row,'配舱单号');
+        if(!no)return;
+        rows.push({no:no,bl:g(row,'提单号'),country:g(row,'国家'),
+            transport:g(row,'运输方式'),tickets:g(row,'票数'),pcs:g(row,'件数')});
+    });
+    if(!rows.length){showToast(tr('所选数据没有配舱单号，无法打印'));return;}
+    _allocBarcodeCtx={id:id,rows:rows};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=tr('配舱条码打印');
+    document.getElementById('crud-modal-body').innerHTML=allocBarcodeBodyHtml();
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="printFinalAllocBarcodes()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('打印')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+    setTimeout(renderFinalAllocBarcodes,0);
+}
+function allocBarcodeBodyHtml(){
+    var rows=_allocBarcodeCtx.rows||[];
+    var inCls='h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 w-full';
+    var h='<div class="space-y-4">';
+    h+='<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 text-sm text-text-secondary">'+
+       tr('已勾选')+'：<span class="font-medium text-text-primary">'+rows.length+'</span> '+tr('个配舱单')+
+       '<div class="mt-1 text-xs text-text-muted break-all">'+esc(rows.slice(0,6).map(function(r){return r.no;}).join('、')+(rows.length>6?'…':''))+'</div></div>';
+    h+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('每单份数')+'</label>'+
+       '<input type="number" min="1" max="20" id="alloc-bc-copies" value="1" class="'+inCls+'" onchange="renderFinalAllocBarcodes()"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('条形码高度(mm)')+'</label>'+
+       '<input type="number" min="20" max="120" step="5" id="alloc-bc-height" value="45" class="'+inCls+'" onchange="renderFinalAllocBarcodes()"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('文字大小(pt)')+'</label>'+
+       '<input type="number" min="8" max="20" id="alloc-bc-font" value="11" class="'+inCls+'" onchange="renderFinalAllocBarcodes()"></div>';
+    h+='</div>';
+    h+='<div class="flex items-center gap-2 text-xs text-text-secondary">'+
+       '<label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="alloc-bc-detail" class="rounded border-surface-300 text-primary-600" checked onchange="renderFinalAllocBarcodes()"><span>'+tr('标签上打印提单号 / 国家 / 票数件数')+'</span></label></div>';
+    h+='<div><div class="text-sm font-semibold text-text-primary mb-2">'+tr('预览')+'</div>'+
+       '<div id="alloc-bc-preview" class="border-t border-surface-200 pt-4"></div></div>';
+    h+='</div>';
+    return h;
+}
+function renderFinalAllocBarcodes(){
+    var box=document.getElementById('alloc-bc-preview');
+    if(!box)return;
+    var rows=_allocBarcodeCtx.rows||[];
+    var copies=Math.max(1,Math.min(20,parseInt((document.getElementById('alloc-bc-copies')||{}).value||'1',10)||1));
+    var height=Math.max(20,Math.min(120,parseInt((document.getElementById('alloc-bc-height')||{}).value||'45',10)||45));
+    var font=Math.max(8,Math.min(20,parseInt((document.getElementById('alloc-bc-font')||{}).value||'11',10)||11));
+    var detailEl=document.getElementById('alloc-bc-detail');
+    var withDetail=detailEl?!!detailEl.checked:true;
+    var items=[];
+    rows.forEach(function(r){
+        for(var k=0;k<copies;k++){
+            var card='<div class="alloc-bc-card border border-surface-200 rounded-lg p-3 bg-white flex flex-col items-center overflow-hidden">';
+            card+='<div class="w-full">'+((typeof renderPalletBarcodeSvg==='function')?renderPalletBarcodeSvg(r.no,height):'')+'</div>';
+            card+='<div class="mt-1 w-full text-center font-semibold text-text-primary" style="font-size:'+font+'pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(r.no)+'">'+esc(r.no)+'</div>';
+            if(withDetail){
+                var line1=[r.bl,r.country].filter(Boolean).join(' · ');
+                var line2=[r.transport,(r.tickets?r.tickets+tr('票'):''),(r.pcs?r.pcs+tr('件'):'')].filter(Boolean).join(' · ');
+                if(line1)card+='<div class="mt-0.5 w-full text-center text-[11px] text-text-secondary truncate" title="'+esc(line1)+'">'+esc(line1)+'</div>';
+                if(line2)card+='<div class="w-full text-center text-[11px] text-text-muted truncate">'+esc(line2)+'</div>';
+            }
+            card+='</div>';
+            items.push(card);
+        }
+    });
+    box.innerHTML='<div class="text-xs text-text-muted mb-2">'+tr('共')+' '+items.length+' '+tr('张')+'</div>'+
+        '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">'+items.join('')+'</div>';
+}
+function printFinalAllocBarcodes(){
+    var box=document.getElementById('alloc-bc-preview');
+    if(!box||!box.querySelectorAll('.alloc-bc-card').length){showToast(tr('没有可打印的标签'));return;}
+    var n=box.querySelectorAll('.alloc-bc-card').length;
+    showToast(tr('已发送打印任务')+'，'+tr('共')+' '+n+' '+tr('张'));
+    if(typeof window!=='undefined'&&window.print)setTimeout(function(){window.print();},60);
+}
+
 function openFinalAllocLinkBLModal(id){
     const idx=getSelectedRowIndex();
     const row=idx>=0?((_listData[id]||TC[id].d)[idx]||[]):[];

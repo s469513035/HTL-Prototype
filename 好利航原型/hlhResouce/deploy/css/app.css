@@ -245,3 +245,9 @@
          * 3) 板块内小标题（dividers）压扁一点，别喧宾夺主。 */
         #crud-modal-body.crud-compact .modal-picker-text{grid-column:auto}
         #crud-modal-body.crud-compact .modal-remark-half{grid-column:1/-1}
+        /* 独占一行、只占 1/4 宽的字段（TC[id].modalFieldClass 指定）。
+         * grid-column 撑满整行是为了「不让别的字段挤上来」，max-width 才是真正的视觉宽度；
+         * 窄屏本来就是单列，再限 25% 会窄到没法点，所以只在 md 以上生效。 */
+        @media (min-width:768px){
+            #crud-modal-body .field-row-quarter{grid-column:1/-1;max-width:25%}
+        }

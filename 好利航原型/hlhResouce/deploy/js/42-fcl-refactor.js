@@ -332,6 +332,9 @@ TC['fcl-booking'].fieldChangeHandlers={
     'Consignee':'fclBookingFillParty(this)',
     'Notify':'fclBookingFillParty(this)'
 };
+/* 是否危险品独占一行、控件只占 1/4 宽 —— 它是下面危险品信息那一组的开关，
+ * 跟普通字段并排会看不出这层从属关系（样式见 css/app.css 的 .field-row-quarter） */
+TC['fcl-booking'].modalFieldClass={'是否危险品':'field-row-quarter'};
 TC['fcl-booking'].afterModalRender='fclBookingAfterModalRender';
 /* 字段多、板块多，用紧凑排版压掉间距（见 css/app.css 的 .crud-compact） */
 TC['fcl-booking'].compactModal=true;
@@ -354,7 +357,9 @@ TC['fcl-booking'].modalSections=[
      * 字段先后由表头顺序决定（引擎按 header index 排序，不是按这里的 fields 顺序），
      * 已在 FCL_BOOKING_HEADERS 里排成：6 个矮字段 -> 3 个高块 -> 危险品 -> 主单备注。 */
     {key:'master',title:'主单信息',cols:3,
-        dividers:{'是否危险品':'危险品信息'},
+        /* 小标题挂在 UN编号 上而不是「是否危险品」上：勾选框始终显示，
+         * 「危险品信息」这一组连同标题只在勾上之后才出现在它下面 */
+        dividers:{'UN编号':'危险品信息'},
         fields:['S/O No.','放单方式','品名','HS Code','货重','柜量','Shipper','Notify','Consignee',
             '是否危险品'].concat(FCL_DG_FIELDS).concat(['主单备注'])},
     {key:'doc',title:'单证信息',cols:3,fields:['柜号','封签号','柜重']},
@@ -392,10 +397,13 @@ function fclBookingFillHsCode(sel){
     if(!row.hs){showToast(tr('该品名尚未维护 HS 编码，请先到品名库补充'));return;}
     if(crudSetField('HS Code',row.hs))showToast('HS Code '+esc(row.hs));
 }
-/* 是否危险品（勾选框）→ 危险品四个明细字段显隐 + 必填联动 */
+/* 是否危险品（勾选框）→ 危险品四个明细字段显隐 + 必填联动；
+ * 「危险品信息」小标题跟着一起显隐，不然没勾选时会剩一条空标题。 */
 function fclBookingToggleDangerous(){
     var on=crudFieldValue('是否危险品')==='是';
     FCL_DG_FIELDS.forEach(function(h){crudToggleField(h,on,true);});
+    var dv=(typeof crudSectionDivider==='function')?crudSectionDivider('UN编号'):null;
+    if(dv)dv.classList.toggle('hidden',!on);
 }
 
 /* 发件人下拉：取「发件人信息」(base-sender) 的联系公司 */

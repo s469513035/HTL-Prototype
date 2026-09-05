@@ -510,7 +510,7 @@ function openCrudModal(mode,id,rowIdx){
             const selectOptions=(fType==='checkbox'||fType==='pickerText')?null:fieldSelectOptions(id,hd,c);
             const isLongText=fType?fType==='textarea':(hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能'));
             const isAttachment=fType?fType==='attachment':hd.includes('附件');
-            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(fType==='pickerText'?'md:col-span-2 modal-picker-text ':'')+(hd.includes('备注')?'modal-remark-half':'');
+            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(fType==='pickerText'?'md:col-span-2 modal-picker-text ':'')+(hd.includes('备注')?'modal-remark-half ':'')+((c.modalFieldClass&&c.modalFieldClass[hd])?c.modalFieldClass[hd]:'');
             const isRequired=isImportantRequiredField(hd,id);
             const reqMark=isRequired?' <span class="text-red-500">*</span>':'';
             const reqAttr=isRequired?' required':'';
@@ -570,7 +570,7 @@ function openCrudModal(mode,id,rowIdx){
             const selectOptions=(fType==='checkbox'||fType==='pickerText')?null:fieldSelectOptions(id,hd,c);
             const isLongText=fType?fType==='textarea':(hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能'));
             const isAttachment=fType?fType==='attachment':hd.includes('附件');
-            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(fType==='pickerText'?'md:col-span-2 modal-picker-text ':'')+(hd.includes('备注')?'modal-remark-half':'');
+            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(fType==='pickerText'?'md:col-span-2 modal-picker-text ':'')+(hd.includes('备注')?'modal-remark-half ':'')+((c.modalFieldClass&&c.modalFieldClass[hd])?c.modalFieldClass[hd]:'');
             const isRequired=isImportantRequiredField(hd,id);
             const reqMark=isRequired?' <span class="text-red-500">*</span>':'';
             const reqAttr=isRequired?' required':'';
@@ -641,7 +641,7 @@ function crudSectionDividerHtml(hd,c){
     const secs=(c&&c.modalSections)||[];
     for(let i=0;i<secs.length;i++){
         const d=secs[i].dividers;
-        if(d&&d[hd])return '<div class="col-span-full text-xs font-semibold text-text-secondary mt-1 pt-2 border-t border-surface-100">'+esc(tr(d[hd]))+'</div>';
+        if(d&&d[hd])return '<div data-section-divider="'+esc(hd)+'" class="col-span-full text-xs font-semibold text-text-secondary mt-1 pt-2 border-t border-surface-100">'+esc(tr(d[hd]))+'</div>';
     }
     return '';
 }
@@ -669,6 +669,12 @@ function crudAssembleSections(buckets,colClass,c,mainTitle){
 function crudSection(key){
     const body=document.getElementById('crud-modal-body');
     return body?body.querySelector('[data-modal-section="'+(window.CSS&&CSS.escape?CSS.escape(key):key)+'"]'):null;
+}
+/* 拿到某个字段前面的板块内小标题，用于跟着字段一起显隐 ——
+ * 否则字段藏起来了标题还杵在那，成了一条没有内容的孤零零横线。 */
+function crudSectionDivider(hd){
+    const body=document.getElementById('crud-modal-body');
+    return body?body.querySelector('[data-section-divider="'+(window.CSS&&CSS.escape?CSS.escape(hd):hd)+'"]'):null;
 }
 
 /* ===== 通用「是/否」勾选框控件 =====

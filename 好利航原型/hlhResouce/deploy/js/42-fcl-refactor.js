@@ -182,65 +182,103 @@ TC['fcl-payment-request'].fieldOptions={
  * 四、既有表覆写：主线收敛与字段扩展
  * ========================================================================== */
 
-/* 10.2 订舱管理 —— 升为全链路主档，合并原「订舱单管理」字段，
- *      移除环形外键（不再存订单号），并入危险品区块（SOP 7.4）。
- *      订舱单号自动生成；选委托订单号自动带出委托信息；危险品明细随勾选显隐。 */
-addPrototypeTable('fcl-booking','订舱管理',
-    '订舱单号|委托订单号|委托类型|客户名称|船司|航线|起运港|目的港|柜型柜量|船名航次|ETD|订舱回执号|回执附件|约号|截补料时间|订舱方式|是否危险品|UN编号|危险类别|包装类别|危险品申报人|Shipper|Consignee|Notify|订舱员|备注|订舱状态|操作',
-    ['待订舱','订舱中','已订舱','取消订舱'],[
-    ['FBK-20260613001','FEO-20260613001','实单','深圳市华运达国际货运','MAERSK','西非线','深圳盐田','拉各斯','40HQ×1','MAERSK LAGOS 026W','2026-06-20','','','MSK-CN-2026-8891','2026-06-17 12:00','EDI','否','','','','',
-        '联系人：张明\n联系公司：深圳市华运达国际货运\n联系人地址：深圳市盐田区盐田路 88 号\n联系人电话：13800138000',
-        '联系人：Mr. Okonkwo\n联系公司：Lagos Import Ltd\n联系人地址：12 Apapa Wharf Road, Lagos, Nigeria\n联系人电话：+234 802 111 2222',
-        '联系人：Same as consignee','刘订舱','客户要求本航次务必装出','待订舱'],
-    ['FBK-20260612002','FEO-20260612002','实单','广州远洋进出口贸易','COSCO','西非线','广州南沙','达喀尔','20GP×2','COSCO AFRICA 118W','2026-06-22','COSU778812','COSCO订舱确认书.pdf;舱位确认邮件.png','COS-CN-2026-4412','2026-06-18 18:00','官网','否','','','','',
-        '联系人：李经理\n联系公司：广州远洋进出口贸易\n联系人地址：广州市南沙区港前大道 168 号\n联系人电话：13900139002',
-        '联系人：M. Diop\n联系公司：Dakar Trading SARL\n联系人地址：Rue 12, Zone Portuaire, Dakar, Senegal\n联系人电话：+221 77 333 4444',
-        '联系人：Dakar Notify','赵订舱','船司已确认舱位','已订舱'],
-    ['FBK-20260611003','FEO-20260611003','实单','东莞市鑫海物流','CMA CGM','地中海线','上海洋山','阿比让','40HQ×1','CMA MARSEILLE 09W','2026-06-25','','','CMA-CN-2026-3320','2026-06-21 12:00','EDI','是','UN3480','9类 锂电池','PI965','李申报','','','','刘订舱','危险品，结单时间早于普货48小时','待订舱'],
-    ['FBK-20260610004','FEO-20260613004','预录单','','MSC','西非线','深圳盐田','特马','40HQ×2','MSC ACCRA 23W','2026-07-02','MSCU334455','MSC_booking_confirm.pdf','','2026-06-28 12:00','官网','否','','','','','','','','赵订舱','预录单委托，无费用产生、无需财务审核','已订舱']
-],[
-    {label:'订舱单号',type:'text'},
+/* 10.2 Job/主单管理（原「订舱管理」）—— 整柜全链路主档。
+ *      Job No 自动生成；危险品明细随勾选显隐；
+ *      弹窗按 基础信息 / 订舱信息 / 主单信息 / 单证信息 分板块。
+ *      种子数据用「表头 -> 值」的对象写，再按表头顺序摊平，避免加列时串位。 */
+var FCL_BOOKING_HEADERS='Job No|委托订单号|委托类型|客户名称|船司|航线|起运港|目的港|柜型柜量|船名航次|ETD|ETA|ATD|ATA|订舱回执号|回执附件|约号|截补料时间|订舱日期|订舱方式|订舱人|订舱备注|S/O No.|放单方式|Shipper|Notify|Consignee|主单备注|柜号|封签号|柜重|是否危险品|UN编号|危险类别|包装类别|危险品申报人|订舱状态|操作';
+var FCL_BOOKING_SEED=[
+    {'Job No':'FBK-20260613001','委托订单号':'FEO-20260613001','委托类型':'实单','客户名称':'深圳市华运达国际货运',
+     '船司':'MAERSK','航线':'西非线','起运港':'深圳盐田','目的港':'拉各斯','柜型柜量':'40HQ×1','船名航次':'MAERSK LAGOS 026W',
+     'ETD':'2026-06-20','ETA':'2026-07-18','ATD':'','ATA':'',
+     '约号':'MSK-CN-2026-8891','截补料时间':'2026-06-17 12:00','订舱日期':'2026-06-13','订舱方式':'EDI','订舱人':'刘订舱',
+     '订舱备注':'客户要求本航次务必装出','S/O No.':'','放单方式':'电放',
+     'Shipper':'联系人：张明\n联系公司：深圳市华运达国际货运\n联系人地址：深圳市盐田区盐田路 88 号\n联系人电话：13800138000',
+     'Notify':'联系人：Same as consignee',
+     'Consignee':'联系人：Mr. Okonkwo\n联系公司：Lagos Import Ltd\n联系人地址：12 Apapa Wharf Road, Lagos, Nigeria\n联系人电话：+234 802 111 2222',
+     '主单备注':'','柜号':'','封签号':'','柜重':'','是否危险品':'否','订舱状态':'待订舱'},
+    {'Job No':'FBK-20260612002','委托订单号':'FEO-20260612002','委托类型':'实单','客户名称':'广州远洋进出口贸易',
+     '船司':'COSCO','航线':'西非线','起运港':'广州南沙','目的港':'达喀尔','柜型柜量':'20GP×2','船名航次':'COSCO AFRICA 118W',
+     'ETD':'2026-06-22','ETA':'2026-07-20','ATD':'2026-06-22','ATA':'',
+     '订舱回执号':'COSU778812','回执附件':'COSCO订舱确认书.pdf;舱位确认邮件.png',
+     '约号':'COS-CN-2026-4412','截补料时间':'2026-06-18 18:00','订舱日期':'2026-06-12','订舱方式':'官网','订舱人':'赵订舱',
+     '订舱备注':'船司已确认舱位','S/O No.':'SO-COS-2026-0612','放单方式':'正本',
+     'Shipper':'联系人：李经理\n联系公司：广州远洋进出口贸易\n联系人地址：广州市南沙区港前大道 168 号\n联系人电话：13900139002',
+     'Notify':'联系人：Dakar Notify',
+     'Consignee':'联系人：M. Diop\n联系公司：Dakar Trading SARL\n联系人地址：Rue 12, Zone Portuaire, Dakar, Senegal\n联系人电话：+221 77 333 4444',
+     '主单备注':'主单已确认，等待放舱','柜号':'COSU7654321','封签号':'SL-0612889','柜重':'21,500 KG',
+     '是否危险品':'否','订舱状态':'已订舱'},
+    {'Job No':'FBK-20260611003','委托订单号':'FEO-20260611003','委托类型':'实单','客户名称':'东莞市鑫海物流',
+     '船司':'CMA CGM','航线':'地中海线','起运港':'上海洋山','目的港':'阿比让','柜型柜量':'40HQ×1','船名航次':'CMA MARSEILLE 09W',
+     'ETD':'2026-06-25','ETA':'2026-07-22','ATD':'','ATA':'',
+     '约号':'CMA-CN-2026-3320','截补料时间':'2026-06-21 12:00','订舱日期':'2026-06-11','订舱方式':'EDI','订舱人':'刘订舱',
+     '订舱备注':'危险品，结单时间早于普货48小时','S/O No.':'','放单方式':'电放',
+     '主单备注':'','柜号':'','封签号':'','柜重':'',
+     '是否危险品':'是','UN编号':'UN3480','危险类别':'9类 锂电池','包装类别':'PI965','危险品申报人':'李申报',
+     '订舱状态':'待订舱'},
+    {'Job No':'FBK-20260610004','委托订单号':'FEO-20260613004','委托类型':'预录单','客户名称':'',
+     '船司':'MSC','航线':'西非线','起运港':'深圳盐田','目的港':'特马','柜型柜量':'40HQ×2','船名航次':'MSC ACCRA 23W',
+     'ETD':'2026-07-02','ETA':'2026-07-29','ATD':'2026-07-02','ATA':'2026-07-28',
+     '订舱回执号':'MSCU334455','回执附件':'MSC_booking_confirm.pdf',
+     '约号':'','截补料时间':'2026-06-28 12:00','订舱日期':'2026-06-10','订舱方式':'官网','订舱人':'赵订舱',
+     '订舱备注':'预录单委托，无费用产生、无需财务审核','S/O No.':'SO-MSC-2026-0610','放单方式':'海运单',
+     '主单备注':'船司已放舱','柜号':'MSCU3344556','封签号':'SL-0610223','柜重':'24,800 KG',
+     '是否危险品':'否','订舱状态':'已放舱'},
+    {'Job No':'FBK-20260608005','委托订单号':'FEO-20260608006','委托类型':'实单','客户名称':'广州远洋进出口贸易',
+     '船司':'ONE','航线':'西非线','起运港':'广州南沙','目的港':'洛美','柜型柜量':'20GP×1','船名航次':'ONE LOME 07W',
+     'ETD':'2026-06-18','ETA':'','ATD':'','ATA':'',
+     '约号':'','截补料时间':'2026-06-14 12:00','订舱日期':'2026-06-08','订舱方式':'邮件','订舱人':'赵订舱',
+     '订舱备注':'客户取消出运，主单作废','S/O No.':'','放单方式':'电放',
+     '主单备注':'','柜号':'','封签号':'','柜重':'','是否危险品':'否','订舱状态':'已作废'}
+];
+addPrototypeTable('fcl-booking','Job/主单管理',
+    FCL_BOOKING_HEADERS,
+    ['待订舱','已订舱','已放舱','已作废'],
+    FCL_BOOKING_SEED.map(function(o){
+        return FCL_BOOKING_HEADERS.split('|').slice(0,-1).map(function(h){return o[h]===undefined?'':o[h];});
+    }),[
+    {label:'Job No',type:'text'},
+    {label:'S/O No.',type:'text'},
     {label:'委托订单号',type:'text'},
-    {label:'委托类型',type:'select',options:['预录单','实单','无单']},
-    {label:'客户名称',type:'select',options:FCL_CUSTOMER_OPTIONS},
     {label:'船司',type:'select',options:FCL_CARRIER_OPTIONS},
     {label:'航线',type:'select',options:FCL_ROUTE_OPTIONS},
     {label:'起运港',type:'select',options:FCL_POL_OPTIONS},
     {label:'目的港',type:'select',options:FCL_POD_OPTIONS},
+    {label:'柜号',type:'text'},
     {label:'是否危险品',type:'select',options:['是','否']},
     {label:'ETD',type:'date'},
-    {label:'订舱状态',type:'select',options:['待订舱','订舱中','已订舱','取消订舱']}
+    {label:'订舱状态',type:'select',options:['待订舱','已订舱','已放舱','已作废']}
 ]);
-TC['fcl-booking'].modalExcludedFields=['订舱状态'];
+/* 委托订单号 / 委托类型 / 客户名称：数据仍在列表里（委托单审核通过时带过来），但不在弹窗录入 */
+TC['fcl-booking'].modalExcludedFields=['订舱状态','委托订单号','委托类型','客户名称'];
 /* 订舱回执号 / 回执附件由「登记订舱回执」写入，不由人工在新增/编辑里录：只在查看明细里成板块展示 */
 TC['fcl-booking'].modalFieldModes={'订舱回执号':['view'],'回执附件':['view']};
 TC['fcl-booking'].fieldOptions={
-    '委托订单号':fclEntrustOrderNoOptions,   /* 函数：弹窗打开时才求值，始终跟随委托订单管理的最新数据 */
-    '委托类型':['预录单','实单','无单'],     /* 无单 = 不走委托单直接开的订舱 */
-    '客户名称':FCL_CUSTOMER_OPTIONS,
     '船司':FCL_CARRIER_OPTIONS,
     '航线':FCL_ROUTE_OPTIONS,
     '起运港':FCL_POL_OPTIONS,
     '目的港':FCL_POD_OPTIONS,
     '柜型柜量':['20GP×1','20GP×2','40GP×1','40HQ×1','40HQ×2'],
     '订舱方式':['EDI','官网','邮件','电话','外配同行','一代'],
+    '放单方式':['电放','正本','海运单','副本放单'],
     '是否危险品':['是','否'],
     '危险类别':['1类 爆炸品','3类 易燃液体','8类 腐蚀品','9类 锂电池'],
     '包装类别':['I类','II类','III类','PI965','PI967'],
     /* 函数：弹窗打开时才求值，跟随发件人信息(base-sender)的最新数据 */
     'Shipper':fclSenderOptions,'Consignee':fclSenderOptions,'Notify':fclSenderOptions
 };
-/* 订舱单号含「单号」→ 引擎渲染为只读自动生成；订舱员固定为当前登录人不可改；
- * UN编号含「编号」会被误判为自动生成，强制回文本；是否危险品改勾选框 */
-TC['fcl-booking'].modalFieldTypes={'订舱员':'currentUser','ETD':'date','截补料时间':'date','UN编号':'text','是否危险品':'checkbox','回执附件':'attachment',
-    /* Shipper/Consignee/Notify：上面一个发件人选择框，下面一个可多行录入的文本框 */
+/* Job No 不含「单号/编号」字样，引擎认不出来 → 显式声明为 code 才会只读自动生成；
+ * 订舱人固定为当前登录人不可改；UN编号含「编号」会被误判为自动生成，强制回文本；
+ * 是否危险品改勾选框；四个船期字段都是日期控件 */
+TC['fcl-booking'].modalFieldTypes={'Job No':'code','订舱人':'currentUser',
+    'ETD':'date','ETA':'date','ATD':'date','ATA':'date','订舱日期':'date','截补料时间':'date',
+    'UN编号':'text','是否危险品':'checkbox','回执附件':'attachment',
+    /* Shipper/Notify/Consignee：上面一个发件人选择框，下面一个可多行录入的文本框 */
     'Shipper':'pickerText','Consignee':'pickerText','Notify':'pickerText'};
 /* 必填覆写：起运港（全局正则只收录了目的港，属遗漏）；
- * 客户名称非必填 —— 预录单性质的订舱此时可能还没有确定客户 */
-TC['fcl-booking'].requiredOverrides={'起运港':true,'客户名称':false};
-/* 选择委托订单号后自动带出委托信息 */
+ * S/O No. 由船司订舱后回签、订舱日期在真正订出去才有 —— 建单时都还是空的，不能卡必填 */
+TC['fcl-booking'].requiredOverrides={'起运港':true,'S/O No.':false,'订舱日期':false};
 TC['fcl-booking'].fieldChangeHandlers={
-    '委托订单号':'fclBookingLoadEntrust(this)',
     '是否危险品':'fclBookingToggleDangerous()',
     'Shipper':'fclBookingFillParty(this)',
     'Consignee':'fclBookingFillParty(this)',
@@ -252,11 +290,14 @@ TC['fcl-booking'].afterModalRender='fclBookingAfterModalRender';
 /* 危险品明细字段：勾选「是否危险品」时才显示并必填（SOP 7.4） */
 var FCL_DG_FIELDS=['UN编号','危险类别','包装类别','危险品申报人'];
 
-/* 弹窗分组板块：危险品明细单独成板块排在基本信息下方，随勾选整块显隐；
- * 订舱回执信息只在查看明细里出现（见上面的 modalFieldModes）。
+/* 弹窗分板块：没被任何板块认领的字段（船司/航线/港口/柜型/船名航次/ETD-ETA-ATD-ATA/约号/
+ * 截补料时间/是否危险品）留在最上面的「基础信息」主栅格里。
+ * 危险品信息随「是否危险品」勾选整块显隐；订舱回执信息只在查看明细里出现（见 modalFieldModes）。
  * 注意：必须写在 FCL_DG_FIELDS 赋值之后 —— var 只提升声明不提升值。 */
 TC['fcl-booking'].modalSections=[
-    {key:'party',title:'收发货人信息',fields:['Shipper','Consignee','Notify']},
+    {key:'booking',title:'订舱信息',fields:['订舱日期','订舱人','订舱方式','订舱备注']},
+    {key:'master',title:'主单信息',fields:['S/O No.','放单方式','Shipper','Notify','Consignee','主单备注']},
+    {key:'doc',title:'单证信息',fields:['柜号','封签号','柜重']},
     {key:'dg',title:'危险品信息',fields:FCL_DG_FIELDS},
     {key:'receipt',title:'订舱回执信息',fields:['订舱回执号','回执附件']}
 ];
@@ -295,24 +336,6 @@ function fclEntrustOrderNoOptions(){
     return c.d.filter(function(r){return r[si]!=='已取消';}).map(function(r){return r[ni];});
 }
 
-/* 选择委托订单号 → 从委托订单管理带出对应信息 */
-function fclBookingLoadEntrust(sel){
-    var no=sel&&sel.value;
-    if(!no)return;
-    var c=TC['fcl-sales-instruction'];
-    if(!c||!c.d)return;
-    var ni=c.h.indexOf('委托订单号');
-    var row=c.d.find(function(r){return r[ni]===no;});
-    if(!row){showToast(tr('未找到该委托订单'));return;}
-    var g=function(h){var i=c.h.indexOf(h);return i<0?'':(row[i]||'');};
-    /* 委托订单字段 → 订舱单字段 */
-    var map=[['委托类型','委托类型'],['客户名称','客户名称'],['船司','船司'],
-             ['起运港','起运港'],['目的港','目的港'],['柜型柜量','柜型柜量'],['预计开船日','ETD']];
-    var filled=0;
-    map.forEach(function(p){if(crudSetField(p[1],g(p[0])))filled++;});
-    showToast(tr('已带出委托信息')+'：'+esc(no));
-}
-
 /* 是否危险品（勾选框）→ 危险品信息板块整块显隐 + 明细字段必填 */
 function fclBookingToggleDangerous(){
     var on=crudFieldValue('是否危险品')==='是';
@@ -321,8 +344,8 @@ function fclBookingToggleDangerous(){
     FCL_DG_FIELDS.forEach(function(h){crudToggleField(h,on,true);});
 }
 
-/* ===== 复制相似订舱 =====
- * 弹窗跟「编辑」完全一样，只是重新生成订舱单号、清空委托订单号，其余字段原样保留。
+/* ===== 复制主单 =====
+ * 弹窗跟「修改数据」完全一样，只是重新生成 Job No、清空委托订单号，其余字段原样保留。
  * 实现上直接复用 edit 弹窗，再在渲染完成后改这两个字段与标题/按钮，避免重写一套表单。 */
 var _fclBookingCopyPending=false;
 function openFclBookingCopy(id){
@@ -332,27 +355,15 @@ function openFclBookingCopy(id){
     openCrudModal('edit',id,idx);
 }
 
-/* 下一个订舱单号：与引擎新增时的自动编号规则一致（末尾数字段 +1，保持位数） */
+/* 下一个 Job No：与引擎新增时的自动编号规则一致（末尾数字段 +1，保持位数） */
 function fclNextBookingNo(id){
     var c=TC[id]||{},data=_listData[id]||expandData(id);
-    var i=(c.h||[]).indexOf('订舱单号');
+    var i=(c.h||[]).indexOf('Job No');
     var last=(i>=0&&data.length&&data[data.length-1][i])||'';
     var m=String(last).match(/^(.*?)(\d+)$/);
     return m?m[1]+String(parseInt(m[2],10)+1).padStart(m[2].length,'0'):(last+'-001');
 }
 
-/* ===== 订舱操作（待订舱 → 订舱中）=====
- * 复用编辑弹窗补充订舱信息，保存后把订舱状态推到「订舱中」。 */
-var _fclBookingDoIdx=-1;
-function openFclBookingDo(id){
-    id=id||'fcl-booking';
-    var idx=getSelectedRowIndex();
-    if(idx<0){openActionModal('selectRequired',id,-1);return;}
-    var row=fclBookingRowAt(id,idx);
-    if(fclBookingStatusOf(id,row)!=='待订舱'){showToast(tr('只有「待订舱」的数据可以做订舱操作'));return;}
-    _fclBookingDoIdx=idx;
-    openCrudModal('edit',id,idx);
-}
 function fclBookingRowAt(id,idx){
     var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:((TC[id]||{}).d||[]);
     return data[idx];
@@ -362,10 +373,9 @@ function fclBookingStatusOf(id,row){
     return (row&&i>=0)?String(row[i]||''):'';
 }
 /* 找到列表行对应的种子行：_listData 里的行是 expandData 拷贝出来的副本，改它不落库。
- * 订舱单号非空时按单号找；为空说明是委托单带过来还没编号的那条（expandData 补的行一定有号），
- * 退而按委托订单号找。 */
+ * Job No 非空时按号找；为空则退而按委托订单号找。 */
 function fclBookingSeedRow(id,row){
-    var c=TC[id]||{},h=c.h||[],iNo=h.indexOf('订舱单号'),iEo=h.indexOf('委托订单号');
+    var c=TC[id]||{},h=c.h||[],iNo=h.indexOf('Job No'),iEo=h.indexOf('委托订单号');
     if(!row)return null;
     var no=iNo>=0?String(row[iNo]||''):'';
     var eo=iEo>=0?String(row[iEo]||''):'';
@@ -374,7 +384,7 @@ function fclBookingSeedRow(id,row){
         return !!eo&&String(r[iEo]||'')===eo&&!String(r[iNo]||'');
     })||null;
 }
-/* 订舱单号生成后回写到对应委托订单的「生成订舱单号」 */
+/* Job No 生成后回写到对应委托订单的「生成订舱单号」 */
 function fclBackfillEntrustBookingNo(entrustNo,bookingNo){
     if(!entrustNo)return;
     var eid='fcl-sales-instruction',c=TC[eid];
@@ -384,25 +394,6 @@ function fclBackfillEntrustBookingNo(entrustNo,bookingNo){
     var row=c.d.find(function(r){return String(r[iNo]||'')===entrustNo;});
     if(row)setRowOverride(eid,row,iGen,bookingNo);
 }
-function submitFclBookingDo(id,idx){
-    var row=fclBookingRowAt(id,idx);
-    var h=(TC[id]||{}).h||[],iSt=h.indexOf('订舱状态'),iNo=h.indexOf('订舱单号'),iEo=h.indexOf('委托订单号');
-    if(!row){showToast(tr('未找到订舱数据'));return;}
-    /* 委托单带过来的数据还没有订舱单号，点订舱时才生成 */
-    var no=iNo>=0?String(row[iNo]||''):'';
-    if(iNo>=0&&!no){
-        no=fclNextBookingNo(id);
-        var seed=fclBookingSeedRow(id,row);
-        if(seed)seed[iNo]=no;
-        row[iNo]=no;
-        fclBackfillEntrustBookingNo(iEo>=0?String(row[iEo]||''):'',no);
-    }
-    if(iSt>=0)setRowOverride(id,row,iSt,'订舱中');
-    _fclBookingDoIdx=-1;
-    closeCrudModal();
-    fclBookingRefreshList(id);
-    showToast(tr('订舱单号')+' '+no+' '+tr('已生成，状态转为「订舱中」'));
-}
 function fclBookingRefreshList(id){
     var mc=document.getElementById('main-content');
     var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
@@ -410,23 +401,24 @@ function fclBookingRefreshList(id){
     if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
 }
 
-/* ===== 取消订舱（订舱中 → 取消订舱，支持多选）===== */
+/* ===== 作废（待订舱/已订舱/已放舱 → 已作废，支持多选）=====
+ * 已经作废过的再勾选也不会重复处理，会被算进「将跳过」。 */
 function openFclBookingCancel(id){
     id=id||'fcl-booking';
     var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
-    if(!idxs.length){showToast(tr('请先勾选需要取消订舱的数据'));return;}
-    var h=(TC[id]||{}).h||[],iNo=h.indexOf('订舱单号');
+    if(!idxs.length){showToast(tr('请先勾选需要作废的主单'));return;}
+    var h=(TC[id]||{}).h||[],iNo=h.indexOf('Job No');
     var eligible=[],blocked=[];
     idxs.forEach(function(i){
         var row=fclBookingRowAt(id,i);
         if(!row)return;
-        if(fclBookingStatusOf(id,row)==='订舱中')eligible.push(i);
+        if(fclBookingStatusOf(id,row)!=='已作废')eligible.push(i);
         else blocked.push(iNo>=0?row[iNo]:'');
     });
-    if(!eligible.length){showToast(tr('只有「订舱中」的数据可以取消订舱'));return;}
-    var msg=tr('已勾选')+' '+idxs.length+' '+tr('条数据')+'，'+tr('其中')+' '+eligible.length+' '+tr('条可取消订舱');
-    if(blocked.length)msg+='，'+blocked.length+' '+tr('条非「订舱中」将跳过');
-    msg+='。'+tr('取消后该票需重新订舱，是否确认？');
+    if(!eligible.length){showToast(tr('所选主单已经是「已作废」，无需重复操作'));return;}
+    var msg=tr('已勾选')+' '+idxs.length+' '+tr('条数据')+'，'+tr('其中')+' '+eligible.length+' '+tr('条可作废');
+    if(blocked.length)msg+='，'+blocked.length+' '+tr('条已作废将跳过');
+    msg+='。'+tr('作废后该票需重新建单，是否确认？');
     openConfirmTip(msg,function(){confirmFclBookingCancel(id,eligible);});
 }
 function confirmFclBookingCancel(id,idxs){
@@ -434,10 +426,10 @@ function confirmFclBookingCancel(id,idxs){
     var n=0;
     idxs.forEach(function(k){
         var row=fclBookingRowAt(id,k);
-        if(row&&i>=0){setRowOverride(id,row,i,'取消订舱');n++;}
+        if(row&&i>=0){setRowOverride(id,row,i,'已作废');n++;}
     });
     fclBookingRefreshList(id);
-    showToast(tr('已取消订舱')+' '+n+' '+tr('条'));
+    showToast(tr('已作废')+' '+n+' '+tr('条'));
 }
 
 /* ===== 委托订单审核通过 → 自动生成待订舱的订舱单 ===== */
@@ -460,12 +452,14 @@ function submitEntrustAudit(id){
     var now=(typeof receiptNowStr==='function')?receiptNowStr():'';
     var who=(typeof getCurrentUserName==='function')?getCurrentUserName():'admin';
     if(result==='通过'){
-        /* 订舱单号不在这里生成 —— 委托单过来的数据先落到「待订舱」，点订舱按钮时才编号 */
+        /* Job No 在这里就编号：改版后「订舱」按钮变成普通「新增」，没有别的落点再补号了，
+         * 而 Job No 是主单的主键，待订舱的单子也必须有号。编完回写委托订单的「生成订舱单号」。 */
         set('状态','已转订舱');set('审核人',who);set('审核时间',now);
-        createBookingFromEntrust(c,row);
+        var jobNo=createBookingFromEntrust(c,row);
+        fclBackfillEntrustBookingNo(get('委托订单号'),jobNo);
         closeCrudModal();
         fclBookingRefreshList(id);
-        showToast(tr('审核通过，已生成待订舱数据（订舱时自动编号）'));
+        showToast(tr('审核通过，已生成待订舱主单')+' '+jobNo);
     }else if(result==='驳回'){
         set('状态','已驳回');set('审核人',who);set('审核时间',now);
         closeCrudModal();
@@ -477,58 +471,38 @@ function submitEntrustAudit(id){
     }
     return true;
 }
-/* 用委托订单的信息生成一条「待订舱」的订舱单（订舱单号留空，订舱时才生成） */
+/* 用委托订单的信息生成一条「待订舱」的主单，返回新生成的 Job No。
+ * 注意写 bc.d 而不是 _listData —— 后者每次渲染都被 expandData 覆盖，写进去会丢。 */
 function createBookingFromEntrust(ec,erow){
     var bid='fcl-booking',bc=TC[bid];
-    if(!bc)return;
+    if(!bc)return '';
     var eg=function(label){var i=(ec.h||[]).indexOf(label);return i>=0?(erow[i]||''):'';};
     var seedWidth=(bc.d&&bc.d.length)?bc.d[0].length:(bc.h||[]).length-1;
-    var map={'订舱单号':'','委托订单号':eg('委托订单号'),'委托类型':eg('委托类型'),
+    var jobNo=fclNextBookingNo(bid);
+    var map={'Job No':jobNo,'委托订单号':eg('委托订单号'),'委托类型':eg('委托类型'),
         '客户名称':eg('客户名称'),'船司':eg('船司'),'起运港':eg('起运港'),'目的港':eg('目的港'),
         '柜型柜量':eg('柜型柜量'),'ETD':eg('预计开船日'),'是否危险品':'否',
-        '订舱员':(typeof getCurrentUserName==='function')?getCurrentUserName():'admin',
-        '备注':tr('由委托订单审核通过自动生成'),'订舱状态':'待订舱'};
+        '订舱日期':(typeof receiptNowStr==='function')?receiptNowStr().slice(0,10):'',
+        '订舱人':(typeof getCurrentUserName==='function')?getCurrentUserName():'admin',
+        '订舱备注':tr('由委托订单审核通过自动生成'),'订舱状态':'待订舱'};
     bc.d.push((bc.h||[]).slice(0,seedWidth).map(function(name){return map[name]!==undefined?map[name]:'';}));
-    if(typeof _listData!=='undefined')delete _listData[bid];   /* 下次渲染重新展开，带上新订舱单 */
+    if(typeof _listData!=='undefined')delete _listData[bid];   /* 下次渲染重新展开，带上新主单 */
+    return jobNo;
 }
 
 function fclBookingAfterModalRender(id,mode,rowData){
-    /* 无单订舱（新增）：不挂委托单，委托订单号留空、委托类型固定「无单」 */
-    if(mode==='add'){
-        var t=document.getElementById('crud-modal-title');
-        if(t)t.textContent=tr('无单订舱');
-        var eo=crudField('委托订单号');
-        if(eo){
-            if(eo.tagName==='SELECT'&&!eo.querySelector('option[value=""]'))
-                eo.insertAdjacentHTML('afterbegin','<option value=""></option>');
-            eo.value='';
-        }
-        crudSetField('委托类型','无单');
-    }
-    /* 订舱操作：标题与底部按钮改成「订舱」语义，保存后推进状态 */
-    if(_fclBookingDoIdx>=0&&mode==='edit'){
-        var doIdx=_fclBookingDoIdx;
-        var t0=document.getElementById('crud-modal-title');
-        if(t0)t0.textContent=tr('订舱')+' - '+tr('补充订舱信息');
-        var f0=document.getElementById('crud-modal-footer');
-        if(f0)f0.innerHTML='<button onclick="cancelFclBookingDo()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
-                           '<button onclick="submitFclBookingDo(\''+id+'\','+doIdx+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('保存并提交订舱')+'</button>';
-    }
+    /* 复制主单：只重新编号，其余字段原样保留。
+     * 委托订单号已不在弹窗里（改版后只在列表展示），复制出来的新单不继承它。 */
     if(_fclBookingCopyPending){
         _fclBookingCopyPending=false;
         var t=document.getElementById('crud-modal-title');
-        if(t)t.textContent=tr('复制相似订舱');
-        crudSetField('订舱单号',fclNextBookingNo(id));
-        crudSetField('委托订单号','');
+        if(t)t.textContent=tr('复制主单');
+        crudSetField('Job No',fclNextBookingNo(id));
         var f=document.getElementById('crud-modal-footer');
         if(f)f.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
                          '<button onclick="closeCrudModal();showToast(\''+tr('复制成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
     }
     fclBookingToggleDangerous();
-}
-function cancelFclBookingDo(){
-    _fclBookingDoIdx=-1;
-    closeCrudModal();
 }
 
 /* 10.3 补料与提单 —— 吸收原「实际录单」，并入催料字段（SOP 11.3）*/
@@ -792,7 +766,7 @@ function openFclOrderDetail(id,rowIdx){
     html+='<div class="col-span-2"><div class="text-[11px] text-text-muted mb-0.5">'+tr('超时预警')+'</div><div class="text-sm text-red-600">'+esc(g('超时预警'))+'</div></div>';
     html+='</div>';
     html+='<div class="mt-3 flex flex-wrap gap-2">';
-    [['订舱管理','fcl-booking'],['放仓作业','fcl-release'],['拖车安排','fcl-truck'],['进仓装柜','fcl-load'],
+    [['Job/主单管理','fcl-booking'],['放仓作业','fcl-release'],['拖车安排','fcl-truck'],['进仓装柜','fcl-load'],
      ['补料与提单','fcl-si-bl'],['报关申报','fcl-customs'],['开船与轨迹','fcl-sailing-track'],['寄单作业','fcl-doc-send']].forEach(function(p){
         html+='<button type="button" class="h-7 px-3 text-xs rounded-lg border border-primary-200 text-primary-600 hover:bg-primary-50 cursor-pointer" '+
               'onclick="closeCrudModal();navigateToTab(\'fcl\',\''+p[1]+'\')">'+esc(tr(p[0]))+'</button>';
@@ -858,16 +832,16 @@ var FCL_SOP_STEPS=[
  caution:'预定仓无需审核（无费用产生）；实单订舱必须走价格与毛利审核。业务员在外可用移动端录入。',
  tabs:[['委托订单管理','fcl-sales-instruction','fcl'],['业务询盘单','fcl-inquiry-order','fcl']]},
 
-{no:'④',name:'订舱管理',sop:'SOP-FCL-04',stage:'ops',role:'订舱员（主导）、商务（仓位协调）',
+{no:'④',name:'Job/主单管理',sop:'SOP-FCL-04',stage:'ops',role:'订舱员（主导）、商务（仓位协调）',
  trigger:'委托订单审核通过，进入「待订舱」队列',
  actions:['从待订舱列表领取订单，选择订舱方式：自有渠道 / 外配同行 / 一代',
           '自有渠道走 EDI 推送或船公司官网；外配同行由系统生成剥离敏感信息的专属托书一键发邮件',
-          '可「复制相似订舱」（同公司/同船司/同港口）减少约 80% 重复录入',
+          '可「复制主单」（同公司/同船司/同港口）减少约 80% 重复录入',
           '填写发货人、收货人、通知人、品名、HS code、货重、柜型柜量、约号','提交后登记船公司订舱回执号'],
  output:'订舱单 FBK + 订舱回执号；状态 已订舱',
  sla:'船公司订舱回执 ≤ 24 小时',
  caution:'危险品必须勾选「是否危险品」并填 UN 编号、危险类别、包装类别、申报人，其船司结单时间早于普货，需提前规划、进仓与普货分开存放。',
- tabs:[['订舱管理','fcl-booking','fcl'],['放仓作业','fcl-release','fcl']]},
+ tabs:[['Job/主单管理','fcl-booking','fcl'],['放仓作业','fcl-release','fcl']]},
 
 {no:'⑤',name:'放仓作业',sop:'SOP-FCL-05',stage:'ops',role:'订舱员（主导）、操作员（协同）',
  trigger:'船公司确认舱位并发出放仓邮件（一般 1~2 个工作日）',
@@ -990,7 +964,7 @@ var FCL_FUNC_MAP=[
     ['业务询盘单','fcl-inquiry-order','fcl','商机台账，记录询盘、报价渠道与失单原因'],
     ['委托订单管理','fcl-sales-instruction','fcl','销售指示即客户委托单，预录单与实单统一在此录入，审核通过后生成订舱单']]},
 {group:'③ 订舱与放舱',hint:'订舱员的完整工作面',items:[
-    ['订舱管理','fcl-booking','fcl','全链路主档；选委托订单号自动带出信息，危险品明细随勾选显隐'],
+    ['Job/主单管理','fcl-booking','fcl','整柜全链路主档；弹窗按 基础/订舱/主单/单证 分板块，危险品明细随勾选显隐'],
     ['放仓作业','fcl-release','fcl','船司放仓邮件解析、敏感信息剥离与放仓件发送']]},
 {group:'④ 操作执行',hint:'操作员、单证员、报关员分岗作业',items:[
     ['拖车安排','fcl-truck','fcl','拖车委托单、拖车行选择与实际费用登记'],

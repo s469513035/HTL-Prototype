@@ -958,7 +958,6 @@ function renderToolbarAction(action,id){
     else if(action.key==='copy')click='openSelectedCrud(\'copy\',\''+id+'\')';
     else if(action.key==='copyWaybill')click='openActionModal(\'copyWaybill\',\''+id+'\',-1)';
     else if(action.key==='copyBooking')click='openFclBookingCopy(\''+id+'\')';
-    else if(action.key==='doBooking')click='openFclBookingDo(\''+id+'\')';
     else if(action.key==='cancelBooking')click='openFclBookingCancel(\''+id+'\')';
     else if(action.key==='freightRecalc')click='openFreightRecalcConfirm(\''+id+'\')';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
@@ -1497,15 +1496,14 @@ function getToolbarActions(id){
         if(id==='fcl-booking-window')base.push({key:'windowTest',label:'测试提醒'});
         if(id==='fcl-release-tpl')base.push({key:'tplImport',label:'批量导入'},{key:'copy',label:'复制模板'});
         if(id==='fcl-booking'){
-            /* 订舱管理：订舱是主操作，紧跟在查询后面；不要「查看详情」和「同步数据」；
-             * 新增=无单订舱（不走委托单直接开的订舱），编辑=修改数据 */
+            /* Job/主单管理：不要「查看详情」和「同步数据」；编辑=修改数据；
+             * 取消订舱改为作废（作废后该票需重新建单，故仍是 danger 色） */
             base.splice(base.findIndex(function(a){return a.type==='view';}),1);
             base.forEach(function(a){
-                if(a.type==='add')a.label='无单订舱';
+                if(a.type==='add')a.label='新增';
                 if(a.type==='edit')a.label='修改数据';
             });
-            base.splice(1,0,{key:'doBooking',label:'订舱',variant:'primary'});
-            base.push({key:'copyBooking',label:'复制相似订舱'},{key:'genAgentBooking',label:'生成外配托书'},{key:'bookingReceipt',label:'登记订舱回执'},{key:'cancelBooking',label:'取消订舱',variant:'danger'});
+            base.push({key:'copyBooking',label:'复制主单'},{key:'genAgentBooking',label:'生成外配托书'},{key:'bookingReceipt',label:'登记订舱回执'},{key:'cancelBooking',label:'作废',variant:'danger'});
         }
         if(id==='fcl-si-bl')base.push({key:'urgeDoc',label:'催料'},{key:'draftBl',label:'草稿件处理'},{key:'bindCustomerOrder',label:'绑定客户实单'},{key:'recalcFee',label:'重算费用'});
         if(id==='fcl-bl-split-merge')base.push({key:'doSplit',label:'拆单'},{key:'doMerge',label:'并单'},{key:'feeAllocate',label:'费用分摊'});

@@ -38,7 +38,7 @@ const menuData=[
 {id:'fcl-intake',label:'接单与订舱',children:[
     {id:'fcl-inquiry-order',label:'业务询盘单',page:'fcl',tab:'fcl-inquiry-order'},
     {id:'fcl-sales-instruction',label:'委托订单管理',page:'fcl',tab:'fcl-sales-instruction'},
-    {id:'fcl-booking',label:'订舱管理',page:'fcl',tab:'fcl-booking'},
+    {id:'fcl-booking',label:'Job/主单管理',page:'fcl',tab:'fcl-booking'},
     {id:'fcl-release',label:'放仓作业',page:'fcl',tab:'fcl-release'}
 ]},
 // ===== ④ 操作执行（SOP-FCL-06~11）=====

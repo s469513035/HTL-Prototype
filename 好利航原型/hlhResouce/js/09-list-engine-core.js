@@ -959,6 +959,8 @@ function renderToolbarAction(action,id){
     else if(action.key==='copyWaybill')click='openActionModal(\'copyWaybill\',\''+id+'\',-1)';
     else if(action.key==='copyBooking')click='openFclBookingCopy(\''+id+'\')';
     else if(action.key==='cancelBooking')click='openFclBookingCancel(\''+id+'\')';
+    else if(action.key==='linkEntrust')click='openFclBookingLinkEntrust(\''+id+'\')';
+    else if(action.key==='releaseBooking')click='openFclBookingRelease(\''+id+'\')';
     else if(action.key==='freightRecalc')click='openFreightRecalcConfirm(\''+id+'\')';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
     else if(action.key==='finalAllocAdjust')click='openFinalAllocAdjustModal(\''+id+'\')';
@@ -1503,7 +1505,7 @@ function getToolbarActions(id){
                 if(a.type==='add')a.label='新增';
                 if(a.type==='edit')a.label='修改数据';
             });
-            base.push({key:'copyBooking',label:'复制主单'},{key:'genAgentBooking',label:'生成外配托书'},{key:'bookingReceipt',label:'登记订舱回执'},{key:'cancelBooking',label:'作废',variant:'danger'});
+            base.push({key:'linkEntrust',label:'关联委托'},{key:'copyBooking',label:'复制主单'},{key:'genAgentBooking',label:'生成外配托书'},{key:'bookingReceipt',label:'登记订舱回执'},{key:'releaseBooking',label:'放舱'},{key:'cancelBooking',label:'作废',variant:'danger'});
         }
         if(id==='fcl-si-bl')base.push({key:'urgeDoc',label:'催料'},{key:'draftBl',label:'草稿件处理'},{key:'bindCustomerOrder',label:'绑定客户实单'},{key:'recalcFee',label:'重算费用'});
         if(id==='fcl-bl-split-merge')base.push({key:'doSplit',label:'拆单'},{key:'doMerge',label:'并单'},{key:'feeAllocate',label:'费用分摊'});

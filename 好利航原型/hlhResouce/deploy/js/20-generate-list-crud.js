@@ -806,9 +806,24 @@ function crudAttachmentFieldHtml(hd,val){
 
 function crudAttachmentChipHtml(name){
     const clip='<svg class="w-3 h-3 text-primary-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>';
-    return '<span class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-white border border-surface-200 text-[11px] text-text-secondary">'+
+    /* 文件名同时写进 data-attach-name：chip 里还有 svg 和删除按钮，
+     * 靠 textContent 取名字会把「×」一起带出来，用属性取才干净（见 crudAttachmentNames）。 */
+    return '<span data-attach-name="'+esc(name)+'" class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-white border border-surface-200 text-[11px] text-text-secondary">'+
            clip+esc(name)+
            '<button type="button" class="text-text-muted hover:text-red-500 cursor-pointer" onclick="this.parentElement.remove()">&times;</button></span>';
+}
+
+/* 读回附件控件里当前挂着的文件名，用分号连成一个串（列表里就是这么存的）。
+ * scope 不传时从整个弹窗 body 里找。 */
+function crudAttachmentNames(scope){
+    const root=scope||document.getElementById('crud-modal-body');
+    if(!root)return '';
+    const out=[];
+    root.querySelectorAll('[data-attach-name]').forEach(function(el){
+        const n=el.getAttribute('data-attach-name');
+        if(n)out.push(n);
+    });
+    return out.join(';');
 }
 
 function onCrudAttachmentPick(input,boxId){

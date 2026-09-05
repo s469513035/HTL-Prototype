@@ -332,9 +332,15 @@ TC['fcl-booking'].fieldChangeHandlers={
     'Consignee':'fclBookingFillParty(this)',
     'Notify':'fclBookingFillParty(this)'
 };
-/* 是否危险品独占一行、控件只占 1/4 宽 —— 它是下面危险品信息那一组的开关，
- * 跟普通字段并排会看不出这层从属关系（样式见 css/app.css 的 .field-row-quarter） */
-TC['fcl-booking'].modalFieldClass={'是否危险品':'field-row-quarter'};
+/* 主单信息板块的两种排布（样式见 css/app.css）：
+ * - 是否危险品：独占一行、控件只占 1/4 宽 —— 它是下面危险品信息那一组的开关，
+ *   跟普通字段并排会看不出这层从属关系；
+ * - 危险品四个明细：每行 4 个，一行放完。 */
+TC['fcl-booking'].modalFieldClass={
+    '是否危险品':'field-row-quarter',
+    'UN编号':'field-col-quarter','危险类别':'field-col-quarter',
+    '包装类别':'field-col-quarter','危险品申报人':'field-col-quarter'
+};
 TC['fcl-booking'].afterModalRender='fclBookingAfterModalRender';
 /* 字段多、板块多，用紧凑排版压掉间距（见 css/app.css 的 .crud-compact） */
 TC['fcl-booking'].compactModal=true;
@@ -356,7 +362,7 @@ TC['fcl-booking'].modalSections=[
      * 3 列刚好让这三个高块并排成完整一行，高度一致、没有缺口。
      * 字段先后由表头顺序决定（引擎按 header index 排序，不是按这里的 fields 顺序），
      * 已在 FCL_BOOKING_HEADERS 里排成：6 个矮字段 -> 3 个高块 -> 危险品 -> 主单备注。 */
-    {key:'master',title:'主单信息',cols:3,
+    {key:'master',title:'主单信息',cols:12,
         /* 小标题挂在 UN编号 上而不是「是否危险品」上：勾选框始终显示，
          * 「危险品信息」这一组连同标题只在勾上之后才出现在它下面 */
         dividers:{'UN编号':'危险品信息'},

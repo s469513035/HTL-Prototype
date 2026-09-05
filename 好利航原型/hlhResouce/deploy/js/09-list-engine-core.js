@@ -564,7 +564,9 @@ function modalGridColumnClass(fields,cols){
     if(cols==='modal'){
         return modalNeedsFourColumns(fields)?'md:grid-cols-4':'md:grid-cols-5';
     }
-    return {1:'md:grid-cols-1',2:'md:grid-cols-2',3:'md:grid-cols-3',4:'md:grid-cols-4',5:'md:grid-cols-5',6:'md:grid-cols-6'}[cols||2]||'md:grid-cols-2';
+    /* 12 是给「一个板块里既要 3 列又要 4 列」用的：12 能被 3 和 4 整除，
+     * 字段默认跨 4 格（每行 3 个），需要每行 4 个的字段跨 3 格（见 css 的 .field-col-quarter）。 */
+    return {1:'md:grid-cols-1',2:'md:grid-cols-2',3:'md:grid-cols-3',4:'md:grid-cols-4',5:'md:grid-cols-5',6:'md:grid-cols-6',12:'md:grid-cols-12'}[cols||2]||'md:grid-cols-2';
 }
 
 function modalGridFullClass(fields,cols){

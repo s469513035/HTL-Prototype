@@ -251,3 +251,14 @@
         @media (min-width:768px){
             #crud-modal-body .field-row-quarter{grid-column:1/-1;max-width:25%}
         }
+        /* 12 列板块：一个板块里同时要「每行 3 个」和「每行 4 个」时用它。
+         * 12 能被 3 和 4 整除，所以字段默认跨 4 格 = 每行 3 个，
+         * 挂 .field-col-quarter 的跨 3 格 = 每行 4 个。
+         * 下面几条特例必须排在通用那条之后 —— 它们特异度相同，靠书写顺序取胜。 */
+        @media (min-width:768px){
+            #crud-modal-body.crud-compact [class*="grid-cols-12"]>[data-field-box]{grid-column:span 4}
+            #crud-modal-body.crud-compact [class*="grid-cols-12"]>.modal-picker-text{grid-column:span 4}
+            #crud-modal-body.crud-compact [class*="grid-cols-12"]>.field-col-quarter{grid-column:span 3}
+            #crud-modal-body.crud-compact [class*="grid-cols-12"]>.modal-remark-half{grid-column:1/-1}
+            #crud-modal-body.crud-compact [class*="grid-cols-12"]>.field-row-quarter{grid-column:1/-1;max-width:25%}
+        }

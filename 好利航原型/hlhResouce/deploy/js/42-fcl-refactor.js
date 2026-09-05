@@ -228,6 +228,42 @@ var FCL_BOOKING_SEED=[
      '品名':'五金工具','HS Code':'8205.5900','货重':'24,800 KG','柜量':'2','是否危险品':'否',
      '主单备注':'船司已放舱','柜号':'MSCU3344556','封签号':'SL-0610223','柜重':'24,800 KG',
      '订舱状态':'已放舱'},
+    {'Job No':'FBK-20260609006','委托订单号':'FEO-20260609007',
+     '船司':'MAERSK','起运港':'深圳盐田','目的港':'拉各斯','柜型柜量':'40HQ×1','船名航次':'MAERSK LAGOS 025W',
+     'ETD':'2026-06-16','ETA':'2026-07-14','ATD':'','ATA':'',
+     '订舱回执号':'MSKU220011','回执附件':'MAERSK订舱确认书.pdf',
+     '放舱附件':'MAERSK放舱件_拉各斯.pdf','关务联系人':'陈关务 / 13800138001',
+     '协议号':'MSK-CN-2026-8870','截补料时间':'2026-06-13 12:00','订舱日期':'2026-06-09','订舱方式':'EDI','订舱人':'刘订舱',
+     '订舱备注':'已完成装柜，等待开船','S/O No.':'SO-MSK-2026-0609','放单方式':'电放',
+     '品名':'电子产品','HS Code':'8543.7099','货重':'19,200 KG','柜量':'1','是否危险品':'否',
+     '主单备注':'装柜完成','柜号':'MSKU2200113','封签号':'SL-0609771','柜重':'19,200 KG','订舱状态':'已装柜'},
+    {'Job No':'FBK-20260605007','委托订单号':'FEO-20260605008',
+     '船司':'COSCO','起运港':'广州南沙','目的港':'达喀尔','柜型柜量':'20GP×1','船名航次':'COSCO AFRICA 117W',
+     'ETD':'2026-06-10','ETA':'2026-07-08','ATD':'2026-06-10','ATA':'',
+     '订舱回执号':'COSU661200','回执附件':'COSCO订舱确认书.pdf',
+     '放舱附件':'COSCO放舱件_达喀尔.pdf','关务联系人':'周关务 / 13900139002',
+     '协议号':'COS-CN-2026-4400','截补料时间':'2026-06-07 18:00','订舱日期':'2026-06-05','订舱方式':'官网','订舱人':'赵订舱',
+     '订舱备注':'船已开出','S/O No.':'SO-COS-2026-0605','放单方式':'正本',
+     '品名':'服装','HS Code':'6109.1000','货重':'11,800 KG','柜量':'1','是否危险品':'否',
+     '主单备注':'已离港，在途跟踪中','柜号':'COSU6612004','封签号':'SL-0605330','柜重':'11,800 KG','订舱状态':'已离港'},
+    {'Job No':'FBK-20260520008','委托订单号':'FEO-20260520009',
+     '船司':'CMA CGM','起运港':'上海洋山','目的港':'阿比让','柜型柜量':'40HQ×1','船名航次':'CMA MARSEILLE 07W',
+     'ETD':'2026-05-24','ETA':'2026-06-21','ATD':'2026-05-24','ATA':'2026-06-20',
+     '订舱回执号':'CMAU441100','回执附件':'CMA订舱确认书.pdf',
+     '放舱附件':'CMA放舱件_阿比让.pdf','关务联系人':'陈关务 / 13800138001',
+     '协议号':'CMA-CN-2026-3300','截补料时间':'2026-05-21 12:00','订舱日期':'2026-05-20','订舱方式':'EDI','订舱人':'刘订舱',
+     '订舱备注':'已到港，等待清关提柜','S/O No.':'SO-CMA-2026-0520','放单方式':'电放',
+     '品名':'五金工具','HS Code':'8205.5900','货重':'22,400 KG','柜量':'1','是否危险品':'否',
+     '主单备注':'目的港已到','柜号':'CMAU4411005','封签号':'SL-0520118','柜重':'22,400 KG','订舱状态':'已到港'},
+    {'Job No':'FBK-20260505009','委托订单号':'FEO-20260505010',
+     '船司':'MSC','起运港':'深圳盐田','目的港':'特马','柜型柜量':'40HQ×1','船名航次':'MSC ACCRA 21W',
+     'ETD':'2026-05-09','ETA':'2026-06-05','ATD':'2026-05-09','ATA':'2026-06-04',
+     '订舱回执号':'MSCU880077','回执附件':'MSC_booking_confirm.pdf',
+     '放舱附件':'MSC放舱件_特马.pdf','关务联系人':'陈关务 / 13800138001',
+     '协议号':'MSC-CN-2026-2210','截补料时间':'2026-05-06 12:00','订舱日期':'2026-05-05','订舱方式':'官网','订舱人':'赵订舱',
+     '订舱备注':'全程完成','S/O No.':'SO-MSC-2026-0505','放单方式':'海运单',
+     '品名':'家具','HS Code':'9403.6090','货重':'17,600 KG','柜量':'1','是否危险品':'否',
+     '主单备注':'客户已签收','柜号':'MSCU8800776','封签号':'SL-0505992','柜重':'17,600 KG','订舱状态':'已签收'},
     {'Job No':'FBK-20260608005','委托订单号':'FEO-20260608006','客户名称':'广州远洋进出口贸易',
      '船司':'ONE','起运港':'广州南沙','目的港':'洛美','柜型柜量':'20GP×1','船名航次':'ONE LOME 07W',
      'ETD':'2026-06-18','ETA':'','ATD':'','ATA':'',
@@ -238,7 +274,7 @@ var FCL_BOOKING_SEED=[
 ];
 addPrototypeTable('fcl-booking','Job/主单管理',
     FCL_BOOKING_HEADERS,
-    ['待订舱','已订舱','已放舱','已作废'],
+    ['待订舱','已订舱','已放舱','已装柜','已离港','已到港','已签收','已作废'],
     FCL_BOOKING_SEED.map(function(o){
         return FCL_BOOKING_HEADERS.split('|').slice(0,-1).map(function(h){return o[h]===undefined?'':o[h];});
     }),[
@@ -253,7 +289,7 @@ addPrototypeTable('fcl-booking','Job/主单管理',
     {label:'品名',type:'text'},
     {label:'是否危险品',type:'select',options:['是','否']},
     {label:'ETD',type:'date'},
-    {label:'订舱状态',type:'select',options:['待订舱','已订舱','已放舱','已作废']}
+    {label:'订舱状态',type:'select',options:['待订舱','已订舱','已放舱','已装柜','已离港','已到港','已签收','已作废']}
 ]);
 /* 委托订单号：数据仍在列表里（委托单审核通过或「关联委托」时写入），但不在弹窗录入；
  * 客户名称已从主单去掉 —— 一个主单可能合并关联多张委托单，客户不唯一，去委托单里看 */
@@ -542,7 +578,7 @@ function openFclBookingViewEntrust(id,idx){
     var nos=String(g('委托订单号')||'').split(/[；;，,]/).map(function(s){return s.trim();}).filter(Boolean);
     var all=fclEntrustRowsBy(null);
     var panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='56%';
+    if(panel)panel.style.width='78%';   /* 明细改列表后有 11 列，56% 会挤成一团 */
     document.getElementById('crud-modal-title').textContent=tr('查看委托')+' - '+job;
     var b='';
     if(!nos.length){
@@ -550,27 +586,29 @@ function openFclBookingViewEntrust(id,idx){
           tr('该主单还没有关联委托订单')+'<div class="mt-1 text-xs">'+tr('可用工具栏的「关联委托」挂上')+'</div></div>';
     }else{
         b+='<div class="mb-3 text-sm text-text-secondary">'+tr('共关联')+' <span class="font-semibold text-text-primary">'+nos.length+'</span> '+tr('张委托订单')+'</div>';
+        /* 明细用列表展示：一张主单常常挂多张委托单，卡片式一张一屏太长，列表能一眼横向比对 */
+        var cols=['委托订单号','委托类型','委托时间','客户名称','业务员','船司','柜型柜量','起运港','目的港','预计开船日','状态'];
+        b+='<div class="border border-surface-200 rounded-lg overflow-x-auto">';
+        b+='<table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+           cols.map(function(t){return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+
+           '</tr></thead><tbody>';
         nos.forEach(function(no){
             var e=all.find(function(x){return x.no===no;});
             if(!e){
-                b+='<div class="mb-2 px-3 py-2.5 rounded-lg border border-amber-200 bg-amber-50 text-sm text-amber-700">'+
-                   esc(no)+'　'+tr('未在委托订单管理中找到')+'</div>';
+                b+='<tr class="border-t border-surface-100 bg-amber-50" data-entrust-row="'+esc(no)+'">'+
+                   '<td class="px-3 py-2 font-medium text-amber-700 whitespace-nowrap">'+esc(no)+'</td>'+
+                   '<td class="px-3 py-2 text-amber-700" colspan="'+(cols.length-1)+'">'+tr('未在委托订单管理中找到')+'</td></tr>';
                 return;
             }
-            var pairs=[['委托类型',e.type],['委托时间',e.time],['客户名称',e.cust],['业务员',e.sales],
-                       ['船司',e.carrier],['柜型柜量',e.box],['起运港',e.pol],['目的港',e.pod],
-                       ['预计开船日',e.etd],['状态',tr(e.status)]];
-            b+='<div class="mb-3 rounded-lg border border-surface-200 overflow-hidden">';
-            b+='<div class="px-3 py-2 bg-surface-50 border-b border-surface-200 flex items-center justify-between">'+
-               '<span class="text-sm font-semibold text-text-primary">'+esc(e.no)+'</span>'+
-               '<span class="text-xs text-text-secondary">'+esc(tr(e.status||''))+'</span></div>';
-            b+='<div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2.5">';
-            pairs.forEach(function(p){
-                b+='<div><div class="text-xs text-text-secondary mb-0.5">'+tr(p[0])+'</div>'+
-                   '<div class="text-sm text-text-primary">'+esc(p[1]||'—')+'</div></div>';
+            var vals=[e.no,e.type,e.time,e.cust,e.sales,e.carrier,e.box,e.pol,e.pod,e.etd,tr(e.status)];
+            b+='<tr class="border-t border-surface-100" data-entrust-row="'+esc(e.no)+'">';
+            vals.forEach(function(v,i){
+                b+='<td class="px-3 py-2 whitespace-nowrap '+(i===0?'font-medium text-text-primary':'text-text-secondary')+'">'+
+                   esc(v||'—')+'</td>';
             });
-            b+='</div></div>';
+            b+='</tr>';
         });
+        b+='</tbody></table></div>';
     }
     document.getElementById('crud-modal-body').innerHTML=b;
     document.getElementById('crud-modal-footer').innerHTML=
@@ -716,6 +754,174 @@ function confirmFclBookingCancel(id,idxs){
     showToast(tr('已作废')+' '+n+' '+tr('条'));
 }
 
+/* ===== 委托订单审核 =====
+ * 审核要对照「应收价 / 成本价 / 毛利 / 毛利率」下判断，所以不用通用审核弹窗，单写一个。
+ * 预录单（预定仓性质，只是先占个舱位、还没有报价和成本）不需要审核，直接转主单。 */
+var FCL_LOW_MARGIN_RATE=5;   /* 毛利率低于这个百分比给出提醒，只提示不拦截 */
+/* 'USD 4,500' -> 4500；取不出数字返回 null，好跟「金额就是 0」区分开 */
+function fclParseMoney(v){
+    var m=String(v==null?'':v).replace(/,/g,'').match(/-?\d+(\.\d+)?/);
+    return m?parseFloat(m[0]):null;
+}
+function fclEntrustPriceInfo(ec,row){
+    var h=(ec&&ec.h)||[];
+    var g=function(label){var i=h.indexOf(label);return (i>=0&&row&&row[i]!=null)?String(row[i]):'';};
+    var sell=g('销售运费'),cost=g('预估成本'),profit=g('预估毛利');
+    var s=fclParseMoney(sell),c=fclParseMoney(cost),p=fclParseMoney(profit);
+    var rate=(s&&s!==0&&p!==null)?(p/s*100):null;
+    /* 对账：应收 - 成本 应该等于毛利，对不上说明单据本身有问题，审核时必须看见 */
+    var calc=(s!==null&&c!==null)?(s-c):null;
+    var mismatch=(calc!==null&&p!==null&&Math.abs(calc-p)>1);
+    return {sell:sell,cost:cost,profit:profit,sellNum:s,costNum:c,profitNum:p,
+            rate:rate,calc:calc,mismatch:mismatch,
+            low:(rate!==null&&rate<FCL_LOW_MARGIN_RATE),
+            empty:(s===null&&c===null&&p===null)};
+}
+var _entrustAuditIdx=-1;
+function openEntrustAuditModal(id,idx){
+    id=id||'fcl-sales-instruction';
+    if(idx===undefined||idx<0)idx=getSelectedRowIndex();
+    if(idx<0){openActionModal('selectRequired',id,-1);return;}
+    var c=TC[id]||{},h=c.h||[];
+    var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+    var row=data[idx];
+    if(!row){showToast(tr('未找到委托订单'));return;}
+    var g=function(label){var i=h.indexOf(label);return (i>=0&&row[i]!=null)?String(row[i]):'';};
+    var st=g('状态');
+    if(st!=='待审核'){showToast(tr('只有「待审核」的委托单可以审核，当前为')+'「'+tr(st||'—')+'」');return;}
+    _entrustAuditIdx=idx;
+    var isPrebook=g('委托类型')==='预录单';
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='54%';
+    document.getElementById('crud-modal-title').textContent=tr('审核数据')+' - '+g('委托订单号');
+    document.getElementById('crud-modal-body').innerHTML=fclEntrustAuditBodyHtml(c,row,isPrebook);
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        (isPrebook
+          ? '<button onclick="submitEntrustPrebook(\''+id+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('直接转主单')+'</button>'
+          : '<button onclick="submitEntrustAudit(\''+id+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('提交审核')+'</button>');
+    document.getElementById('crud-modal').classList.add('show');
+}
+function fclEntrustAuditBodyHtml(c,row,isPrebook){
+    var h=c.h||[];
+    var g=function(label){var i=h.indexOf(label);return (i>=0&&row[i]!=null)?String(row[i]):'';};
+    var out='';
+    /* 单据抬头：审核时总要先看清是谁的什么货 */
+    var head=[['委托订单号',g('委托订单号')],['委托类型',g('委托类型')],['客户名称',g('客户名称')],
+              ['业务员',g('业务员')],['船司',g('船司')],['柜型柜量',g('柜型柜量')],
+              ['起运港',g('起运港')],['目的港',g('目的港')],['预计开船日',g('预计开船日')]];
+    out+='<div class="text-sm font-semibold text-text-primary mb-2 pb-1.5 border-b border-surface-200">'+tr('委托信息')+'</div>';
+    out+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2.5 mb-4">';
+    head.forEach(function(p){
+        out+='<div><div class="text-xs text-text-secondary mb-0.5">'+tr(p[0])+'</div>'+
+             '<div class="text-sm text-text-primary">'+esc(p[1]||'—')+'</div></div>';
+    });
+    out+='</div>';
+
+    if(isPrebook){
+        out+='<div class="px-3 py-3 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
+             '<div class="font-semibold text-text-primary mb-1">'+tr('预录单（预定仓）无需审核')+'</div>'+
+             tr('预定仓只是先占船司舱位，此时还没有报价与成本，没有可对照的毛利，因此不走审核。')+
+             '<br>'+tr('点「直接转主单」即可生成待订舱主单；等客户下实单、价格谈定后再走费用流程。')+
+             '</div>';
+        return out;
+    }
+
+    var p=fclEntrustPriceInfo(c,row);
+    var cell=function(label,val,cls){
+        return '<div data-audit-price="'+esc(label)+'"><div class="text-xs text-text-secondary mb-0.5">'+tr(label)+'</div>'+
+               '<div class="text-base font-semibold '+(cls||'text-text-primary')+'">'+esc(val)+'</div></div>';
+    };
+    out+='<div class="text-sm font-semibold text-text-primary mb-2 pb-1.5 border-b border-surface-200">'+tr('价格对照')+'</div>';
+    out+='<div class="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3 mb-2 px-3 py-3 rounded-lg bg-surface-50 border border-surface-200">';
+    out+=cell('应收价',p.sell||'—');
+    out+=cell('成本价',p.cost||'—');
+    out+=cell('毛利',p.profit||'—');
+    out+=cell('毛利率',p.rate===null?'—':(p.rate.toFixed(2)+'%'),
+              p.low?'text-amber-600':(p.rate===null?'text-text-primary':'text-success-700'));
+    out+='</div>';
+    if(p.empty){
+        out+='<div class="mb-3 text-xs text-amber-600">'+tr('该委托单还没有填报价与成本，无法对照毛利，请先补齐再审核')+'</div>';
+    }else{
+        if(p.mismatch)out+='<div class="mb-1.5 text-xs text-red-600">'+
+            tr('应收价 - 成本价 =')+' '+esc(String(p.calc))+'，'+tr('与填报的毛利对不上，请先核实')+'</div>';
+        if(p.low)out+='<div class="mb-1.5 text-xs text-amber-600">'+
+            tr('毛利率低于')+' '+FCL_LOW_MARGIN_RATE+'%，'+tr('请谨慎审核')+'</div>';
+        if(!p.mismatch&&!p.low)out+='<div class="mb-1.5 text-xs text-success-700">'+tr('价格与毛利勾稽一致')+'</div>';
+    }
+    out+='<div class="text-sm font-semibold text-text-primary mb-2 mt-3 pb-1.5 border-b border-surface-200">'+tr('审核意见')+'</div>';
+    out+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3">';
+    out+='<div data-field-label="审核结果"><label class="text-xs text-text-secondary mb-1 block">'+tr('审核结果')+
+         '<span class="text-red-500 ml-1">*</span></label>'+
+         '<select class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+
+         '<option value="">'+tr('请选择')+'</option>'+
+         ['通过','驳回','退回补充'].map(function(o){return '<option value="'+esc(o)+'">'+tr(o)+'</option>';}).join('')+
+         '</select></div>';
+    out+='<div data-field-label="审核人"><label class="text-xs text-text-secondary mb-1 block">'+tr('审核人')+'</label>'+
+         '<input type="text" readonly value="'+esc((typeof getCurrentUserName==='function')?getCurrentUserName():'admin')+
+         '" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed"></div>';
+    out+='<div data-field-label="审核意见" class="md:col-span-3"><label class="text-xs text-text-secondary mb-1 block">'+tr('审核意见')+'</label>'+
+         '<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+
+         tr('请填写审核意见')+'"></textarea></div>';
+    out+='</div>';
+    return out;
+}
+/* 预录单直接转主单：不需要审核结果，落「已审核」并生成待订舱主单 */
+function submitEntrustPrebook(id){
+    id=id||'fcl-sales-instruction';
+    var c=TC[id]||{},h=c.h||[];
+    var row=fclBookingRowAt(id,_entrustAuditIdx>=0?_entrustAuditIdx:getSelectedRowIndex());
+    if(!row){showToast(tr('请先勾选一条委托订单'));return false;}
+    var set=function(label,val){var i=h.indexOf(label);if(i>=0)setRowOverride(id,row,i,val);};
+    var get=function(label){var i=h.indexOf(label);return i>=0?(row[i]||''):'';};
+    var now=(typeof receiptNowStr==='function')?receiptNowStr():'';
+    var who=(typeof getCurrentUserName==='function')?getCurrentUserName():'admin';
+    set('状态','已审核');set('审核人',who);set('审核时间',now);
+    var jobNo=createBookingFromEntrust(c,row);
+    fclBackfillEntrustBookingNo(get('委托订单号'),jobNo);
+    _entrustAuditIdx=-1;
+    closeCrudModal();
+    fclBookingRefreshList(id);
+    showToast(tr('预录单无需审核，已直接转主单')+' '+jobNo);
+    return true;
+}
+
+/* ===== 重新提交审核（已驳回 -> 待审核，支持多选）===== */
+function openEntrustResubmit(id){
+    id=id||'fcl-sales-instruction';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选需要重新提交的委托单'));return;}
+    var c=TC[id]||{},h=c.h||[],iNo=h.indexOf('委托订单号'),iSt=h.indexOf('状态');
+    var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+    var eligible=[],blocked=[];
+    idxs.forEach(function(i){
+        var row=data[i];
+        if(!row)return;
+        if(iSt>=0&&row[iSt]==='已驳回')eligible.push(i);
+        else blocked.push(iNo>=0?row[iNo]:'');
+    });
+    if(!eligible.length){showToast(tr('只有「已驳回」的委托单可以重新提交审核'));return;}
+    var msg=tr('已勾选')+' '+idxs.length+' '+tr('条数据')+'，'+tr('其中')+' '+eligible.length+' '+tr('条可重新提交');
+    if(blocked.length)msg+='，'+blocked.length+' '+tr('条非「已驳回」将跳过');
+    msg+='。'+tr('重新提交后状态回到「待审核」，原审核人与审核时间会清空，是否确认？');
+    openConfirmTip(msg,function(){confirmEntrustResubmit(id,eligible);});
+}
+function confirmEntrustResubmit(id,idxs){
+    var c=TC[id]||{},h=c.h||[];
+    var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+    var now=(typeof receiptNowStr==='function')?receiptNowStr():'';
+    var n=0;
+    idxs.forEach(function(k){
+        var row=data[k];
+        if(!row)return;
+        var set=function(label,val){var i=h.indexOf(label);if(i>=0)setRowOverride(id,row,i,val);};
+        set('状态','待审核');set('审核人','');set('审核时间','');set('提交时间',now);
+        n++;
+    });
+    fclBookingRefreshList(id);
+    showToast(tr('已重新提交审核')+' '+n+' '+tr('条'));
+}
+
 /* ===== 委托订单审核通过 → 自动生成待订舱的订舱单 ===== */
 function fclActionFieldValue(label){
     var box=document.querySelector('[data-field-label="'+label+'"]');
@@ -727,7 +933,8 @@ function submitEntrustAudit(id){
     id=id||'fcl-sales-instruction';
     var result=fclActionFieldValue('审核结果');
     if(!result){showToast(tr('请选择审核结果'));return false;}
-    var idx=getSelectedRowIndex();
+    /* 专用审核弹窗打开时记下的行；没有就退回按勾选取（兼容通用审核弹窗） */
+    var idx=_entrustAuditIdx>=0?_entrustAuditIdx:getSelectedRowIndex();
     var row=fclBookingRowAt(id,idx);
     if(!row){showToast(tr('请先勾选一条委托订单'));return false;}
     var c=TC[id]||{},h=c.h||[];
@@ -753,6 +960,7 @@ function submitEntrustAudit(id){
         closeCrudModal();
         showToast(tr('已退回补充，委托订单仍为「待审核」'));
     }
+    _entrustAuditIdx=-1;
     return true;
 }
 /* 用委托订单的信息生成一条「待订舱」的主单，返回新生成的 Job No。

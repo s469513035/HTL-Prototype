@@ -202,6 +202,11 @@ function openActionModal(action,id,rowIdx){
         openSimpleCancelConfirm(id,idx);
         return;
     }
+    /* 委托订单审核：要对照成本价/应收价/毛利率，且预录单（预定仓）不走审核，用专用弹窗 */
+    if(action==='audit'&&id==='fcl-sales-instruction'&&typeof openEntrustAuditModal==='function'){
+        openEntrustAuditModal(id,idx);
+        return;
+    }
     if(action==='copyWaybill'&&(id==='wb-manage'||id==='wb-client-manage')){
         openCopyWaybillModal(id,idx);
         return;

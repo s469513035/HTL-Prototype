@@ -960,6 +960,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='copyBooking')click='openFclBookingCopy(\''+id+'\')';
     else if(action.key==='cancelBooking')click='openFclBookingCancel(\''+id+'\')';
     else if(action.key==='linkEntrust')click='openFclBookingLinkEntrust(\''+id+'\')';
+    else if(action.key==='entrustResubmit')click='openEntrustResubmit(\''+id+'\')';
     else if(action.key==='releaseBooking')click='openFclBookingRelease(\''+id+'\')';
     else if(action.key==='freightRecalc')click='openFreightRecalcConfirm(\''+id+'\')';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
@@ -1475,6 +1476,7 @@ function getToolbarActions(id){
             {type:'edit',label:'编辑数据'},
             {type:'view',label:'查看详情'},
             {key:'audit',label:'审核数据'},
+            {key:'entrustResubmit',label:'重新提交审核'},
             {key:'entrustCancel',label:'取消委托',variant:'danger'}
         ];
     }

@@ -223,3 +223,18 @@
 
         /* 消息通知下拉：内容两行截断 */
         .notif-clamp2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+        /* ===== 紧凑型 CRUD 弹窗 =====
+         * TC[id].compactModal=true 时给 #crud-modal-body 加 .crud-compact。
+         * 只压间距与控件高度，不动栅格列数 —— 字段的对齐关系保持不变，
+         * 免得为了变紧凑反而把某一行挤成两行。 */
+        #crud-modal-body.crud-compact [class*="grid-cols"]{column-gap:.875rem;row-gap:.625rem}
+        #crud-modal-body.crud-compact [data-field-box]>label{margin-bottom:.25rem;font-size:.75rem;line-height:1.1rem}
+        #crud-modal-body.crud-compact [data-field-box] input:not([type=checkbox]),
+        #crud-modal-body.crud-compact [data-field-box] select{height:2.125rem;padding-top:0;padding-bottom:0}
+        #crud-modal-body.crud-compact [data-field-box] textarea{padding-top:.375rem;padding-bottom:.375rem;min-height:3.75rem}
+        #crud-modal-body.crud-compact [data-field-box]>label+div>select{margin-bottom:.25rem}
+        /* 板块之间与板块标题下方的留白 */
+        #crud-modal-body.crud-compact [data-modal-section]{margin-top:.875rem}
+        #crud-modal-body.crud-compact .border-b{margin-bottom:.5rem;padding-bottom:.375rem}
+        #crud-modal-body.crud-compact>.mb-4{margin-bottom:.75rem}

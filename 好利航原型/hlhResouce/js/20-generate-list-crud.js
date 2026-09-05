@@ -355,6 +355,9 @@ function openCrudModal(mode,id,rowIdx){
     const titleEl=document.getElementById('crud-modal-title');
     const bodyEl=document.getElementById('crud-modal-body');
     const footerEl=document.getElementById('crud-modal-footer');
+    /* TC[id].compactModal=true → 弹窗走紧凑排版（压间距与控件高度，列数不变）。
+     * 字段/板块特别多的页面（如 Job/主单管理）默认间距会把弹窗撑得很长，需要滚很久。 */
+    bodyEl.classList.toggle('crud-compact',!!c.compactModal);
     const modeLabel=mode==='view'?L.view:mode==='add'?L.add:L.edit;
     titleEl.textContent=modeLabel+tr(c.t);
     const rowData=(rowIdx>=0&&_listData[id])?_listData[id][rowIdx]:null;

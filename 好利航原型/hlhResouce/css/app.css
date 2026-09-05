@@ -238,3 +238,10 @@
         #crud-modal-body.crud-compact [data-modal-section]{margin-top:.875rem}
         #crud-modal-body.crud-compact .border-b{margin-bottom:.5rem;padding-bottom:.375rem}
         #crud-modal-body.crud-compact>.mb-4{margin-bottom:.75rem}
+        /* 紧凑弹窗的排版收口（配合 modalSections[].cols）：
+         * 1) pickerText 默认 md:col-span-2 是为 5 列栅格准备的；板块自己指定列数后
+         *    让它回到 1 格，三个收发货人才能并排成整齐的一行。
+         * 2) 备注/说明类长文本一律铺满整行，行尾不留碎格。
+         * 3) 板块内小标题（dividers）压扁一点，别喧宾夺主。 */
+        #crud-modal-body.crud-compact .modal-picker-text{grid-column:auto}
+        #crud-modal-body.crud-compact .modal-remark-half{grid-column:1/-1}

@@ -487,7 +487,7 @@ function openCrudModal(mode,id,rowIdx){
                 else if(isCode){html+='<div class="text-sm font-semibold text-primary-700 mt-0.5">'+(val||'\u2014')+'</div>';}
                 else{html+='<div class="text-sm text-text-primary mt-0.5">'+(val||'\u2014')+'</div>';}
                 html+='</div>';
-                buckets[crudSectionKeyOf(hd,c)]+=html;
+                buckets[crudSectionKeyOf(hd,c)]+=crudSectionDividerHtml(hd,c)+html;
         });
         bodyEl.innerHTML=modalFields.length>0?crudAssembleSections(buckets,colClass,c,tr('基本信息')):'';
         footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+L.close+'</button>';
@@ -509,7 +509,7 @@ function openCrudModal(mode,id,rowIdx){
             const selectOptions=(fType==='checkbox'||fType==='pickerText')?null:fieldSelectOptions(id,hd,c);
             const isLongText=fType?fType==='textarea':(hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能'));
             const isAttachment=fType?fType==='attachment':hd.includes('附件');
-            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(fType==='pickerText'?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
+            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(fType==='pickerText'?'md:col-span-2 modal-picker-text ':'')+(hd.includes('备注')?'modal-remark-half':'');
             const isRequired=isImportantRequiredField(hd,id);
             const reqMark=isRequired?' <span class="text-red-500">*</span>':'';
             const reqAttr=isRequired?' required':'';
@@ -548,7 +548,7 @@ function openCrudModal(mode,id,rowIdx){
                 html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'>';
             }
             html+='</div>';
-            buckets[crudSectionKeyOf(hd,c)]+=html;
+            buckets[crudSectionKeyOf(hd,c)]+=crudSectionDividerHtml(hd,c)+html;
         });
         bodyEl.innerHTML=crudAssembleSections(buckets,colClass,c,'');
         footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+tr('新增成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认提交')+'</button>';
@@ -569,7 +569,7 @@ function openCrudModal(mode,id,rowIdx){
             const selectOptions=(fType==='checkbox'||fType==='pickerText')?null:fieldSelectOptions(id,hd,c);
             const isLongText=fType?fType==='textarea':(hd.includes('备注')||hd.includes('说明')||hd.includes('描述')||hd.includes('地址')||hd.includes('职能'));
             const isAttachment=fType?fType==='attachment':hd.includes('附件');
-            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(fType==='pickerText'?'md:col-span-2 ':'')+(hd.includes('备注')?'modal-remark-half':'');
+            const fieldWrapClass=(isLongText?'md:col-span-2 ':'')+(isAttachment?'md:col-span-2 ':'')+(fType==='pickerText'?'md:col-span-2 modal-picker-text ':'')+(hd.includes('备注')?'modal-remark-half':'');
             const isRequired=isImportantRequiredField(hd,id);
             const reqMark=isRequired?' <span class="text-red-500">*</span>':'';
             const reqAttr=isRequired?' required':'';
@@ -603,7 +603,7 @@ function openCrudModal(mode,id,rowIdx){
                 html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+val+'" placeholder="'+esc(tr('请输入')+tr(hd))+'"'+anchor+reqAttr+'>';
             }
             html+='</div>';
-            buckets[crudSectionKeyOf(hd,c)]+=html;
+            buckets[crudSectionKeyOf(hd,c)]+=crudSectionDividerHtml(hd,c)+html;
         });
         bodyEl.innerHTML=crudAssembleSections(buckets,colClass,c,'');
         if(mode==='add'){
@@ -633,6 +633,23 @@ function crudNewSectionBuckets(c){
     ((c&&c.modalSections)||[]).forEach(function(s){b[s.key]='';});
     return b;
 }
+/* 板块内的小标题分隔：modalSections[].dividers={'字段名':'小标题'}
+ * 渲染到该字段前时插一条整行的细标题，把板块内部再分一组
+ * （例：主单信息最下面的「危险品信息」）。不另起板块，所以字段仍属同一栅格、同一板块。 */
+function crudSectionDividerHtml(hd,c){
+    const secs=(c&&c.modalSections)||[];
+    for(let i=0;i<secs.length;i++){
+        const d=secs[i].dividers;
+        if(d&&d[hd])return '<div class="col-span-full text-xs font-semibold text-text-secondary mt-1 pt-2 border-t border-surface-100">'+esc(tr(d[hd]))+'</div>';
+    }
+    return '';
+}
+/* 板块可以自己定列数：modalSections[].cols=3。
+ * 不同板块字段的「胖瘦」差很多 —— 一水儿的短字段适合 5 列，
+ * 混了多行文本框的板块列数太多就会排出空洞，单独指定列数比全局统一好看。 */
+function crudSectionColClass(s,colClass){
+    return (s&&s.cols)?modalGridFullClass(null,s.cols):colClass;
+}
 function crudAssembleSections(buckets,colClass,c,mainTitle){
     let html='';
     if(buckets.__main__){
@@ -644,7 +661,7 @@ function crudAssembleSections(buckets,colClass,c,mainTitle){
         if(!buckets[s.key])return;
         html+='<div class="mt-5" data-modal-section="'+esc(s.key)+'">';
         html+='<div class="text-sm font-semibold text-text-primary mb-3 pb-2 border-b border-surface-200">'+esc(tr(s.title))+'</div>';
-        html+='<div class="'+colClass+'">'+buckets[s.key]+'</div></div>';
+        html+='<div class="'+crudSectionColClass(s,colClass)+'">'+buckets[s.key]+'</div></div>';
     });
     return html;
 }

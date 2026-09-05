@@ -186,7 +186,7 @@ TC['fcl-payment-request'].fieldOptions={
  *      Job No 自动生成；危险品明细随勾选显隐；
  *      弹窗按 基础信息 / 订舱信息 / 主单信息 / 单证信息 分板块。
  *      种子数据用「表头 -> 值」的对象写，再按表头顺序摊平，避免加列时串位。 */
-var FCL_BOOKING_HEADERS='Job No|委托订单号|委托类型|客户名称|船司|航线|起运港|目的港|柜型柜量|船名航次|ETD|ETA|ATD|ATA|订舱回执号|回执附件|协议号|截补料时间|订舱日期|订舱方式|订舱人|订舱备注|S/O No.|放单方式|Shipper|Notify|Consignee|品名|HS Code|货重|柜量|是否危险品|UN编号|危险类别|包装类别|危险品申报人|主单备注|柜号|封签号|柜重|订舱状态|操作';
+var FCL_BOOKING_HEADERS='Job No|委托订单号|委托类型|客户名称|船司|航线|起运港|目的港|柜型柜量|船名航次|ETD|ETA|ATD|ATA|订舱回执号|回执附件|协议号|截补料时间|订舱日期|订舱方式|订舱人|订舱备注|S/O No.|放单方式|品名|HS Code|货重|柜量|Shipper|Notify|Consignee|是否危险品|UN编号|危险类别|包装类别|危险品申报人|主单备注|柜号|封签号|柜重|订舱状态|操作';
 var FCL_BOOKING_SEED=[
     {'Job No':'FBK-20260613001','委托订单号':'FEO-20260613001','委托类型':'实单','客户名称':'深圳市华运达国际货运',
      '船司':'MAERSK','航线':'西非线','起运港':'深圳盐田','目的港':'拉各斯','柜型柜量':'40HQ×1','船名航次':'MAERSK LAGOS 026W',
@@ -307,10 +307,19 @@ var FCL_DG_FIELDS=['UN编号','危险类别','包装类别','危险品申报人'
  * 订舱回执信息只在查看明细里出现（见 modalFieldModes）。
  * 注意：必须写在 FCL_DG_FIELDS 赋值之后 —— var 只提升声明不提升值。 */
 TC['fcl-booking'].modalSections=[
-    {key:'booking',title:'订舱信息',fields:['订舱日期','订舱人','订舱方式','订舱备注']},
-    {key:'master',title:'主单信息',fields:['S/O No.','放单方式','Shipper','Notify','Consignee',
-        '品名','HS Code','货重','柜量','是否危险品'].concat(FCL_DG_FIELDS).concat(['主单备注'])},
-    {key:'doc',title:'单证信息',fields:['柜号','封签号','柜重']},
+    /* 订舱信息也用 3 列：三个矮字段正好铺满第一行，订舱备注整行独占第二行。
+     * 留 5 列的话备注铺满后第一行会空出 2 格。 */
+    {key:'booking',title:'订舱信息',cols:3,fields:['订舱日期','订舱人','订舱方式','订舱备注']},
+    /* 主单信息用 3 列：Shipper/Notify/Consignee 是「下拉 + 多行文本」的高块，
+     * 在 5 列栅格里跟矮字段混排会撑出大片空洞（矮字段下面白 88px、行尾还剩 1 格）；
+     * 3 列刚好让这三个高块并排成完整一行，高度一致、没有缺口。
+     * 字段先后由表头顺序决定（引擎按 header index 排序，不是按这里的 fields 顺序），
+     * 已在 FCL_BOOKING_HEADERS 里排成：6 个矮字段 -> 3 个高块 -> 危险品 -> 主单备注。 */
+    {key:'master',title:'主单信息',cols:3,
+        dividers:{'是否危险品':'危险品信息'},
+        fields:['S/O No.','放单方式','品名','HS Code','货重','柜量','Shipper','Notify','Consignee',
+            '是否危险品'].concat(FCL_DG_FIELDS).concat(['主单备注'])},
+    {key:'doc',title:'单证信息',cols:3,fields:['柜号','封签号','柜重']},
     {key:'receipt',title:'订舱回执信息',fields:['订舱回执号','回执附件']}
 ];
 

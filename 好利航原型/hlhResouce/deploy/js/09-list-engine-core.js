@@ -964,6 +964,8 @@ function renderToolbarAction(action,id){
     else if(action.key==='linkEntrust')click='openFclBookingLinkEntrust(\''+id+'\')';
     else if(action.key==='entrustResubmit')click='openEntrustResubmit(\''+id+'\')';
     else if(action.key==='confirmEstCost')click='openEstCostConfirm(\''+id+'\')';
+    else if(action.key==='importAgentBill')click='openAgentBillImportModal(\''+id+'\')';
+    else if(action.key==='allocAgentCost')click='openAgentCostAlloc(\''+id+'\')';
     else if(action.key==='reconcileCost')click='openAgentCostReconcile(\''+id+'\')';
     else if(action.key==='payApBill')click='openApBillPay(\''+id+'\')';
     else if(action.key==='confirmArFee')click='openArFeeConfirm(\''+id+'\')';
@@ -1522,7 +1524,7 @@ function getToolbarActions(id){
         if(['fcl-edi-api','fcl-provider-api'].includes(id))base.push({key:'sync',label:'同步数据'});
         /* 整柜财务 5 张表各自的业务动作 */
         if(id==='fcl-est-cost')base.push({key:'confirmEstCost',label:'确认成本'});
-        if(id==='fcl-agent-cost')base.push({key:'reconcileCost',label:'对账'});
+        if(id==='fcl-agent-cost')base.push({key:'importAgentBill',label:'代账账单导入'},{key:'allocAgentCost',label:'手工分摊'},{key:'reconcileCost',label:'对账'});
         if(id==='fcl-ap-bill')base.push({key:'payApBill',label:'付款登记'});
         if(id==='fcl-ar-fee')base.push({key:'confirmArFee',label:'费用确认'});
         if(id==='fcl-ar-receipt')base.push({key:'writeOffReceipt',label:'核销'});

@@ -301,6 +301,356 @@ function openAgentCostReconcile(id){
     if(noData)msg+='，'+noData+' '+tr('条缺金额已跳过');
     showToast(msg);
 }
+/* ===== 代理实际成本 · 代账账单导入 =====
+ * 走全站统一的导入四段式：模板信息 → 上传 → 逐行校验 → 勾选确认。
+ * 导入的是代理/服务商发来的代账账单，只带「他们那边有的」字段；
+ * 预估金额由系统按 Job No + 费用名称 去预估成本明细里带出来，
+ * 差异等导入后点「对账」再算 —— 导入只负责把实际金额落进来。 */
+var AGENT_IMPORT_REQUIRED=['Job No','服务商','费用名称','币别','实际金额'];
+var AGENT_IMPORT_EXCLUDE=['操作','实际成本号','预估金额','差异金额','差异率','对账人','对账时间','对账状态'];
+var _agentImportRows=[];
+var _agentImportFile='';
+function agentImportColumns(id){
+    var c=TC[id||'fcl-agent-cost']||{};
+    return (c.h||[]).filter(function(h){
+        if(AGENT_IMPORT_EXCLUDE.indexOf(h)>=0)return false;
+        return !/^(创建|修改)(人|时间|网点)$/.test(h);
+    });
+}
+/* 按 Job No + 费用名称 去预估成本明细里找预估金额（作废的不算） */
+function fclEstAmountOf(job,feeName){
+    var c=TC['fcl-est-cost'];
+    if(!c||!c.d||!job)return '';
+    var h=c.h||[],iJ=h.indexOf('Job No'),iF=h.indexOf('费用名称'),iA=h.indexOf('预估金额'),iS=h.indexOf('状态');
+    if(iJ<0||iA<0)return '';
+    var hit=c.d.find(function(r){
+        return String(r[iJ]||'')===job&&(iF<0||!feeName||String(r[iF]||'')===feeName)&&(iS<0||r[iS]!=='已作废');
+    });
+    return hit?String(hit[iA]||''):'';
+}
+function openAgentBillImportModal(id){
+    id=id||'fcl-agent-cost';
+    _agentImportRows=[];_agentImportFile='';
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='70%';
+    document.getElementById('crud-modal-title').textContent=tr('代账账单导入');
+    document.getElementById('crud-modal-body').innerHTML=agentImportBodyHtml(id);
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="confirmAgentBillImport(\''+id+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认导入')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function agentImportSectionTitle(text){
+    return '<div class="flex items-center gap-2 mb-3"><span class="w-1 h-4 bg-primary-500 rounded"></span>'+
+           '<span class="text-base font-semibold text-text-primary">'+tr(text)+'</span></div>';
+}
+function agentImportBodyHtml(id){
+    var h='<div class="space-y-5">';
+    h+='<section>'+agentImportSectionTitle('模板信息');
+    h+='<div class="rounded-lg border border-surface-200 bg-white p-4">';
+    h+='<button type="button" onclick="showToast(tr(\'代账账单导入模板下载中\'))" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg cursor-pointer">'+tr('下载代账账单导入模板')+'</button>';
+    h+='<div class="mt-3 w-full border border-dashed border-surface-300 rounded-lg bg-surface-50 px-3 py-2.5">';
+    h+='<div class="flex items-center gap-2 flex-wrap">';
+    h+='<label class="h-8 px-3 inline-flex items-center text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">';
+    h+='<input type="file" accept=".xls,.xlsx" class="hidden" onchange="onAgentImportPick(this,\''+id+'\')">'+esc(tr('选择文件'))+'</label>';
+    h+='<span class="text-[11px] text-text-muted">'+esc(tr('仅支持 Excel（.xls / .xlsx），单个不超过 10MB'))+'</span>';
+    h+='</div>';
+    h+='<div data-agent-import-file class="flex flex-wrap gap-1.5 mt-2'+(_agentImportFile?'':' hidden')+'">'+
+       (_agentImportFile&&typeof crudAttachmentChipHtml==='function'?crudAttachmentChipHtml(_agentImportFile):'')+'</div>';
+    h+='</div>';
+    h+='<div class="mt-3 text-xs text-red-500">'+tr('注意：模板上传后下方列表展示当前模板数据的校验信息')+'</div>';
+    h+='</div></section>';
+    h+='<section>'+agentImportSectionTitle('导入数据');
+    h+='<div data-agent-import-summary class="mb-2 text-xs text-text-secondary'+(_agentImportRows.length?'':' hidden')+'"></div>';
+    h+='<div data-agent-import-table class="rounded-lg border border-surface-200 bg-white overflow-hidden">'+agentImportTableHtml(id)+'</div>';
+    h+='</section>';
+    h+='</div>';
+    return h;
+}
+function agentImportTableHtml(id){
+    var cols=agentImportColumns(id);
+    var h='<div class="overflow-auto" style="max-height:360px">';
+    h+='<table class="w-full data-table" style="table-layout:auto;min-width:100%;border-collapse:separate;border-spacing:0"><thead><tr class="bg-white">';
+    h+='<th class="px-3 py-2 text-xs font-medium text-text-secondary text-center whitespace-nowrap border-b border-surface-200">#</th>';
+    h+='<th class="px-3 py-2 border-b border-surface-200"><input type="checkbox" class="rounded border-surface-300 text-primary-600" onchange="toggleAllAgentImportRows(this)"></th>';
+    cols.forEach(function(c){
+        var req=AGENT_IMPORT_REQUIRED.indexOf(c)>=0;
+        h+='<th class="px-3 py-2 text-xs font-medium whitespace-nowrap border-b border-surface-200 '+(req?'text-red-500':'text-text-secondary')+'">'+esc(tr(c))+'</th>';
+    });
+    h+='<th class="px-3 py-2 text-xs font-medium text-text-secondary whitespace-nowrap border-b border-surface-200">'+tr('校验结果')+'</th>';
+    h+='</tr></thead><tbody>';
+    if(!_agentImportRows.length){
+        h+='<tr><td colspan="'+(cols.length+3)+'" class="px-3 py-16 text-center text-sm text-text-muted">'+tr('请先上传模板文件')+'</td></tr>';
+    }else{
+        _agentImportRows.forEach(function(r,i){
+            h+='<tr class="border-b border-surface-100 '+(r.ok?'':'bg-red-50/50')+'">';
+            h+='<td class="px-3 py-2 text-sm text-text-muted text-center">'+(i+1)+'</td>';
+            h+='<td class="px-3 py-2"><input type="checkbox" class="agent-import-check rounded border-surface-300 text-primary-600" value="'+i+'"'+(r.ok?' checked':'')+(r.ok?'':' disabled')+'></td>';
+            cols.forEach(function(c,ci){
+                h+='<td class="px-3 py-2 text-sm text-text-primary whitespace-nowrap">'+esc(r.cells[ci]||'')+'</td>';
+            });
+            h+='<td class="px-3 py-2 text-sm whitespace-nowrap '+(r.ok?'text-green-600':'text-red-600')+'">'+esc(r.ok?tr('校验通过'):r.msg)+'</td>';
+            h+='</tr>';
+        });
+    }
+    h+='</tbody></table></div>';
+    return h;
+}
+function toggleAllAgentImportRows(cb){
+    document.querySelectorAll('.agent-import-check:not([disabled])').forEach(function(x){x.checked=cb.checked;});
+}
+function onAgentImportPick(input,id){
+    var f=(input.files||[])[0];
+    if(!f)return;
+    _agentImportFile=f.name;
+    _agentImportRows=buildAgentImportPreview(id);
+    var body=document.getElementById('crud-modal-body');
+    if(body)body.innerHTML=agentImportBodyHtml(id);
+    var okCount=_agentImportRows.filter(function(r){return r.ok;}).length;
+    var sum=document.querySelector('[data-agent-import-summary]');
+    if(sum){
+        sum.classList.remove('hidden');
+        sum.innerHTML=tr('已解析')+' <span class="font-semibold text-text-primary">'+_agentImportRows.length+'</span> '+tr('条')+
+            '，'+tr('校验通过')+' <span class="font-semibold text-green-600">'+okCount+'</span> '+tr('条')+
+            '，'+tr('校验失败')+' <span class="font-semibold text-red-600">'+(_agentImportRows.length-okCount)+'</span> '+tr('条')+
+            '（'+esc(f.name)+'）';
+    }
+    showToast(tr('已解析')+' '+_agentImportRows.length+' '+tr('条'));
+}
+/* 原型阶段不解析真实 Excel：按现有成本行造几条示例，最后一行故意缺实际金额演示校验列 */
+function buildAgentImportPreview(id){
+    id=id||'fcl-agent-cost';
+    var c=TC[id]||{},cols=agentImportColumns(id),full=c.h||[];
+    var src=(c.d||[]).slice(0,3);
+    var idx=function(n){return cols.indexOf(n);};
+    return src.map(function(row,i){
+        var cells=cols.map(function(name){
+            var k=full.indexOf(name);
+            return (k>=0&&row[k]!=null)?String(row[k]):'';
+        });
+        if(idx('服务商账单号')>=0)cells[idx('服务商账单号')]='AGT-IMP-'+(260901+i);
+        if(idx('实际金额')>=0&&!cells[idx('实际金额')])cells[idx('实际金额')]='1000';
+        if(i===src.length-1&&idx('实际金额')>=0)cells[idx('实际金额')]='';
+        var missing=AGENT_IMPORT_REQUIRED.filter(function(name){
+            var k=idx(name);
+            return k>=0&&!String(cells[k]||'').trim();
+        });
+        return {cells:cells,ok:missing.length===0,msg:missing.length?(tr('必填项为空')+'：'+missing.join('、')):''};
+    });
+}
+function confirmAgentBillImport(id){
+    id=id||'fcl-agent-cost';
+    if(!_agentImportRows.length){showToast(tr('请先上传模板文件'));return;}
+    var picked=[];
+    document.querySelectorAll('.agent-import-check:checked').forEach(function(x){picked.push(parseInt(x.value,10));});
+    var rows=picked.map(function(i){return _agentImportRows[i];}).filter(function(r){return r&&r.ok;});
+    if(!rows.length){showToast(tr('没有可导入的数据，请先勾选校验通过的行'));return;}
+    var c=TC[id]||{},cols=agentImportColumns(id);
+    var seedWidth=(c.d&&c.d.length)?c.d[0].length:(c.h||[]).length-1;
+    var full=(c.h||[]).slice(0,seedWidth);
+    var seq=(c.d||[]).length;
+    rows.forEach(function(r){
+        var job=r.cells[cols.indexOf('Job No')]||'';
+        var fee=cols.indexOf('费用名称')>=0?(r.cells[cols.indexOf('费用名称')]||''):'';
+        var row=full.map(function(name){
+            var k=cols.indexOf(name);
+            if(k>=0)return r.cells[k]||'';
+            if(name==='实际成本号')return 'FAC-IMP'+(2609000+(++seq));
+            if(name==='预估金额')return fclEstAmountOf(job,fee);   /* 从预估成本明细带出，供后续对账 */
+            if(name==='对账状态')return '待对账';
+            return '';
+        });
+        c.d.push(row);
+    });
+    if(typeof _listData!=='undefined')delete _listData[id];
+    closeCrudModal();
+    fclFinRefresh(id);
+    showToast(tr('导入成功')+' '+rows.length+' '+tr('条')+'，'+tr('已按 Job 带出预估金额，可点「对账」算差异'));
+}
+
+/* ===== 代理实际成本 · 手工分摊 =====
+ * 一张代账账单常常是几个柜合开的（比如一张 MAERSK 发票覆盖 3 个 Job），
+ * 手工分摊就是把这一行的实际金额按 Job 拆成几行，拆完金额必须刚好等于原金额。
+ * 确认后原行变成第一份，其余份追加为新行，各自带出自己的预估金额。 */
+var _agentAllocCtx={id:'',idx:-1,total:0};
+var _agentAllocRows=[];
+function openAgentCostAlloc(id){
+    id=id||'fcl-agent-cost';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选需要分摊的成本行'));return;}
+    if(idxs.length>1){showToast(tr('手工分摊一次只能选一行'));return;}
+    var row=fclFinRows(id)[idxs[0]];
+    if(!row){showToast(tr('未找到成本行'));return;}
+    if(fclFinGet(id,row,'对账状态')==='已确认'){showToast(tr('已确认的成本行不能再分摊'));return;}
+    var total=fclParseMoney(fclFinGet(id,row,'实际金额'));
+    if(total===null||total<=0){showToast(tr('该行没有实际金额，无法分摊'));return;}
+    _agentAllocCtx={id:id,idx:idxs[0],total:total};
+    /* 默认两行：原 Job 占满，第二行留空等录入 */
+    _agentAllocRows=[{job:fclFinGet(id,row,'Job No'),amt:String(total)},{job:'',amt:''}];
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='58%';
+    document.getElementById('crud-modal-title').textContent=tr('手工分摊')+' - '+fclFinGet(id,row,'实际成本号');
+    document.getElementById('crud-modal-body').innerHTML=agentAllocBodyHtml(id,row);
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitAgentCostAlloc()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认分摊')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function agentAllocBodyHtml(id,row){
+    var h='';
+    h+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
+       esc(fclFinGet(id,row,'服务商'))+'　'+esc(fclFinGet(id,row,'费用名称'))+'　'+
+       tr('待分摊')+' <span class="font-semibold text-text-primary">'+esc(fclFinGet(id,row,'币别'))+' '+
+       esc(fclFinGet(id,row,'实际金额'))+'</span>'+
+       '<div class="mt-1 text-xs text-text-muted">'+tr('拆成几个 Job，各份金额合计必须等于待分摊金额')+'</div></div>';
+    h+='<div class="flex items-center gap-2 mb-2">';
+    h+='<button type="button" onclick="addAgentAllocRow()" class="h-8 px-3 text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">'+tr('添加一行')+'</button>';
+    h+='<button type="button" onclick="splitAgentAllocEven()" class="h-8 px-3 text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">'+tr('平均分摊')+'</button>';
+    h+='<button type="button" onclick="splitAgentAllocByEst()" class="h-8 px-3 text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">'+tr('按预估成本比例分摊')+'</button>';
+    h+='</div>';
+    h+='<div data-alloc-table>'+agentAllocTableHtml()+'</div>';
+    return h;
+}
+function agentAllocTableHtml(){
+    var h='<div class="border border-surface-200 rounded-lg overflow-hidden">';
+    h+='<table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary w-10">#</th>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('Job No')+'<span class="text-red-500 ml-1">*</span></th>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('分摊金额')+'<span class="text-red-500 ml-1">*</span></th>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('占比')+'</th>'+
+       '<th class="px-3 py-2 w-16"></th></tr></thead><tbody>';
+    var total=_agentAllocCtx.total||0;
+    _agentAllocRows.forEach(function(r,i){
+        var amt=fclParseMoney(r.amt);
+        h+='<tr class="border-t border-surface-100" data-alloc-row="'+i+'">'+
+           '<td class="px-3 py-2 text-text-muted">'+(i+1)+'</td>'+
+           '<td class="px-3 py-2"><input data-alloc-job="'+i+'" type="text" value="'+esc(r.job)+'" onchange="syncAgentAllocRow('+i+')" class="w-full h-8 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50"></td>'+
+           '<td class="px-3 py-2"><input data-alloc-amt="'+i+'" type="number" value="'+esc(r.amt)+'" oninput="syncAgentAllocRow('+i+')" class="w-full h-8 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50"></td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+((amt!==null&&total)?((amt/total*100).toFixed(2)+'%'):'—')+'</td>'+
+           '<td class="px-3 py-2"><button type="button" onclick="removeAgentAllocRow('+i+')" class="text-xs text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td></tr>';
+    });
+    h+='</tbody></table></div>';
+    h+=agentAllocSummaryHtml();
+    return h;
+}
+function agentAllocSummaryHtml(){
+    var total=_agentAllocCtx.total||0;
+    var sum=_agentAllocRows.reduce(function(s,r){return s+(fclParseMoney(r.amt)||0);},0);
+    var diff=+(total-sum).toFixed(2);
+    var cls=diff===0?'text-success-700':'text-red-600';
+    return '<div data-alloc-sum class="mt-2 text-sm '+cls+'">'+
+        tr('已分摊')+' <span class="font-semibold">'+sum.toFixed(2)+'</span>　'+
+        tr('待分摊')+' <span class="font-semibold">'+total.toFixed(2)+'</span>　'+
+        tr('差额')+' <span class="font-semibold">'+diff.toFixed(2)+'</span>'+
+        (diff===0?('　'+tr('金额已分摊完毕')):('　'+tr('差额不为 0 无法提交')))+'</div>';
+}
+function readAgentAllocRow(i){
+    var j=document.querySelector('[data-alloc-job="'+i+'"]');
+    var a=document.querySelector('[data-alloc-amt="'+i+'"]');
+    if(_agentAllocRows[i]){
+        if(j)_agentAllocRows[i].job=String(j.value||'');
+        if(a)_agentAllocRows[i].amt=String(a.value||'');
+    }
+}
+function syncAgentAllocRow(i){
+    readAgentAllocRow(i);
+    var box=document.querySelector('[data-alloc-sum]');
+    if(box)box.outerHTML=agentAllocSummaryHtml();
+}
+function readAllAgentAllocRows(){
+    _agentAllocRows.forEach(function(r,i){readAgentAllocRow(i);});
+}
+function redrawAgentAlloc(){
+    var box=document.querySelector('[data-alloc-table]');
+    if(box)box.innerHTML=agentAllocTableHtml();
+}
+function addAgentAllocRow(){
+    readAllAgentAllocRows();
+    _agentAllocRows.push({job:'',amt:''});
+    redrawAgentAlloc();
+}
+function removeAgentAllocRow(i){
+    readAllAgentAllocRows();
+    if(_agentAllocRows.length<=2){showToast(tr('至少保留两行，否则不叫分摊'));return;}
+    _agentAllocRows.splice(i,1);
+    redrawAgentAlloc();
+}
+/* 平均分摊：除不尽的零头补到最后一行，保证合计刚好等于总额。
+ * msg 用于被「按预估比例」回退调用时说明原因 —— 否则那条提示会被这里的覆盖掉。 */
+function splitAgentAllocEven(msg){
+    readAllAgentAllocRows();
+    var n=_agentAllocRows.length,total=_agentAllocCtx.total||0;
+    if(!n)return;
+    var each=Math.floor(total/n*100)/100,acc=0;
+    _agentAllocRows.forEach(function(r,i){
+        var v=(i===n-1)?+(total-acc).toFixed(2):each;
+        acc+=v;r.amt=String(v);
+    });
+    redrawAgentAlloc();
+    showToast(msg||(tr('已平均分摊到')+' '+n+' '+tr('行')));
+}
+/* 按各 Job 的预估成本比例分摊；有 Job 取不到预估的就退回平均分摊 */
+function splitAgentAllocByEst(){
+    readAllAgentAllocRows();
+    var total=_agentAllocCtx.total||0;
+    var ests=_agentAllocRows.map(function(r){
+        return r.job?(fclParseMoney(fclEstAmountOf(r.job,''))||0):0;
+    });
+    var base=ests.reduce(function(s,v){return s+v;},0);
+    if(!base){splitAgentAllocEven(tr('所选 Job 都没有预估成本，已改用平均分摊'));return;}
+    var acc=0,n=_agentAllocRows.length;
+    _agentAllocRows.forEach(function(r,i){
+        var v=(i===n-1)?+(total-acc).toFixed(2):Math.floor(total*ests[i]/base*100)/100;
+        acc+=v;r.amt=String(v);
+    });
+    redrawAgentAlloc();
+    showToast(tr('已按预估成本比例分摊'));
+}
+function submitAgentCostAlloc(){
+    readAllAgentAllocRows();
+    var id=_agentAllocCtx.id,src=fclFinRows(id)[_agentAllocCtx.idx];
+    if(!src){showToast(tr('未找到成本行'));return;}
+    var valid=_agentAllocRows.filter(function(r){return String(r.job||'').trim()&&fclParseMoney(r.amt)!==null;});
+    if(valid.length<2){showToast(tr('至少填两行 Job 与金额才能分摊'));return;}
+    var jobs=valid.map(function(r){return r.job.trim();});
+    if(new Set(jobs).size!==jobs.length){showToast(tr('同一个 Job 出现了多次，请合并后再分摊'));return;}
+    if(valid.some(function(r){return (fclParseMoney(r.amt)||0)<=0;})){showToast(tr('分摊金额必须大于 0'));return;}
+    var sum=valid.reduce(function(s,r){return s+(fclParseMoney(r.amt)||0);},0);
+    var diff=+((_agentAllocCtx.total||0)-sum).toFixed(2);
+    if(diff!==0){showToast(tr('各份合计与待分摊金额差')+' '+diff+'，'+tr('请调平后再提交'));return;}
+    var c=TC[id]||{},h=c.h||[];
+    var seedWidth=(c.d&&c.d.length)?c.d[0].length:h.length-1;
+    var fee=fclFinGet(id,src,'费用名称');
+    var mark=tr('由')+' '+fclFinGet(id,src,'实际成本号')+' '+tr('手工分摊');
+    /* 第一份改写原行 */
+    fclFinSet(id,src,'Job No',valid[0].job.trim());
+    fclFinSet(id,src,'实际金额',String(fclParseMoney(valid[0].amt)));
+    fclFinSet(id,src,'预估金额',fclEstAmountOf(valid[0].job.trim(),fee));
+    fclFinSet(id,src,'差异金额','');fclFinSet(id,src,'差异率','');
+    fclFinSet(id,src,'对账状态','待对账');
+    fclFinSet(id,src,'备注',mark);
+    /* 其余份追加为新行；写 TC.d 而不是 _listData，否则下次渲染就没了 */
+    var seq=(c.d||[]).length;
+    valid.slice(1).forEach(function(r){
+        var job=r.job.trim();
+        var row=h.slice(0,seedWidth).map(function(name){
+            if(name==='实际成本号')return 'FAC-AL'+(2609000+(++seq));
+            if(name==='Job No')return job;
+            if(name==='实际金额')return String(fclParseMoney(r.amt));
+            if(name==='预估金额')return fclEstAmountOf(job,fee);
+            if(name==='差异金额'||name==='差异率'||name==='对账人'||name==='对账时间')return '';
+            if(name==='对账状态')return '待对账';
+            if(name==='备注')return mark;
+            return fclFinGet(id,src,name);   /* 服务商/费用名称/费用类别/币别/账单号等照抄 */
+        });
+        c.d.push(row);
+    });
+    if(typeof _listData!=='undefined')delete _listData[id];
+    closeCrudModal();
+    fclFinRefresh(id);
+    showToast(tr('已分摊为')+' '+valid.length+' '+tr('行')+'，'+tr('各行状态回到「待对账」，可重新对账'));
+}
+
 /* ③ 应付账单管理：付款登记 —— 累加已付、倒算待付、据此定状态 */
 var _apPayCtx={id:'',idx:-1};
 function openApBillPay(id){

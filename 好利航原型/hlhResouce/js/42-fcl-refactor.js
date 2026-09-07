@@ -97,29 +97,6 @@ TC['fcl-release-tpl'].fieldOptions={
  * 二、④ 操作执行 —— 新增模块
  * ========================================================================== */
 
-/* 8.6 拆单并单管理（SOP 11.4）*/
-addPrototypeTable('fcl-bl-split-merge','拆单并单管理',
-    '拆并单号|操作类型|订舱单号|源提单号|目标提单号|船公司|拆分方式|拆分合并数量|收货人明细|关联报关方式|费用分摊方式|操作人|操作时间|状态|操作',
-    ['草稿','已提交','已完成','已撤销'],[
-    ['FBS-20260613001','拆单(M拆H)','FBK-20260613001','HLHLA260613001','HLHLA260613001-A;HLHLA260613001-B','MAERSK','按柜量拆分','2','Lagos Import Ltd;Lagos Trading Co','拆分报关','按柜','陈单证','2026-06-13 15:40','已完成'],
-    ['FBS-20260612002','并单(H合M)','FBK-20260612002','HLHDK260612002;HLHDK260612003','HLHDK260612100','COSCO','人工指定合并','2','Dakar Trading','合并报关','按票','周单证','2026-06-12 17:20','已提交'],
-    ['FBS-20260611003','拆单(M拆H)','FBK-20260611003','HLHAB260611003','待生成','CMA CGM','按费用拆分','3','Abidjan Import;Abidjan Retail;Abidjan Logistics','拆分报关','按重量','陈单证','2026-06-11 11:10','草稿']
-],[
-    {label:'拆并单号',type:'text'},
-    {label:'操作类型',type:'select',options:['拆单(M拆H)','并单(H合M)']},
-    {label:'订舱单号',type:'text'},
-    {label:'源提单号',type:'text'},
-    {label:'船公司',type:'select',options:FCL_CARRIER_OPTIONS},
-    {label:'状态',type:'select',options:['草稿','已提交','已完成','已撤销']}
-]);
-TC['fcl-bl-split-merge'].modalExcludedFields=['操作人','操作时间','状态'];
-TC['fcl-bl-split-merge'].fieldOptions={
-    '操作类型':['拆单(M拆H)','并单(H合M)'],
-    '船公司':FCL_CARRIER_OPTIONS,
-    '拆分方式':['按柜型拆分','按柜量拆分','按费用拆分','人工拆分','人工指定合并'],
-    '关联报关方式':['单独报关','合并报关','拆分报关','买单报关'],
-    '费用分摊方式':['按柜','按票','按重量','手工指定']
-};
 
 /* ==========================================================================
  * 三、⑤ 财务与结算 —— 新增模块
@@ -496,6 +473,163 @@ function fclBackfillEntrustBookingNo(entrustNo,bookingNo){
     var row=c.d.find(function(r){return String(r[iNo]||'')===entrustNo;});
     if(row)setRowOverride(eid,row,iGen,bookingNo);
 }
+/* ===== Job 作业操作 =====
+ * 原「操作执行」那一组 7 个独立页面已撤，改成主单上的一个「操作」下拉：
+ * 每一项 = 针对当前勾选主单的一次环节登记。
+ * 字段里带 job 的会真写回主单对应列（列表上看得到）；带 status 的会推进订舱状态；
+ * 其余是本环节的登记项，原型阶段只做录入与提示，不再单独建表。 */
+var FCL_JOB_OPS=[
+{key:'truck',label:'拖车安排',hint:'录入拖车委托单，发给拖车行',fields:[
+    {label:'拖车公司',type:'select',options:['鹏程拖车','南沙拖车','中远陆运','客户自拖']},
+    {label:'提柜地点'},{label:'装柜地点'},{label:'还柜地点'},
+    {label:'预约时间',type:'datetime-local'},{label:'司机电话'},
+    {label:'拖车备注',type:'textarea'}]},
+{key:'load',label:'进仓装柜',hint:'装柜完成后登记柜号封签，状态转「已装柜」',
+    status:'已装柜',statusFrom:['已订舱','已放舱'],fields:[
+    {label:'柜号',job:'柜号',required:true},{label:'封签号',job:'封签号',required:true},
+    {label:'柜重',job:'柜重'},{label:'装柜地点'},{label:'装柜件数'},
+    {label:'装柜时间',type:'datetime-local'},{label:'装柜备注',type:'textarea'}]},
+{key:'sibl',label:'补料与提单',hint:'SI 补料、草稿件与提单确认',fields:[
+    {label:'提单号'},{label:'MBL/HBL',type:'select',options:['MBL','HBL']},
+    {label:'收货人'},{label:'通知人'},
+    {label:'补料截止',type:'datetime-local'},
+    {label:'草稿件状态',type:'select',options:['待生成','已生成','已确认']},
+    {label:'补料备注',type:'textarea'}]},
+{key:'split',label:'拆单并单',hint:'M 单拆 H 单 / H 单合 M 单，含费用分摊',fields:[
+    {label:'操作类型',type:'select',options:['拆单(M拆H)','并单(H合M)']},
+    {label:'源提单号'},{label:'目标提单号'},
+    {label:'拆分方式',type:'select',options:['按柜型拆分','按柜量拆分','按费用拆分','人工指定合并']},
+    {label:'费用分摊方式',type:'select',options:['按柜','按票','按重量','手工指定']},
+    {label:'拆并说明',type:'textarea'}]},
+{key:'customs',label:'报关申报',hint:'报关方式、报关行与放行登记',fields:[
+    {label:'报关方式',type:'select',options:['买单报关','客户抬头','单独报关','合并报关']},
+    {label:'报关行'},{label:'申报时间',type:'datetime-local'},{label:'放行时间',type:'datetime-local'},
+    {label:'资料状态',type:'select',options:['资料待补','资料齐全']},
+    {label:'报关备注',type:'textarea'}]},
+{key:'track',label:'开船与轨迹',hint:'回填 ATD / ATA，状态随之推进到已离港 / 已到港',fields:[
+    {label:'ATD',job:'ATD',type:'date'},{label:'ATA',job:'ATA',type:'date'},
+    {label:'当前节点',type:'select',options:['待开船','已开船','海上运输','已到港']},
+    {label:'异常预警',type:'select',options:['无','塞港预警','船期延误','甩柜']},
+    {label:'轨迹备注',type:'textarea'}]},
+{key:'docsend',label:'寄单作业',hint:'正本寄出与签收登记',fields:[
+    {label:'寄单方式',type:'select',options:['顺丰','DHL','EMS','客户自取']},
+    {label:'快递单号'},{label:'寄出时间',type:'datetime-local'},{label:'签收时间',type:'datetime-local'},
+    {label:'寄单备注',type:'textarea'}]}
+];
+function fclJobOpBy(key){
+    for(var i=0;i<FCL_JOB_OPS.length;i++)if(FCL_JOB_OPS[i].key===key)return FCL_JOB_OPS[i];
+    return null;
+}
+var _fclJobOpCtx={id:'',idx:-1,key:''};
+function openFclJobOp(key,id){
+    id=id||'fcl-booking';
+    var op=fclJobOpBy(key);
+    if(!op){showToast(tr('未知操作'));return;}
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选一个主单再做')+'「'+tr(op.label)+'」');return;}
+    if(idxs.length>1){showToast(tr('作业登记一次只能选一个主单'));return;}
+    var row=fclBookingRowAt(id,idxs[0]);
+    if(!row){showToast(tr('未找到主单数据'));return;}
+    var st=fclBookingStatusOf(id,row);
+    if(st==='已作废'){showToast(tr('已作废的主单不能再做作业登记'));return;}
+    if(op.statusFrom&&op.statusFrom.indexOf(st)<0){
+        showToast(tr(op.label)+tr(' 需要主单处于')+'「'+op.statusFrom.join('/')+'」，'+tr('当前为')+'「'+tr(st||'—')+'」');
+        return;
+    }
+    _fclJobOpCtx={id:id,idx:idxs[0],key:key};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='54%';
+    document.getElementById('crud-modal-title').textContent=tr(op.label)+' - '+fclJobFieldOf(id,row,'Job No');
+    document.getElementById('crud-modal-body').innerHTML=fclJobOpBodyHtml(id,row,op);
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitFclJobOp()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认登记')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function fclJobFieldOf(id,row,label){
+    var h=(TC[id]||{}).h||[],i=h.indexOf(label);
+    return (i>=0&&row&&row[i]!=null)?String(row[i]):'';
+}
+function fclJobOpBodyHtml(id,row,op){
+    var g=function(label){return fclJobFieldOf(id,row,label);};
+    var out='';
+    out+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
+         tr('主单')+' <span class="font-semibold text-text-primary">'+esc(g('Job No'))+'</span>　'+
+         esc(g('船名航次')||'—')+'　'+esc(g('起运港')||'—')+' → '+esc(g('目的港')||'—')+
+         '　'+tr('当前状态')+'「'+esc(tr(g('订舱状态')))+'」'+
+         '<div class="mt-1 text-xs text-text-muted">'+esc(tr(op.hint||''))+'</div></div>';
+    out+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-3">';
+    op.fields.forEach(function(f){
+        var val=f.job?g(f.job):'';
+        var span=(f.type==='textarea')?' md:col-span-3':'';
+        var req=f.required?'<span class="text-red-500 ml-1">*</span>':'';
+        out+='<div data-job-field="'+esc(f.label)+'" class="'+span.trim()+'">';
+        out+='<label class="text-xs text-text-secondary mb-1 block">'+esc(tr(f.label))+req+'</label>';
+        if(f.type==='select'){
+            out+='<select class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+
+                 '<option value="">'+tr('请选择')+'</option>'+
+                 (f.options||[]).map(function(o){
+                     return '<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(tr(o))+'</option>';}).join('')+
+                 '</select>';
+        }else if(f.type==='textarea'){
+            out+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+
+                 esc(tr('请输入')+tr(f.label))+'">'+esc(val)+'</textarea>';
+        }else{
+            var t=(f.type==='date'||f.type==='datetime-local')?f.type:'text';
+            out+='<input type="'+t+'" value="'+esc(val)+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+
+                 esc(tr('请输入')+tr(f.label))+'">';
+        }
+        out+='</div>';
+    });
+    out+='</div>';
+    return out;
+}
+function fclJobOpValue(label){
+    var box=document.querySelector('[data-job-field="'+label+'"]');
+    if(!box)return '';
+    var el=box.querySelector('select')||box.querySelector('textarea')||box.querySelector('input');
+    return el?String(el.value||''):'';
+}
+function submitFclJobOp(){
+    var ctx=_fclJobOpCtx,op=fclJobOpBy(ctx.key);
+    if(!op)return;
+    var id=ctx.id,row=fclBookingRowAt(id,ctx.idx);
+    if(!row){showToast(tr('未找到主单数据'));return;}
+    var h=(TC[id]||{}).h||[];
+    /* 必填校验 */
+    var missing=[];
+    op.fields.forEach(function(f){if(f.required&&!fclJobOpValue(f.label))missing.push(tr(f.label));});
+    if(missing.length){showToast(tr('请填写')+'：'+missing.join('、'));return;}
+    /* 能落到主单字段上的，真写回列表 */
+    var written=[];
+    op.fields.forEach(function(f){
+        if(!f.job)return;
+        var v=fclJobOpValue(f.label);
+        if(!v)return;
+        var i=h.indexOf(f.job);
+        if(i>=0){setRowOverride(id,row,i,v);written.push(tr(f.job));}
+    });
+    /* 状态推进 */
+    var st=fclBookingStatusOf(id,row),newSt='';
+    if(op.status)newSt=op.status;
+    if(op.key==='track'){
+        /* 到港优先于离港：两个都填了说明这票已经到了 */
+        if(fclJobOpValue('ATA'))newSt='已到港';
+        else if(fclJobOpValue('ATD'))newSt='已离港';
+    }
+    if(newSt&&newSt!==st){
+        var i=h.indexOf('订舱状态');
+        if(i>=0)setRowOverride(id,row,i,newSt);
+    }else{newSt='';}
+    closeCrudModal();
+    fclBookingRefreshList(id);
+    var msg=tr(op.label)+tr('已登记');
+    if(written.length)msg+='，'+tr('已更新')+' '+written.join('、');
+    if(newSt)msg+='，'+tr('状态转为')+'「'+tr(newSt)+'」';
+    showToast(msg);
+    _fclJobOpCtx={id:'',idx:-1,key:''};
+}
+
 /* ===== 关联委托 =====
  * 两种用法合成一个弹窗：
  *   a) 勾 1 个主单 + 选多个委托单  -> 一个主单挂多张委托单
@@ -1010,34 +1144,6 @@ function fclBookingAfterModalRender(id,mode,rowData){
     fclBookingToggleDangerous();
 }
 
-/* 10.3 补料与提单 —— 吸收原「实际录单」，并入催料字段（SOP 11.3）*/
-addPrototypeTable('fcl-si-bl','补料与提单',
-    '补料单号|订舱单号|提单号|柜号|补料状态|MBL/HBL|收货人|通知人|对内补料截止|对外补料截止|补料完整性|催料次数|最近催料时间|自动催料|草稿件状态|客户确认状态|改单次数|改单费|客户实单|提单费用状态|重算状态|操作',
-    ['待补料','已补料','草稿确认中','已确认'],[
-    ['FSB-20260613001','FBK-20260613001','HLHLA260613001','MSKU1234567','待补料','HBL','Lagos Import Ltd','Same as consignee','2026-06-16 12:00','2026-06-17 12:00','资料待补','2','2026-06-16 14:00','开启','待生成','待确认','0','0','已绑定','待重算','正常'],
-    ['FSB-20260612002','FBK-20260612002','HLHDK260612002','COSU7654321','已确认','MBL','Dakar Trading','Dakar Notify','2026-06-17 18:00','2026-06-18 18:00','资料齐全','0','','开启','已生成','已确认','1','USD 50','已绑定','已计算','正常'],
-    ['FSB-20260611003','FBK-20260611003','HLHAB260611003','CMAU9988776','草稿确认中','HBL','Abidjan Import','Abidjan Notify','2026-06-20 12:00','2026-06-21 12:00','资料齐全','1','2026-06-20 13:30','开启','已生成','待确认','0','0','未绑定','未计算','需重算']
-],[
-    {label:'补料单号',type:'text'},
-    {label:'订舱单号',type:'text'},
-    {label:'提单号',type:'text'},
-    {label:'柜号',type:'text'},
-    {label:'MBL/HBL',type:'select',options:['MBL','HBL']},
-    {label:'补料状态',type:'select',options:['待补料','已补料','草稿确认中','已确认']},
-    {label:'客户实单',type:'select',options:['已绑定','未绑定']},
-    {label:'对内补料截止',type:'date'}
-]);
-TC['fcl-si-bl'].modalExcludedFields=['催料次数','最近催料时间','补料状态','重算状态'];
-TC['fcl-si-bl'].fieldOptions={
-    'MBL/HBL':['MBL','HBL'],
-    '补料完整性':['资料待补','资料齐全'],
-    '自动催料':['开启','关闭'],
-    '草稿件状态':['待生成','已生成','已作废'],
-    '客户确认状态':['待确认','已确认','要求改单'],
-    '客户实单':['已绑定','未绑定'],
-    '提单费用状态':['未计算','待重算','已计算'],
-    '重算状态':['正常','需重算','已重算']
-};
 
 /* 9.3 应收与放单 —— 放单规则引擎字段（SOP 17.2 / 19.3）*/
 addPrototypeTable('fcl-ar-release','应收与放单',
@@ -1168,128 +1274,6 @@ TC['fcl-inquiry-order'].fieldOptions={
     '币别':FCL_CURRENCY_OPTIONS,'报价渠道':['邮件','微信','QQ','电话'],'业务员':FCL_SALES_OPTIONS
 };
 
-/* ==========================================================================
- * 五、10.1 订单管理 → 整柜业务总览看板（只读，主状态分页签 + 15 节点进度灯）
- * 节点顺序：①询价 ②建档 ③销指 ④订舱 ⑤放仓 ⑥拖车 ⑦装柜 ⑧补料 ⑨报关
- *           ⑩开船 ⑪寄单 ⑫账单 ⑬付款 ⑭放单 ⑮提成
- * 图例：● 已完成   ◐ 进行中   ○ 未开始   ✖ 异常
- * ========================================================================== */
-addPrototypeTable('fcl-order','整柜业务总览',
-    '票单号|委托订单号|客户名称|业务员|船公司|航线|柜型柜量|船名航次|ETD|ATD|ETA|主状态|节点进度|当前责任人|超时预警|销售价|实际成本|毛利|操作',
-    ['待订舱','已订舱','已放仓','操作中','已开船','在途','已到港','已完结','已取消','异常挂起'],[
-    ['FBK-20260613001','FEO-20260613001','深圳市华运达国际货运','张三','MAERSK','西非线','40HQ×1','MAERSK LAGOS 026W','2026-06-20','','2026-07-18','待订舱','●●●◐○○○○○○○○○○○','刘订舱','订舱窗口 2026-06-17 18:00 截止','USD 4,500','USD 4,120','USD 380'],
-    ['FBK-20260612002','FEO-20260612002','广州远洋进出口贸易','李四','COSCO','西非线','20GP×2','COSCO AFRICA 118W','2026-06-22','','2026-07-20','已放仓','●●●●●◐○○○○○○○○○','陈操作','—','USD 5,600','USD 5,180','USD 420'],
-    ['FBK-20260611003','FEO-20260611003','东莞市鑫海物流','王五','CMA CGM','地中海线','40HQ×1','CMA MARSEILLE 09W','2026-06-25','','2026-07-24','操作中','●●●●●●●◐○○○○○○○','陈单证','补料对内截止 2026-06-20 12:00','USD 6,200','USD 5,600','USD 600'],
-    ['FBK-20260605008','FEO-20260605008','上海锦程国际贸易','赵六','COSCO','西非线','40HQ×1','COSCO AFRICA 118W','2026-06-05','2026-06-05 23:10','2026-07-02','在途','●●●●●●●●●●○○○○○','陈操作','塞港预警：目的港拥堵','USD 5,100','USD 4,500','USD 600'],
-    ['FBK-20260520011','FEO-20260520011','深圳市华运达国际货运','张三','MSC','西非线','40HQ×1','MSC ACCRA 18W','2026-05-20','2026-05-20 14:30','2026-06-17','已完结','●●●●●●●●●●●●●●●','—','—','USD 5,100','USD 4,500','USD 600'],
-    ['FBK-20260610005','FEO-20260610005','广州远洋进出口贸易','李四','CMA CGM','西非线','20GP×1','CMA ABIDJAN 11W','2026-06-18','','2026-07-16','异常挂起','●●●●✖○○○○○○○○○○','刘订舱','订舱失败：船司舱位不足（FEX-20260613001）','USD 2,680','USD 2,580','USD 100']
-],[
-    {label:'票单号',type:'text'},
-    {label:'委托订单号',type:'text'},
-    {label:'客户名称',type:'select',options:FCL_CUSTOMER_OPTIONS},
-    {label:'业务员',type:'select',options:FCL_SALES_OPTIONS},
-    {label:'船公司',type:'select',options:FCL_CARRIER_OPTIONS},
-    {label:'ETD',type:'date'},
-    {label:'主状态',type:'select',options:['待订舱','已订舱','已放仓','操作中','已开船','在途','已到港','已完结','已取消','异常挂起']}
-]);
-/* 只读看板：不新增、不编辑、不删除；行内仅「查看」（进入票单360） */
-TC['fcl-order'].noAutoAudit=true;
-
-/* ==========================================================================
- * 六、票单 360 详情（总览看板行内「查看」入口）
- * ========================================================================== */
-var FCL_TIMELINE_NODES=[
-    {n:'①',label:'询价/报价',role:'业务员'},
-    {n:'②',label:'客户建档',role:'业务员'},
-    {n:'③',label:'委托订单',role:'业务员/商务'},
-    {n:'④',label:'订舱',role:'订舱员'},
-    {n:'⑤',label:'放仓',role:'订舱员'},
-    {n:'⑥',label:'拖车',role:'操作员'},
-    {n:'⑦',label:'进仓装柜',role:'仓库/操作员'},
-    {n:'⑧',label:'补料/提单',role:'操作员/单证员'},
-    {n:'⑨',label:'报关',role:'报关员'},
-    {n:'⑩',label:'开船/轨迹',role:'系统'},
-    {n:'⑪',label:'寄单',role:'操作员/深圳前台'},
-    {n:'⑫',label:'账单',role:'操作员/财务'},
-    {n:'⑬',label:'付款',role:'财务(应付)'},
-    {n:'⑭',label:'应收/放单',role:'财务(应收)'},
-    {n:'⑮',label:'提成',role:'深圳财务'}
-];
-
-function fclNodeStateMeta(ch){
-    if(ch==='●')return {cls:'bg-green-500',text:'text-green-700',label:'已完成'};
-    if(ch==='◐')return {cls:'bg-primary-500',text:'text-primary-700',label:'进行中'};
-    if(ch==='✖')return {cls:'bg-red-500',text:'text-red-700',label:'异常'};
-    return {cls:'bg-surface-300',text:'text-text-muted',label:'未开始'};
-}
-
-function openFclOrderDetail(id,rowIdx){
-    var c=TC[id]||{};
-    var row=(c.d&&c.d[rowIdx])||[];
-    var g=function(h){return getTableValueByHeader(c,row,h,'')||'—';};
-    var progress=String(getTableValueByHeader(c,row,'节点进度','')||'');
-    var html='';
-
-    html+='<div class="flex gap-5">';
-
-    /* 左侧：15 节点时间轴 */
-    html+='<div class="w-64 shrink-0 border border-surface-200 rounded-xl p-4 bg-surface-50">';
-    html+='<div class="text-sm font-semibold text-text-primary mb-3">'+tr('全链路节点')+'</div>';
-    FCL_TIMELINE_NODES.forEach(function(node,i){
-        var meta=fclNodeStateMeta(progress.charAt(i)||'○');
-        html+='<div class="flex items-start gap-2.5 pb-2.5">';
-        html+='<div class="flex flex-col items-center shrink-0">';
-        html+='<span class="w-2.5 h-2.5 rounded-full '+meta.cls+'"></span>';
-        if(i<FCL_TIMELINE_NODES.length-1)html+='<span class="w-px flex-1 min-h-[14px] bg-surface-300"></span>';
-        html+='</div>';
-        html+='<div class="leading-tight">';
-        html+='<div class="text-xs font-medium '+meta.text+'">'+node.n+' '+esc(tr(node.label))+'</div>';
-        html+='<div class="text-[11px] text-text-muted">'+esc(tr(node.role))+' · '+esc(tr(meta.label))+'</div>';
-        html+='</div></div>';
-    });
-    html+='</div>';
-
-    /* 右侧：基本信息 + 当前环节 + 页签 */
-    html+='<div class="flex-1 min-w-0 flex flex-col gap-4">';
-
-    html+='<div class="border border-surface-200 rounded-xl p-4">';
-    html+='<div class="text-sm font-semibold text-text-primary mb-3">'+tr('基本信息')+'</div>';
-    html+='<div class="grid grid-cols-4 gap-x-5 gap-y-3">';
-    [['票单号','票单号'],['委托订单号','委托订单号'],['客户名称','客户名称'],['业务员','业务员'],
-     ['船公司','船公司'],['航线','航线'],['柜型柜量','柜型柜量'],['船名航次','船名航次'],
-     ['ETD','ETD'],['ATD','ATD'],['ETA','ETA'],['当前责任人','当前责任人']].forEach(function(p){
-        html+='<div><div class="text-[11px] text-text-muted mb-0.5">'+esc(tr(p[0]))+'</div>'+
-              '<div class="text-sm text-text-primary break-all">'+esc(g(p[1]))+'</div></div>';
-    });
-    html+='</div></div>';
-
-    html+='<div class="border border-surface-200 rounded-xl p-4">';
-    html+='<div class="text-sm font-semibold text-text-primary mb-3">'+tr('当前环节与预警')+'</div>';
-    html+='<div class="grid grid-cols-3 gap-x-5 gap-y-3">';
-    html+='<div><div class="text-[11px] text-text-muted mb-0.5">'+tr('主状态')+'</div><div class="text-sm">'+statusBadge(getTableValueByHeader(c,row,'主状态',''))+'</div></div>';
-    html+='<div class="col-span-2"><div class="text-[11px] text-text-muted mb-0.5">'+tr('超时预警')+'</div><div class="text-sm text-red-600">'+esc(g('超时预警'))+'</div></div>';
-    html+='</div>';
-    html+='<div class="mt-3 flex flex-wrap gap-2">';
-    [['Job/主单管理','fcl-booking'],['放仓作业','fcl-release'],['拖车安排','fcl-truck'],['进仓装柜','fcl-load'],
-     ['补料与提单','fcl-si-bl'],['报关申报','fcl-customs'],['开船与轨迹','fcl-sailing-track'],['寄单作业','fcl-doc-send']].forEach(function(p){
-        html+='<button type="button" class="h-7 px-3 text-xs rounded-lg border border-primary-200 text-primary-600 hover:bg-primary-50 cursor-pointer" '+
-              'onclick="closeCrudModal();navigateToTab(\'fcl\',\''+p[1]+'\')">'+esc(tr(p[0]))+'</button>';
-    });
-    html+='</div></div>';
-
-    html+='<div class="border border-surface-200 rounded-xl p-4">';
-    html+='<div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用与毛利')+'</div>';
-    html+='<div class="grid grid-cols-3 gap-x-5">';
-    [['销售价','销售价'],['实际成本','实际成本'],['毛利','毛利']].forEach(function(p){
-        html+='<div><div class="text-[11px] text-text-muted mb-0.5">'+esc(tr(p[0]))+'</div>'+
-              '<div class="text-base font-semibold text-blue-700">'+esc(g(p[1]))+'</div></div>';
-    });
-    html+='</div></div>';
-
-    html+='</div></div>';
-
-    openSimpleInfoModal(tr('票单360')+' - '+esc(g('票单号')),html,'80%');
-}
 
 /* ==========================================================================
  * 七、整柜业务操作导航（首页）—— SOP 全流程速查 + 功能地图
@@ -1345,7 +1329,7 @@ var FCL_SOP_STEPS=[
  output:'订舱单 FBK + 订舱回执号；状态 已订舱',
  sla:'船公司订舱回执 ≤ 24 小时',
  caution:'危险品在主单信息里勾选「是否危险品」后补 UN 编号、危险类别、包装类别、申报人；其船司结单时间早于普货，需提前规划、进仓与普货分开存放。',
- tabs:[['Job/主单管理','fcl-booking','fcl'],['放仓作业','fcl-release','fcl']]},
+ tabs:[['Job/主单管理','fcl-booking','fcl']]},
 
 {no:'⑤',name:'放仓作业',sop:'SOP-FCL-05',stage:'ops',role:'订舱员（主导）、操作员（协同）',
  trigger:'船公司确认舱位并发出放仓邮件（一般 1~2 个工作日）',
@@ -1355,7 +1339,7 @@ var FCL_SOP_STEPS=[
  output:'客户专用放仓件；状态 已放仓；同时对内提醒拖车、报关、补料',
  sla:'放仓邮件接收 ≤ 48 小时',
  caution:'放仓模板是本环节核心，按「船公司 × 目的港」维护，含对外/对内结单时间（对内一般早 1 天）。危险品需单独一套模板。',
- tabs:[['放仓作业','fcl-release','fcl'],['放仓模板','fcl-release-tpl','biz-cfg']]},
+ tabs:[['Job/主单管理','fcl-booking','fcl'],['放仓模板','fcl-release-tpl','biz-cfg']]},
 
 {no:'⑥',name:'拖车安排',sop:'SOP-FCL-06',stage:'ops',role:'操作员（主导）、拖车行、财务（对账）',
  trigger:'放仓完成',
@@ -1364,7 +1348,7 @@ var FCL_SOP_STEPS=[
  output:'拖车委托单 FTR；状态 拖车费用已确认',
  sla:'—',
  caution:'目标是让供应商自助录入，把财务对账工作量降低约 70%。',
- tabs:[['拖车安排','fcl-truck','fcl']]},
+ tabs:[['Job/主单管理','fcl-booking','fcl']]},
 
 {no:'⑦',name:'进仓装柜',sop:'SOP-FCL-07',stage:'ops',role:'操作员（监督）、仓库操作员（执行）',
  trigger:'拖车提柜到仓，货物到仓',
@@ -1373,7 +1357,7 @@ var FCL_SOP_STEPS=[
  output:'装柜单 FLD + 装柜清单 + 封柜照；状态 已进仓 / 已装柜',
  sla:'—',
  caution:'业务联系单不再打印，改由系统按时间节点自动生成任务与提醒，实现无纸化。',
- tabs:[['进仓装柜','fcl-load','fcl'],['仓库PDA','pda-app','warehouse-pda']]},
+ tabs:[['Job/主单管理','fcl-booking','fcl'],['仓库PDA','pda-app','warehouse-pda']]},
 
 {no:'⑧',name:'补料与提单',sop:'SOP-FCL-08',stage:'ops',role:'操作员（主导）、单证员（制单）、客户（确认）',
  trigger:'装柜完成，临近船公司补料截止日',
@@ -1384,7 +1368,7 @@ var FCL_SOP_STEPS=[
  output:'补料单 FSB + 提单号 + 柜号；状态 已补料 → 提单已确认 → 提单已签发',
  sla:'对内截止比对外提前 1 天（留 3~4 小时操作时间）；草稿件确认 ≤ 12 小时',
  caution:'拆单（1 MBL 拆多 HBL）遵循船公司拆单逻辑；并单（多 HBL 合 1 MBL）可合并申报节省费用。拆单产生的 HBL 会打拆单标记，放单时强制转人工审核。',
- tabs:[['补料与提单','fcl-si-bl','fcl'],['拆单并单管理','fcl-bl-split-merge','fcl']]},
+ tabs:[['Job/主单管理','fcl-booking','fcl']]},
 
 {no:'⑨',name:'报关申报',sop:'SOP-FCL-09',stage:'ops',role:'报关员（主导）、报关行（执行）',
  trigger:'装柜完成',
@@ -1394,7 +1378,7 @@ var FCL_SOP_STEPS=[
  output:'报关单 FCD + 放行单；状态 已申报 / 查验中 / 已放行',
  sla:'—',
  caution:'当前为线下对接、逐票录入费用；月结由财务统一与报关行对账。报关行 API 属远期规划。',
- tabs:[['报关申报','fcl-customs','fcl']]},
+ tabs:[['Job/主单管理','fcl-booking','fcl']]},
 
 {no:'⑩',name:'开船与轨迹',sop:'SOP-FCL-10',stage:'ops',role:'操作员（监控）、客服（通知）、系统',
  trigger:'船舶离港',
@@ -1404,7 +1388,7 @@ var FCL_SOP_STEPS=[
  output:'轨迹单 FTK + 轨迹节点记录；状态 已开船 / 在途 / 已到港',
  sla:'—',
  caution:'四类异常预警：开船延误、跳港、塞港、船公司换船。开船延误产生的额外费用可作为账单申诉依据。',
- tabs:[['开船与轨迹','fcl-sailing-track','fcl'],['异常处理','fcl-exception','fcl']]},
+ tabs:[['Job/主单管理','fcl-booking','fcl']]},
 
 {no:'⑪',name:'寄单作业',sop:'SOP-FCL-11',stage:'ops',role:'操作员（发起）、深圳前台（执行）',
  trigger:'提单已签发且应收已核销放单',
@@ -1413,7 +1397,7 @@ var FCL_SOP_STEPS=[
  output:'寄单单 FDS + 快递单号；状态 待寄单 → 已寄出 → 已签收',
  sla:'深圳前台当日寄出',
  caution:'原流程靠邮件单向操作、深圳同事邮件量大；改为系统任务流后直接在系统看任务、回填单号并自动反馈客户。',
- tabs:[['寄单作业','fcl-doc-send','fcl']]},
+ tabs:[['Job/主单管理','fcl-booking','fcl']]},
 
 {no:'⑫',name:'账单管理',sop:'SOP-FCL-12',stage:'fin',role:'操作员（录入）、财务（对账）',
  trigger:'船公司账单送达（邮件 PDF 或官网下载）',
@@ -1451,7 +1435,7 @@ var FCL_SOP_STEPS=[
  output:'提成单 FCM；状态 待核算 → 已核算 → 已发放',
  sla:'—',
  caution:'存在未关闭申诉的票单不可核算提成。业绩可视化的目的是让业务员能对照核对，简化工作并加深对财务的信任。',
- tabs:[['业绩与提成','fcl-commission','fcl'],['整柜业务总览','fcl-order','fcl']]}
+ tabs:[['业绩与提成','fcl-commission','fcl']]}
 ];
 
 /* 功能地图：6 个分组 + 每项一句话说明 */
@@ -1468,16 +1452,7 @@ var FCL_FUNC_MAP=[
     ['业务询盘单','fcl-inquiry-order','fcl','商机台账，记录询盘、报价渠道与失单原因'],
     ['委托订单管理','fcl-sales-instruction','fcl','销售指示即客户委托单，预录单与实单统一在此录入，审核通过后生成订舱单']]},
 {group:'③ 订舱与放舱',hint:'订舱员的完整工作面',items:[
-    ['Job/主单管理','fcl-booking','fcl','整柜全链路主档；弹窗按 基础/订舱/主单/单证 分板块，危险品明细随勾选显隐'],
-    ['放仓作业','fcl-release','fcl','船司放仓邮件解析、敏感信息剥离与放仓件发送']]},
-{group:'④ 操作执行',hint:'操作员、单证员、报关员分岗作业',items:[
-    ['拖车安排','fcl-truck','fcl','拖车委托单、拖车行选择与实际费用登记'],
-    ['进仓装柜','fcl-load','fcl','进仓登记、PDA 扫描装柜、封柜照与铅封号'],
-    ['补料与提单','fcl-si-bl','fcl','SI 录入、催料、草稿件确认、实单绑定与费用重算'],
-    ['拆单并单管理','fcl-bl-split-merge','fcl','M 单拆 H 单 / H 单合 M 单，含费用分摊'],
-    ['报关申报','fcl-customs','fcl','报关资料、报关方式、查验登记与放行单'],
-    ['开船与轨迹','fcl-sailing-track','fcl','ETD/ATD/ETA、轨迹节点与四类异常预警'],
-    ['寄单作业','fcl-doc-send','fcl','寄单任务流、快递单号回填与客户通知']]},
+    ['Job/主单管理','fcl-booking','fcl','整柜全链路主档；放舱与拖车/装柜/补料/拆并单/报关/开船轨迹/寄单都收进本页的「放舱」与「操作」按钮里']]},
 {group:'⑤ 财务与结算',hint:'应付链 → 应收链 → 提成',items:[
     ['实际费用管理','fcl-bill-entry','fcl','船司实际费用逐项录入与确认'],
     ['账单导入','fcl-actual-bill-import','fcl','按模板批量导入船司账单，显示匹配数与差异数'],
@@ -1489,10 +1464,6 @@ var FCL_FUNC_MAP=[
     ['应收与放单','fcl-ar-release','fcl','放单判定：自动放单 / 人工审核 / 黑名单强拦截'],
     ['银行流水管理','fcl-bank-flow','fcl','流水自动匹配与手工认领'],
     ['业绩与提成','fcl-commission','fcl','毛利、提成预估与发放三条件校验']]},
-{group:'⑥ 监控与看板',hint:'跨环节视角',items:[
-    ['整柜业务总览','fcl-order','fcl','一票一行 + 15 节点进度灯，双击查看票单360'],
-    ['异常处理','fcl-exception','fcl','订舱失败、报关异常等业务链路异常单'],
-    ['SLA与KPI','fcl-sla-kpi','fcl','各环节时效达成率与岗位 KPI 监控']]},
 {group:'⚙ 整柜规则（业务配置）',hint:'规则外置，业务可自行维护',items:[
     ['关键业务规则','fcl-rule','biz-cfg','订舱、财务等各类规则的启用与优先级'],
     ['放仓模板','fcl-release-tpl','biz-cfg','船公司 × 目的港，结单时间、瞒报告示与敏感信息剥离'],
@@ -1521,14 +1492,18 @@ var FCL_EXCEPTIONS=[
 ['接口对接失败','IT','30 分钟未恢复 → 告警 → 暂时人工录入']
 ];
 
+/* 总览看板已下线，统计口径改挂 Job/主单管理这张全链路主档 */
 function fclGuideStats(){
-    var c=TC['fcl-order']||{},rows=c.d||[],si=(c.h||[]).indexOf('主状态');
-    var cnt=function(s){return si<0?0:rows.filter(function(r){return r[si]===s;}).length;};
+    var c=TC['fcl-booking']||{},rows=c.d||[],si=(c.h||[]).indexOf('订舱状态');
+    var cnt=function(){
+        var want=Array.prototype.slice.call(arguments);
+        return si<0?0:rows.filter(function(r){return want.indexOf(r[si])>=0;}).length;
+    };
     return [
-        {label:'在途票单总数',val:rows.length,cls:'text-primary-700'},
+        {label:'主单总数',val:rows.length,cls:'text-primary-700'},
         {label:'待订舱',val:cnt('待订舱'),cls:'text-orange-600'},
-        {label:'操作中',val:cnt('操作中'),cls:'text-blue-600'},
-        {label:'异常挂起',val:cnt('异常挂起'),cls:'text-red-600'}
+        {label:'在途',val:cnt('已离港','已到港'),cls:'text-blue-600'},
+        {label:'已作废',val:cnt('已作废'),cls:'text-red-600'}
     ];
 }
 
@@ -1690,7 +1665,7 @@ function generateFclGuidePage(id){
     h+='<div class="bg-white rounded-xl border border-surface-200 p-6">';
     h+='<div class="flex items-center gap-2 mb-4"><span class="w-1 h-4 bg-primary-600 rounded"></span>'+
        '<span class="text-base font-semibold text-text-primary">'+tr('异常处理速查')+'</span>'+
-       '<span class="text-xs text-text-muted">'+tr('SOP 第二十一章；异常登记入口见「监控与看板 → 异常处理」')+'</span></div>';
+       '<span class="text-xs text-text-muted">'+tr('SOP 第二十一章；异常在对应环节的作业弹窗里登记')+'</span></div>';
     h+='<table class="w-full text-xs"><thead><tr class="bg-primary-50/60">'+
        '<th class="text-left px-3 py-2 font-semibold text-primary-800 w-[18%]">'+tr('异常类型')+'</th>'+
        '<th class="text-left px-3 py-2 font-semibold text-primary-800 w-[14%]">'+tr('首问责任')+'</th>'+
@@ -1702,18 +1677,11 @@ function generateFclGuidePage(id){
            '<td class="px-3 py-2 text-text-secondary leading-relaxed">'+esc(tr(e[2]))+'</td></tr>';
     });
     h+='</tbody></table>';
-    h+='<div class="mt-3 flex gap-2">'+fclGuideChip('异常处理','fcl-exception','fcl')+fclGuideChip('SLA与KPI','fcl-sla-kpi','fcl')+'</div>';
+    h+='<div class="mt-3 flex gap-2">'+fclGuideChip('Job/主单管理','fcl-booking','fcl')+'</div>';
     h+='</div>';
 
     h+='</div>';
     return h;
-}
-
-/* 工具栏「票单360」：取勾选行；未勾选则提示 */
-function openSelectedFclOrderDetail(id){
-    var idx=getSelectedRowIndex();
-    if(idx<0){showToast(tr('请先勾选一条数据'));return;}
-    openFclOrderDetail(id,idx);
 }
 
 /* 简易只读弹窗：复用现有 crud-modal 骨架 */

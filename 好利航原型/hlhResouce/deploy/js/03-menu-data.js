@@ -38,27 +38,15 @@ const menuData=[
 {id:'fcl-intake',label:'接单与订舱',children:[
     {id:'fcl-inquiry-order',label:'业务询盘单',page:'fcl',tab:'fcl-inquiry-order'},
     {id:'fcl-sales-instruction',label:'委托订单管理',page:'fcl',tab:'fcl-sales-instruction'},
-    {id:'fcl-booking',label:'Job/主单管理',page:'fcl',tab:'fcl-booking'},
-    {id:'fcl-release',label:'放仓作业',page:'fcl',tab:'fcl-release'}
+    {id:'fcl-booking',label:'Job/主单管理',page:'fcl',tab:'fcl-booking'}
 ]},
-// ===== ④ 操作执行（SOP-FCL-06~11）=====
-{id:'fcl-ops',label:'操作执行',children:[
-    {id:'fcl-truck',label:'拖车安排',page:'fcl',tab:'fcl-truck'},
-    {id:'fcl-load',label:'进仓装柜',page:'fcl',tab:'fcl-load'},
-    {id:'fcl-si-bl',label:'补料与提单',page:'fcl',tab:'fcl-si-bl'},
-    {id:'fcl-bl-split-merge',label:'拆单并单管理',page:'fcl',tab:'fcl-bl-split-merge'},
-    {id:'fcl-customs',label:'报关申报',page:'fcl',tab:'fcl-customs'},
-    {id:'fcl-sailing-track',label:'开船与轨迹',page:'fcl',tab:'fcl-sailing-track'},
-    {id:'fcl-doc-send',label:'寄单作业',page:'fcl',tab:'fcl-doc-send'}
-]},
+// ===== ④ 操作执行 =====
+// 拖车/装柜/补料/拆并单/报关/开船轨迹/寄单 7 个页面已撤，
+// 收成 Job/主单管理 工具栏上的「操作」下拉（见 42 的 FCL_JOB_OPS）。
 // ===== ⑤ 财务与结算（SOP-FCL-12~15）=====
 // 这一组已整体移到「财务结算 → 整柜财务」，整柜业务下不再重复挂一份。
-// ===== ⑥ 监控与看板（SOP 第19/21/22章）=====
-{id:'fcl-monitor',label:'监控与看板',children:[
-    {id:'fcl-order',label:'整柜业务总览',page:'fcl',tab:'fcl-order'},
-    {id:'fcl-exception',label:'异常处理',page:'fcl',tab:'fcl-exception'},
-    {id:'fcl-sla-kpi',label:'SLA与KPI',page:'fcl',tab:'fcl-sla-kpi'}
-]}
+// ===== ⑥ 监控与看板 =====
+// 整柜业务总览 / 异常处理 / SLA与KPI 已整体下线。
 ]},
 
 {id:'warehouse',label:'仓储作业',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',children:[

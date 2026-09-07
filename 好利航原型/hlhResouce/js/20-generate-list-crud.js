@@ -141,7 +141,7 @@ function generateListPage(id,page,statusFilter){
         h+='</div>';
         h+='</div>';
     }
-    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-appeal'||id==='fcl-payment-request'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust')){
+    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-ap-bill'||id==='fcl-ar-fee'||id==='fcl-ar-receipt'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust')){
         const statusCounts={};
         statusCounts['']=allData.length;
         c.s.forEach(s=>{statusCounts[s]=allData.filter(row=>{
@@ -184,7 +184,6 @@ function generateListPage(id,page,statusFilter){
             if(ci===si||(c.statusBadgeCols&&c.statusBadgeCols.indexOf(th)>=0)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap">'+statusBadge(rawCell)+'</td>';}
             else if((id==='wb-manage'||id==='wb-client-manage')&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold font-mono" onclick="openWaybillDetail(\''+id+'\','+gi+')">'+esc(displayCell)+'</button></td>';}
             else if(id==='fin-fee-mgmt'&&th==='运单号'){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold font-mono" ondblclick="openFeeMgmtDetail(\''+id+'\','+gi+')" title="'+esc(tr('双击进入详情'))+'">'+esc(displayCell)+'</button></td>';}
-            else if(id==='fcl-bill'&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold font-mono" ondblclick="openBillDetailModal(\''+id+'\','+gi+')" title="'+esc(tr('双击进入详情'))+'">'+esc(displayCell)+'</button></td>';}
             else if(ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium font-mono text-primary-700" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}
             else if(th.includes('图片')){h+='<td class="px-4 py-3 text-sm whitespace-nowrap">'+renderNoPreImageThumbs(rawCell)+'</td>';}
             else if(id==='fin-fee-mgmt'&&['操作审核','海外确认','财务审核'].includes(th)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-bold text-primary-700 bg-primary-50/50" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}

@@ -122,17 +122,13 @@ const menuData=[
 ]},
 /* 整柜的应付/请款/付款/应收放单/银行流水/提成，唯一入口在这里
  * （原「整柜业务 → 财务与结算」已撤掉，不再两处重复）。 */
+/* 整柜财务重新设计为 5 张表：成本侧 预估→实际→应付账单，收入侧 应收明细→收款 */
 {id:'fin-fcl',label:'整柜财务',children:[
-{id:'fcl-bill-entry',label:'实际费用管理',page:'fcl',tab:'fcl-bill-entry'},
-{id:'fcl-actual-bill-import',label:'账单导入',page:'fcl',tab:'fcl-actual-bill-import'},
-{id:'fcl-carrier-bill-compare',label:'船公司账单对比',page:'fcl',tab:'fcl-carrier-bill-compare'},
-{id:'fcl-appeal',label:'账单申诉',page:'fcl',tab:'fcl-appeal'},
-{id:'fcl-bill',label:'整柜应付账单',page:'fcl',tab:'fcl-bill'},
-{id:'fcl-payment-request',label:'请款单管理',page:'fcl',tab:'fcl-payment-request'},
-{id:'fcl-payment',label:'付款管理',page:'fcl',tab:'fcl-payment'},
-{id:'fcl-ar-release',label:'应收与放单',page:'fcl',tab:'fcl-ar-release'},
-{id:'fcl-bank-flow',label:'银行流水管理',page:'fcl',tab:'fcl-bank-flow'},
-{id:'fcl-commission',label:'业绩与提成',page:'fcl',tab:'fcl-commission'}
+{id:'fcl-est-cost',label:'预估成本明细',page:'fcl',tab:'fcl-est-cost'},
+{id:'fcl-agent-cost',label:'代理实际成本',page:'fcl',tab:'fcl-agent-cost'},
+{id:'fcl-ap-bill',label:'应付账单管理',page:'fcl',tab:'fcl-ap-bill'},
+{id:'fcl-ar-fee',label:'应收费用明细',page:'fcl',tab:'fcl-ar-fee'},
+{id:'fcl-ar-receipt',label:'应收收款管理',page:'fcl',tab:'fcl-ar-receipt'}
 ]}
 ]},
 

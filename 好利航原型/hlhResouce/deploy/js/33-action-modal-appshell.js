@@ -251,16 +251,8 @@ function openActionModal(action,id,rowIdx){
         openActionModal('selectRequired',id,-1);
         return;
     }
-    if(action==='downloadTemplate'&&id==='fcl-bill-entry'){
-        openFclFeeImportModal(id);
-        return;
-    }
     if(action==='fileRecognize'){
         openFclFileRecognizeModal(id);
-        return;
-    }
-    if(action==='payDetail'&&id==='fcl-bill'){
-        openFclPayableDetailModal(id,idx);
         return;
     }
     if(action==='addOutboundPlan'){

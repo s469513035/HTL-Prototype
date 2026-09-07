@@ -94,66 +94,357 @@ TC['fcl-release-tpl'].fieldOptions={
 };
 
 /* ==========================================================================
- * 二、④ 操作执行 —— 新增模块
+ * 二、⑤ 整柜财务 —— 重新设计为 5 张表
+ *   成本侧：预估成本明细 → 代理实际成本 → 应付账单管理
+ *   收入侧：应收费用明细 → 应收收款管理
+ *   五张表都挂在 Job No 上，一票整柜的钱从头到尾能串起来。
  * ========================================================================== */
 
+var FCL_FEE_KINDS=['海运费','附加费','拖车费','报关费','单证费','仓储费','其他'];
+var FCL_AGENT_OPTIONS=['MAERSK','COSCO','CMA CGM','MSC','ONE','鹏程拖车','深圳报关行','广州报关行','中外运'];
 
-/* ==========================================================================
- * 三、⑤ 财务与结算 —— 新增模块
- * ========================================================================== */
-
-/* 9.1 账单申诉（SOP 15.4 / 19.4：先付款后申诉，MAC 周期约 3 个月，须呈现「超期未处理」）*/
-addPrototypeTable('fcl-appeal','账单申诉',
-    '申诉单号|关联账单号|对比单号|订舱单号|船公司|申诉类型|申诉原因|争议金额|币别|账单付款情况|提交人|提交时间|申诉周期(天)|到期日|剩余天数|处理结果|结果金额|关闭时间|状态|操作',
-    ['草稿','申诉中','已通过','已驳回','超期未处理','已关闭'],[
-    ['FAP-20260613001','FBE-20260613001','FCMP-20260613001','FBK-20260613001','MAERSK','附加费多计','船司在表价外多计塞港费 USD 80，与放仓时报价不符','80','USD','已付款','张财务','2026-06-13 16:10','90','2026-09-11','90','','','','申诉中'],
-    ['FAP-20260605002','FBE-20260605008','FCMP-20260605008','FBK-20260605008','COSCO','开船延误产生的额外费用','实际开船晚于ETD 6天，产生滞港费 USD 240','240','USD','已付款','张财务','2026-06-05 10:30','90','2026-09-03','82','抵扣下次账单','240','','已通过'],
-    ['FAP-20260228003','FBE-20260228011','FCMP-20260228011','FBK-20260228011','MSC','汇率差异','账单按月初汇率结算，与合同约定的开船日汇率不一致','156','USD','已付款','张财务','2026-02-28 09:20','90','2026-05-29','-95','','','','超期未处理'],
-    ['FAP-20260610004','FBE-20260610005','FCMP-20260610005','FBK-20260610005','CMA CGM','重复计费','文件费重复收取两次','60','USD','未付款','张财务','2026-06-10 14:00','90','2026-09-08','87','','','','草稿']
+/* ① 预估成本明细 —— 订舱时按 Job 拆出来的成本基线，后面拿它跟代理实际成本比 */
+addPrototypeTable('fcl-est-cost','预估成本明细',
+    '预估明细号|Job No|客户名称|费用名称|费用类别|供应商|币别|预估金额|汇率|本位币金额|计费方式|数量|来源|录入人|录入时间|状态|操作',
+    ['草稿','已确认','已作废'],[
+    ['FEC-20260613001','FBK-20260613001','深圳市华运达国际货运','海运费','海运费','MAERSK','USD','4120','7.15','29,458.00','按柜','1','报价带出','张财务','2026-06-13 15:20','已确认'],
+    ['FEC-20260613002','FBK-20260613001','深圳市华运达国际货运','拖车费','拖车费','鹏程拖车','CNY','1800','1.00','1,800.00','按柜','1','人工录入','张财务','2026-06-13 15:25','已确认'],
+    ['FEC-20260613003','FBK-20260613001','深圳市华运达国际货运','报关费','报关费','深圳报关行','CNY','350','1.00','350.00','按票','1','报价带出','张财务','2026-06-13 15:26','草稿'],
+    ['FEC-20260612004','FBK-20260612002','广州远洋进出口贸易','海运费','海运费','COSCO','USD','5180','7.15','37,037.00','按柜','2','报价带出','张财务','2026-06-12 16:40','已确认'],
+    ['FEC-20260612005','FBK-20260612002','广州远洋进出口贸易','附加费','附加费','COSCO','USD','120','7.15','858.00','按票','1','系统计算','张财务','2026-06-12 16:42','已作废']
 ],[
-    {label:'申诉单号',type:'text'},
-    {label:'关联账单号',type:'text'},
-    {label:'订舱单号',type:'text'},
-    {label:'船公司',type:'select',options:FCL_CARRIER_OPTIONS},
-    {label:'申诉类型',type:'select',options:['附加费多计','汇率差异','开船延误产生的额外费用','重复计费','单价与价格表不符','塞港费争议','其他']},
-    {label:'提交时间',type:'date'},
+    {label:'预估明细号',type:'text'},
+    {label:'Job No',type:'text'},
+    {label:'客户名称',type:'select',options:FCL_CUSTOMER_OPTIONS},
+    {label:'费用类别',type:'select',options:FCL_FEE_KINDS},
+    {label:'供应商',type:'select',options:FCL_AGENT_OPTIONS},
+    {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
+    {label:'状态',type:'select',options:['草稿','已确认','已作废']}
+]);
+TC['fcl-est-cost'].modalExcludedFields=['本位币金额','录入人','录入时间','状态'];
+TC['fcl-est-cost'].fieldOptions={
+    '客户名称':FCL_CUSTOMER_OPTIONS,'费用类别':FCL_FEE_KINDS,'供应商':FCL_AGENT_OPTIONS,
+    '币别':FCL_CURRENCY_OPTIONS,'计费方式':['按柜','按票','按重量','按体积'],
+    '来源':['报价带出','人工录入','系统计算']
+};
+
+/* ② 代理实际成本 —— 服务商/代理报来的实际金额，与预估逐项比差异 */
+addPrototypeTable('fcl-agent-cost','代理实际成本',
+    '实际成本号|Job No|服务商|费用名称|费用类别|币别|预估金额|实际金额|差异金额|差异率|服务商账单号|对账人|对账时间|备注|对账状态|操作',
+    ['待对账','对账一致','有差异','已确认'],[
+    ['FAC-20260613001','FBK-20260613001','MAERSK','海运费','海运费','USD','4120','4200','80','1.94%','MSK-INV-260613','张财务','2026-06-16 10:20','船司多计塞港费 USD 80','有差异'],
+    ['FAC-20260613002','FBK-20260613001','鹏程拖车','拖车费','拖车费','CNY','1800','1800','0','0.00%','PC-260613-08','张财务','2026-06-16 10:25','','对账一致'],
+    ['FAC-20260612003','FBK-20260612002','COSCO','海运费','海运费','USD','5180','5180','0','0.00%','COS-INV-260612','张财务','2026-06-15 14:00','','已确认'],
+    ['FAC-20260612004','FBK-20260612002','深圳报关行','报关费','报关费','CNY','350','420','70','20.00%','','','','报关行加收查验费，待核实','待对账']
+],[
+    {label:'实际成本号',type:'text'},
+    {label:'Job No',type:'text'},
+    {label:'服务商',type:'select',options:FCL_AGENT_OPTIONS},
+    {label:'费用类别',type:'select',options:FCL_FEE_KINDS},
+    {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
+    {label:'服务商账单号',type:'text'},
+    {label:'对账状态',type:'select',options:['待对账','对账一致','有差异','已确认']}
+]);
+TC['fcl-agent-cost'].modalExcludedFields=['差异金额','差异率','对账人','对账时间','对账状态'];
+TC['fcl-agent-cost'].fieldOptions={
+    '服务商':FCL_AGENT_OPTIONS,'费用类别':FCL_FEE_KINDS,'币别':FCL_CURRENCY_OPTIONS
+};
+
+/* ③ 应付账单管理 —— 按服务商汇总的应付，并入付款执行（原「付款管理」不再单开一页） */
+addPrototypeTable('fcl-ap-bill','应付账单管理',
+    '应付账单号|服务商|账单周期|涉及Job数|币别|应付金额|已付金额|待付金额|账期|到期日|付款方式|付款时间|付款水单|审批人|账单状态|操作',
+    ['待确认','已确认','部分付款','已付清','已作废'],[
+    ['FAP-20260613001','MAERSK','2026-06','2','USD','8320','0','8320','月结30天','2026-07-13','','','','','待确认'],
+    ['FAP-20260612002','COSCO','2026-06','1','USD','5180','5180','0','票结','2026-06-20','电汇','2026-06-18 15:30','水单_COSCO_0618.pdf','财务主管','已付清'],
+    ['FAP-20260610003','鹏程拖车','2026-06','3','CNY','5400','2000','3400','月结15天','2026-06-30','电汇','2026-06-20 11:00','水单_鹏程_0620.pdf','财务主管','部分付款'],
+    ['FAP-20260605004','深圳报关行','2026-05','4','CNY','1680','1680','0','月结30天','2026-06-05','电汇','2026-06-04 16:20','水单_报关行_0604.pdf','财务主管','已付清']
+],[
+    {label:'应付账单号',type:'text'},
+    {label:'服务商',type:'select',options:FCL_AGENT_OPTIONS},
+    {label:'账单周期',type:'text'},
+    {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
+    {label:'付款方式',type:'select',options:['电汇','支票','承兑','现金']},
     {label:'到期日',type:'date'},
-    {label:'状态',type:'select',options:['草稿','申诉中','已通过','已驳回','超期未处理','已关闭']}
+    {label:'账单状态',type:'select',options:['待确认','已确认','部分付款','已付清','已作废']}
 ]);
-TC['fcl-appeal'].modalExcludedFields=['剩余天数','关闭时间','状态'];
-TC['fcl-appeal'].fieldOptions={
-    '船公司':FCL_CARRIER_OPTIONS,
-    '币别':FCL_CURRENCY_OPTIONS,
-    '申诉类型':['附加费多计','汇率差异','开船延误产生的额外费用','重复计费','单价与价格表不符','塞港费争议','其他'],
-    '账单付款情况':['已付款','未付款','部分付款'],
-    '处理结果':['退款','抵扣下次账单','维持原账单']
+TC['fcl-ap-bill'].modalExcludedFields=['已付金额','待付金额','付款方式','付款时间','付款水单','审批人','账单状态'];
+TC['fcl-ap-bill'].fieldOptions={
+    '服务商':FCL_AGENT_OPTIONS,'币别':FCL_CURRENCY_OPTIONS,
+    '账期':['票结','月结15天','月结30天','月结60天'],
+    '付款方式':['电汇','支票','承兑','现金']
 };
 
-/* 9.2 请款单管理（SOP 16.1/16.2：期望付款时间不可改；同船东同币种合并付款）*/
-addPrototypeTable('fcl-payment-request','请款单管理',
-    '请款单号|关联账单号|订舱单号|船东/服务商|币别|请款金额|付款用途|结算方式|期望付款时间|最晚付款期限|收款账号|开户行|申请人|申请时间|审批人|审批时间|合并批次号|实际付款时间|付款差异天数|状态|操作',
-    ['待提交','请款待审批','审批通过待付款','已合并','已付款','已驳回'],[
-    ['FPR-20260613001','FBE-20260613001','FBK-20260613001','MAERSK','USD','4120','海运费','票结','2026-06-25','2026-06-30','DE89370400440532013000','Maersk Bank HK','陈操作','2026-06-13 16:30','','','','','','请款待审批'],
-    ['FPR-20260612002','FBE-20260612002','FBK-20260612002','COSCO','USD','5180','海运费','月结','2026-06-28','2026-07-06','CN45012345678901234567','中国银行深圳分行','陈操作','2026-06-12 18:00','财务主管','2026-06-13 09:15','PB-202606-001','2026-06-27','-1','已付款'],
-    ['FPR-20260611003','FBE-20260611003','FBK-20260611003','COSCO','USD','2460','附加费','月结','2026-06-28','2026-07-06','CN45012345678901234567','中国银行深圳分行','陈操作','2026-06-11 15:20','财务主管','2026-06-13 09:15','PB-202606-001','2026-06-27','-1','已合并'],
-    ['FPR-20260610004','FBE-20260610004','FBK-20260610004','MSC','USD','3860','海运费','票结','2026-06-20','2026-06-22','MSC8899001122334455','MSC Bank Geneva','陈操作','2026-06-10 11:00','财务主管','2026-06-11 10:00','','','','审批通过待付款']
+/* ④ 应收费用明细 —— 按 Job 的应收逐项，收款核销时冲这里的未收金额 */
+addPrototypeTable('fcl-ar-fee','应收费用明细',
+    '应收明细号|Job No|客户名称|业务员|费用名称|费用类别|币别|应收金额|汇率|本位币金额|已收金额|未收金额|结算方式|费用确认状态|操作',
+    ['待确认','已确认','部分收款','已结清','已作废'],[
+    ['FAR-20260613001','FBK-20260613001','深圳市华运达国际货运','张三','海运费','海运费','USD','4500','7.15','32,175.00','0','4500','票结','待确认'],
+    ['FAR-20260613002','FBK-20260613001','深圳市华运达国际货运','张三','拖车费','拖车费','CNY','2000','1.00','2,000.00','0','2000','票结','已确认'],
+    ['FAR-20260612003','FBK-20260612002','广州远洋进出口贸易','李四','海运费','海运费','USD','5600','7.15','40,040.00','5600','0','月结','已结清'],
+    ['FAR-20260612004','FBK-20260612002','广州远洋进出口贸易','李四','报关费','报关费','CNY','400','1.00','400.00','200','200','月结','部分收款'],
+    ['FAR-20260610005','FBK-20260610004','','赵六','海运费','海运费','USD','3200','7.15','22,880.00','0','3200','票结','已作废']
 ],[
-    {label:'请款单号',type:'text'},
-    {label:'关联账单号',type:'text'},
-    {label:'订舱单号',type:'text'},
-    {label:'船东/服务商',type:'select',options:FCL_CARRIER_OPTIONS},
-    {label:'结算方式',type:'select',options:['票结','月结']},
-    {label:'期望付款时间',type:'date'},
-    {label:'状态',type:'select',options:['待提交','请款待审批','审批通过待付款','已合并','已付款','已驳回']}
+    {label:'应收明细号',type:'text'},
+    {label:'Job No',type:'text'},
+    {label:'客户名称',type:'select',options:FCL_CUSTOMER_OPTIONS},
+    {label:'业务员',type:'select',options:FCL_SALES_OPTIONS},
+    {label:'费用类别',type:'select',options:FCL_FEE_KINDS},
+    {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
+    {label:'费用确认状态',type:'select',options:['待确认','已确认','部分收款','已结清','已作废']}
 ]);
-/* PR-01 期望付款时间由操作录入、提交后锁定；实际付款时间与差异天数由财务侧回写 */
-TC['fcl-payment-request'].modalExcludedFields=['审批人','审批时间','合并批次号','实际付款时间','付款差异天数','状态'];
-TC['fcl-payment-request'].fieldOptions={
-    '船东/服务商':FCL_CARRIER_OPTIONS,
-    '币别':FCL_CURRENCY_OPTIONS,
-    '结算方式':['票结','月结'],
-    '付款用途':['海运费','附加费','拖车费','报关费','改单费','其他']
+TC['fcl-ar-fee'].modalExcludedFields=['本位币金额','已收金额','未收金额','费用确认状态'];
+TC['fcl-ar-fee'].fieldOptions={
+    '客户名称':FCL_CUSTOMER_OPTIONS,'业务员':FCL_SALES_OPTIONS,
+    '费用类别':FCL_FEE_KINDS,'币别':FCL_CURRENCY_OPTIONS,
+    '结算方式':['票结','月结','预付','到付']
 };
+
+/* ⑤ 应收收款管理 —— 客户打款进来后认领、核销到应收明细上 */
+addPrototypeTable('fcl-ar-receipt','应收收款管理',
+    '收款单号|客户名称|收款方式|币别|收款金额|已核销金额|未核销金额|收款日期|到账银行账户|关联Job|核销人|核销时间|备注|收款状态|操作',
+    ['待认领','待核销','部分核销','全部核销'],[
+    ['FRC-20260618001','广州远洋进出口贸易','电汇','USD','5600','5600','0','2026-06-18','招商银行 6225****8888','FBK-20260612002','张财务','2026-06-18 16:40','','全部核销'],
+    ['FRC-20260620002','广州远洋进出口贸易','电汇','CNY','400','200','200','2026-06-20','招商银行 6225****8888','FBK-20260612002','张财务','2026-06-20 10:15','客户先付一半报关费','部分核销'],
+    ['FRC-20260622003','深圳市华运达国际货运','电汇','USD','4500','0','4500','2026-06-22','招商银行 6225****8888','FBK-20260613001','','','','待核销'],
+    ['FRC-20260623004','','电汇','CNY','2000','0','2000','2026-06-23','招商银行 6225****8888','','','','对方户名与客户档案对不上，待认领','待认领']
+],[
+    {label:'收款单号',type:'text'},
+    {label:'客户名称',type:'select',options:FCL_CUSTOMER_OPTIONS},
+    {label:'收款方式',type:'select',options:['电汇','支票','现金','信用证']},
+    {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
+    {label:'关联Job',type:'text'},
+    {label:'收款日期',type:'date'},
+    {label:'收款状态',type:'select',options:['待认领','待核销','部分核销','全部核销']}
+]);
+TC['fcl-ar-receipt'].modalExcludedFields=['已核销金额','未核销金额','核销人','核销时间','收款状态'];
+TC['fcl-ar-receipt'].fieldOptions={
+    '客户名称':FCL_CUSTOMER_OPTIONS,'币别':FCL_CURRENCY_OPTIONS,
+    '收款方式':['电汇','支票','现金','信用证'],
+    '到账银行账户':['招商银行 6225****8888','中国银行 4563****1234','工商银行 6222****4321']
+};
+
+/* ===== 整柜财务的 5 个自定义操作 =====
+ * 都走「勾选 -> 校验状态 -> 改状态/算金额 -> 刷新列表」这一套，
+ * 金额一律用 fclParseMoney 解析，避免 '4,120' 这种带千分位的字符串直接参与运算。 */
+function fclFinRows(id){
+    return (typeof _listData!=='undefined'&&_listData[id])?_listData[id]:((TC[id]||{}).d||[]);
+}
+function fclFinSet(id,row,label,val){
+    var i=((TC[id]||{}).h||[]).indexOf(label);
+    if(i>=0)setRowOverride(id,row,i,val);
+}
+function fclFinGet(id,row,label){
+    var i=((TC[id]||{}).h||[]).indexOf(label);
+    return (i>=0&&row&&row[i]!=null)?String(row[i]):'';
+}
+function fclFinRefresh(id){
+    var mc=document.getElementById('main-content');
+    var pg=(typeof _listPage!=='undefined'&&_listPage[id])?_listPage[id]:1;
+    var sf=(typeof _statusFilterVal!=='undefined')?(_statusFilterVal||''):'';
+    if(mc&&typeof generateListPage==='function')mc.innerHTML=generateListPage(id,pg,sf);
+}
+/* 通用：把勾选行里状态符合 from 的推进到 to */
+function fclFinBatchStatus(id,statusCol,from,to,opLabel){
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选需要')+tr(opLabel)+tr('的数据'));return;}
+    var rows=fclFinRows(id),eligible=[],blocked=0;
+    idxs.forEach(function(i){
+        var row=rows[i];
+        if(!row)return;
+        if(from.indexOf(fclFinGet(id,row,statusCol))>=0)eligible.push(i);else blocked++;
+    });
+    if(!eligible.length){showToast(tr('只有')+'「'+from.join('/')+'」'+tr('的数据可以')+tr(opLabel));return;}
+    var msg=tr('已勾选')+' '+idxs.length+' '+tr('条')+'，'+tr('其中')+' '+eligible.length+' '+tr('条可')+tr(opLabel);
+    if(blocked)msg+='，'+blocked+' '+tr('条状态不符将跳过');
+    msg+='。'+tr('确认后状态转为')+'「'+tr(to)+'」，'+tr('是否继续？');
+    openConfirmTip(msg,function(){
+        eligible.forEach(function(i){fclFinSet(id,rows[i],statusCol,to);});
+        fclFinRefresh(id);
+        showToast(tr(opLabel)+' '+eligible.length+' '+tr('条'));
+    });
+}
+/* ① 预估成本明细：草稿 -> 已确认 */
+function openEstCostConfirm(id){
+    fclFinBatchStatus(id||'fcl-est-cost','状态',['草稿'],'已确认','确认成本');
+}
+/* ④ 应收费用明细：待确认 -> 已确认 */
+function openArFeeConfirm(id){
+    fclFinBatchStatus(id||'fcl-ar-fee','费用确认状态',['待确认'],'已确认','费用确认');
+}
+/* ② 代理实际成本：对账 —— 按预估/实际算差异，据差异定状态 */
+function openAgentCostReconcile(id){
+    id=id||'fcl-agent-cost';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选需要对账的成本行'));return;}
+    var rows=fclFinRows(id),done=0,diff=0,noData=0;
+    var now=(typeof receiptNowStr==='function')?receiptNowStr():'';
+    var who=(typeof getCurrentUserName==='function')?getCurrentUserName():'admin';
+    idxs.forEach(function(i){
+        var row=rows[i];
+        if(!row)return;
+        if(fclFinGet(id,row,'对账状态')==='已确认')return;
+        var est=fclParseMoney(fclFinGet(id,row,'预估金额'));
+        var act=fclParseMoney(fclFinGet(id,row,'实际金额'));
+        if(est===null||act===null){noData++;return;}
+        var d=act-est;
+        fclFinSet(id,row,'差异金额',String(d));
+        fclFinSet(id,row,'差异率',est?((d/est*100).toFixed(2)+'%'):'—');
+        fclFinSet(id,row,'对账状态',d===0?'对账一致':'有差异');
+        fclFinSet(id,row,'对账人',who);
+        fclFinSet(id,row,'对账时间',now);
+        done++;
+        if(d!==0)diff++;
+    });
+    if(!done){showToast(noData?tr('所选行缺预估或实际金额，无法对账'):tr('所选行已确认，无需重复对账'));return;}
+    fclFinRefresh(id);
+    var msg=tr('已对账')+' '+done+' '+tr('条')+'，'+tr('其中')+' '+diff+' '+tr('条有差异');
+    if(noData)msg+='，'+noData+' '+tr('条缺金额已跳过');
+    showToast(msg);
+}
+/* ③ 应付账单管理：付款登记 —— 累加已付、倒算待付、据此定状态 */
+var _apPayCtx={id:'',idx:-1};
+function openApBillPay(id){
+    id=id||'fcl-ap-bill';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选需要付款的账单'));return;}
+    if(idxs.length>1){showToast(tr('付款登记一次只能选一张账单'));return;}
+    var row=fclFinRows(id)[idxs[0]];
+    if(!row){showToast(tr('未找到账单'));return;}
+    var st=fclFinGet(id,row,'账单状态');
+    if(st==='已付清'||st==='已作废'){showToast(tr('该账单为')+'「'+tr(st)+'」，'+tr('不能再付款'));return;}
+    _apPayCtx={id:id,idx:idxs[0]};
+    var due=fclParseMoney(fclFinGet(id,row,'待付金额'));
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='46%';
+    document.getElementById('crud-modal-title').textContent=tr('付款登记')+' - '+fclFinGet(id,row,'应付账单号');
+    var b='';
+    b+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
+       esc(fclFinGet(id,row,'服务商'))+'　'+esc(fclFinGet(id,row,'账单周期'))+'　'+
+       tr('应付')+' '+esc(fclFinGet(id,row,'币别'))+' '+esc(fclFinGet(id,row,'应付金额'))+
+       '　'+tr('已付')+' '+esc(fclFinGet(id,row,'已付金额')||'0')+
+       '　<span class="font-semibold text-text-primary">'+tr('待付')+' '+esc(fclFinGet(id,row,'待付金额'))+'</span></div>';
+    [['本次付款金额','pay-amt','number',due===null?'':String(due)],
+     ['付款方式','pay-way','select',''],['付款时间','pay-time','datetime-local',''],
+     ['付款水单','pay-slip','text','']].forEach(function(f){
+        b+='<div class="mb-3" data-pay-field="'+f[1]+'"><label class="text-xs text-text-secondary mb-1 block">'+tr(f[0])+
+           (f[1]==='pay-amt'?'<span class="text-red-500 ml-1">*</span>':'')+'</label>';
+        if(f[2]==='select'){
+            b+='<select id="'+f[1]+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+
+               ['电汇','支票','承兑','现金'].map(function(o){return '<option value="'+o+'">'+tr(o)+'</option>';}).join('')+'</select>';
+        }else{
+            b+='<input id="'+f[1]+'" type="'+f[2]+'" value="'+esc(f[3])+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">';
+        }
+        b+='</div>';
+    });
+    document.getElementById('crud-modal-body').innerHTML=b;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitApBillPay()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认付款')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function submitApBillPay(){
+    var id=_apPayCtx.id,row=fclFinRows(id)[_apPayCtx.idx];
+    if(!row){showToast(tr('未找到账单'));return;}
+    var el=document.getElementById('pay-amt');
+    var amt=fclParseMoney(el?el.value:'');
+    if(amt===null||amt<=0){showToast(tr('请填写大于 0 的付款金额'));return;}
+    var total=fclParseMoney(fclFinGet(id,row,'应付金额'))||0;
+    var paid=(fclParseMoney(fclFinGet(id,row,'已付金额'))||0)+amt;
+    if(paid>total){showToast(tr('本次付款后已付金额超过应付金额，请核对'));return;}
+    var left=total-paid;
+    fclFinSet(id,row,'已付金额',String(paid));
+    fclFinSet(id,row,'待付金额',String(left));
+    var w=document.getElementById('pay-way'),t=document.getElementById('pay-time'),s=document.getElementById('pay-slip');
+    if(w&&w.value)fclFinSet(id,row,'付款方式',w.value);
+    if(t&&t.value)fclFinSet(id,row,'付款时间',t.value);
+    if(s&&s.value)fclFinSet(id,row,'付款水单',s.value);
+    fclFinSet(id,row,'审批人',(typeof getCurrentUserName==='function')?getCurrentUserName():'admin');
+    fclFinSet(id,row,'账单状态',left===0?'已付清':'部分付款');
+    closeCrudModal();
+    fclFinRefresh(id);
+    showToast(tr('已登记付款')+' '+amt+'，'+tr('待付')+' '+left+'，'+tr('状态转为')+'「'+tr(left===0?'已付清':'部分付款')+'」');
+}
+/* ⑤ 应收收款管理：核销 / 反核销 */
+var _arWriteOffCtx={id:'',idx:-1};
+function openArReceiptWriteOff(id){
+    id=id||'fcl-ar-receipt';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选需要核销的收款单'));return;}
+    if(idxs.length>1){showToast(tr('核销一次只能选一张收款单'));return;}
+    var row=fclFinRows(id)[idxs[0]];
+    if(!row){showToast(tr('未找到收款单'));return;}
+    var st=fclFinGet(id,row,'收款状态');
+    if(st==='待认领'){showToast(tr('该收款单还没认领到客户，先补客户名称再核销'));return;}
+    if(st==='全部核销'){showToast(tr('该收款单已全部核销'));return;}
+    _arWriteOffCtx={id:id,idx:idxs[0]};
+    var left=fclParseMoney(fclFinGet(id,row,'未核销金额'));
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='46%';
+    document.getElementById('crud-modal-title').textContent=tr('核销')+' - '+fclFinGet(id,row,'收款单号');
+    var b='';
+    b+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
+       esc(fclFinGet(id,row,'客户名称'))+'　'+tr('收款')+' '+esc(fclFinGet(id,row,'币别'))+' '+esc(fclFinGet(id,row,'收款金额'))+
+       '　'+tr('已核销')+' '+esc(fclFinGet(id,row,'已核销金额')||'0')+
+       '　<span class="font-semibold text-text-primary">'+tr('未核销')+' '+esc(fclFinGet(id,row,'未核销金额'))+'</span></div>';
+    b+='<div class="mb-3"><label class="text-xs text-text-secondary mb-1 block">'+tr('本次核销金额')+'<span class="text-red-500 ml-1">*</span></label>'+
+       '<input id="wo-amt" type="number" value="'+(left===null?'':left)+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
+    b+='<div class="mb-3"><label class="text-xs text-text-secondary mb-1 block">'+tr('核销到 Job')+'</label>'+
+       '<input id="wo-job" type="text" value="'+esc(fclFinGet(id,row,'关联Job'))+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
+    b+='<div class="text-xs text-text-muted">'+tr('核销后会冲减该 Job 应收费用明细里的未收金额')+'</div>';
+    document.getElementById('crud-modal-body').innerHTML=b;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitArReceiptWriteOff()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认核销')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function submitArReceiptWriteOff(){
+    var id=_arWriteOffCtx.id,row=fclFinRows(id)[_arWriteOffCtx.idx];
+    if(!row){showToast(tr('未找到收款单'));return;}
+    var el=document.getElementById('wo-amt');
+    var amt=fclParseMoney(el?el.value:'');
+    if(amt===null||amt<=0){showToast(tr('请填写大于 0 的核销金额'));return;}
+    var total=fclParseMoney(fclFinGet(id,row,'收款金额'))||0;
+    var done=(fclParseMoney(fclFinGet(id,row,'已核销金额'))||0)+amt;
+    if(done>total){showToast(tr('核销金额超过收款金额，请核对'));return;}
+    var left=total-done;
+    fclFinSet(id,row,'已核销金额',String(done));
+    fclFinSet(id,row,'未核销金额',String(left));
+    fclFinSet(id,row,'核销人',(typeof getCurrentUserName==='function')?getCurrentUserName():'admin');
+    fclFinSet(id,row,'核销时间',(typeof receiptNowStr==='function')?receiptNowStr():'');
+    fclFinSet(id,row,'收款状态',left===0?'全部核销':'部分核销');
+    var jobEl=document.getElementById('wo-job');
+    var job=jobEl?String(jobEl.value||''):'';
+    if(job)fclFinSet(id,row,'关联Job',job);
+    var hit=fclWriteOffAgainstArFee(job,amt);
+    closeCrudModal();
+    fclFinRefresh(id);
+    var msg=tr('已核销')+' '+amt+'，'+tr('未核销')+' '+left;
+    msg+=hit?('，'+tr('已冲减应收明细')+' '+hit+' '+tr('条')):('，'+tr('未找到该 Job 的应收明细'));
+    showToast(msg);
+}
+/* 把核销金额按顺序冲到该 Job 的应收明细未收金额上，返回冲减的条数 */
+function fclWriteOffAgainstArFee(job,amount){
+    if(!job)return 0;
+    var fid='fcl-ar-fee',c=TC[fid];
+    if(!c||!c.d)return 0;
+    var h=c.h||[],iJob=h.indexOf('Job No');
+    if(iJob<0)return 0;
+    var left=amount,n=0;
+    c.d.forEach(function(row){
+        if(left<=0)return;
+        if(String(row[iJob]||'')!==job)return;
+        var due=fclParseMoney(fclFinGet(fid,row,'未收金额'));
+        if(due===null||due<=0)return;
+        var take=Math.min(due,left);
+        var got=(fclParseMoney(fclFinGet(fid,row,'已收金额'))||0)+take;
+        fclFinSet(fid,row,'已收金额',String(got));
+        fclFinSet(fid,row,'未收金额',String(due-take));
+        fclFinSet(fid,row,'费用确认状态',(due-take)===0?'已结清':'部分收款');
+        left-=take;n++;
+    });
+    if(typeof _listData!=='undefined')delete _listData[fid];
+    return n;
+}
 
 /* ==========================================================================
  * 四、既有表覆写：主线收敛与字段扩展
@@ -1145,72 +1436,7 @@ function fclBookingAfterModalRender(id,mode,rowData){
 }
 
 
-/* 9.3 应收与放单 —— 放单规则引擎字段（SOP 17.2 / 19.3）*/
-addPrototypeTable('fcl-ar-release','应收与放单',
-    '放单单号|账单号|订舱单号|客户名称|应收金额|已收金额|待收金额|历史欠款金额|历史未核销单数|客户黑名单|拆单标记|分批付款标记|放单判定结果|判定说明|放单方式|自动放单时间|人工审核人|放单人|放单状态|操作',
-    ['待收款','部分收款','允许放单','已放单','已拦截'],[
-    ['FAR-20260613001','FCB-20260613001','FBK-20260613001','深圳市华运达国际货运','4500','0','4500','0','0','否','否','否','转人工审核','当票应收未核销，待收 USD 4500','电放','','','陈七','待收款'],
-    ['FAR-20260612002','FCB-20260612002','FBK-20260612002','广州远洋进出口贸易','5600','5600','0','0','0','否','否','否','自动放单','无历史欠款且当票应收已全额核销','正本寄单','2026-06-12 18:20','','周八','已放单'],
-    ['FAR-20260611003','FCB-20260611003','FBK-20260611003','东莞市鑫海物流','3200','3200','0','0','2','否','是','否','转人工审核','存在历史未核销单据 2 笔；本票为拆单后部分核销，需人工确认避免循环扣单','电放','','财务主管','陈七','允许放单'],
-    ['FAR-20260610004','FCB-20260610004','FBK-20260610004','上海锦程国际贸易','2800','2800','0','12000','5','是','否','是','强拦截','客户在黑名单，系统拒绝放单（SOP 19.3）','—','','','—','已拦截']
-],[
-    {label:'放单单号',type:'text'},
-    {label:'账单号',type:'text'},
-    {label:'订舱单号',type:'text'},
-    {label:'客户名称',type:'select',options:FCL_CUSTOMER_OPTIONS},
-    {label:'客户黑名单',type:'select',options:['是','否']},
-    {label:'放单判定结果',type:'select',options:['自动放单','转人工审核','强拦截']},
-    {label:'放单方式',type:'select',options:['电放','正本寄单','目的港放货']},
-    {label:'放单状态',type:'select',options:['待收款','部分收款','允许放单','已放单','已拦截']}
-]);
-TC['fcl-ar-release'].modalExcludedFields=['历史欠款金额','历史未核销单数','放单判定结果','判定说明','自动放单时间','人工审核人','放单人','放单状态'];
-TC['fcl-ar-release'].fieldOptions={
-    '客户名称':FCL_CUSTOMER_OPTIONS,
-    '客户黑名单':['是','否'],'拆单标记':['是','否'],'分批付款标记':['是','否'],
-    '放单判定结果':['自动放单','转人工审核','强拦截'],
-    '放单方式':['电放','正本寄单','目的港放货']
-};
 
-/* 9.4 业绩与提成（SOP 18.1 发放三条件：收款到位 + 对账完成 + 无未关闭申诉）*/
-addPrototypeTable('fcl-commission','业绩与提成',
-    '提成单号|订舱单号|业务员|所属分公司|客户名称|应收金额|实际成本|毛利|毛利率|提成比例|提成金额|币别|核算月份|收款情况|对账情况|未关闭申诉数|可发放标记|发放时间|状态|操作',
-    ['待核算','已核算','已发放','暂缓发放'],[
-    ['FCM-20260613001','FBK-20260613001','张三','深圳分公司','深圳市华运达国际货运','4500','4120','380','8.4%','8%','30.40','USD','2026-06','未收齐','未对账','0','否','','待核算'],
-    ['FCM-20260612002','FBK-20260612002','李四','广州分公司','广州远洋进出口贸易','5600','5180','420','7.5%','8%','33.60','USD','2026-06','已收齐','已对账','0','是','','已核算'],
-    ['FCM-20260605003','FBK-20260605008','王五','上海分公司','东莞市鑫海物流','6200','5600','600','9.7%','8%','48.00','USD','2026-06','已收齐','已对账','1','否','','暂缓发放'],
-    ['FCM-20260520004','FBK-20260520011','赵六','深圳分公司','上海锦程国际贸易','5100','4500','600','11.8%','8%','48.00','USD','2026-05','已收齐','已对账','0','是','2026-06-10','已发放']
-],[
-    {label:'提成单号',type:'text'},
-    {label:'订舱单号',type:'text'},
-    {label:'业务员',type:'select',options:FCL_SALES_OPTIONS},
-    {label:'所属分公司',type:'select',options:FCL_BRANCH_OPTIONS},
-    {label:'核算月份',type:'text'},
-    {label:'状态',type:'select',options:['待核算','已核算','已发放','暂缓发放']}
-]);
-TC['fcl-commission'].modalExcludedFields=['毛利','毛利率','提成金额','可发放标记','发放时间','状态'];
-TC['fcl-commission'].fieldOptions={
-    '业务员':FCL_SALES_OPTIONS,'所属分公司':FCL_BRANCH_OPTIONS,
-    '客户名称':FCL_CUSTOMER_OPTIONS,'币别':FCL_CURRENCY_OPTIONS,
-    '收款情况':['未收齐','已收齐'],'对账情况':['未对账','已对账'],'可发放标记':['是','否']
-};
-
-/* 付款管理（原「应付管理」改名）—— 补期望/实际付款时间与合并批次（SOP 16.2）*/
-addPrototypeTable('fcl-payment','付款管理',
-    '付款单号|请款单号|账单号|服务商|付款方式|付款金额|币别|期望付款时间|实际付款时间|付款差异天数|合并批次号|银行水单|申请人|审批人|付款状态|操作',
-    ['待审批','待付款','已付款','已驳回'],[
-    ['FPY-20260613001','FPR-20260613001','FCB-20260613001','MAERSK','票结','4120','USD','2026-06-25','','','','','张财务','财务主管','待审批'],
-    ['FPY-20260612002','FPR-20260612002','FCB-20260612002','COSCO','月结','7640','USD','2026-06-28','2026-06-27','-1','PB-202606-001','receipt_202606_001.pdf','张财务','财务主管','已付款']
-],[
-    {label:'付款单号',type:'text'},
-    {label:'请款单号',type:'text'},
-    {label:'账单号',type:'text'},
-    {label:'服务商',type:'select',options:FCL_CARRIER_OPTIONS},
-    {label:'付款方式',type:'select',options:['票结','月结']},
-    {label:'期望付款时间',type:'date'},
-    {label:'付款状态',type:'select',options:['待审批','待付款','已付款','已驳回']}
-]);
-TC['fcl-payment'].modalExcludedFields=['付款差异天数','合并批次号','申请人','审批人','付款状态'];
-TC['fcl-payment'].fieldOptions={'服务商':FCL_CARRIER_OPTIONS,'付款方式':['票结','月结'],'币别':FCL_CURRENCY_OPTIONS};
 
 /* 10.4 委托订单管理（原「销售指示」）
  * 业务口径：业务员录入的销售指示即客户委托单；预录单与实单都是委托，仅「委托类型」不同。
@@ -1407,7 +1633,7 @@ var FCL_SOP_STEPS=[
  output:'实际费用 FBE / 导入批次 FBI / 对比单 FCMP / 申诉单 FAP；状态 账单已确认 或 申诉中',
  sla:'船公司账单录入 ≤ 2 个工作日',
  caution:'申诉务必「先付款后申诉」，避免逾期影响后续业务。MAC 申诉周期约 3 个月，系统在到期前 7/3/1 天三次提醒，超期自动置「超期未处理」。',
- tabs:[['实际费用管理','fcl-bill-entry','fcl'],['账单导入','fcl-actual-bill-import','fcl'],['船公司账单对比','fcl-carrier-bill-compare','fcl'],['账单申诉','fcl-appeal','fcl']]},
+ tabs:[['预估成本明细','fcl-est-cost','fcl'],['代理实际成本','fcl-agent-cost','fcl']]},
 
 {no:'⑬',name:'付款管理',sop:'SOP-FCL-13',stage:'fin',role:'操作员（请款）、财务（审核与付款）',
  trigger:'账单确认无误',
@@ -1416,7 +1642,7 @@ var FCL_SOP_STEPS=[
  output:'请款单 FPR → 付款单 FPY；状态 已付款 → 已核销',
  sla:'CMA 开船日 +10 天；其他船公司约 +14 天',
  caution:'期望付款时间由操作录入、提交后不可改；实际付款时间由财务录入。系统按两者差异做资金盘点。票结由操作部逐票发起，月结由财务按月汇总。',
- tabs:[['请款单管理','fcl-payment-request','fcl'],['付款管理','fcl-payment','fcl'],['整柜应付账单','fcl-bill','fcl']]},
+ tabs:[['应付账单管理','fcl-ap-bill','fcl']]},
 
 {no:'⑭',name:'应收与放单',sop:'SOP-FCL-14',stage:'fin',role:'财务（应收）、操作员（发起放单）',
  trigger:'客户付款到账 / 操作员发起放单申请',
@@ -1426,7 +1652,7 @@ var FCL_SOP_STEPS=[
  output:'放单单 FAR；状态 已核销 / 已放单，随后进入寄单流程',
  sla:'客户付款 → 自动放单 ≤ 2 小时',
  caution:'避免循环扣单：拆单后部分核销、分批付款等特殊情况必须识别出来转人工并高亮提醒。',
- tabs:[['应收与放单','fcl-ar-release','fcl'],['银行流水管理','fcl-bank-flow','fcl']]},
+ tabs:[['应收费用明细','fcl-ar-fee','fcl'],['应收收款管理','fcl-ar-receipt','fcl']]},
 
 {no:'⑮',name:'业绩与提成',sop:'SOP-FCL-15',stage:'fin',role:'深圳财务（核算与发放）、业务员（查看）',
  trigger:'毛利结算完成、收款到位',
@@ -1435,7 +1661,7 @@ var FCL_SOP_STEPS=[
  output:'提成单 FCM；状态 待核算 → 已核算 → 已发放',
  sla:'—',
  caution:'存在未关闭申诉的票单不可核算提成。业绩可视化的目的是让业务员能对照核对，简化工作并加深对财务的信任。',
- tabs:[['业绩与提成','fcl-commission','fcl']]}
+ tabs:[['应收收款管理','fcl-ar-receipt','fcl']]}
 ];
 
 /* 功能地图：6 个分组 + 每项一句话说明 */
@@ -1453,17 +1679,12 @@ var FCL_FUNC_MAP=[
     ['委托订单管理','fcl-sales-instruction','fcl','销售指示即客户委托单，预录单与实单统一在此录入，审核通过后生成订舱单']]},
 {group:'③ 订舱与放舱',hint:'订舱员的完整工作面',items:[
     ['Job/主单管理','fcl-booking','fcl','整柜全链路主档；放舱与拖车/装柜/补料/拆并单/报关/开船轨迹/寄单都收进本页的「放舱」与「操作」按钮里']]},
-{group:'⑤ 财务与结算',hint:'应付链 → 应收链 → 提成',items:[
-    ['实际费用管理','fcl-bill-entry','fcl','船司实际费用逐项录入与确认'],
-    ['账单导入','fcl-actual-bill-import','fcl','按模板批量导入船司账单，显示匹配数与差异数'],
-    ['船公司账单对比','fcl-carrier-bill-compare','fcl','系统应付 vs 船司账单，自动标记差异'],
-    ['账单申诉','fcl-appeal','fcl','争议金额、申诉周期、到期提醒与超期未处理'],
-    ['整柜应付账单','fcl-bill','fcl','按服务商汇总的应付账单'],
-    ['请款单管理','fcl-payment-request','fcl','期望付款时间、最晚付款期限与合并付款'],
-    ['付款管理','fcl-payment','fcl','付款执行、实际付款时间与银行水单'],
-    ['应收与放单','fcl-ar-release','fcl','放单判定：自动放单 / 人工审核 / 黑名单强拦截'],
-    ['银行流水管理','fcl-bank-flow','fcl','流水自动匹配与手工认领'],
-    ['业绩与提成','fcl-commission','fcl','毛利、提成预估与发放三条件校验']]},
+{group:'⑤ 整柜财务',hint:'成本侧 预估→实际→应付账单；收入侧 应收明细→收款',items:[
+    ['预估成本明细','fcl-est-cost','fcl','订舱时按 Job 拆出的成本基线，后面拿它跟代理实际成本比'],
+    ['代理实际成本','fcl-agent-cost','fcl','服务商报来的实际金额，逐项对账算差异'],
+    ['应付账单管理','fcl-ap-bill','fcl','按服务商汇总的应付，并入付款登记'],
+    ['应收费用明细','fcl-ar-fee','fcl','按 Job 的应收逐项，收款核销时冲这里的未收金额'],
+    ['应收收款管理','fcl-ar-receipt','fcl','客户打款认领与核销，自动冲减应收明细']]},
 {group:'⚙ 整柜规则（业务配置）',hint:'规则外置，业务可自行维护',items:[
     ['关键业务规则','fcl-rule','biz-cfg','订舱、财务等各类规则的启用与优先级'],
     ['放仓模板','fcl-release-tpl','biz-cfg','船公司 × 目的港，结单时间、瞒报告示与敏感信息剥离'],

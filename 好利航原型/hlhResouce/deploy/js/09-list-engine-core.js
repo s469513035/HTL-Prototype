@@ -963,6 +963,11 @@ function renderToolbarAction(action,id){
     else if(action.key==='cancelBooking')click='openFclBookingCancel(\''+id+'\')';
     else if(action.key==='linkEntrust')click='openFclBookingLinkEntrust(\''+id+'\')';
     else if(action.key==='entrustResubmit')click='openEntrustResubmit(\''+id+'\')';
+    else if(action.key==='confirmEstCost')click='openEstCostConfirm(\''+id+'\')';
+    else if(action.key==='reconcileCost')click='openAgentCostReconcile(\''+id+'\')';
+    else if(action.key==='payApBill')click='openApBillPay(\''+id+'\')';
+    else if(action.key==='confirmArFee')click='openArFeeConfirm(\''+id+'\')';
+    else if(action.key==='writeOffReceipt')click='openArReceiptWriteOff(\''+id+'\')';
     else if(action.key==='releaseBooking')click='openFclBookingRelease(\''+id+'\')';
     else if(action.key==='freightRecalc')click='openFreightRecalcConfirm(\''+id+'\')';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
@@ -991,7 +996,6 @@ function renderToolbarAction(action,id){
     else if(action.key==='labelFieldDoc')click='openLabelFieldDocModal()';
     else if(action.key==='newSortScan')click='openSortBagRuleModal(\''+id+'\')';
     else if(action.key==='editCodingRule')click='openCodingRuleEditModal(\''+id+'\')';
-    else if(action.key==='genBill'&&id==='fcl-bill-entry')click='showToast(\''+esc(tr('账单生成成功'))+'\')';
     else if(action.key==='genBill'&&id==='fin-fee-mgmt')click='openFeeMgmtGenBillModal(\''+id+'\')';
     else if(action.key==='trackMapping')click='showToast(\''+esc(tr('轨迹映射配置'))+'\')';
     else if(action.key==='subOrderInfo')click='openSubOrderInfoModal(\''+id+'\')';
@@ -1507,24 +1511,21 @@ function getToolbarActions(id){
                 })},
                 {key:'cancelBooking',label:'作废',variant:'danger'});
         }
-        if(id==='fcl-appeal')base.push({key:'submitAppeal',label:'提交申诉'},{key:'appealResult',label:'登记结果'},{key:'genOffsetFee',label:'生成抵扣费用'});
-        if(id==='fcl-payment-request')base.push({key:'submitPr',label:'提交审批'},{key:'mergePay',label:'合并付款'},{key:'genPayment',label:'生成付款单'});
-        if(id==='fcl-ar-release')base.push({key:'releaseJudge',label:'放单判定'});
-        if(id==='fcl-commission')base.push({key:'calcCommission',label:'核算提成'},{key:'grantCommission',label:'确认发放'},{key:'perfBoard',label:'业绩看板'});
         if(id==='fcl-quote')base.push({key:'copyQuote',label:'复制报价'},{key:'markupMaintain',label:'加价维护'});
         if(['fcl-cost-price','fcl-business-cost','fcl-sales-price'].includes(id))base.push({key:'copyAdd',label:'复制新增'});
         if(id==='fcl-trial-calc'||id==='fcl-trial-calc-biz')base.push({key:'trialGenerateQuote',label:'生成报价'});
         if(id==='fcl-inquiry-order')base.push({key:'convertPreorder',label:'转化草稿/预录单'});
         if(id==='fcl-draft-preorder')base.push({key:'bindCustomerOrder',label:'绑定客户实单'});
         if(id==='fcl-actual-order-entry')base.push({key:'bindCustomerOrder',label:'绑定客户实单'},{key:'recalcFee',label:'重算费用'});
-        if(id==='fcl-bill-entry')base.push({key:'downloadTemplate',label:'下载导入模版'},{key:'fileRecognize',label:'图片和文件识别'},{key:'genBill',label:'生成账单'});
-        if(id==='fcl-bill')base.push({key:'payDetail',label:'查看明细'});
-        if(id==='fcl-bank-flow')base.push({key:'genReceivable',label:'生成收款管理'},{key:'genPayable',label:'生成付款管理'});
         /* fcl-sales-instruction 已在上面早返回（含审核数据），此处不再列入 */
-        if(['fcl-customer-audit','fcl-payment','fcl-payment-request','fcl-ar-release'].includes(id))base.push({key:'audit',label:'审核数据'});
+        if(id==='fcl-customer-audit')base.push({key:'audit',label:'审核数据'});
         if(['fcl-edi-api','fcl-provider-api'].includes(id))base.push({key:'sync',label:'同步数据'});
-        if(['fcl-bill','fcl-ar-release'].includes(id))base.push({key:'genPdf',label:'下载PDF'});
-        if(id==='fcl-payment')base.push({key:'downloadReceipt',label:'下载水单'});
+        /* 整柜财务 5 张表各自的业务动作 */
+        if(id==='fcl-est-cost')base.push({key:'confirmEstCost',label:'确认成本'});
+        if(id==='fcl-agent-cost')base.push({key:'reconcileCost',label:'对账'});
+        if(id==='fcl-ap-bill')base.push({key:'payApBill',label:'付款登记'});
+        if(id==='fcl-ar-fee')base.push({key:'confirmArFee',label:'费用确认'});
+        if(id==='fcl-ar-receipt')base.push({key:'writeOffReceipt',label:'核销'});
         base.push({key:'export',label:'导出数据'});
         return base;
     }

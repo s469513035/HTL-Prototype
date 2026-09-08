@@ -57,15 +57,30 @@ var _finalAllocUnselectedSeed=[
     {no:'YPC-20260626003',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004',sub:[{no:'H-YPC-20260626003-001',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004'}]},
     {no:'YPC-TY',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014',sub:[{no:'H-YPC-TY-001',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014'}]}
 ];
-var _finalAllocState={mode:'add',unselected:[],selected:[],expanded:{},header:{no:'',transport:'海运',bl:'',country:'',containerNo:'',label:''}};
+var _finalAllocState={mode:'add',unselected:[],selected:[],expanded:{},filterTransport:'',query:{},
+    header:{no:'',transport:'海运',bl:'',country:'',containerNo:'',label:''}};
+
+/* 左侧「未选数据」的查询字段。放模块作用域是为了让渲染和回填共用同一份 key，
+ * 少一处就会出现「填了查不到、查了填不回」。
+ * 第二个字段不写 label —— 它的列名随运输方式变，渲染时才取。 */
+var _FA_QUERY_FIELDS=[
+    {key:'warehouse',label:'仓库归属',type:'select',options:['广州南沙仓','深圳坂田仓','上海洋山仓','东莞虎门仓']},
+    {key:'unitNo',type:'text'},
+    {key:'country',label:'收件国家',type:'select',options:['美国','尼日利亚','塞内加尔','科特迪瓦','多哥','喀麦隆']},
+    {key:'destWarehouse',label:'收件仓库',type:'select',options:['拉各斯仓','达喀尔仓','阿比让仓','洛美仓','杜阿拉仓','LAX-Amazon FBA']},
+    {key:'category',label:'品名大类',type:'select',options:['普货','电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他']},
+    {key:'custType',label:'客户类型',type:'select',options:['直客','货代','合作客户']}
+];
 
 function _finalAllocClone(arr){return JSON.parse(JSON.stringify(arr));}
 
 /* 空运走「分拣装袋」那条线，货是按袋交给航司的，配舱自然也按袋配；
- * 海运/卡航/快递还是按运单配。两个面板表和左侧查询条件都从这里取列名，
- * 免得只改一处，表头写「袋号」查询框还写「运单号」。 */
+ * 海运/卡航/快递还是按运单配。列名由左侧查询区的「运输方式」决定 ——
+ * 那是筛未选货源用的，筛出来是袋还是运单，两个面板表就照着叫。
+ * 选「全部」时没法确定，按默认的运单号显示。
+ * 两个面板表和左侧查询条件都从这里取名，免得只改一处、表头写「袋号」查询框还写「运单号」。 */
 function _finalAllocUnitLabel(){
-    return _finalAllocState.header.transport==='空运'?'袋号':'运单号';
+    return _finalAllocState.filterTransport==='空运'?'袋号':'运单号';
 }
 /* 把表头那几个输入框的当前值收回 state。
  * 重绘是按 state 重建 DOM 的，不先收回，用户已经填的柜号/提单号会被抹掉。 */
@@ -77,17 +92,36 @@ function finalAllocSyncHeader(){
         if(el)_finalAllocState.header[k]=el.value;
     });
 }
-/* 运输方式改了要重绘（列名跟着变），重绘前先把表头其它字段收回来 */
-function finalAllocOnTransportChange(){
+/* 左侧查询区同理：重绘前把已填的查询条件收回来 */
+function finalAllocSyncQuery(){
+    const t=document.getElementById('final-alloc-filter-transport');
+    if(t)_finalAllocState.filterTransport=t.value;
+    _FA_QUERY_FIELDS.forEach(function(q){
+        const el=document.getElementById('final-alloc-q-'+q.key);
+        if(el)_finalAllocState.query[q.key]=el.value;
+    });
+}
+/* 重绘前统一收值。弹窗里凡是会触发重绘的动作（切运输方式、展开收起、选入移除）
+ * 都要先走这一步，否则用户填到一半的内容会被重建 DOM 抹掉。 */
+function finalAllocSyncForm(){
     finalAllocSyncHeader();
+    finalAllocSyncQuery();
+}
+/* 左侧运输方式改了：列名跟着变，要重绘 */
+function finalAllocOnFilterTransportChange(){
+    finalAllocSyncForm();
     finalAllocRerender();
 }
 
-function _finalAllocResetState(mode,headerInit,selectedInit){
+function _finalAllocResetState(mode,headerInit,selectedInit,filterTransport){
     _finalAllocState.mode=mode;
     _finalAllocState.unselected=_finalAllocClone(_finalAllocUnselectedSeed);
     _finalAllocState.selected=selectedInit?_finalAllocClone(selectedInit):[];
     _finalAllocState.expanded={};
+    /* 新增时左侧筛选默认「全部」；调整时预置成这单本身的运输方式，
+     * 调空运的单一进来就是按袋看，不用再手动切一次 */
+    _finalAllocState.filterTransport=filterTransport||'';
+    _finalAllocState.query={};
     _finalAllocState.header=Object.assign({no:'',transport:'海运',bl:'',country:'',containerNo:'',label:''},headerInit||{});
 }
 
@@ -177,24 +211,23 @@ function _finalAllocLeftPanel(showAdvanced){
     h+='<div class="text-sm font-semibold text-orange-600 mb-2">'+tr('未选数据')+'</div>';
     /* 查询行 */
     h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3">';
-    h+='<div class="mb-3 pb-3 border-b border-surface-100"><div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('全部')+'</option><option>'+tr('海运')+'</option><option>'+tr('空运')+'</option><option>'+tr('卡航')+'</option><option>'+tr('快递')+'</option></select></div></div>';
+    /* 这个下拉决定了未选货源是按袋还是按运单来的，所以两个面板表的首列名跟着它走。
+     * option 显式写 value（中文原值），切到英文/法文界面时比较才不会失效。 */
+    const ft=_finalAllocState.filterTransport||'';
+    h+='<div class="mb-3 pb-3 border-b border-surface-100"><div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-filter-transport" onchange="finalAllocOnFilterTransportChange()"><option value=""'+(ft===''?' selected':'')+'>'+tr('全部')+'</option>';
+    ['海运','空运','卡航','快递'].forEach(function(o){h+='<option value="'+esc(o)+'"'+(ft===o?' selected':'')+'>'+tr(o)+'</option>';});
+    h+='</select></div></div>';
     h+='<div class="grid grid-cols-3 gap-3">';
-    const _faQueryFields=[
-        {label:'仓库归属',type:'select',options:['广州南沙仓','深圳坂田仓','上海洋山仓','东莞虎门仓']},
-        {label:_finalAllocUnitLabel(),type:'text'},
-        {label:'收件国家',type:'select',options:['美国','尼日利亚','塞内加尔','科特迪瓦','多哥','喀麦隆']},
-        {label:'收件仓库',type:'select',options:['拉各斯仓','达喀尔仓','阿比让仓','洛美仓','杜阿拉仓','LAX-Amazon FBA']},
-        {label:'品名大类',type:'select',options:['普货','电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他']},
-        {label:'客户类型',type:'select',options:['直客','货代','合作客户']}
-    ];
-    _faQueryFields.forEach(function(q){
-        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+q.label+'</label>';
+    _FA_QUERY_FIELDS.forEach(function(q){
+        const label=q.label||_finalAllocUnitLabel();
+        const val=_finalAllocState.query[q.key]||'';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr(label)+'</label>';
         if(q.type==='select'){
-            h+='<select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50"><option value="">'+tr('请选择')+q.label+'</option>';
-            q.options.forEach(function(o){h+='<option>'+esc(o)+'</option>';});
+            h+='<select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-q-'+q.key+'"><option value="">'+tr('请选择')+tr(label)+'</option>';
+            q.options.forEach(function(o){h+='<option'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});
             h+='</select>';
         }else{
-            h+='<input type="text" placeholder="'+tr('请输入')+q.label+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50">';
+            h+='<input type="text" value="'+esc(val)+'" placeholder="'+tr('请输入')+tr(label)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-q-'+q.key+'">';
         }
         h+='</div>';
     });
@@ -221,7 +254,7 @@ function _finalAllocRightPanel(showHeader){
         countries.forEach(function(o){h+='<option'+(o===hd.country?' selected':'')+'>'+o+'</option>';});
         h+='</select></div>';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('柜号')+'</label><input type="text" value="'+esc(hd.containerNo||'')+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-container" placeholder="'+esc(tr('请输入柜号'))+'"></div>';
-        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-transport" onchange="finalAllocOnTransportChange()">';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-transport">';
         ['海运','空运','卡航','快递'].forEach(function(o){h+='<option'+(o===hd.transport?' selected':'')+'>'+o+'</option>';});
         h+='</select></div>';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('关联提单')+'</label><input type="text" value="'+esc(hd.bl)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-bl"></div>';
@@ -250,12 +283,14 @@ function _finalAllocBodyHtml(mode){
 }
 
 function finalAllocToggleRow(side,i){
+    finalAllocSyncForm();
     const k=side+'-'+i;
     _finalAllocState.expanded[k]=!_finalAllocState.expanded[k];
     finalAllocRerender();
 }
 
 function finalAllocExpandAll(open){
+    finalAllocSyncForm();
     _finalAllocState.expanded={};
     if(open){
         _finalAllocState.unselected.forEach(function(_,i){_finalAllocState.expanded['unselected-'+i]=true;});
@@ -291,6 +326,7 @@ function finalAllocMove(dir){
     const toKey=dir==='right'?'selected':'unselected';
     const checks=document.querySelectorAll('.final-alloc-check[data-side="'+fromKey+'"]:checked');
     if(!checks.length){showToast(tr(dir==='right'?'请勾选要选入的数据':'请勾选要移除的数据'));return;}
+    finalAllocSyncForm();
     const indices=Array.prototype.map.call(checks,function(cb){return parseInt(cb.dataset.idx,10);}).sort(function(a,b){return b-a;});
     indices.forEach(function(idx){
         const row=_finalAllocState[fromKey].splice(idx,1)[0];
@@ -347,7 +383,7 @@ function openFinalAllocAdjustModal(id,rowIdx){
         ?presetNo.replace(/^ZPCD-/,'BAG-').replace(/-终配/,'')
         :presetNo.replace(/-终配/,'-预配').replace(/^ZPCD-/,'YPC-');
     const presetSelected=[{no:presetUnitNo,pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002',sub:[{no:'H82606240002',pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002'}]}];
-    _finalAllocResetState('edit',{no:presetNo,label:presetLabel,transport:presetTransport,bl:presetBL,country:presetCountry,containerNo:presetContainer},presetSelected);
+    _finalAllocResetState('edit',{no:presetNo,label:presetLabel,transport:presetTransport,bl:presetBL,country:presetCountry,containerNo:presetContainer},presetSelected,presetTransport);
     _finalAllocState.expanded['selected-0']=true;
     const titleEl=document.getElementById('crud-modal-title');
     const bodyEl=document.getElementById('crud-modal-body');

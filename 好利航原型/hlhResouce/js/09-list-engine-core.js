@@ -963,7 +963,6 @@ function renderToolbarAction(action,id){
     else if(action.key==='cancelBooking')click='openFclBookingCancel(\''+id+'\')';
     else if(action.key==='linkEntrust')click='openFclBookingLinkEntrust(\''+id+'\')';
     else if(action.key==='entrustResubmit')click='openEntrustResubmit(\''+id+'\')';
-    else if(action.key==='confirmEstCost')click='openEstCostConfirm(\''+id+'\')';
     else if(action.key==='importAgentBill')click='openAgentBillImportModal(\''+id+'\')';
     else if(action.key==='allocAgentCost')click='openAgentCostAlloc(\''+id+'\')';
     else if(action.key==='reconcileCost')click='openAgentCostReconcile(\''+id+'\')';
@@ -1523,7 +1522,11 @@ function getToolbarActions(id){
         if(id==='fcl-customer-audit')base.push({key:'audit',label:'审核数据'});
         if(['fcl-edi-api','fcl-provider-api'].includes(id))base.push({key:'sync',label:'同步数据'});
         /* 整柜财务 5 张表各自的业务动作 */
-        if(id==='fcl-est-cost')base.push({key:'confirmEstCost',label:'确认成本'});
+        /* 预估成本明细：成本基线由报价/订舱带出，页面上只做新增和导出，
+         * 不给「编辑数据 / 查看详情 / 确认成本」这三个动作 */
+        if(id==='fcl-est-cost'){
+            for(var ei=base.length-1;ei>=0;ei--)if(base[ei].type==='edit'||base[ei].type==='view')base.splice(ei,1);
+        }
         if(id==='fcl-agent-cost')base.push({key:'importAgentBill',label:'代账账单导入'},{key:'allocAgentCost',label:'手工分摊'},{key:'reconcileCost',label:'对账'});
         if(id==='fcl-ap-bill')base.push({key:'payApBill',label:'付款登记'});
         if(id==='fcl-ar-fee')base.push({key:'confirmArFee',label:'费用确认'});

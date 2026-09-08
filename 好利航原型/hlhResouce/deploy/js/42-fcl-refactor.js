@@ -105,27 +105,26 @@ var FCL_AGENT_OPTIONS=['MAERSK','COSCO','CMA CGM','MSC','ONE','鹏程拖车','�
 
 /* ① 预估成本明细 —— 订舱时按 Job 拆出来的成本基线，后面拿它跟代理实际成本比 */
 addPrototypeTable('fcl-est-cost','预估成本明细',
-    '预估明细号|Job No|客户名称|费用名称|费用类别|供应商|币别|预估金额|汇率|本位币金额|计费方式|数量|来源|录入人|录入时间|状态|操作',
+    '预估明细号|Job No|费用科目|供应商|币别|金额|计费方式|来源|录入人|录入时间|状态|操作',
     ['草稿','已确认','已作废'],[
-    ['FEC-20260613001','FBK-20260613001','深圳市华运达国际货运','海运费','海运费','MAERSK','USD','4120','7.15','29,458.00','按柜','1','报价带出','张财务','2026-06-13 15:20','已确认'],
-    ['FEC-20260613002','FBK-20260613001','深圳市华运达国际货运','拖车费','拖车费','鹏程拖车','CNY','1800','1.00','1,800.00','按柜','1','人工录入','张财务','2026-06-13 15:25','已确认'],
-    ['FEC-20260613003','FBK-20260613001','深圳市华运达国际货运','报关费','报关费','深圳报关行','CNY','350','1.00','350.00','按票','1','报价带出','张财务','2026-06-13 15:26','草稿'],
-    ['FEC-20260612004','FBK-20260612002','广州远洋进出口贸易','海运费','海运费','COSCO','USD','5180','7.15','37,037.00','按柜','2','报价带出','张财务','2026-06-12 16:40','已确认'],
-    ['FEC-20260612005','FBK-20260612002','广州远洋进出口贸易','附加费','附加费','COSCO','USD','120','7.15','858.00','按票','1','系统计算','张财务','2026-06-12 16:42','已作废']
+    ['FEC-20260613001','FBK-20260613001','海运费','MAERSK','USD','4120','按柜','报价带出','张财务','2026-06-13 15:20','已确认'],
+    ['FEC-20260613002','FBK-20260613001','拖车费','鹏程拖车','CNY','1800','按柜','人工录入','张财务','2026-06-13 15:25','已确认'],
+    ['FEC-20260613003','FBK-20260613001','报关费','深圳报关行','CNY','350','按票','报价带出','张财务','2026-06-13 15:26','草稿'],
+    ['FEC-20260612004','FBK-20260612002','海运费','COSCO','USD','5180','按柜','报价带出','张财务','2026-06-12 16:40','已确认'],
+    ['FEC-20260612005','FBK-20260612002','附加费','COSCO','USD','120','按票','系统计算','张财务','2026-06-12 16:42','已作废']
 ],[
     {label:'预估明细号',type:'text'},
     {label:'Job No',type:'text'},
-    {label:'客户名称',type:'select',options:FCL_CUSTOMER_OPTIONS},
-    {label:'费用类别',type:'select',options:FCL_FEE_KINDS},
+    {label:'费用科目',type:'select',options:FCL_FEE_KINDS},
     {label:'供应商',type:'select',options:FCL_AGENT_OPTIONS},
     {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
     {label:'状态',type:'select',options:['草稿','已确认','已作废']}
 ]);
-TC['fcl-est-cost'].modalExcludedFields=['本位币金额','录入人','录入时间','状态'];
+/* 来源是系统按数据怎么进来的自动打的标（报价带出/人工录入/系统计算），弹窗里不给人填 */
+TC['fcl-est-cost'].modalExcludedFields=['来源','录入人','录入时间','状态'];
 TC['fcl-est-cost'].fieldOptions={
-    '客户名称':FCL_CUSTOMER_OPTIONS,'费用类别':FCL_FEE_KINDS,'供应商':FCL_AGENT_OPTIONS,
-    '币别':FCL_CURRENCY_OPTIONS,'计费方式':['按柜','按票','按重量','按体积'],
-    '来源':['报价带出','人工录入','系统计算']
+    '费用科目':FCL_FEE_KINDS,'供应商':FCL_AGENT_OPTIONS,
+    '币别':FCL_CURRENCY_OPTIONS,'计费方式':['按柜','按票','按重量','按体积']
 };
 
 /* ② 代理实际成本 —— 服务商/代理报来的实际金额，与预估逐项比差异 */
@@ -223,7 +222,7 @@ TC['fcl-ar-receipt'].fieldOptions={
     '到账银行账户':['招商银行 6225****8888','中国银行 4563****1234','工商银行 6222****4321']
 };
 
-/* ===== 整柜财务的 5 个自定义操作 =====
+/* ===== 整柜财务的自定义操作 =====
  * 都走「勾选 -> 校验状态 -> 改状态/算金额 -> 刷新列表」这一套，
  * 金额一律用 fclParseMoney 解析，避免 '4,120' 这种带千分位的字符串直接参与运算。 */
 function fclFinRows(id){
@@ -262,10 +261,6 @@ function fclFinBatchStatus(id,statusCol,from,to,opLabel){
         fclFinRefresh(id);
         showToast(tr(opLabel)+' '+eligible.length+' '+tr('条'));
     });
-}
-/* ① 预估成本明细：草稿 -> 已确认 */
-function openEstCostConfirm(id){
-    fclFinBatchStatus(id||'fcl-est-cost','状态',['草稿'],'已确认','确认成本');
 }
 /* ④ 应收费用明细：待确认 -> 已确认 */
 function openArFeeConfirm(id){
@@ -317,11 +312,15 @@ function agentImportColumns(id){
         return !/^(创建|修改)(人|时间|网点)$/.test(h);
     });
 }
-/* 按 Job No + 费用名称 去预估成本明细里找预估金额（作废的不算） */
+/* 按 Job No + 费用名称 去预估成本明细里找金额（作废的不算）。
+ * 预估表那边的科目列叫「费用科目」、金额列叫「金额」，
+ * 这里对旧列名做兼容取值，免得以后谁再改一次列名就把带值功能带崩。 */
 function fclEstAmountOf(job,feeName){
     var c=TC['fcl-est-cost'];
     if(!c||!c.d||!job)return '';
-    var h=c.h||[],iJ=h.indexOf('Job No'),iF=h.indexOf('费用名称'),iA=h.indexOf('预估金额'),iS=h.indexOf('状态');
+    var h=c.h||[],iJ=h.indexOf('Job No'),iS=h.indexOf('状态');
+    var iF=h.indexOf('费用科目');if(iF<0)iF=h.indexOf('费用名称');
+    var iA=h.indexOf('金额');if(iA<0)iA=h.indexOf('预估金额');
     if(iJ<0||iA<0)return '';
     var hit=c.d.find(function(r){
         return String(r[iJ]||'')===job&&(iF<0||!feeName||String(r[iF]||'')===feeName)&&(iS<0||r[iS]!=='已作废');

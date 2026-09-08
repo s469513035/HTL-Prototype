@@ -61,6 +61,28 @@ var _finalAllocState={mode:'add',unselected:[],selected:[],expanded:{},header:{n
 
 function _finalAllocClone(arr){return JSON.parse(JSON.stringify(arr));}
 
+/* 空运走「分拣装袋」那条线，货是按袋交给航司的，配舱自然也按袋配；
+ * 海运/卡航/快递还是按运单配。两个面板表和左侧查询条件都从这里取列名，
+ * 免得只改一处，表头写「袋号」查询框还写「运单号」。 */
+function _finalAllocUnitLabel(){
+    return _finalAllocState.header.transport==='空运'?'袋号':'运单号';
+}
+/* 把表头那几个输入框的当前值收回 state。
+ * 重绘是按 state 重建 DOM 的，不先收回，用户已经填的柜号/提单号会被抹掉。 */
+function finalAllocSyncHeader(){
+    const map={no:'final-alloc-no',label:'final-alloc-label',country:'final-alloc-country',
+        containerNo:'final-alloc-container',transport:'final-alloc-transport',bl:'final-alloc-bl'};
+    Object.keys(map).forEach(function(k){
+        const el=document.getElementById(map[k]);
+        if(el)_finalAllocState.header[k]=el.value;
+    });
+}
+/* 运输方式改了要重绘（列名跟着变），重绘前先把表头其它字段收回来 */
+function finalAllocOnTransportChange(){
+    finalAllocSyncHeader();
+    finalAllocRerender();
+}
+
 function _finalAllocResetState(mode,headerInit,selectedInit){
     _finalAllocState.mode=mode;
     _finalAllocState.unselected=_finalAllocClone(_finalAllocUnselectedSeed);
@@ -74,8 +96,10 @@ function _finalAllocPanelTable(side){
     const rows=isLeft?_finalAllocState.unselected:_finalAllocState.selected;
     // 左侧(未选)：运单号|件数|可配件数|可配实重|可配体积|实际重量|实际体积
     // 右侧(已选)：运单号|件数|实际重量|实际体积（去掉可配实重/可配体积；可配件数→件数）
-    const cols=isLeft?['运单号','件数','可配件数','可配实重','可配体积','实际重量','实际体积']
-                     :['运单号','件数','出货重量','出货体积'];
+    // 首列列名随运输方式变：空运=袋号，其余=运单号
+    const unit=_finalAllocUnitLabel();
+    const cols=isLeft?[unit,'件数','可配件数','可配实重','可配体积','实际重量','实际体积']
+                     :[unit,'件数','出货重量','出货体积'];
     const colspan=cols.length+2;
     let h='<div class="border border-surface-200 rounded-lg overflow-hidden bg-white"><div class="overflow-auto" style="max-height:520px"><table class="w-full text-xs" style="border-collapse:separate;border-spacing:0">';
     h+='<thead class="bg-[#EFF6FF] sticky top-0 z-10"><tr>';
@@ -157,7 +181,7 @@ function _finalAllocLeftPanel(showAdvanced){
     h+='<div class="grid grid-cols-3 gap-3">';
     const _faQueryFields=[
         {label:'仓库归属',type:'select',options:['广州南沙仓','深圳坂田仓','上海洋山仓','东莞虎门仓']},
-        {label:'运单号',type:'text'},
+        {label:_finalAllocUnitLabel(),type:'text'},
         {label:'收件国家',type:'select',options:['美国','尼日利亚','塞内加尔','科特迪瓦','多哥','喀麦隆']},
         {label:'收件仓库',type:'select',options:['拉各斯仓','达喀尔仓','阿比让仓','洛美仓','杜阿拉仓','LAX-Amazon FBA']},
         {label:'品名大类',type:'select',options:['普货','电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他']},
@@ -197,7 +221,7 @@ function _finalAllocRightPanel(showHeader){
         countries.forEach(function(o){h+='<option'+(o===hd.country?' selected':'')+'>'+o+'</option>';});
         h+='</select></div>';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('柜号')+'</label><input type="text" value="'+esc(hd.containerNo||'')+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-container" placeholder="'+esc(tr('请输入柜号'))+'"></div>';
-        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-transport">';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-transport" onchange="finalAllocOnTransportChange()">';
         ['海运','空运','卡航','快递'].forEach(function(o){h+='<option'+(o===hd.transport?' selected':'')+'>'+o+'</option>';});
         h+='</select></div>';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('关联提单')+'</label><input type="text" value="'+esc(hd.bl)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-bl"></div>';
@@ -318,7 +342,11 @@ function openFinalAllocAdjustModal(id,rowIdx){
     const presetCountry=row[3]||'';
     const presetContainer=row[4]||'';
     const presetTransport=row[8]||'海运';
-    const presetSelected=[{no:presetNo.replace(/-终配/,'-预配').replace(/^ZPCD-/,'YPC-'),pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002',sub:[{no:'H82606240002',pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002'}]}];
+    /* 已选行的首列跟着运输方式走：空运配的是袋，给个袋号；其余仍是预配单号 */
+    const presetUnitNo=presetTransport==='空运'
+        ?presetNo.replace(/^ZPCD-/,'BAG-').replace(/-终配/,'')
+        :presetNo.replace(/-终配/,'-预配').replace(/^ZPCD-/,'YPC-');
+    const presetSelected=[{no:presetUnitNo,pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002',sub:[{no:'H82606240002',pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002'}]}];
     _finalAllocResetState('edit',{no:presetNo,label:presetLabel,transport:presetTransport,bl:presetBL,country:presetCountry,containerNo:presetContainer},presetSelected);
     _finalAllocState.expanded['selected-0']=true;
     const titleEl=document.getElementById('crud-modal-title');
@@ -335,18 +363,7 @@ function openFinalAllocAdjustModal(id,rowIdx){
 
 function finalAllocSubmit(mode,id){
     if(!_finalAllocState.selected.length){showToast(tr('请先选入数据再提交'));return;}
-    const noEl=document.getElementById('final-alloc-no');
-    const blEl=document.getElementById('final-alloc-bl');
-    const trEl=document.getElementById('final-alloc-transport');
-    const countryEl=document.getElementById('final-alloc-country');
-    const containerEl=document.getElementById('final-alloc-container');
-    const labelEl=document.getElementById('final-alloc-label');
-    if(noEl)_finalAllocState.header.no=noEl.value;
-    if(blEl)_finalAllocState.header.bl=blEl.value;
-    if(trEl)_finalAllocState.header.transport=trEl.value;
-    if(countryEl)_finalAllocState.header.country=countryEl.value;
-    if(containerEl)_finalAllocState.header.containerNo=containerEl.value;
-    if(labelEl)_finalAllocState.header.label=labelEl.value;
+    finalAllocSyncHeader();
     if(!_finalAllocState.header.no){showToast(tr('配舱单号必填'));return;}
     closeCrudModal();
     showToast(tr(mode==='add'?'终配舱登记成功':'终配舱调整成功'));

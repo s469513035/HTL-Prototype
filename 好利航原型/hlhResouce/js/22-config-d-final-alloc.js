@@ -57,6 +57,15 @@ var _finalAllocUnselectedSeed=[
     {no:'YPC-20260626003',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004',sub:[{no:'H-YPC-20260626003-001',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004'}]},
     {no:'YPC-TY',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014',sub:[{no:'H-YPC-TY-001',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014'}]}
 ];
+/* 空运按袋配舱：一行就是一袋，袋在国内装好就封了，配舱阶段不再往里看运单，
+ * 所以这份种子不带 sub —— 表格也就没有主子表可展开。 */
+var _finalAllocBagSeed=[
+    {no:'BAG-20260626-001',pcs:4,canPcs:4,canWt:38,canVol:'0.180000',outWt:38,outVol:'0.180000'},
+    {no:'BAG-20260626-002',pcs:3,canPcs:3,canWt:26,canVol:'0.120000',outWt:26,outVol:'0.120000'},
+    {no:'BAG-20260626-003',pcs:2,canPcs:2,canWt:15,canVol:'0.070000',outWt:15,outVol:'0.070000'},
+    {no:'BAG-20260627-001',pcs:6,canPcs:6,canWt:54,canVol:'0.260000',outWt:54,outVol:'0.260000'}
+];
+
 var _finalAllocState={mode:'add',unselected:[],selected:[],expanded:{},filterTransport:'',query:{},
     header:{no:'',transport:'海运',bl:'',country:'',containerNo:'',label:''}};
 
@@ -69,7 +78,10 @@ var _FA_QUERY_FIELDS=[
     {key:'country',label:'收件国家',type:'select',options:['美国','尼日利亚','塞内加尔','科特迪瓦','多哥','喀麦隆']},
     {key:'destWarehouse',label:'收件仓库',type:'select',options:['拉各斯仓','达喀尔仓','阿比让仓','洛美仓','杜阿拉仓','LAX-Amazon FBA']},
     {key:'category',label:'品名大类',type:'select',options:['普货','电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他']},
-    {key:'custType',label:'客户类型',type:'select',options:['直客','货代','合作客户']}
+    {key:'custType',label:'客户类型',type:'select',options:['直客','货代','合作客户']},
+    {key:'forecastTime',label:'预报时间',type:'date'},
+    /* 与运单模块「修改附加服务」用的是同一份选项，别另起一套 */
+    {key:'service',label:'附加服务',type:'select',options:['报关','合并报关','拆分报关','带电','带磁','贴箱唛']}
 ];
 
 function _finalAllocClone(arr){return JSON.parse(JSON.stringify(arr));}
@@ -79,8 +91,13 @@ function _finalAllocClone(arr){return JSON.parse(JSON.stringify(arr));}
  * 那是筛未选货源用的，筛出来是袋还是运单，两个面板表就照着叫。
  * 选「全部」时没法确定，按默认的运单号显示。
  * 两个面板表和左侧查询条件都从这里取名，免得只改一处、表头写「袋号」查询框还写「运单号」。 */
+function _finalAllocIsAir(){return _finalAllocState.filterTransport==='空运';}
 function _finalAllocUnitLabel(){
-    return _finalAllocState.filterTransport==='空运'?'袋号':'运单号';
+    return _finalAllocIsAir()?'袋号':'运单号';
+}
+/* 未选货源池：空运给袋、其余给运单。两种结构不同（袋没有子行），切换时要整池换掉 */
+function _finalAllocPoolSeed(){
+    return _finalAllocIsAir()?_finalAllocBagSeed:_finalAllocUnselectedSeed;
 }
 /* 把表头那几个输入框的当前值收回 state。
  * 重绘是按 state 重建 DOM 的，不先收回，用户已经填的柜号/提单号会被抹掉。 */
@@ -107,20 +124,32 @@ function finalAllocSyncForm(){
     finalAllocSyncHeader();
     finalAllocSyncQuery();
 }
-/* 左侧运输方式改了：列名跟着变，要重绘 */
+/* 左侧运输方式改了：列名跟着变，要重绘。
+ * 如果是在「按袋」和「按运单」之间来回切，货源池的结构也变了，
+ * 得整池换掉；已选里那批是另一种单位的，留着会出现「袋号」列下挂运单号，
+ * 一张配舱单混两种单位本身也不成立，所以一并清掉并给出提示。 */
 function finalAllocOnFilterTransportChange(){
+    var wasAir=_finalAllocIsAir();
     finalAllocSyncForm();
+    if(_finalAllocIsAir()!==wasAir){
+        var dropped=_finalAllocState.selected.length;
+        _finalAllocState.unselected=_finalAllocClone(_finalAllocPoolSeed());
+        _finalAllocState.selected=[];
+        _finalAllocState.expanded={};
+        if(dropped)showToast(tr('已切换配舱单位为')+'「'+tr(_finalAllocUnitLabel())+'」，'+tr('原已选')+' '+dropped+' '+tr('条已清空'));
+    }
     finalAllocRerender();
 }
 
 function _finalAllocResetState(mode,headerInit,selectedInit,filterTransport){
     _finalAllocState.mode=mode;
-    _finalAllocState.unselected=_finalAllocClone(_finalAllocUnselectedSeed);
+    /* 新增时左侧筛选默认「全部」；调整时预置成这单本身的运输方式，
+     * 调空运的单一进来就是按袋看，不用再手动切一次。
+     * 必须先定 filterTransport 再取货源池 —— 池子是按它挑的。 */
+    _finalAllocState.filterTransport=filterTransport||'';
+    _finalAllocState.unselected=_finalAllocClone(_finalAllocPoolSeed());
     _finalAllocState.selected=selectedInit?_finalAllocClone(selectedInit):[];
     _finalAllocState.expanded={};
-    /* 新增时左侧筛选默认「全部」；调整时预置成这单本身的运输方式，
-     * 调空运的单一进来就是按袋看，不用再手动切一次 */
-    _finalAllocState.filterTransport=filterTransport||'';
     _finalAllocState.query={};
     _finalAllocState.header=Object.assign({no:'',transport:'海运',bl:'',country:'',containerNo:'',label:''},headerInit||{});
 }
@@ -130,8 +159,9 @@ function _finalAllocPanelTable(side){
     const rows=isLeft?_finalAllocState.unselected:_finalAllocState.selected;
     // 左侧(未选)：运单号|件数|可配件数|可配实重|可配体积|实际重量|实际体积
     // 右侧(已选)：运单号|件数|实际重量|实际体积（去掉可配实重/可配体积；可配件数→件数）
-    // 首列列名随运输方式变：空运=袋号，其余=运单号
+    // 首列列名随运输方式变：空运=袋号，其余=运单号；空运还不走主子表
     const unit=_finalAllocUnitLabel();
+    const isAir=_finalAllocIsAir();
     const cols=isLeft?[unit,'件数','可配件数','可配实重','可配体积','实际重量','实际体积']
                      :[unit,'件数','出货重量','出货体积'];
     const colspan=cols.length+2;
@@ -146,11 +176,13 @@ function _finalAllocPanelTable(side){
     }
     rows.forEach(function(r,i){
         const expKey=side+'-'+i;
-        const expanded=!!_finalAllocState.expanded[expKey];
+        const expanded=!isAir&&!!_finalAllocState.expanded[expKey];
         const arrow=expanded?'▾':'▸';
         h+='<tr class="hover:bg-primary-50/30 border-b border-surface-100"><td class="px-2 py-2 text-text-muted">'+(i+1)+'</td>';
         h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-check final-alloc-check-parent" data-side="'+side+'" data-idx="'+i+'" onchange="finalAllocSyncSub(this)"></td>';
-        h+='<td class="px-2 py-2 font-medium text-primary-700 whitespace-nowrap"><span class="cursor-pointer mr-1 text-text-muted" onclick="finalAllocToggleRow(\''+side+'\','+i+')">'+arrow+'</span>'+esc(r.no)+'</td>';
+        /* 空运一行就是一袋，没有下钻的子行，展开箭头也就不给了 */
+        h+='<td class="px-2 py-2 font-medium text-primary-700 whitespace-nowrap">'+
+            (isAir?'':'<span class="cursor-pointer mr-1 text-text-muted" onclick="finalAllocToggleRow(\''+side+'\','+i+')">'+arrow+'</span>')+esc(r.no)+'</td>';
         if(isLeft){
             h+='<td class="px-2 py-2 text-right">'+r.pcs+'</td>';
             h+='<td class="px-2 py-2 text-right">'+r.canPcs+'</td>';
@@ -163,7 +195,7 @@ function _finalAllocPanelTable(side){
             h+='<td class="px-2 py-2 text-right">'+r.outWt+'</td>';
             h+='<td class="px-2 py-2 text-right">'+r.outVol+'</td></tr>';
         }
-        if(expanded&&r.sub){
+        if(!isAir&&expanded&&r.sub){
             r.sub.forEach(function(s,si){
                 h+='<tr class="bg-surface-50/60 border-b border-surface-100"><td class="px-2 py-2 text-text-muted">'+(i+1)+'.'+(si+1)+'</td>';
                 h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-sub-check" data-side="'+side+'" data-pidx="'+i+'" data-sidx="'+si+'" onchange="finalAllocSyncParent(this)"></td>';
@@ -226,6 +258,8 @@ function _finalAllocLeftPanel(showAdvanced){
             h+='<select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-q-'+q.key+'"><option value="">'+tr('请选择')+tr(label)+'</option>';
             q.options.forEach(function(o){h+='<option'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});
             h+='</select>';
+        }else if(q.type==='date'){
+            h+='<input type="date" value="'+esc(val)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-q-'+q.key+'">';
         }else{
             h+='<input type="text" value="'+esc(val)+'" placeholder="'+tr('请输入')+tr(label)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-q-'+q.key+'">';
         }
@@ -235,8 +269,11 @@ function _finalAllocLeftPanel(showAdvanced){
     /* 操作按钮行 */
     h+='<div class="flex flex-wrap gap-2 mb-2">';
     h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'查询完成\'))">'+tr('查询')+'</button>';
-    h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(true)">'+tr('全部展开')+'</button>';
-    h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(false)">'+tr('全部收起')+'</button>';
+    /* 空运是平铺的袋列表，没有可展开的子行，这两个按钮就不给了 */
+    if(!_finalAllocIsAir()){
+        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(true)">'+tr('全部展开')+'</button>';
+        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(false)">'+tr('全部收起')+'</button>';
+    }
     h+='</div>';
     return h;
 }

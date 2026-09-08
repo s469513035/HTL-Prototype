@@ -49,7 +49,7 @@ function warehousePdaTaskItems(){
     items.push(['pda-load-scan','装柜扫描','按配舱号扫描托盘装柜核对']);
     items.push(['pda-load-finish','装柜完成','装柜完成后上传柜照片与提交']);
     items.push(['pda-sort-scan','分拣扫描','按装袋规则扫描运单装袋']);
-    items.push(['ow-arrival-scan','海外到货扫描','按国内配舱单逐件扫描到货入库']);
+    items.push(['ow-arrival-scan','海外到货扫描','按国内配舱单扫描到货入库，空运可按袋']);
     items.push(['ow-unload-finish','卸柜完成','卸柜完成后上传封签/开门/卸货/空柜照并提交']);
     items.push(['ow-out-scan-os','海外出库扫描','按提货单逐件扫描出库放行']);
     items.push(['ow-pallet-bind','仓库上托','运单子单号扫码绑定托盘和库位库区']);

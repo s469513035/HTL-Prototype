@@ -1555,12 +1555,25 @@ function submitOverseasOutboundCreate(){
  * 仓库PDA · 海外仓扫描屏（由 17 的 generateWarehousePdaOperationScreen 路由）
  * ============================================================ */
 
-/* ---------- 海外到货扫描 ow-arrival-scan（list/operate 两屏，按件） ---------- */
+/* ---------- 海外到货扫描 ow-arrival-scan（list/operate 两屏，按件 / 空运可按袋） ---------- */
 var _owArrScanView='list';
 var _owArrScanCurrent=null;
 var _owArrScanScanned={};
 var _owArrScanTab='pending';
+var _owArrScanMode='piece';   /* piece=按件（默认）/ bag=按袋，仅空运配舱单可切 */
 var _owArrScanList=[
+    {no:'YPCD-20260626-001',bl:'TD-20260626-001',wh:'拉各斯海外仓',transport:'空运',
+        pieces:[
+            /* 空运的件在国内装袋出运，每件都带袋号，到货可按袋扫也可按件扫 */
+            {sub:'WB-20260705001-01',wb:'WB-20260705001',cust:'CUS-006',cargoType:'普货',bag:'BAG-20260626-001'},
+            {sub:'WB-20260705001-02',wb:'WB-20260705001',cust:'CUS-006',cargoType:'普货',bag:'BAG-20260626-001'},
+            {sub:'WB-20260705004-01',wb:'WB-20260705004',cust:'CUS-007',cargoType:'普货',bag:'BAG-20260626-001'},
+            {sub:'WB-20260705008-01',wb:'WB-20260705008',cust:'CUS-008',cargoType:'带电',bag:'BAG-20260626-002'},
+            {sub:'WB-20260705008-02',wb:'WB-20260705008',cust:'CUS-008',cargoType:'带电',bag:'BAG-20260626-002'},
+            {sub:'WB-20260705011-01',wb:'WB-20260705011',cust:'CUS-009',cargoType:'敏感货',bag:'BAG-20260626-003'},
+            {sub:'WB-20260705011-02',wb:'WB-20260705011',cust:'CUS-009',cargoType:'敏感货',bag:'BAG-20260626-003'},
+            {sub:'WB-20260705015-01',wb:'WB-20260705015',cust:'CUS-010',cargoType:'普货',bag:'BAG-20260626-003'}
+        ]},
     {no:'YPCD-20260625-001',bl:'TD-20260625-001',wh:'达喀尔海外仓',transport:'海运',
         pieces:[
             {sub:'WB-20260701002-01',wb:'WB-20260701002',cust:'CUS-001',cargoType:'普货'},
@@ -1579,6 +1592,40 @@ var _owArrScanList=[
         ]}
 ];
 
+/* ===== 按袋扫描的几个小工具 =====
+ * 空运的货在国内是装袋交给航司的，到货现场先点袋、扫袋号整袋入库，
+ * 所以空运的配舱单多一个「按袋」扫描方式。
+ * 袋是从 pieces 里现归并出来的，不另存一份 —— 两套数据分开存，
+ * 按件扫和按袋扫的进度迟早会对不上。 */
+function owArrScanIsAir(item){return !!item&&item.transport==='空运';}
+function owArrScanBags(item){
+    var out=[],map={};
+    ((item&&item.pieces)||[]).forEach(function(p){
+        var b=p.bag||'';
+        if(!b)return;
+        if(!map[b]){map[b]={bag:b,pcs:0,types:[],subs:[]};out.push(map[b]);}
+        map[b].pcs++;
+        map[b].subs.push(p.sub);
+        if(map[b].types.indexOf(p.cargoType)<0)map[b].types.push(p.cargoType);
+    });
+    /* 一袋里混了几种货就标「混装」，现场好判断要不要单独放 */
+    out.forEach(function(b){b.cargoType=b.types.length>1?'混装':(b.types[0]||'');});
+    return out;
+}
+/* 袋里的件全扫了才算这袋到货 */
+function owArrScanBagDone(b){
+    return (b.subs||[]).length>0&&b.subs.every(function(s){return !!_owArrScanScanned[s];});
+}
+/* 实际生效的扫描方式：非空运一律按件，防止切过袋以后换单还留在按袋 */
+function owArrScanModeOf(item){
+    return (owArrScanIsAir(item)&&_owArrScanMode==='bag')?'bag':'piece';
+}
+function switchOwArrScanMode(m){
+    _owArrScanMode=(m==='bag')?'bag':'piece';
+    _owArrScanTab='pending';
+    refreshWarehousePdaPrototype();
+}
+
 function generateOwArrivalScanScreen(){
     if(_owArrScanView==='operate'&&_owArrScanCurrent!==null&&_owArrScanList[_owArrScanCurrent]){
         return generateOwArrivalScanOperate();
@@ -1590,15 +1637,18 @@ function generateOwArrivalScanList(){
     h+=pdaScanInput('ow-arr-order','请扫描国内配舱单号','applyOwArrScanOrder','YPCD-20260625-001');
     _owArrScanList.forEach(function(item,i){
         var total=item.pieces.length;
+        var bags=owArrScanBags(item);
         h+='<button type="button" onclick="pickOwArrScanCard('+i+')" class="block w-full text-left rounded-xl border border-surface-200 bg-white p-3 shadow-sm">';
         h+='<div class="grid grid-cols-2 gap-y-2 text-xs">';
-        h+='<div><div class="text-text-secondary">'+tr('配舱单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.no)+'</div></div>';
+        /* 运输方式做成角标：空运的才有「按袋」扫描方式，挑单时要一眼能分出来 */
+        h+='<div class="col-span-2 flex items-center justify-between gap-2"><div class="min-w-0"><div class="text-text-secondary">'+tr('配舱单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.no)+'</div></div>'+
+            '<span class="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium '+(owArrScanIsAir(item)?'bg-sky-100 text-sky-700':'bg-surface-100 text-text-secondary')+'">'+tr(item.transport||'')+'</span></div>';
         h+='<div><div class="text-text-secondary">'+tr('提单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.bl)+'</div></div>';
         h+='<div><div class="text-text-secondary">'+tr('目的仓库')+'</div><div class="font-medium text-text-primary mt-0.5">'+tr(item.wh)+'</div></div>';
-        h+='<div><div class="text-text-secondary">'+tr('应到件数')+'</div><div class="font-medium text-primary-700 mt-0.5">'+total+'</div></div>';
+        h+='<div><div class="text-text-secondary">'+tr('应到件数')+'</div><div class="font-medium text-primary-700 mt-0.5">'+total+(bags.length?('（'+bags.length+tr('袋')+'）'):'')+'</div></div>';
         h+='</div></button>';
     });
-    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('提示：选择国内做好的配舱单，按件扫描到货入库。')+'</div>';
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('提示：选择国内做好的配舱单扫描到货入库；空运的单可以切换按袋扫描。')+'</div>';
     h+='</div>';
     setTimeout(function(){var el=document.getElementById('ow-arr-order');if(el)el.focus();},50);
     return h;
@@ -1617,6 +1667,8 @@ function pickOwArrScanCard(i){
     _owArrScanCurrent=i;
     _owArrScanScanned={};
     _owArrScanTab='pending';
+    /* 空运默认按袋（现场就是整袋卸下来点数的），其余只能按件 */
+    _owArrScanMode=owArrScanIsAir(_owArrScanList[i])?'bag':'piece';
     _owArrScanView='operate';
     refreshWarehousePdaPrototype();
 }
@@ -1645,6 +1697,25 @@ function applyOwArrScanPiece(){
     else showToast(tr('入库成功')+'：'+val);
     refreshWarehousePdaPrototype();
 }
+/* 按袋扫：扫一个袋号，整袋里的件一起入库 */
+function applyOwArrScanBag(){
+    var input=document.getElementById('ow-arr-bag');
+    if(!input)return;
+    var val=(input.value||'').trim();
+    if(!val)return;
+    var item=_owArrScanList[_owArrScanCurrent];
+    var bags=owArrScanBags(item);
+    var target=bags.find(function(b){return b.bag===val;});
+    var reset=function(){input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();};
+    if(!target){showToast(tr('该袋号不在本配舱单内'));reset();return;}
+    if(owArrScanBagDone(target)){showToast(tr('该袋已扫描'));reset();return;}
+    target.subs.forEach(function(s){_owArrScanScanned[s]=true;});
+    _owArrScanTab='scanned';
+    var remaining=bags.filter(function(b){return !owArrScanBagDone(b);});
+    if(remaining.length===0)showToast(tr('已全部到货，可点击一键到货完成'));
+    else showToast(tr('入库成功')+'：'+val+'（'+target.pcs+tr('件')+'）');
+    refreshWarehousePdaPrototype();
+}
 function finishOwArrScan(){
     var item=_owArrScanList[_owArrScanCurrent];
     if(!item)return;
@@ -1654,19 +1725,51 @@ function finishOwArrScan(){
 }
 function generateOwArrivalScanOperate(){
     var item=_owArrScanList[_owArrScanCurrent];
-    var pending=item.pieces.filter(function(p){return !_owArrScanScanned[p.sub];});
-    var scanned=item.pieces.filter(function(p){return _owArrScanScanned[p.sub];});
+    var isAir=owArrScanIsAir(item);
+    var mode=owArrScanModeOf(item);
+    var bags=owArrScanBags(item);
+    /* 待/已 两个列表按当前扫描方式取：按件看件，按袋看袋 */
+    var pending,scanned;
+    if(mode==='bag'){
+        pending=bags.filter(function(b){return !owArrScanBagDone(b);});
+        scanned=bags.filter(function(b){return owArrScanBagDone(b);});
+    }else{
+        pending=item.pieces.filter(function(p){return !_owArrScanScanned[p.sub];});
+        scanned=item.pieces.filter(function(p){return _owArrScanScanned[p.sub];});
+    }
     var active=_owArrScanTab==='scanned'?scanned:pending;
     var tabBtn=function(key,label,n){
         var on=_owArrScanTab===key;
         return '<button type="button" onclick="switchOwArrScanTab(\''+key+'\')" class="h-10 rounded-lg text-sm font-medium '+(on?'bg-primary-600 text-white':'bg-white text-text-secondary border border-surface-200')+'">'+tr(label)+'（'+n+'）</button>';
     };
+    var modeBtn=function(key,label){
+        var on=mode===key;
+        return '<button type="button" onclick="switchOwArrScanMode(\''+key+'\')" class="h-9 rounded-lg text-xs font-medium '+(on?'bg-primary-600 text-white':'bg-white text-text-secondary border border-surface-200')+'">'+tr(label)+'</button>';
+    };
     var h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
-    h+='<section class="rounded-xl border border-primary-100 bg-primary-50 p-3"><div class="text-sm font-semibold text-primary-700 mb-2">'+tr('配舱单信息')+'</div><div class="grid grid-cols-2 gap-2 text-xs text-primary-700"><div class="break-all">'+tr('配舱单号')+'：'+esc(item.no)+'</div><div class="break-all">'+tr('提单号')+'：'+esc(item.bl)+'</div><div class="break-all">'+tr('目的仓库')+'：'+tr(item.wh)+'</div><div class="break-all">'+tr('应到件数')+'：'+item.pieces.length+'</div></div></section>';
-    h+=pdaScanInput('ow-arr-piece','请扫描子单号','applyOwArrScanPiece',pending[0]?pending[0].sub:'');
+    h+='<section class="rounded-xl border border-primary-100 bg-primary-50 p-3"><div class="text-sm font-semibold text-primary-700 mb-2">'+tr('配舱单信息')+'</div><div class="grid grid-cols-2 gap-2 text-xs text-primary-700"><div class="break-all">'+tr('配舱单号')+'：'+esc(item.no)+'</div><div class="break-all">'+tr('提单号')+'：'+esc(item.bl)+'</div><div class="break-all">'+tr('目的仓库')+'：'+tr(item.wh)+'</div><div class="break-all">'+tr('运输方式')+'：'+tr(item.transport||'')+'</div><div class="break-all">'+tr('应到件数')+'：'+item.pieces.length+'</div>'+
+        (isAir?('<div class="break-all">'+tr('应到袋数')+'：'+bags.length+'</div>'):'')+'</div></section>';
+    /* 扫描方式只有空运才给切 —— 海运没有装袋这一步，给了也没得选 */
+    if(isAir){
+        h+='<section><div class="text-xs text-text-secondary mb-1.5">'+tr('扫描方式')+'</div><div class="grid grid-cols-2 gap-2">'+modeBtn('piece','按件')+modeBtn('bag','按袋')+'</div></section>';
+    }
+    if(mode==='bag'){
+        h+=pdaScanInput('ow-arr-bag','请扫描袋号','applyOwArrScanBag',pending[0]?pending[0].bag:'');
+    }else{
+        h+=pdaScanInput('ow-arr-piece','请扫描子单号','applyOwArrScanPiece',pending[0]?pending[0].sub:'');
+    }
     h+='<div class="grid grid-cols-2 gap-2">'+tabBtn('pending','待到货',pending.length)+tabBtn('scanned','已到货',scanned.length)+'</div>';
     if(active.length===0){
-        h+='<div class="rounded-xl border border-surface-200 bg-white py-8 text-center text-xs text-text-muted">'+tr(_owArrScanTab==='scanned'?'暂无已到货件':'已全部扫描完毕')+'</div>';
+        var emptyTip=_owArrScanTab==='scanned'?(mode==='bag'?'暂无已到货袋':'暂无已到货件'):'已全部扫描完毕';
+        h+='<div class="rounded-xl border border-surface-200 bg-white py-8 text-center text-xs text-text-muted">'+tr(emptyTip)+'</div>';
+    }else if(mode==='bag'){
+        active.forEach(function(b){
+            h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="grid grid-cols-2 gap-y-1 text-xs">';
+            h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('袋号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(b.bag)+'</div></div>';
+            h+='<div><div class="text-text-secondary">'+tr('件数')+'</div><div class="font-medium text-primary-700 mt-0.5">'+b.pcs+'</div></div>';
+            h+='<div><div class="text-text-secondary">'+tr('货物类型')+'</div><div class="font-medium text-text-primary mt-0.5">'+tr(b.cargoType)+'</div></div>';
+            h+='</div></div>';
+        });
     }else{
         active.forEach(function(p){
             h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="grid grid-cols-2 gap-y-1 text-xs">';
@@ -1679,7 +1782,8 @@ function generateOwArrivalScanOperate(){
     }
     h+='</div>';
     h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><button type="button" onclick="finishOwArrScan()" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('一键到货完成')+'</button></div>';
-    setTimeout(function(){var el=document.getElementById('ow-arr-piece');if(el)el.focus();},50);
+    var focusId=mode==='bag'?'ow-arr-bag':'ow-arr-piece';
+    setTimeout(function(){var el=document.getElementById(focusId);if(el)el.focus();},50);
     return h;
 }
 

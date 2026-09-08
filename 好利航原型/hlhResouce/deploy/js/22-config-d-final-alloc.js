@@ -86,6 +86,15 @@ var _FA_QUERY_FIELDS=[
 
 function _finalAllocClone(arr){return JSON.parse(JSON.stringify(arr));}
 
+/* 配舱计划这一组弹窗的底栏。统一走全站的按钮规范：
+ * 取消在左、主操作在右，主操作用 primary 实心（原来是橙色实心且主操作在左，
+ * 和其它所有弹窗都反着）。#crud-modal-footer 本身是 flex justify-end gap-3，
+ * 所以按钮上不用再加 mr-2。 */
+function finalAllocFooterHtml(confirmOnclick,confirmLabel,closeLabel){
+    return '<button type="button" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" onclick="closeCrudModal()">'+tr(closeLabel||'关闭')+'</button>'+
+        '<button type="button" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer" onclick="'+confirmOnclick+'">'+tr(confirmLabel||'确认')+'</button>';
+}
+
 /* 空运走「分拣装袋」那条线，货是按袋交给航司的，配舱自然也按袋配；
  * 海运/卡航/快递还是按运单配。列名由左侧查询区的「运输方式」决定 ——
  * 那是筛未选货源用的，筛出来是袋还是运单，两个面板表就照着叫。
@@ -166,10 +175,12 @@ function _finalAllocPanelTable(side){
                      :[unit,'件数','出货重量','出货体积'];
     const colspan=cols.length+2;
     let h='<div class="border border-surface-200 rounded-lg overflow-hidden bg-white"><div class="overflow-auto" style="max-height:520px"><table class="w-full text-xs" style="border-collapse:separate;border-spacing:0">';
-    h+='<thead class="bg-[#EFF6FF] sticky top-0 z-10"><tr>';
-    h+='<th class="px-2 py-2 text-left font-semibold text-text-secondary" style="width:36px">#</th>';
-    h+='<th class="px-2 py-2 text-left font-semibold text-text-secondary" style="width:32px"><input type="checkbox" onchange="finalAllocToggleAll(\''+side+'\',this.checked)"></th>';
-    cols.forEach(function(c){h+='<th class="px-2 py-2 text-left font-semibold text-text-secondary whitespace-nowrap">'+c+'</th>';});
+    /* 表头统一走全站的 bg-surface-50 + text-text-secondary，不再用写死的 #EFF6FF */
+    const thCls='px-2 py-2 text-left font-semibold text-text-secondary border-b border-surface-200';
+    h+='<thead class="bg-surface-50 text-text-secondary sticky top-0 z-10"><tr>';
+    h+='<th class="'+thCls+'" style="width:36px">#</th>';
+    h+='<th class="'+thCls+'" style="width:32px"><input type="checkbox" class="rounded border-surface-300 text-primary-600" onchange="finalAllocToggleAll(\''+side+'\',this.checked)"></th>';
+    cols.forEach(function(c){h+='<th class="'+thCls+' whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';
     if(!rows.length){
         h+='<tr><td colspan="'+colspan+'" class="px-3 py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
@@ -179,7 +190,7 @@ function _finalAllocPanelTable(side){
         const expanded=!isAir&&!!_finalAllocState.expanded[expKey];
         const arrow=expanded?'▾':'▸';
         h+='<tr class="hover:bg-primary-50/30 border-b border-surface-100"><td class="px-2 py-2 text-text-muted">'+(i+1)+'</td>';
-        h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-check final-alloc-check-parent" data-side="'+side+'" data-idx="'+i+'" onchange="finalAllocSyncSub(this)"></td>';
+        h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-check final-alloc-check-parent rounded border-surface-300 text-primary-600" data-side="'+side+'" data-idx="'+i+'" onchange="finalAllocSyncSub(this)"></td>';
         /* 空运一行就是一袋，没有下钻的子行，展开箭头也就不给了 */
         h+='<td class="px-2 py-2 font-medium text-primary-700 whitespace-nowrap">'+
             (isAir?'':'<span class="cursor-pointer mr-1 text-text-muted" onclick="finalAllocToggleRow(\''+side+'\','+i+')">'+arrow+'</span>')+esc(r.no)+'</td>';
@@ -198,7 +209,7 @@ function _finalAllocPanelTable(side){
         if(!isAir&&expanded&&r.sub){
             r.sub.forEach(function(s,si){
                 h+='<tr class="bg-surface-50/60 border-b border-surface-100"><td class="px-2 py-2 text-text-muted">'+(i+1)+'.'+(si+1)+'</td>';
-                h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-sub-check" data-side="'+side+'" data-pidx="'+i+'" data-sidx="'+si+'" onchange="finalAllocSyncParent(this)"></td>';
+                h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-sub-check rounded border-surface-300 text-primary-600" data-side="'+side+'" data-pidx="'+i+'" data-sidx="'+si+'" onchange="finalAllocSyncParent(this)"></td>';
                 h+='<td class="px-2 py-2 pl-6 text-text-secondary whitespace-nowrap">'+esc(s.no)+'</td>';
                 if(isLeft){
                     h+='<td class="px-2 py-2 text-right">'+s.pcs+'</td>';
@@ -240,7 +251,7 @@ function _finalAllocPanelTable(side){
 
 function _finalAllocLeftPanel(showAdvanced){
     let h='';
-    h+='<div class="text-sm font-semibold text-orange-600 mb-2">'+tr('未选数据')+'</div>';
+    h+='<div class="text-sm font-semibold text-text-primary mb-2">'+tr('未选数据')+'</div>';
     /* 查询行 */
     h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3">';
     /* 这个下拉决定了未选货源是按袋还是按运单来的，所以两个面板表的首列名跟着它走。
@@ -268,11 +279,14 @@ function _finalAllocLeftPanel(showAdvanced){
     h+='</div></div>';
     /* 操作按钮行 */
     h+='<div class="flex flex-wrap gap-2 mb-2">';
-    h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="showToast(tr(\'查询完成\'))">'+tr('查询')+'</button>';
+    /* 按钮层级跟全站一致：主操作用 primary 实心，次要操作用白底描边，不再一排同色实心蓝 */
+    const btnPrimary='h-8 px-3 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg cursor-pointer';
+    const btnGhost='h-8 px-3 text-xs font-medium text-text-secondary bg-white border border-surface-200 hover:bg-surface-50 rounded-lg cursor-pointer';
+    h+='<button class="'+btnPrimary+'" onclick="showToast(tr(\'查询完成\'))">'+tr('查询')+'</button>';
     /* 空运是平铺的袋列表，没有可展开的子行，这两个按钮就不给了 */
     if(!_finalAllocIsAir()){
-        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(true)">'+tr('全部展开')+'</button>';
-        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer" onclick="finalAllocExpandAll(false)">'+tr('全部收起')+'</button>';
+        h+='<button class="'+btnGhost+'" onclick="finalAllocExpandAll(true)">'+tr('全部展开')+'</button>';
+        h+='<button class="'+btnGhost+'" onclick="finalAllocExpandAll(false)">'+tr('全部收起')+'</button>';
     }
     h+='</div>';
     return h;
@@ -280,12 +294,13 @@ function _finalAllocLeftPanel(showAdvanced){
 
 function _finalAllocRightPanel(showHeader){
     let h='';
-    h+='<div class="text-sm font-semibold text-orange-600 mb-2">'+tr('已选数据')+'</div>';
+    h+='<div class="text-sm font-semibold text-text-primary mb-2">'+tr('已选数据')+'</div>';
     if(showHeader){
         const hd=_finalAllocState.header;
         const countries=['塞内加尔','尼日利亚','加纳','科特迪瓦','喀麦隆','多哥'];
         h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3"><div class="grid grid-cols-3 gap-3">';
-        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary"><span class="text-red-500">*</span> '+tr('配舱单号')+'</label><input type="text" value="'+esc(hd.no)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-no"></div>';
+        /* 必填星号跟全站一样放在标签后面 */
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('配舱单号')+' <span class="text-red-500">*</span></label><input type="text" value="'+esc(hd.no)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-no"></div>';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('标签编号')+'</label><input type="text" value="'+esc(hd.label||'')+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-label" placeholder="'+esc(tr('请输入标签编号'))+'"></div>';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('国家')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-country"><option value="">'+tr('请选择')+'</option>';
         countries.forEach(function(o){h+='<option'+(o===hd.country?' selected':'')+'>'+o+'</option>';});
@@ -301,7 +316,8 @@ function _finalAllocRightPanel(showHeader){
 }
 
 function _finalAllocBodyHtml(mode){
-    const arrows='<div class="flex flex-col justify-center gap-3 px-1"><button class="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-base cursor-pointer" onclick="finalAllocMove(\'right\')" title="'+tr('选入')+'">›</button><button class="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-base cursor-pointer" onclick="finalAllocMove(\'left\')" title="'+tr('移除')+'">‹</button></div>';
+    const arrowCls='w-8 h-8 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-base cursor-pointer';
+    const arrows='<div class="flex flex-col justify-center gap-3 px-1"><button class="'+arrowCls+'" onclick="finalAllocMove(\'right\')" title="'+tr('选入')+'">›</button><button class="'+arrowCls+'" onclick="finalAllocMove(\'left\')" title="'+tr('移除')+'">‹</button></div>';
     let h='<div class="flex flex-col gap-3">';
     /* 控件行：左(查询+按钮) 与 右(表头) 顶部对齐（高度可不同） */
     h+='<div class="flex gap-4 items-start">';
@@ -400,8 +416,7 @@ function openFinalAllocAddModal(id){
     if(panel)panel.style.width='92%';
     titleEl.textContent=tr('新增');
     bodyEl.innerHTML=_finalAllocBodyHtml('add');
-    footerEl.innerHTML='<button class="px-4 h-9 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg cursor-pointer mr-2" onclick="finalAllocSubmit(\'add\',\''+id+'\')">'+tr('终配舱登记')+'</button>'+
-        '<button class="px-4 h-9 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" onclick="closeCrudModal()">'+tr('关闭')+'</button>';
+    footerEl.innerHTML=finalAllocFooterHtml('finalAllocSubmit(\'add\',\''+id+'\')','终配舱登记');
     document.getElementById('crud-modal').classList.add('show');
 }
 
@@ -429,8 +444,7 @@ function openFinalAllocAdjustModal(id,rowIdx){
     if(panel)panel.style.width='92%';
     titleEl.textContent=tr('调整');
     bodyEl.innerHTML=_finalAllocBodyHtml('edit');
-    footerEl.innerHTML='<button class="px-4 h-9 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg cursor-pointer mr-2" onclick="finalAllocSubmit(\'edit\',\''+id+'\')">'+tr('确认')+'</button>'+
-        '<button class="px-4 h-9 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" onclick="closeCrudModal()">'+tr('关闭')+'</button>';
+    footerEl.innerHTML=finalAllocFooterHtml('finalAllocSubmit(\'edit\',\''+id+'\')','确认');
     document.getElementById('crud-modal').classList.add('show');
 }
 
@@ -490,15 +504,13 @@ function openFinalAllocBarcodeModal(id){
     if(panel)panel.style.width='62%';
     document.getElementById('crud-modal-title').textContent=tr('配舱条码打印');
     document.getElementById('crud-modal-body').innerHTML=allocBarcodeBodyHtml();
-    document.getElementById('crud-modal-footer').innerHTML=
-        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
-        '<button onclick="printFinalAllocBarcodes()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('打印')+'</button>';
+    document.getElementById('crud-modal-footer').innerHTML=finalAllocFooterHtml('printFinalAllocBarcodes()','打印','取消');
     document.getElementById('crud-modal').classList.add('show');
     setTimeout(renderFinalAllocBarcodes,0);
 }
 function allocBarcodeBodyHtml(){
     var rows=_allocBarcodeCtx.rows||[];
-    var inCls='h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 w-full';
+    var inCls='h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 w-full';
     var h='<div class="space-y-4">';
     h+='<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 text-sm text-text-secondary">'+
        tr('已勾选')+'：<span class="font-medium text-text-primary">'+rows.length+'</span> '+tr('个配舱单')+
@@ -565,15 +577,17 @@ function openFinalAllocLinkBLModal(id){
     titleEl.textContent=tr('关联提单');
     let h='<div class="space-y-4">';
     h+='<div class="bg-primary-50 border border-primary-100 rounded-lg p-3 text-xs text-primary-700">'+tr('为选中的终配舱单关联提单号；若未选中则按输入新增关联。')+'</div>';
-    h+='<div class="grid grid-cols-2 gap-4">';
-    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('配舱单号')+'</label><input type="text" value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
-    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary"><span class="text-red-500">*</span> '+tr('提单号')+'</label><input type="text" value="'+esc(row[2]||'TD-20260626-001')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
-    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('柜号')+'</label><input type="text" value="'+esc(row[3]||'GH-20260626-001')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
-    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('运输方式')+'</label><select class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"><option>海运</option><option>空运</option><option>卡航</option></select></div>';
+    /* 控件走全站规范：h-10 + bg-surface-50，标签用 text-sm font-medium text-text-secondary */
+    const fldCls='h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    const lblCls='text-sm font-medium text-text-secondary';
+    h+='<div class="grid grid-cols-2 gap-x-5 gap-y-4">';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('配舱单号')+'</label><input type="text" value="'+esc(row[0]||'')+'" class="'+fldCls+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('提单号')+' <span class="text-red-500">*</span></label><input type="text" value="'+esc(row[2]||'TD-20260626-001')+'" class="'+fldCls+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('柜号')+'</label><input type="text" value="'+esc(row[3]||'GH-20260626-001')+'" class="'+fldCls+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('运输方式')+'</label><select class="'+fldCls+'">'+['海运','空运','卡航','快递'].map(function(o){return '<option>'+esc(o)+'</option>';}).join('')+'</select></div>';
     h+='</div></div>';
     bodyEl.innerHTML=h;
-    footerEl.innerHTML='<button class="px-4 h-9 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg cursor-pointer mr-2" onclick="closeCrudModal();showToast(tr(\'已关联提单\'))">'+tr('确认')+'</button>'+
-        '<button class="px-4 h-9 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" onclick="closeCrudModal()">'+tr('关闭')+'</button>';
+    footerEl.innerHTML=finalAllocFooterHtml('closeCrudModal();showToast(tr(\'已关联提单\'))','确认');
     document.getElementById('crud-modal').classList.add('show');
 }
 
@@ -588,13 +602,15 @@ function openFinalAllocRenameModal(id){
     if(panel)panel.style.width='48%';
     titleEl.textContent=tr('修改配舱单号');
     let h='<div class="space-y-4">';
-    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('原配舱单号')+'</label><input type="text" readonly value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-muted"></div>';
-    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary"><span class="text-red-500">*</span> '+tr('新配舱单号')+'</label><input type="text" id="final-alloc-new-no" value="'+esc(row[0]||'')+'" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white"></div>';
-    h+='<div class="flex flex-col gap-1"><label class="text-sm text-text-secondary">'+tr('备注')+'</label><textarea class="h-20 px-3 py-2 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+tr('请输入修改原因')+'"></textarea></div>';
+    /* 同上：控件高度、底色、标签字重都对齐全站；备注按规范用 rows=3 的 textarea */
+    const fldCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    const lblCls='text-sm font-medium text-text-secondary';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('原配舱单号')+'</label><input type="text" readonly value="'+esc(row[0]||'')+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-muted cursor-not-allowed"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('新配舱单号')+' <span class="text-red-500">*</span></label><input type="text" id="final-alloc-new-no" value="'+esc(row[0]||'')+'" class="'+fldCls+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入修改原因'))+'"></textarea></div>';
     h+='</div>';
     bodyEl.innerHTML=h;
-    footerEl.innerHTML='<button class="px-4 h-9 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg cursor-pointer mr-2" onclick="closeCrudModal();showToast(tr(\'配舱单号已修改\'))">'+tr('确认')+'</button>'+
-        '<button class="px-4 h-9 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" onclick="closeCrudModal()">'+tr('关闭')+'</button>';
+    footerEl.innerHTML=finalAllocFooterHtml('closeCrudModal();showToast(tr(\'配舱单号已修改\'))','确认');
     document.getElementById('crud-modal').classList.add('show');
 }
 

@@ -75,6 +75,10 @@
         .list-toolbar .toolbar-action{height:32px;padding:0 10px;font-size:12px}
         .list-config-menu{position:absolute;z-index:30;margin-top:4px;max-height:240px;overflow-y:auto;border-radius:8px;border:1px solid #E3E8EF;background:#fff;box-shadow:0 12px 28px rgba(15,23,42,.12);padding:10px}
         .modal-remark-half{width:50%;max-width:100%;min-width:320px}
+        /* 备注默认占半行（.modal-remark-half 由引擎按表头自动挂）。
+         * 少数窄弹窗要它铺满整行时，用 modalFieldClass 再挂一个 .modal-remark-full 覆盖 ——
+         * 带 #crud-modal-body 前缀是为了在特异性上压过 Tailwind 的 md:col-span-2 和上面那条 half。 */
+        #crud-modal-body .modal-remark-full{grid-column:1/-1;width:100%;min-width:0}
         .col-resizer{position:absolute;right:0;top:0;bottom:0;width:6px;cursor:col-resize;background:#E3E8EF;z-index:2;transition:background .15s,width .15s}
         .col-resizer:hover{background:#1F6FA8;width:3px}
         .col-resizer.active{background:#1F6FA8;width:4px}

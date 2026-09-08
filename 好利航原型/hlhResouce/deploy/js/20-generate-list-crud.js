@@ -470,7 +470,10 @@ function openCrudModal(mode,id,rowIdx){
         openRateModal(mode,id,rowIdx,rowData);
         return;
     }
-    const colClass=modalGridFullClass(modalFields,'modal');
+    /* 弹窗列数：默认按字段的「胖瘦」自动挑 4 或 5 列。
+     * 字段少的表按默认排会摊得很散（6 个字段撑 5 列 = 第二行只剩 1 个），
+     * 这种页用 TC[id].modalCols=3 固定列数更好看。 */
+    const colClass=modalGridFullClass(modalFields,(c&&c.modalCols)||'modal');
     if(mode==='view'){
         const buckets=crudNewSectionBuckets(c);
         modalFields.forEach(function(field){

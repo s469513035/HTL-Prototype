@@ -968,6 +968,14 @@ function renderToolbarAction(action,id){
     else if(action.key==='importAgentBill')click='openAgentBillImportModal(\''+id+'\')';
     else if(action.key==='allocAgentCost')click='openAgentCostAlloc(\''+id+'\')';
     else if(action.key==='reconcileCost')click='openAgentCostReconcile(\''+id+'\')';
+    else if(action.key==='importBillHead')click='openBillHeadImport(\''+id+'\')';
+    else if(action.key==='allocAgentBill')click='openAgentBillAlloc(\''+id+'\')';
+    else if(action.key==='voidAgentBill')click='voidAgentBillRows(\''+id+'\')';
+    else if(action.key==='costDiffDetail')click='openCostDiffDetail(\''+id+'\')';
+    else if(action.key==='allocToShipment')click='openShipmentAlloc(\''+id+'\')';
+    else if(action.key==='applyPayment')click='openPaymentApply(\''+id+'\')';
+    else if(action.key==='apBillAudit')click='openApBillAudit(\''+id+'\')';
+    else if(action.key==='apBillDetail')click='openApBillDetail(\''+id+'\')';
     else if(action.key==='payApBill')click='openApBillPay(\''+id+'\')';
     else if(action.key==='confirmArFee')click='openArFeeConfirm(\''+id+'\')';
     else if(action.key==='writeOffReceipt')click='openArReceiptWriteOff(\''+id+'\')';
@@ -1556,8 +1564,19 @@ function getToolbarActions(id){
         if(id==='fcl-est-cost'){
             for(var ei=base.length-1;ei>=0;ei--)if(base[ei].type==='edit'||base[ei].type==='view')base.splice(ei,1);
         }
-        if(id==='fcl-agent-cost')base.push({key:'importAgentBill',label:'代账账单导入'},{key:'allocAgentCost',label:'手工分摊'},{key:'reconcileCost',label:'对账'});
-        if(id==='fcl-ap-bill')base.push({key:'payApBill',label:'付款登记'});
+        /* 代理账单：导入 → 一级分摊（票数/件数/体积/重量/预估比例）→ 作废 */
+        if(id==='fcl-agent-bill')base.push({key:'importBillHead',label:'账单导入'},{key:'allocAgentBill',label:'费用分摊',variant:'primary'},{key:'voidAgentBill',label:'作废账单',variant:'danger'});
+        if(id==='fcl-agent-cost')base.push({key:'importAgentBill',label:'代账账单导入'},{key:'allocAgentCost',label:'手工分摊'},{key:'reconcileCost',label:'对账'},
+            {key:'costDiffDetail',label:'差异分析'},{key:'allocToShipment',label:'分摊到票'},{key:'applyPayment',label:'付款申请',variant:'primary'});
+        /* 单票成本明细全部由二级分摊生成，页面上不给新增/编辑 */
+        if(id==='fcl-shipment-cost'){
+            for(var si=base.length-1;si>=0;si--)if(base[si].type==='add'||base[si].type==='edit')base.splice(si,1);
+        }
+        if(id==='fcl-ap-bill'){
+            /* 应付账单由付款申请生成，不再手工新增 */
+            for(var ai=base.length-1;ai>=0;ai--)if(base[ai].type==='add')base.splice(ai,1);
+            base.push({key:'apBillAudit',label:'审批'},{key:'apBillDetail',label:'查看明细'},{key:'payApBill',label:'付款登记'});
+        }
         if(id==='fcl-ar-fee')base.push({key:'confirmArFee',label:'费用确认'});
         if(id==='fcl-ar-receipt')base.push({key:'writeOffReceipt',label:'核销'});
         base.push({key:'export',label:'导出数据'});
@@ -1698,7 +1717,9 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt'];
+var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt',
+/* 单票成本明细全部由「分摊到票」生成，手工编辑会让它和来源成本行对不上 */
+'fcl-shipment-cost'];
 var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl','biz-track-cfg','wh-stock-check','approval-mine','approval-msg','cs-issue-track','cs-issue-type','wb-op-instruction','crm-cust','wb-manage'];
 function listRowCanEdit(id){return _rowNoEditIds.indexOf(id)<0;}
 /* _rowNoDeleteIds / listRowCanDelete：自 2026-09 全局取消通用删除后已无调用点，

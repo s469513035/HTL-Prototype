@@ -38,7 +38,9 @@ const menuData=[
 {id:'fcl-intake',label:'接单与订舱',children:[
     {id:'fcl-inquiry-order',label:'业务询盘单',page:'fcl',tab:'fcl-inquiry-order'},
     {id:'fcl-sales-instruction',label:'委托订单管理',page:'fcl',tab:'fcl-sales-instruction'},
-    {id:'fcl-booking',label:'Job/主单管理',page:'fcl',tab:'fcl-booking'}
+    {id:'fcl-booking',label:'Job/主单管理',page:'fcl',tab:'fcl-booking'},
+    /* 柜内装了谁的货、多少件/体积/重量 —— 成本二级分摊的取数来源 */
+    {id:'fcl-job-cargo',label:'柜内票清单',page:'fcl',tab:'fcl-job-cargo'}
 ]},
 // ===== ④ 操作执行 =====
 // 拖车/装柜/补料/拆并单/报关/开船轨迹/寄单 7 个页面已撤，
@@ -122,10 +124,14 @@ const menuData=[
 ]},
 /* 整柜的应付/请款/付款/应收放单/银行流水/提成，唯一入口在这里
  * （原「整柜业务 → 财务与结算」已撤掉，不再两处重复）。 */
-/* 整柜财务重新设计为 5 张表：成本侧 预估→实际→应付账单，收入侧 应收明细→收款 */
+/* 整柜财务按成本流转顺序排：
+ * 成本侧 预估 → 代理账单(导入/一级分摊) → 代理实际成本(对账) → 单票成本明细(二级分摊) → 应付账单
+ * 收入侧 应收明细 → 收款 */
 {id:'fin-fcl',label:'整柜财务',children:[
 {id:'fcl-est-cost',label:'预估成本明细',page:'fcl',tab:'fcl-est-cost'},
+{id:'fcl-agent-bill',label:'代理账单',page:'fcl',tab:'fcl-agent-bill'},
 {id:'fcl-agent-cost',label:'代理实际成本',page:'fcl',tab:'fcl-agent-cost'},
+{id:'fcl-shipment-cost',label:'单票成本明细',page:'fcl',tab:'fcl-shipment-cost'},
 {id:'fcl-ap-bill',label:'应付账单管理',page:'fcl',tab:'fcl-ap-bill'},
 {id:'fcl-ar-fee',label:'应收费用明细',page:'fcl',tab:'fcl-ar-fee'},
 {id:'fcl-ar-receipt',label:'应收收款管理',page:'fcl',tab:'fcl-ar-receipt'}

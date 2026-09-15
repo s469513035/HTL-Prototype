@@ -23,6 +23,9 @@ const fakeEl = new Proxy({}, {
     if (k === 'children' || k === 'childNodes') return [];
     if (Symbol.iterator === k) return undefined;
     if (typeof k === 'string' && /^(innerHTML|textContent|value|id|className)$/.test(k)) return '';
+    /* tagName/nodeName 会被 .toLowerCase() 调用，不能返回 noop 函数 */
+    if (k === 'tagName' || k === 'nodeName') return 'DIV';
+    if (k === 'nodeType') return 1;
     return typeof k === 'string' ? noop : undefined;
   },
   set: () => true
@@ -42,7 +45,13 @@ const sandbox = {
   alert: noop, confirm: () => true, prompt: () => null,
   fetch: () => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }),
   QRCode: function () { return fakeEl; },
-  matchMedia: () => ({ matches: false, addEventListener: noop, addListener: noop })
+  matchMedia: () => ({ matches: false, addEventListener: noop, addListener: noop }),
+  /* 09 的 setupRuntimeEnhancements 会 new 一个 MutationObserver 监听 body；
+   * node vm 里没有 DOM，给个空壳即可（本脚本只校验数据与渲染结果，不校验运行时增强）。 */
+  MutationObserver: function () { return { observe: noop, disconnect: noop, takeRecords: () => [] }; },
+  requestAnimationFrame: cb => setTimeout(cb, 0),
+  cancelAnimationFrame: noop,
+  getComputedStyle: () => ({ getPropertyValue: () => '' })
 };
 sandbox.window = sandbox;
 sandbox.globalThis = sandbox;

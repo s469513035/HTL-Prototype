@@ -789,6 +789,16 @@ if(TC['wb-manage']){
             TC['wb-manage'].d.forEach(function(row){row.splice(opIdx>=0?opIdx:row.length,0,'—');});
         }
     });
+    /* 包装类型：插在「件数」后面，和下单录入、入仓操作录的是同一个字段。
+     * 这里走列插入而不是改上面那行巨长的 TC 定义，是为了不动已有 20 多列的行数据。 */
+    if(!TC['wb-manage'].h.includes('包装类型')){
+        const pcsIdx=TC['wb-manage'].h.indexOf('件数');
+        const at=pcsIdx>=0?pcsIdx+1:Math.max(0,TC['wb-manage'].h.indexOf('操作'));
+        TC['wb-manage'].h.splice(at,0,'包装类型');
+        const packs=['纸箱','木箱','编织袋','托盘','纸箱'];
+        TC['wb-manage'].d.forEach(function(row,idx){row.splice(at,0,packs[idx%packs.length]);});
+        if(TC['wb-manage'].q)TC['wb-manage'].q.push({label:'包装类型',type:'select',field:'packageType',options:PACKAGE_TYPE_OPTIONS});
+    }
 }
 TC['fin-ar-fee']={
     t:'费用入账',

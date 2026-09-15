@@ -216,6 +216,8 @@ function generateShipmentEntryPage(id,options){
         {label:'物流单号',value:''},
         {label:'产品',type:'select',required:true,options:productOptions.length?productOptions:['西非海运专线','西非空运专线'],onchange:'handleShipmentEntryProductChange(this)'},
         {label:'货物类型',type:'select',required:true,options:['普货','敏感货']},
+        /* 包装类型与入仓操作、运单管理共用 PACKAGE_TYPE_OPTIONS（04-table-catalog.js） */
+        {label:'包装类型',type:'select',required:true,options:PACKAGE_TYPE_OPTIONS,value:'纸箱'},
         {label:'国内仓库',type:'select',required:true,options:['深圳盐田仓','广州南沙仓','上海浦东仓','义乌仓']},
         {label:'件数',type:'number',required:true,value:'1'},
         {label:'总体积(CBM)',type:'number',value:''},

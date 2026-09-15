@@ -228,6 +228,8 @@ function generateWarehouseMultiInboundPage(id){
     h+=warehouseField('客户','<input id="warehouse-multi-customer" list="crm-customer-options" readonly onchange="handleWarehouseMultiCustomerChange(this)" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed">',false);
     h+=warehouseField('目的仓库','<select id="warehouse-multi-dest-warehouse" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50"><option value="">'+tr('请选择')+'</option>'+multiDestOptions.map(function(o){return '<option value="'+esc(o)+'">'+esc(tr(o))+'</option>';}).join('')+'</select>',false);
     h+=warehouseField('件数','<input id="warehouse-multi-forecast" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
+    /* 包装类型：一票多件也要录，与一票一件、下单录入共用 PACKAGE_TYPE_OPTIONS */
+    h+=warehouseField('包装类型','<select id="warehouse-multi-package" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50">'+PACKAGE_TYPE_OPTIONS.map(function(o){return '<option value="'+esc(o)+'">'+esc(tr(o))+'</option>';}).join('')+'</select>',true);
     h+=warehouseField('库位库区','<input id="warehouse-multi-zone" value="" placeholder="'+esc(tr('请输入库位库区'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50">',false,'md:col-span-2');
     h+=warehouseField('操作备注',warehouseInlineInput('text','','请输入操作备注','', ''),false,'md:col-span-2');
     h+='</div>';
@@ -427,6 +429,8 @@ function generateWarehouseInboundPage(id){
         {label:'目的仓库',required:true,type:'select',id:'warehouse-inbound-dest',options:['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓','特马海外仓','蒙罗维亚海外仓','科纳克里海外仓','班珠尔海外仓'],value:'达喀尔海外仓'},
         {label:'产品',type:'select',options:inboundProductOptions.length?inboundProductOptions:['西非海运专线','西非空运专线'],onchange:'handleWarehouseProductChange(this)'},
         {label:'货物类型',type:'select',required:true,options:['普货','敏感货'],value:'普货'},
+        /* 包装类型与下单录入、运单管理共用 PACKAGE_TYPE_OPTIONS（04-table-catalog.js） */
+        {label:'包装类型',type:'select',required:true,options:PACKAGE_TYPE_OPTIONS,value:'纸箱'},
         {label:'品名',required:true,value:'',placeholder:'输入品名信息',list:'product-name-options',oninput:'handleWarehouseProductNameInput(this)',onblur:'handleCargoNameCommit(this)'},
         {label:'长(cm)',type:'number',value:''},
         {label:'宽(cm)',type:'number',value:''},

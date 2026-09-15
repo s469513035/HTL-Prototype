@@ -3036,22 +3036,53 @@ applyStandardSheetTable('base-employee','员工管理',
     ]);
 TC['base-employee'].s=['启用','禁用'];
 removeTableColumns('base-employee',['序号','所属大区','特殊说明','性别','出生日期','国籍','民族','邮箱']);
+/* 地理数据四张表补法文 / 葡文名称：核心市场西非五国里塞内加尔、科特迪瓦、喀麦隆、多哥
+ * 讲法语，安哥拉、莫桑比克讲葡语，单证和面单都要按当地语言出，所以这两列是配置项不是装饰。
+ * 种子同步补上西非与葡语国家的真实译名，否则新加的两列全是空的，没法验也没法演示。 */
 applyStandardSheetTable('cfg-country','国家列表',
-    ['序号','国家二字码','国家三字码','国家名称','国家英文名称','是否启用'],
-    [['1','US','USA','美国','United States','是']],
-    [{label:'国家二字码',type:'text',field:'code2'},{label:'国家三字码',type:'text',field:'code3'},{label:'国家名称',type:'text',field:'name'},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}]);
+    ['序号','国家二字码','国家三字码','国家名称','国家英文名称','国家法文名称','国家葡文名称','是否启用'],
+    [['1','US','USA','美国','United States','États-Unis','Estados Unidos','是'],
+     ['2','CN','CHN','中国','China','Chine','China','是'],
+     ['3','SN','SEN','塞内加尔','Senegal','Sénégal','Senegal','是'],
+     ['4','CI','CIV','科特迪瓦','Ivory Coast','Côte d\'Ivoire','Costa do Marfim','是'],
+     ['5','CM','CMR','喀麦隆','Cameroon','Cameroun','Camarões','是'],
+     ['6','TG','TGO','多哥','Togo','Togo','Togo','是'],
+     ['7','NG','NGA','尼日利亚','Nigeria','Nigéria','Nigéria','是'],
+     ['8','GH','GHA','加纳','Ghana','Ghana','Gana','是'],
+     ['9','AO','AGO','安哥拉','Angola','Angola','Angola','是'],
+     ['10','MZ','MOZ','莫桑比克','Mozambique','Mozambique','Moçambique','是']],
+    [{label:'国家二字码',type:'text',field:'code2'},{label:'国家三字码',type:'text',field:'code3'},{label:'国家名称',type:'text',field:'name'},{label:'国家法文名称',type:'text',field:'nameFr'},{label:'国家葡文名称',type:'text',field:'namePt'},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}]);
 applyStandardSheetTable('cfg-province','州/省列表',
-    ['序号','州省编码','州省名称','所属国家','英文名称','邮编前缀','是否启用'],
-    [['1','US-CA','加利福尼亚州','US','California','90000-96199','是']],
-    [{label:'州省编码',type:'text',field:'code'},{label:'州省名称',type:'text',field:'name'},{label:'所属国家',type:'text',field:'country'},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}]);
+    ['序号','州省编码','州省名称','所属国家','英文名称','法文名称','葡文名称','邮编前缀','是否启用'],
+    [['1','US-CA','加利福尼亚州','US','California','Californie','Califórnia','90000-96199','是'],
+     ['2','SN-DK','达喀尔大区','SN','Dakar','Dakar','Dacar','11000-12999','是'],
+     ['3','CI-AB','阿比让自治区','CI','Abidjan','Abidjan','Abidjã','00100-00999','是'],
+     ['4','CM-LT','滨海大区','CM','Littoral','Littoral','Litoral','00237','是'],
+     ['5','TG-MA','滨海区','TG','Maritime','Maritime','Marítima','00228','是'],
+     ['6','NG-LA','拉各斯州','NG','Lagos','Lagos','Lagos','100001-102999','是'],
+     ['7','AO-LU','罗安达省','AO','Luanda','Luanda','Luanda','—','是']],
+    [{label:'州省编码',type:'text',field:'code'},{label:'州省名称',type:'text',field:'name'},{label:'所属国家',type:'text',field:'country'},{label:'法文名称',type:'text',field:'nameFr'},{label:'葡文名称',type:'text',field:'namePt'},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}]);
 applyStandardSheetTable('cfg-city','城市列表',
-    ['序号','城市编码','城市名称','城市名称（英文）','所属国家','所属州省','邮编默认','是否启用'],
-    [['1','US-CA-LAX','洛杉矶','Los Angeles','US','US-CA','90001','是']],
-    [{label:'城市编码',type:'text',field:'code'},{label:'城市名称',type:'text',field:'name'},{label:'所属国家',type:'text',field:'country'},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}]);
+    ['序号','城市编码','城市名称','城市名称（英文）','城市名称（法文）','城市名称（葡文）','所属国家','所属州省','邮编默认','是否启用'],
+    [['1','US-CA-LAX','洛杉矶','Los Angeles','Los Angeles','Los Angeles','US','US-CA','90001','是'],
+     ['2','SN-DK-DKR','达喀尔','Dakar','Dakar','Dacar','SN','SN-DK','11000','是'],
+     ['3','CI-AB-ABJ','阿比让','Abidjan','Abidjan','Abidjã','CI','CI-AB','00225','是'],
+     ['4','CM-LT-DLA','杜阿拉','Douala','Douala','Duala','CM','CM-LT','00237','是'],
+     ['5','TG-MA-LFW','洛美','Lome','Lomé','Lomé','TG','TG-MA','00228','是'],
+     ['6','NG-LA-LOS','拉各斯','Lagos','Lagos','Lagos','NG','NG-LA','100001','是'],
+     ['7','AO-LU-LAD','罗安达','Luanda','Luanda','Luanda','AO','AO-LU','00244','是']],
+    [{label:'城市编码',type:'text',field:'code'},{label:'城市名称',type:'text',field:'name'},{label:'所属国家',type:'text',field:'country'},{label:'城市名称（法文）',type:'text',field:'nameFr'},{label:'城市名称（葡文）',type:'text',field:'namePt'},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}]);
 applyStandardSheetTable('cfg-port','港口机场列表',
-    ['序号','港口机场类型','港口五字码/机场三字码','中文名称','英文名称','所属国家','所属州省','所属城市','是否启用','备注'],
-    [['1','港口','USLAX','洛杉矶港','Port of Los Angeles','US','US-CA','US-CA-LAX','是','美西最大港']],
-    [{label:'港口五字码/机场三字码',type:'text',field:'code'},{label:'中文名称',type:'text',field:'name'},{label:'港口机场类型',type:'select',field:'type',options:['港口','机场']},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}]);
+    ['序号','港口机场类型','港口五字码/机场三字码','中文名称','英文名称','法文名称','葡文名称','所属国家','所属州省','所属城市','是否启用','备注'],
+    [['1','港口','USLAX','洛杉矶港','Port of Los Angeles','Port de Los Angeles','Porto de Los Angeles','US','US-CA','US-CA-LAX','是','美西最大港'],
+     ['2','港口','SNDKR','达喀尔港','Port of Dakar','Port de Dakar','Porto de Dacar','SN','SN-DK','SN-DK-DKR','是','西非枢纽港'],
+     ['3','港口','CIABJ','阿比让港','Port of Abidjan','Port d\'Abidjan','Porto de Abidjã','CI','CI-AB','CI-AB-ABJ','是','—'],
+     ['4','港口','CMDLA','杜阿拉港','Port of Douala','Port de Douala','Porto de Duala','CM','CM-LT','CM-LT-DLA','是','—'],
+     ['5','港口','TGLFW','洛美港','Port of Lome','Port de Lomé','Porto de Lomé','TG','TG-MA','TG-MA-LFW','是','—'],
+     ['6','港口','NGLOS','拉各斯港','Port of Lagos','Port de Lagos','Porto de Lagos','NG','NG-LA','NG-LA-LOS','是','—'],
+     ['7','机场','DKR','达喀尔机场','Dakar Airport','Aéroport de Dakar','Aeroporto de Dacar','SN','SN-DK','SN-DK-DKR','是','—'],
+     ['8','机场','LOS','拉各斯机场','Lagos Airport','Aéroport de Lagos','Aeroporto de Lagos','NG','NG-LA','NG-LA-LOS','是','—']],
+    [{label:'港口五字码/机场三字码',type:'text',field:'code'},{label:'中文名称',type:'text',field:'name'},{label:'港口机场类型',type:'select',field:'type',options:['港口','机场']},{label:'法文名称',type:'text',field:'nameFr'},{label:'葡文名称',type:'text',field:'namePt'},{label:'是否启用',type:'select',field:'enabled',options:['是','否']}]);
 applyStandardSheetTable('cfg-warehouse','仓库列表',
     ['序号','仓库编码','仓库名称','仓库类型','所属国家','所属州省','所属城市','收件人','电话','邮编','地址','英文名称','英文地址','是否启用'],
     [

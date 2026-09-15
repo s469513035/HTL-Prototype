@@ -2,14 +2,17 @@
    多单号标签式查询 + 历史记录 + 轨迹卡片（可展开时间轴）+ 子单轨迹弹窗。
    配色沿用主体蓝白风格：查询按钮/时间轴节点用 primary，状态徽章走全局 statusBadge。 */
 
-var _tqTags=['H2609050001','H2608180006','H2608220003'];
+/* 默认标签里放一个查不到的单号（H2609120009），否则「未查到」这条路没有入口可演示 */
+var _tqTags=['H2609050001','H2608180006','H2608220003','H2609120009'];
 var _tqHistory=['H2608280002','H2608220003','H2608180007','H2609050001'];
 var _tqExpanded={};      /* 主单展开状态 code -> true */
 var _tqSubExpanded={};   /* 子单展开状态 subCode -> true */
 var _tqSubOwner='';      /* 子单轨迹弹窗当前对应的主单号 */
-/* OMS 客户端也用这张页（oms-track-query）。时间轴上的「创建人」是内部操作员姓名，
- * 不该给客户看，进页时按 id 置位，tqTimelineHtml 据此少渲染那一段。 */
-var _tqHideOperator=false;
+/* OMS 客户端也用这张页（oms-track-query）。客户视角下不重复渲染英文轨迹文案。
+ * 「创建人」两端都不再展示，所以不归这个开关管。 */
+var _tqCustomerView=false;
+/* 批量查询结果的节点筛选：'' = 全部；进度节点名；'__nf__' = 未查到 */
+var _tqFilter='';
 
 var TQ_ORDERS={
 /* 海运 · 深圳→达喀尔：已离港在途（进度 2/4，当前节点 pulse 演示） */
@@ -75,17 +78,35 @@ function tqProgressOf(status){
     var map={'草稿':0,'已预报':0,'已确认':0,'已到货':1,'已配舱':1,'已出库':2,'已离港':2,'在途':2,'已到港':3,'海外已到仓':3,'海外已出仓':3,'已签收':4,'已退件':4,'已取消':0};
     return map[status]!==undefined?map[status]:0;
 }
-function tqProgressHtml(status){
+/* 状态色调：按所处阶段/结局分四档，卡片的左侧色条、状态胶囊、进度条、当前动态条都用它，
+ * 这样「当前是什么状态」在一张卡上有四处一致的视觉呼应，扫一眼就能分辨。 */
+function tqStatusTone(status){
+    var s=String(status||'');
+    if(/退件|取消|异常|滞留/.test(s))
+        return {hex:'#DC2626',pill:'bg-danger-50 text-danger-700 border-danger-100',solid:'bg-danger-600',
+                dot:'bg-danger-600',ring:'ring-danger-100',line:'border-danger-400',soft:'bg-danger-50/60 border-danger-100',text:'text-danger-700',live:false};
+    if(tqProgressOf(s)>=4)
+        return {hex:'#1F9D66',pill:'bg-success-50 text-success-700 border-success-100',solid:'bg-success-600',
+                dot:'bg-success-600',ring:'ring-success-100',line:'border-success-400',soft:'bg-success-50/60 border-success-100',text:'text-success-700',live:false};
+    if(tqProgressOf(s)===0)
+        return {hex:'#D97706',pill:'bg-warning-50 text-warning-700 border-warning-100',solid:'bg-warning-600',
+                dot:'bg-warning-600',ring:'ring-warning-100',line:'border-warning-400',soft:'bg-warning-50/60 border-warning-100',text:'text-warning-700',live:true};
+    return {hex:'#1F6FA8',pill:'bg-primary-50 text-primary-700 border-primary-100',solid:'bg-primary-600',
+            dot:'bg-primary-600',ring:'ring-primary-100',line:'border-primary-400',soft:'bg-primary-50/60 border-primary-100',text:'text-primary-700',live:true};
+}
+function tqProgressHtml(status,tone){
+    tone=tone||tqStatusTone(status);
     var cur=tqProgressOf(status);
     var h='<div class="flex items-start select-none">';
     TQ_PROGRESS_STEPS.forEach(function(step,i){
         var done=i<cur,curr=i===cur;
-        h+='<div class="flex flex-col items-center flex-shrink-0 w-12">';
-        if(curr)h+='<span class="w-3.5 h-3.5 rounded-full bg-primary-600 ring-4 ring-primary-100 pulse"></span>';
-        else if(done)h+='<span class="w-2.5 h-2.5 rounded-full bg-primary-500 mt-1"></span>';
-        else h+='<span class="w-2.5 h-2.5 rounded-full border-2 border-surface-300 bg-white mt-1"></span>';
-        h+='<span class="mt-1.5 text-[11px] whitespace-nowrap '+(curr?'font-semibold text-primary-700':(done?'text-text-secondary':'text-text-muted'))+'">'+tr(step)+'</span></div>';
-        if(i<TQ_PROGRESS_STEPS.length-1)h+='<div class="flex-1 h-0 mt-[9px] mx-1 border-t-2 '+(i<cur?'border-primary-400':'border-dashed border-surface-300')+'"></div>';
+        h+='<div class="flex flex-col items-center flex-shrink-0 w-14">';
+        /* 当前节点：更大的点 + 光环 + 呼吸动画，和已完成/未开始拉开差距 */
+        if(curr)h+='<span class="w-4 h-4 rounded-full '+tone.dot+' ring-4 '+tone.ring+(tone.live?' pulse':'')+'"></span>';
+        else if(done)h+='<span class="w-2.5 h-2.5 rounded-full '+tone.solid+' mt-[3px] opacity-70"></span>';
+        else h+='<span class="w-2.5 h-2.5 rounded-full border-2 border-surface-300 bg-white mt-[3px]"></span>';
+        h+='<span class="mt-1.5 whitespace-nowrap '+(curr?('text-xs font-bold '+tone.text):(done?'text-[11px] text-text-secondary':'text-[11px] text-text-muted'))+'">'+tr(step)+'</span></div>';
+        if(i<TQ_PROGRESS_STEPS.length-1)h+='<div class="flex-1 h-0 mt-[9px] mx-1 border-t-2 '+(i<cur?tone.line:'border-dashed border-surface-300')+'"></div>';
     });
     h+='</div>';
     return h;
@@ -172,7 +193,9 @@ function tqCardHtml(code,o,opts){
     var expanded=!!opts.expanded;
     var toggle=opts.onToggle||'';
     var isAir=(o.country==='US'); /* 演示：美国线走空运图标，其余海运 */
-    var h='<div class="rounded-xl border border-surface-200 bg-white overflow-hidden card-hover">';
+    var tone=tqStatusTone(o.status);
+    /* 左侧 4px 状态色条：一列卡片扫下来，当前处在什么阶段先由颜色给出答案 */
+    var h='<div class="rounded-xl border border-surface-200 bg-white overflow-hidden card-hover" style="border-left:4px solid '+tone.hex+'">';
     h+='<div class="px-4 pt-3.5 pb-3 '+(expanded?'bg-surface-50/70':'bg-white hover:bg-surface-50/50')+(toggle?' cursor-pointer':'')+'"'+(toggle?' onclick="'+toggle+'"':'')+'>';
     /* 头部：运输图标 + 单号 + 路线 + 状态 */
     h+='<div class="flex items-center gap-3 flex-wrap">';
@@ -183,17 +206,22 @@ function tqCardHtml(code,o,opts){
        '<span class="text-xs font-medium text-text-primary whitespace-nowrap">'+tr('深圳')+'</span>'+
        '<span class="relative flex-1 max-w-[130px] border-t-2 border-dashed '+(isAir?'border-gold-400':'border-primary-300')+'">'+tqRouteVehicleHtml(isAir)+'</span>'+
        '<span class="text-xs font-medium text-text-primary whitespace-nowrap">'+esc(o.country)+'</span></div>';
-    h+='<div class="flex items-center gap-2.5 ml-auto flex-shrink-0">'+statusBadge(o.status||'已预报');
+    /* 状态胶囊：比原来的小徽章更大更实，在途状态带呼吸圆点 */
+    h+='<div class="flex items-center gap-2.5 ml-auto flex-shrink-0">'+
+       '<span class="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full border text-sm font-bold '+tone.pill+'">'+
+       '<span class="w-2 h-2 rounded-full '+tone.dot+(tone.live?' pulse':'')+'"></span>'+esc(tr(o.status||'已预报'))+'</span>';
     if(opts.showSub){
         h+='<button type="button" onclick="event.stopPropagation();openTqSubModal(\''+esc(code)+'\')" class="h-7 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">'+tr('子单轨迹')+'</button>';
     }
     if(toggle)h+=tqChevronHtml(expanded);
     h+='</div></div>';
     /* 进度条 */
-    h+='<div class="mt-4 pr-1">'+tqProgressHtml(o.status)+'</div>';
-    /* 最新动态摘要条 */
-    h+='<div class="mt-2 flex items-center gap-2 text-xs rounded-lg bg-primary-50/60 border border-primary-100 px-3 py-2">'+
-       '<span class="w-1.5 h-1.5 rounded-full bg-primary-600 flex-shrink-0"></span>'+
+    h+='<div class="mt-4 pr-1">'+tqProgressHtml(o.status,tone)+'</div>';
+    /* 当前节点摘要条：明确标出「当前节点」，颜色跟状态走 */
+    h+='<div class="mt-2 flex items-center gap-2 text-xs rounded-lg border px-3 py-2 '+tone.soft+'">'+
+       '<span class="inline-flex items-center gap-1.5 flex-shrink-0 font-semibold '+tone.text+'">'+
+       '<span class="w-1.5 h-1.5 rounded-full '+tone.dot+'"></span>'+tr('当前节点')+'</span>'+
+       '<span class="text-surface-300 flex-shrink-0">|</span>'+
        '<span class="text-text-primary font-medium truncate">'+esc(tqEventText(last))+'</span>'+
        '<span class="ml-auto text-text-muted whitespace-nowrap flex-shrink-0">'+esc(last.time)+'</span></div>';
     h+='</div>';
@@ -227,16 +255,85 @@ function tqTimelineHtml(events){
             (isCur?'<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary-600 text-white">'+tr('当前节点')+'</span>':'')+
             (abnormal?'<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700">'+tr('异常')+'</span>':'')+
             '</div>';
+        /* 「创建人」是内部操作员姓名，两端都不展示（客户不关心，内部看轨迹也用不上） */
         h+='<div class="mt-1 flex items-center gap-1.5 text-[11px] text-text-muted flex-wrap">'+
             tqPinIconHtml()+'<span>'+esc(e.loc||'-')+'</span>'+
             '<span class="text-surface-300">|</span><span>'+esc(e.time||'')+'</span>'+
-            (_tqHideOperator?'':'<span class="text-surface-300">|</span><span>'+esc(tr('创建人'))+' '+esc(e.by||'-')+'</span>')+
             '</div>';
-        if(!_tqHideOperator&&e.en&&_currentLang==='zh')h+='<div class="mt-0.5 text-[11px] text-primary-600">'+esc(e.en)+'</div>';
+        if(!_tqCustomerView&&e.en&&_currentLang==='zh')h+='<div class="mt-0.5 text-[11px] text-primary-600">'+esc(e.en)+'</div>';
         h+='</div>';
     });
     h+='</div>';
     return h;
+}
+
+/* ---------- 批量查询汇总 ----------
+ * 一次贴几十个单号时，用户要的是先看分布（各节点各有多少、哪些压根没查到），
+ * 再决定点开哪几张卡。所以结果区顶部放一条汇总带，chip 可点击当筛选用。 */
+function tqIsKnown(code){return !!TQ_ORDERS[code];}
+function tqSummarize(codes){
+    var buckets={},notFound=[];
+    TQ_PROGRESS_STEPS.forEach(function(s){buckets[s]=[];});
+    codes.forEach(function(c){
+        if(!tqIsKnown(c)){notFound.push(c);return;}
+        buckets[TQ_PROGRESS_STEPS[tqProgressOf(tqOrderOf(c).status)]].push(c);
+    });
+    return {buckets:buckets,notFound:notFound,found:codes.length-notFound.length,total:codes.length};
+}
+function tqSumChipHtml(label,count,key,tone){
+    var on=_tqFilter===key;
+    var zero=count===0;
+    var cls=on?('border-transparent text-white '+tone.solid)
+        :(zero?'border-surface-200 bg-surface-50 text-text-muted'
+              :'border-surface-200 bg-white text-text-secondary hover:border-primary-300 hover:bg-primary-50 cursor-pointer');
+    var click=zero&&!on?'':' onclick="tqSetFilter(\''+key+'\')"';
+    return '<button type="button"'+click+' class="inline-flex items-center gap-1.5 h-7 px-3 rounded-full border text-xs whitespace-nowrap transition-colors '+cls+'">'+
+        (key==='__nf__'||zero?'':'<span class="w-1.5 h-1.5 rounded-full '+(on?'bg-white':tone.dot)+'"></span>')+
+        esc(tr(label))+'<span class="font-bold'+(on?'':(zero?'':' '+tone.text))+'">'+count+'</span></button>';
+}
+function tqSummaryHtml(codes){
+    if(codes.length<2)return '';   /* 单个单号不需要汇总 */
+    var s=tqSummarize(codes);
+    var neutral={solid:'bg-primary-600',dot:'bg-primary-600',text:'text-primary-700'};
+    var h='<div class="bg-white rounded-xl border border-surface-200 px-4 py-3 shadow-sm mb-3">';
+    h+='<div class="flex items-center gap-2 flex-wrap">';
+    h+='<span class="text-xs text-text-muted flex-shrink-0 mr-1">'+tr('本次查询')+' <span class="font-bold text-text-primary">'+s.total+'</span> '+tr('个单号')+'</span>';
+    h+=tqSumChipHtml('全部',s.total,'',neutral);
+    h+='<span class="w-px h-4 bg-surface-200 mx-1 flex-shrink-0"></span>';
+    TQ_PROGRESS_STEPS.forEach(function(step){
+        /* 节点色调按该节点所代表的阶段取，和卡片上的颜色对得上 */
+        h+=tqSumChipHtml(step,s.buckets[step].length,step,tqStatusTone(step==='已签收'?'已签收':(step==='已下单'?'已预报':'已离港')));
+    });
+    if(s.notFound.length){
+        h+='<span class="w-px h-4 bg-surface-200 mx-1 flex-shrink-0"></span>';
+        h+=tqSumChipHtml('未查到',s.notFound.length,'__nf__',tqStatusTone('已退件'));
+    }
+    h+='</div>';
+    /* 查不到的单号直接列出来，省得用户自己在卡片里找 */
+    if(s.notFound.length){
+        h+='<div class="mt-2.5 pt-2.5 border-t border-surface-100 flex items-start gap-2 text-xs">'+
+           '<span class="inline-flex items-center gap-1 text-danger-600 flex-shrink-0 font-medium">'+
+           '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>'+
+           tr('未查到')+'：</span>'+
+           '<span class="text-text-secondary font-mono break-all">'+esc(s.notFound.join('、'))+'</span></div>';
+    }
+    h+='</div>';
+    return h;
+}
+function tqSetFilter(key){
+    _tqFilter=(_tqFilter===key)?'':key;
+    tqRenderResults();
+}
+/* 查不到的单号单独一张「空卡」——原来会兜底渲染成一张「已预报」的正常卡片，
+ * 看上去像查到了，误导性比没结果还强。 */
+function tqNotFoundCardHtml(code){
+    return '<div class="rounded-xl border border-dashed border-surface-300 bg-surface-50/60 px-4 py-3.5 flex items-center gap-3">'+
+        '<span class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-surface-100 text-text-muted">'+
+        '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M9.17 14.83l5.66-5.66M14.83 14.83L9.17 9.17M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>'+
+        '<div class="min-w-0"><div class="text-sm font-semibold text-text-secondary font-mono">'+esc(code)+'</div>'+
+        '<div class="text-[11px] text-text-muted mt-0.5">'+tr('未查到该单号的轨迹，请核对单号是否正确')+'</div></div>'+
+        '<span class="ml-auto inline-flex items-center h-7 px-3 rounded-full border border-surface-200 bg-white text-xs text-text-muted flex-shrink-0">'+tr('未查到')+'</span>'+
+        '</div>';
 }
 
 /* ---------- 结果区 ---------- */
@@ -244,15 +341,31 @@ function tqResultsHtml(){
     if(!_tqTags.length){
         return tqEmptyStateHtml();
     }
-    return '<div class="space-y-3">'+_tqTags.slice().sort().map(function(code){
+    var codes=_tqTags.slice().sort();
+    var shown=codes.filter(function(c){
+        if(_tqFilter==='')return true;
+        if(_tqFilter==='__nf__')return !tqIsKnown(c);
+        if(!tqIsKnown(c))return false;
+        return TQ_PROGRESS_STEPS[tqProgressOf(tqOrderOf(c).status)]===_tqFilter;
+    });
+    var h=tqSummaryHtml(codes);
+    if(!shown.length){
+        h+='<div class="py-12 text-center text-sm text-text-muted rounded-xl border border-dashed border-surface-300 bg-white">'+
+           tr('该节点下没有单号')+'</div>';
+        return h;
+    }
+    h+='<div class="space-y-3">'+shown.map(function(code){
+        if(!tqIsKnown(code))return tqNotFoundCardHtml(code);
         var o=tqOrderOf(code);
         return tqCardHtml(code,o,{expanded:_tqExpanded[code]!==false,showSub:true,onToggle:'tqToggle(\''+code+'\')'});
     }).join('')+'</div>';
+    return h;
 }
 
 function generateTrackQueryPage(id){
     _tqExpanded={};
-    _tqHideOperator=String(id||'').indexOf('oms-')===0;
+    _tqFilter='';
+    _tqCustomerView=String(id||'').indexOf('oms-')===0;
     let h='<div class="h-full overflow-auto bg-surface-50">';
     h+='<div class="max-w-[1600px] mx-auto px-6 py-5">';
     h+='<div class="mb-5">'+tqSearchBarHtml()+'</div>';
@@ -305,7 +418,7 @@ function tqRemoveTag(i){
 }
 
 function tqClearTags(){
-    _tqTags=[];_tqExpanded={};
+    _tqTags=[];_tqExpanded={};_tqFilter='';
     var inp=document.getElementById('tq-input'); if(inp)inp.value='';
     tqRenderTags(); tqRenderResults();
 }
@@ -318,8 +431,13 @@ function tqRunQuery(){
         tqRenderTags(); tqRenderHistory();
     }
     if(!_tqTags.length){ showToast(tr('请先输入运单号')); return; }
+    _tqFilter='';
     tqRenderResults();
-    showToast(tr('已查询')+' '+_tqTags.length+' '+tr('个单号'));
+    /* 提示里直接报未查到的条数，不用等用户自己翻 */
+    var s=tqSummarize(_tqTags);
+    var msg=tr('已查询')+' '+s.total+' '+tr('个单号');
+    if(s.notFound.length)msg+='，'+tr('其中')+' '+s.notFound.length+' '+tr('个未查到');
+    showToast(msg);
 }
 
 function tqUseHistory(code){

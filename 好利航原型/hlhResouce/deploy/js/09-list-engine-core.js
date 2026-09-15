@@ -1272,7 +1272,7 @@ function getToolbarActions(id){
             {key:'search',label:'查询',variant:'primary'},
             {type:'add',label:'新增',variant:'primary'},
             {key:'finalAllocAdjust',label:'调整',variant:'primary'},
-            {key:'finalAllocLinkBL',label:'关联提单'},
+            {key:'finalAllocLinkBL',label:'关联主单'},
             {key:'allocBarcode',label:'配舱条码打印'},
             {key:'finalAllocDelete',label:'删除',variant:'danger'},
             {key:'export',label:'导出'}

@@ -482,7 +482,7 @@ function _finalAllocRightPanel(showHeader){
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('运输方式')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-transport">';
         ['海运','空运','卡航','快递'].forEach(function(o){h+='<option'+(o===hd.transport?' selected':'')+'>'+o+'</option>';});
         h+='</select></div>';
-        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('关联提单')+'</label><input type="text" value="'+esc(hd.bl)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-bl"></div>';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('关联主单')+'</label><input type="text" value="'+esc(hd.bl)+'" placeholder="'+esc(tr('Job No'))+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-bl"></div>';
         h+='</div></div>';
     }
     return h;
@@ -597,12 +597,13 @@ function openFinalAllocAdjustModal(id,rowIdx){
     const idx=(rowIdx===undefined||rowIdx<0)?getSelectedRowIndex():rowIdx;
     if(idx<0){openActionModal('selectRequired',id,-1);return;}
     const row=(_listData[id]||TC[id].d)[idx]||[];
-    const presetNo=row[0]||'';
-    const presetLabel=row[1]||'';
-    const presetBL=row[2]||'';
-    const presetCountry=row[3]||'';
-    const presetContainer=row[4]||'';
-    const presetTransport=row[8]||'海运';
+    /* 全部按表头名取，不再按下标 —— 这张表的列序已经调过几轮了 */
+    const presetNo=faListCell(id,row,'配舱单号');
+    const presetLabel=faListCell(id,row,'标签编号');
+    const presetBL=faListCell(id,row,'Job No');
+    const presetCountry=faListCell(id,row,'国家');
+    const presetContainer=faListCell(id,row,'柜号');
+    const presetTransport=faListCell(id,row,'运输方式','海运');
     /* 已选行的首列跟着运输方式走：空运配的是袋，给个袋号；其余仍是预配单号 */
     const presetUnitNo=presetTransport==='空运'
         ?presetNo.replace(/^ZPCD-/,'BAG-').replace(/-终配/,'')
@@ -668,7 +669,7 @@ function openFinalAllocBarcodeModal(id){
         if(!row)return;
         var no=g(row,'配舱单号');
         if(!no)return;
-        rows.push({no:no,bl:g(row,'提单号'),country:g(row,'国家'),
+        rows.push({no:no,bl:g(row,'Job No'),country:g(row,'国家'),
             transport:g(row,'运输方式'),tickets:g(row,'票数'),pcs:g(row,'件数')});
     });
     if(!rows.length){showToast(tr('所选数据没有配舱单号，无法打印'));return;}
@@ -739,6 +740,13 @@ function printFinalAllocBarcodes(){
     if(typeof window!=='undefined'&&window.print)setTimeout(function(){window.print();},60);
 }
 
+/* 按表头名取配舱计划某行的值。列序调过好几次了（去掉配柜状态、提单号改 Job No、
+ * 补封签号），再按下标取迟早取串 —— 原来「柜号」输入框里显示的就是国家名。 */
+function faListCell(id,row,name,dft){
+    const h=(TC[id]&&TC[id].h)||[],i=h.indexOf(name);
+    const v=(i>=0&&row&&row[i]!=null)?String(row[i]):'';
+    return v!==''?v:(dft===undefined?'':dft);
+}
 function openFinalAllocLinkBLModal(id){
     const idx=getSelectedRowIndex();
     const row=idx>=0?((_listData[id]||TC[id].d)[idx]||[]):[];
@@ -747,20 +755,21 @@ function openFinalAllocLinkBLModal(id){
     const footerEl=document.getElementById('crud-modal-footer');
     const panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='52%';
-    titleEl.textContent=tr('关联提单');
+    titleEl.textContent=tr('关联主单');
     let h='<div class="space-y-4">';
-    h+='<div class="bg-primary-50 border border-primary-100 rounded-lg p-3 text-xs text-primary-700">'+tr('为选中的终配舱单关联提单号；若未选中则按输入新增关联。')+'</div>';
+    h+='<div class="bg-primary-50 border border-primary-100 rounded-lg p-3 text-xs text-primary-700">'+tr('为选中的终配舱单关联主单（Job No）；若未选中则按输入新增关联。')+'</div>';
     /* 控件走全站规范：h-10 + bg-surface-50，标签用 text-sm font-medium text-text-secondary */
     const fldCls='h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
     const lblCls='text-sm font-medium text-text-secondary';
     h+='<div class="grid grid-cols-2 gap-x-5 gap-y-4">';
-    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('配舱单号')+'</label><input type="text" value="'+esc(row[0]||'')+'" class="'+fldCls+'"></div>';
-    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('提单号')+' <span class="text-red-500">*</span></label><input type="text" value="'+esc(row[2]||'TD-20260626-001')+'" class="'+fldCls+'"></div>';
-    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('柜号')+'</label><input type="text" value="'+esc(row[3]||'GH-20260626-001')+'" class="'+fldCls+'"></div>';
-    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('运输方式')+'</label><select class="'+fldCls+'">'+['海运','空运','卡航','快递'].map(function(o){return '<option>'+esc(o)+'</option>';}).join('')+'</select></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('配舱单号')+'</label><input type="text" value="'+esc(faListCell(id,row,'配舱单号'))+'" class="'+fldCls+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('Job No')+' <span class="text-red-500">*</span></label><input type="text" value="'+esc(faListCell(id,row,'Job No','FBK-20260626001'))+'" class="'+fldCls+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('柜号')+'</label><input type="text" value="'+esc(faListCell(id,row,'柜号','GH-20260626-001'))+'" class="'+fldCls+'"></div>';
+    /* 封签号非必填：柜子封好才有，关联主单时经常还没有 */
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('封签号')+'</label><input type="text" value="'+esc(faListCell(id,row,'封签号'))+'" placeholder="'+esc(tr('选填，封柜后回填'))+'" class="'+fldCls+'"></div>';
     h+='</div></div>';
     bodyEl.innerHTML=h;
-    footerEl.innerHTML=finalAllocFooterHtml('closeCrudModal();showToast(tr(\'已关联提单\'))','确认');
+    footerEl.innerHTML=finalAllocFooterHtml('closeCrudModal();showToast(tr(\'已关联主单\'))','确认');
     document.getElementById('crud-modal').classList.add('show');
 }
 
@@ -778,8 +787,9 @@ function openFinalAllocRenameModal(id){
     /* 同上：控件高度、底色、标签字重都对齐全站；备注按规范用 rows=3 的 textarea */
     const fldCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
     const lblCls='text-sm font-medium text-text-secondary';
-    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('原配舱单号')+'</label><input type="text" readonly value="'+esc(row[0]||'')+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-muted cursor-not-allowed"></div>';
-    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('新配舱单号')+' <span class="text-red-500">*</span></label><input type="text" id="final-alloc-new-no" value="'+esc(row[0]||'')+'" class="'+fldCls+'"></div>';
+    const curNo=faListCell(id,row,'配舱单号');
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('原配舱单号')+'</label><input type="text" readonly value="'+esc(curNo)+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-muted cursor-not-allowed"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('新配舱单号')+' <span class="text-red-500">*</span></label><input type="text" id="final-alloc-new-no" value="'+esc(curNo)+'" class="'+fldCls+'"></div>';
     h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入修改原因'))+'"></textarea></div>';
     h+='</div>';
     bodyEl.innerHTML=h;

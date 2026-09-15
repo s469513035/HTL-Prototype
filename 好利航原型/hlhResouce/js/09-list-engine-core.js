@@ -936,7 +936,9 @@ function renderToolbarAction(action,id){
         return '<div class="relative inline-block"><button type="button" onclick="toggleToolbarDropdown(event,\''+ddMenuId+'\')" class="toolbar-action font-medium rounded-lg cursor-pointer inline-flex items-center justify-center gap-1 whitespace-nowrap '+color+'" style="'+ddWidth+'">'+esc(tr(action.label))+' <span class="text-[10px]">▾</span></button><div id="'+ddMenuId+'" class="hidden absolute left-0 top-full mt-1 z-40 min-w-[140px] bg-white border border-surface-200 rounded-lg shadow-lg py-1">'+ddItems+'</div></div>';
     }
     let click='';
-    if(id==='fin-fee-mgmt'&&action.type==='add')click='openFeeMgmtFeeModal(\'add\',\''+id+'\',-1)';
+    if(action.key==='omsAddOrder')click='navigateToTab(\'\',\'oms-order-entry\')';
+    else if(action.key==='omsBillDetail')click='omsOpenSelectedBillDetail(\''+id+'\')';
+    else if(id==='fin-fee-mgmt'&&action.type==='add')click='openFeeMgmtFeeModal(\'add\',\''+id+'\',-1)';
     else if(id==='fin-fee-mgmt'&&action.type==='edit')click='openSelectedFeeMgmtEdit(\''+id+'\')';
     else if(id==='ow-pickup'&&action.type==='add')click='openOverseasPickupCreate()';
     else if(action.key==='pickupEdit')click='openSelectedPickupEdit(\''+id+'\')';
@@ -1317,6 +1319,33 @@ function getToolbarActions(id){
             {key:'export',label:'导出数据'}
         ];
     }
+    /* OMS 订单管理：动作全部复用 TMS 运单管理那一套（查看详情/业务确认/标签打印/取消订单），
+     * 两端行为保持一致。labelPrint 不进 :981 的白名单，和 wb-manage 一样落到默认分支。 */
+    if(id==='oms-order-mgmt'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'omsAddOrder',label:'新增订单',type:'add'},
+            {key:'viewWaybillDetail',label:'查看详情',variant:'primary'},
+            {key:'businessConfirm',label:'订单确认'},
+            {key:'labelPrint',label:'标签打印'},
+            {key:'cancelWaybill',label:'取消订单',variant:'danger'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
+    /* OMS 问题件：回复走 TMS 反馈弹窗的 cust-reply（客户反馈）模式 —— 那个模式本来就是留给客户侧的 */
+    if(id==='oms-issue-mgmt'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'csCustReply',label:'回复'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
+    if(id==='oms-bill'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'omsBillDetail',label:'账单明细'}
+        ];
+    }
     if(id==='fin-fee-mgmt'){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
@@ -1669,7 +1698,7 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account'];
+var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt'];
 var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl','biz-track-cfg','wh-stock-check','approval-mine','approval-msg','cs-issue-track','cs-issue-type','wb-op-instruction','crm-cust','wb-manage'];
 function listRowCanEdit(id){return _rowNoEditIds.indexOf(id)<0;}
 /* _rowNoDeleteIds / listRowCanDelete：自 2026-09 全局取消通用删除后已无调用点，

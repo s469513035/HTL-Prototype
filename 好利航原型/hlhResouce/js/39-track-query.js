@@ -7,6 +7,9 @@ var _tqHistory=['H2608220003','H2608180006','H2608180007'];
 var _tqExpanded={};      /* 主单展开状态 code -> true */
 var _tqSubExpanded={};   /* 子单展开状态 subCode -> true */
 var _tqSubOwner='';      /* 子单轨迹弹窗当前对应的主单号 */
+/* OMS 客户端也用这张页（oms-track-query）。时间轴上的「创建人」是内部操作员姓名，
+ * 不该给客户看，进页时按 id 置位，tqTimelineHtml 据此少渲染那一段。 */
+var _tqHideOperator=false;
 
 var TQ_ORDERS={
 'H2608180006':{orderTime:'2026-08-18 11:15:05',country:'US',status:'已到货',subCount:4,events:[
@@ -122,7 +125,9 @@ function tqTimelineHtml(events){
         h+='<div class="relative pb-4 last:pb-0">';
         h+='<div class="absolute -left-9 top-0 w-6 h-6 rounded-full border-2 border-primary-500 bg-white text-primary-600 text-[11px] font-semibold flex items-center justify-center">'+(i+1)+'</div>';
         h+='<div class="text-xs text-text-primary">'+esc(e.time||'')+
-            '<span class="ml-2 text-text-secondary">【'+tr('创建人')+'：'+esc(e.by||'-')+'　'+tr('发生地')+'：'+esc(e.loc||'-')+'】</span></div>';
+            '<span class="ml-2 text-text-secondary">【'+
+            (_tqHideOperator?'':(tr('创建人')+'：'+esc(e.by||'-')+'　'))+
+            tr('发生地')+'：'+esc(e.loc||'-')+'】</span></div>';
         h+='<div class="mt-1 text-xs"><span class="text-text-primary font-medium">'+esc(e.cn||'')+'</span>'+
             (e.en?'<span class="ml-2 text-primary-600">'+esc(e.en)+'</span>':'')+'</div>';
         h+='</div>';
@@ -144,6 +149,7 @@ function tqResultsHtml(){
 
 function generateTrackQueryPage(id){
     _tqExpanded={};
+    _tqHideOperator=String(id||'').indexOf('oms-')===0;
     let h='<div class="h-full overflow-auto bg-surface-50">';
     h+='<div class="max-w-[1600px] mx-auto px-6 py-5">';
     h+='<div class="mb-5">'+tqSearchBarHtml()+tqHistoryHtml()+'</div>';

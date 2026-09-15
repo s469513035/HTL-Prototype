@@ -143,7 +143,9 @@ function openCsIssueAddModal(id){
 function openCsIssueViewModal(id,rowIdx){
     const info=_csRowOf(id,rowIdx);
     const wbNo=info.get('运单号');
-    const headerInfo=[[tr('运单号'),wbNo],[tr('问题类型'),info.get('问题类型名称')],[tr('客户名称'),info.get('客户名称')],[tr('销售产品'),info.get('销售产品')]];
+    /* 过滤掉取不到值的项：OMS 端的问题件表没有「客户名称」列（客户自己的门户，冗余），
+     * 不滤会在弹窗抬头上留一个空的「客户名称：」 */
+    const headerInfo=[[tr('运单号'),wbNo],[tr('问题类型'),info.get('问题类型名称')],[tr('客户名称'),info.get('客户名称')],[tr('销售产品'),info.get('销售产品')]].filter(function(p){return p[1]!=='';});
     const records=csIssueRecordsOf(wbNo,info.get('问题类型名称'),info.get('最新响应时间'),info.get('最新响应内容'));
     let h='<div class="space-y-5">';
     h+='<div><div class="text-sm font-semibold text-text-primary mb-3 pl-2 border-l-3 border-primary-500">'+tr('问题记录')+'</div>';
@@ -151,11 +153,15 @@ function openCsIssueViewModal(id,rowIdx){
     h+='</div>';
     h+='<div><div class="text-sm font-semibold text-text-primary mb-3 pl-2 border-l-3 border-primary-500">'+tr('基本信息')+'</div>';
     h+='<div class="rounded-xl border border-surface-200 bg-white p-4"><div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 text-sm">';
-    [['运单号',wbNo],['问题类型',info.get('问题类型名称')],['问题件状态',info.get('问题件状态')],
-     ['客户名称',info.get('客户名称')],['销售产品',info.get('销售产品')],['登记人',info.get('登记人')],
-     ['登记时间',info.get('登记时间')],['最新响应时间',info.get('最新响应时间')],['最新响应内容',info.get('最新响应内容')]
-    ].forEach(function(p){
-        h+='<div class="min-w-0"><span class="text-text-secondary">'+tr(p[0])+'：</span><span class="text-text-primary break-all">'+esc(p[1]||'-')+'</span></div>';
+    /* 取不到值的项直接不渲染。原来写死了 9 项，其中「问题件状态 / 登记人 / 登记时间」
+     * 两张表都没有这些列名（状态那列实际叫「问题状态」），所以 TMS 端一直常驻三个「-」；
+     * OMS 端还会多一个空的「客户名称」。改成按名取 + 过滤空值，两端都干净。 */
+    [['运单号',wbNo],['问题类型',info.get('问题类型名称')],['问题状态',info.get('问题状态')],
+     ['运单状态',info.get('运单状态')],['客户名称',info.get('客户名称')],['客户单号',info.get('客户单号')],
+     ['销售产品',info.get('销售产品')],['最新响应时间',info.get('最新响应时间')],
+     ['最新响应内容',info.get('最新响应内容')],['问题备注',info.get('问题备注')]
+    ].filter(function(p){return p[1]!=='';}).forEach(function(p){
+        h+='<div class="min-w-0"><span class="text-text-secondary">'+tr(p[0])+'：</span><span class="text-text-primary break-all">'+esc(p[1])+'</span></div>';
     });
     h+='</div></div></div></div>';
     const panel=document.querySelector('#crud-modal .slide-panel');
@@ -173,7 +179,9 @@ function openCsIssueFeedbackModal(id,mode){
     const i0=indices[0];
     const info=_csRowOf(id,i0);
     const wbNo=info.get('运单号');
-    const headerInfo=[[tr('运单号'),wbNo],[tr('问题类型'),info.get('问题类型名称')],[tr('客户名称'),info.get('客户名称')],[tr('销售产品'),info.get('销售产品')]];
+    /* 过滤掉取不到值的项：OMS 端的问题件表没有「客户名称」列（客户自己的门户，冗余），
+     * 不滤会在弹窗抬头上留一个空的「客户名称：」 */
+    const headerInfo=[[tr('运单号'),wbNo],[tr('问题类型'),info.get('问题类型名称')],[tr('客户名称'),info.get('客户名称')],[tr('销售产品'),info.get('销售产品')]].filter(function(p){return p[1]!=='';});
     const records=csIssueRecordsOf(wbNo,info.get('问题类型名称'),info.get('最新响应时间'),info.get('最新响应内容'));
     const titleMap={'cs-reply':'问题件客服反馈','cust-on-behalf':'问题件代客户反馈','cust-reply':'问题件客户反馈','release':'问题件放行'};
     const title=titleMap[mode]||'问题件反馈';

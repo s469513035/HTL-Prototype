@@ -1366,3 +1366,82 @@ Object.assign(_manualI18n.pt,{
     '地理数据':'Dados geográficos','平台设置':'Configurações da plataforma','流程与风控':'Fluxos e Controlo de risco'
 });
 
+/* ========== OMS 客户端门户（44-oms-portal.js）三语补充 ========== */
+Object.assign(_manualI18n.en,{
+    '功能首页':'Home','客户中心':'Customer Center','新增订单':'New Order','客服':'Customer Service','轨迹查询':'Tracking Query','账单管理':'Bill Management',
+    '订单确认':'Confirm Order','取消订单':'Cancel Order','新增问题件':'New Issue','回复':'Reply','账单明细':'Bill Details','导出对账单':'Export Statement','对账单PDF已生成':'Statement PDF generated',
+    '双击查看明细':'Double-click for details','订单明细':'Order Details','问题件详情':'Issue Details','沟通记录':'Communication History','我要回复':'My Reply','发送回复':'Send Reply','请输入回复内容':'Please enter your reply','回复已发送':'Reply sent',
+    '请先勾选订单':'Please select orders first','请先勾选一条问题件':'Please select an issue first','请先勾选一条账单':'Please select a bill first',
+    '仅「草稿 / 已预报」状态的订单可确认':'Only Draft / Forecasted orders can be confirmed','仅「草稿 / 已预报 / 已确认」状态的订单可取消':'Only Draft / Forecasted / Confirmed orders can be canceled',
+    '确认后将提交至仓库备货，是否确认':'After confirmation it will be sent to the warehouse for stocking. Confirm','条订单':'orders','已确认':'Confirmed','取消后不可恢复。':'This cannot be undone.','取消成功':'Canceled',
+    '标签PDF已生成':'Label PDF generated','已发送至打印机':'sent to printer','张':'pcs','装箱标签':'Packing Label','运单':'Waybill',
+    '问题类型':'Issue Type','关联运单号':'Related Waybill No.','问题描述':'Issue Description','问题状态':'Issue Status','最新回复':'Latest Reply',
+    '待处理':'Pending','处理中':'Processing','已解决':'Resolved','已关闭':'Closed','清关延误':'Clearance Delay',
+    '账单号':'Bill No.','账单金额':'Bill Amount','已付金额':'Paid Amount','待付金额':'Unpaid Amount','到期日':'Due Date','账单状态':'Bill Status',
+    '待付款':'Unpaid','部分付款':'Partially Paid','已付款':'Paid','已逾期':'Overdue',
+    '草稿':'Draft','已预报':'Forecasted','已配舱':'Space Allocated','已出库':'Outbound','已离港':'Departed','已签收':'Signed',
+    '您好':'Hello','A类客户':'Class A Customer','专属客服':'Dedicated CS','账户余额':'Account Balance','信用额度':'Credit Limit',
+    '本月订单':'Orders This Month','最新订单':'Latest Orders','问题件动态':'Issue Updates','客户信息':'Customer Info','消息通知':'Notifications','查看全部':'View All','去处理':'Handle','合作起始':'Partner Since',
+    '费用名称':'Fee Name','合计':'Total','暂无货物明细':'No cargo details','暂无沟通记录':'No communication yet','暂无进行中的问题件':'No ongoing issues',
+    '提交':'Submit','关闭':'Close','请填写问题描述':'Please fill in the issue description','问题件已提交，客服将尽快处理':'Issue submitted. CS will handle it soon.','请描述问题详情，如破损件数、缺少数量等':'Describe the issue, e.g. damaged/missing pieces','支持上传图片附件（最多 5 张），原型演示略':'Image attachments supported (up to 5), omitted in prototype','请输入回复内容，客服将尽快处理':'Enter your reply. CS will handle it soon','条订单，将按每件货物生成标签。':'orders. Labels will be generated per piece.','确认取消选中的':'Confirm canceling the selected','我':'Me'
+});
+Object.assign(_manualI18n.fr,{
+    '功能首页':'Accueil','客户中心':'Espace client','新增订单':'Nouvelle commande','客服':'Service client','轨迹查询':'Suivi','账单管理':'Gestion factures',
+    '订单确认':'Confirmer commande','取消订单':'Annuler commande','新增问题件':'Nouvel incident','回复':'Répondre','账单明细':'Détails facture','导出对账单':'Exporter relevé','对账单PDF已生成':'PDF relevé généré',
+    '双击查看明细':'Double-clic pour détails','订单明细':'Détails commande','问题件详情':'Détails incident','沟通记录':'Historique échanges','我要回复':'Ma réponse','发送回复':'Envoyer réponse','请输入回复内容':'Saisir votre réponse','回复已发送':'Réponse envoyée',
+    '请先勾选订单':'Sélectionner d’abord des commandes','请先勾选一条问题件':'Sélectionner d’abord un incident','请先勾选一条账单':'Sélectionner d’abord une facture',
+    '仅「草稿 / 已预报」状态的订单可确认':'Seules les commandes Brouillon / Préavis peuvent être confirmées','仅「草稿 / 已预报 / 已确认」状态的订单可取消':'Seules les commandes Brouillon / Préavis / Confirmé peuvent être annulées',
+    '确认后将提交至仓库备货，是否确认':'Après confirmation, envoi à l’entrepôt pour préparation. Confirmer','条订单':'commandes','已确认':'Confirmé','取消后不可恢复。':'Irréversible.','取消成功':'Annulé',
+    '标签PDF已生成':'PDF étiquette généré','已发送至打印机':'envoyé à l’imprimante','张':'ex.','装箱标签':'Étiquette colisage','运单':'Expédition',
+    '问题类型':'Type incident','关联运单号':'N° expédition lié','问题描述':'Description incident','问题状态':'Statut incident','最新回复':'Dernière réponse',
+    '待处理':'À traiter','处理中':'En cours','已解决':'Résolu','已关闭':'Clôturé','清关延误':'Retard dédouanement',
+    '账单号':'N° facture','账单金额':'Montant facture','已付金额':'Montant payé','待付金额':'Montant dû','到期日':'Échéance','账单状态':'Statut facture',
+    '待付款':'À payer','部分付款':'Partiellement payé','已付款':'Payé','已逾期':'En retard',
+    '草稿':'Brouillon','已预报':'Préavis','已配舱':'Espace alloué','已出库':'Sorti','已离港':'Parti','已签收':'Signé',
+    '您好':'Bonjour','A类客户':'Client classe A','专属客服':'CS dédié','账户余额':'Solde compte','信用额度':'Limite crédit',
+    '本月订单':'Commandes du mois','最新订单':'Dernières commandes','问题件动态':'Incidents récents','客户信息':'Infos client','消息通知':'Notifications','查看全部':'Voir tout','去处理':'Traiter','合作起始':'Partenaire depuis',
+    '费用名称':'Nom frais','合计':'Total','暂无货物明细':'Aucun détail cargo','暂无沟通记录':'Aucun échange','暂无进行中的问题件':'Aucun incident en cours',
+    '提交':'Soumettre','关闭':'Fermer','请填写问题描述':'Veuillez décrire l’incident','问题件已提交，客服将尽快处理':'Incident soumis. Le CS traitera rapidement.','请描述问题详情，如破损件数、缺少数量等':'Décrivez l’incident, ex. colis endommagés/manquants','支持上传图片附件（最多 5 张），原型演示略':'Pièces image supportées (max 5), omis dans le prototype','请输入回复内容，客服将尽快处理':'Saisir votre réponse. Le CS traitera rapidement','条订单，将按每件货物生成标签。':'commandes. Étiquettes générées par colis.','确认取消选中的':'Confirmer l’annulation de','我':'Moi'
+});
+Object.assign(_manualI18n.pt,{
+    '功能首页':'Início','客户中心':'Central do cliente','新增订单':'Novo pedido','客服':'Atendimento','轨迹查询':'Rastreamento','账单管理':'Gestão de contas',
+    '订单确认':'Confirmar pedido','取消订单':'Cancelar pedido','新增问题件':'Novo problema','回复':'Responder','账单明细':'Detalhes da conta','导出对账单':'Exportar extrato','对账单PDF已生成':'PDF do extrato gerado',
+    '双击查看明细':'Duplo clique para detalhes','订单明细':'Detalhes do pedido','问题件详情':'Detalhes do problema','沟通记录':'Histórico de comunicação','我要回复':'Minha resposta','发送回复':'Enviar resposta','请输入回复内容':'Digite sua resposta','回复已发送':'Resposta enviada',
+    '请先勾选订单':'Selecione os pedidos primeiro','请先勾选一条问题件':'Selecione um problema primeiro','请先勾选一条账单':'Selecione uma conta primeiro',
+    '仅「草稿 / 已预报」状态的订单可确认':'Apenas pedidos Rascunho / Pré-aviso podem ser confirmados','仅「草稿 / 已预报 / 已确认」状态的订单可取消':'Apenas pedidos Rascunho / Pré-aviso / Confirmado podem ser cancelados',
+    '确认后将提交至仓库备货，是否确认':'Após confirmar, será enviado ao armazém. Confirmar','条订单':'pedidos','已确认':'Confirmado','取消后不可恢复。':'Não pode ser desfeito.','取消成功':'Cancelado',
+    '标签PDF已生成':'PDF de etiqueta gerado','已发送至打印机':'enviado à impressora','张':'un.','装箱标签':'Etiqueta de embalagem','运单':'Guia',
+    '问题类型':'Tipo de problema','关联运单号':'Nº guia relacionada','问题描述':'Descrição do problema','问题状态':'Status do problema','最新回复':'Última resposta',
+    '待处理':'Pendente','处理中':'Em processamento','已解决':'Resolvido','已关闭':'Fechado','清关延误':'Atraso no desembaraço',
+    '账单号':'Nº conta','账单金额':'Valor da conta','已付金额':'Valor pago','待付金额':'Valor pendente','到期日':'Vencimento','账单状态':'Status da conta',
+    '待付款':'A pagar','部分付款':'Parcialmente pago','已付款':'Pago','已逾期':'Vencido',
+    '草稿':'Rascunho','已预报':'Pré-aviso','已配舱':'Espaço alocado','已出库':'Saída','已离港':'Partiu','已签收':'Assinado',
+    '您好':'Olá','A类客户':'Cliente classe A','专属客服':'Atendimento dedicado','账户余额':'Saldo da conta','信用额度':'Limite de crédito',
+    '本月订单':'Pedidos do mês','最新订单':'Últimos pedidos','问题件动态':'Problemas recentes','客户信息':'Dados do cliente','消息通知':'Notificações','查看全部':'Ver tudo','去处理':'Tratar','合作起始':'Parceiro desde',
+    '费用名称':'Nome da taxa','合计':'Total','暂无货物明细':'Sem detalhes de carga','暂无沟通记录':'Sem comunicação','暂无进行中的问题件':'Sem problemas em andamento',
+    '提交':'Enviar','关闭':'Fechar','请填写问题描述':'Preencha a descrição do problema','问题件已提交，客服将尽快处理':'Problema enviado. O atendimento tratará em breve.','请描述问题详情，如破损件数、缺少数量等':'Descreva o problema, ex. peças danificadas/faltantes','支持上传图片附件（最多 5 张），原型演示略':'Anexos de imagem suportados (até 5), omitido no protótipo','请输入回复内容，客服将尽快处理':'Digite sua resposta. O atendimento tratará em breve','条订单，将按每件货物生成标签。':'pedidos. Etiquetas geradas por peça.','确认取消选中的':'Confirmar cancelamento de','我':'Eu'
+});
+
+/* OMS 门户补充第二批：费用名/仓库名/消息类型/轨迹节点 */
+Object.assign(_manualI18n.en,{
+    '物流轨迹':'Logistics Tracking','条':'items','问题件单号':'Issue No.',
+    '海运费/空运费':'Sea/Air Freight','海运费':'Sea Freight','空运费':'Air Freight','仓储操作费':'Handling Fee','带电附加费':'Battery Surcharge','清关费':'Clearance Fee',
+    '轨迹':'Tracking','账单':'Bill','问题件':'Issue','系统':'System','账单付款':'Bill Payment','问题件跟进':'Issue Follow-up',
+    '达喀尔海外仓':'Dakar Overseas Warehouse','拉各斯海外仓':'Lagos Overseas Warehouse','阿比让海外仓':'Abidjan Overseas Warehouse','特马海外仓':'Tema Overseas Warehouse','杜阿拉海外仓':'Douala Overseas Warehouse',
+    '已下单':'Ordered','业务确认':'Business Confirmation','国内仓入仓':'Domestic Warehouse Inbound','配舱出库':'Load Plan Outbound','海外仓签收':'Overseas Warehouse Signed','好利航总部':'HOLLY TRANS HQ','深圳':'Shenzhen'
+});
+Object.assign(_manualI18n.fr,{
+    '物流轨迹':'Suivi logistique','条':'éléments','问题件单号':'N° incident',
+    '海运费/空运费':'Fret maritime/aérien','海运费':'Fret maritime','空运费':'Fret aérien','仓储操作费':'Frais manutention','带电附加费':'Supplément batterie','清关费':'Frais dédouanement',
+    '轨迹':'Suivi','账单':'Facture','问题件':'Incident','系统':'Système','账单付款':'Paiement facture','问题件跟进':'Suivi incident',
+    '达喀尔海外仓':'Entrepôt overseas Dakar','拉各斯海外仓':'Entrepôt overseas Lagos','阿比让海外仓':'Entrepôt overseas Abidjan','特马海外仓':'Entrepôt overseas Tema','杜阿拉海外仓':'Entrepôt overseas Douala',
+    '已下单':'Commandé','业务确认':'Confirmation métier','国内仓入仓':'Entrée entrepôt national','配舱出库':'Sortie plan chargement','海外仓签收':'Signé entrepôt overseas','好利航总部':'Siège HOLLY TRANS','深圳':'Shenzhen'
+});
+Object.assign(_manualI18n.pt,{
+    '物流轨迹':'Rastreamento logístico','条':'itens','问题件单号':'Nº do problema',
+    '海运费/空运费':'Frete marítimo/aéreo','海运费':'Frete marítimo','空运费':'Frete aéreo','仓储操作费':'Taxa de movimentação','带电附加费':'Sobretaxa bateria','清关费':'Taxa de desembaraço',
+    '轨迹':'Rastreio','账单':'Conta','问题件':'Problema','系统':'Sistema','账单付款':'Pagamento de conta','问题件跟进':'Acompanhamento de problema',
+    '达喀尔海外仓':'Armazém overseas Dakar','拉各斯海外仓':'Armazém overseas Lagos','阿比让海外仓':'Armazém overseas Abidjan','特马海外仓':'Armazém overseas Tema','杜阿拉海外仓':'Armazém overseas Douala',
+    '已下单':'Pedido feito','业务确认':'Confirmação comercial','国内仓入仓':'Entrada armazém nacional','配舱出库':'Saída plano de carga','海外仓签收':'Assinado armazém overseas','好利航总部':'Sede HOLLY TRANS','深圳':'Shenzhen'
+});
+

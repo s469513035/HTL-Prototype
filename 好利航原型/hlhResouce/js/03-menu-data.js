@@ -194,9 +194,16 @@ const menuData=[
 ]},
 
 {id:'oms-client',label:'客户中心',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>',children:[
-{id:'wb-client-manage',label:'我的运单',page:'oms-cw',tab:'wb-client-manage'},
-{id:'oms-wb-query',label:'运单查询',page:'oms-cw',tab:'oms-wb-query'},
-{id:'oms-track-query',label:'轨迹查询',page:'oms-cw',tab:'oms-track-query'}
+{id:'oms-home',label:'功能首页',langKey:'oms_home',page:'oms-cw',tab:'oms-home'},
+{id:'oms-order-group',label:'订单管理',langKey:'oms_order',children:[
+{id:'oms-order-entry',label:'新增订单',langKey:'oms_order_entry',page:'oms-cw',tab:'oms-order-entry'},
+{id:'oms-order-mgmt',label:'订单管理',langKey:'oms_order_mgmt',page:'oms-cw',tab:'oms-order-mgmt'}
+]},
+{id:'oms-cs-group',label:'客服',langKey:'oms_cs',children:[
+{id:'oms-issue-mgmt',label:'问题件管理',langKey:'oms_issue',page:'oms-cw',tab:'oms-issue-mgmt'},
+{id:'oms-track-query',label:'轨迹查询',langKey:'oms_track',page:'oms-cw',tab:'oms-track-query'}
+]},
+{id:'oms-bill',label:'账单管理',langKey:'oms_bill',page:'oms-cw',tab:'oms-bill'}
 ]}
 ];
 

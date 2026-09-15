@@ -453,8 +453,15 @@ function renderWaybillDetailPanels(detailId,id,row){
             ['算费日志',renderWaybillSimpleTable(['费用名称','计算公式','算费金额','算费时间','操作人'],[['基础运费','MAX(实际重量, 体积重量) × 单价','CNY 8,580','2026-06-02 10:33:21','系统'],['国内段运费','件数 × 入仓操作单价','CNY 680','2026-06-02 10:35:08','系统']],900)]
         );
     }
+    /* OMS（客户端）只保留这几个页签。必须在这里就把面板滤掉 ——
+     * 光在 renderWaybillDetailInner 里少画一个页签，费用面板的 HTML 还是会进 DOM，
+     * 客户查看源码照样能看到费用数据。 */
+    const custTabs=['品名信息','材积信息','附件信息','轨迹信息','备注说明'];
+    const shown=(String(id||'').indexOf('oms-')===0)
+        ?panels.filter(function(p){return custTabs.indexOf(p[0])>=0;})
+        :panels;
     let html='';
-    panels.forEach(function(panel,i){
+    shown.forEach(function(panel,i){
         html+='<div class="waybill-detail-panel '+(i===0?'':'hidden')+'" data-detail-panel="'+esc(panel[0])+'">'+panel[1]+'</div>';
     });
     return html;
@@ -478,20 +485,31 @@ function renderWaybillDetailInner(detailId,id,row){
     const freight=waybillCell(id,row,['运费'],'—');
     const status=waybillCell(id,row,['运单状态','状态'],'已预报');
     const remark=waybillCell(id,row,['仓库异常备注','备注'],'—');
+    /* OMS（客户端）复用这个弹窗时要做客户视角裁剪：
+     * 内部岗位（业务员/客服/操作/所属网点）、客户自己的代码名称都不给看，费用也不体现
+     *（客户的钱统一在账单管理里看）。TMS 端一切照旧。 */
+    const custView=String(id||'').indexOf('oms-')===0;
     let h='<div data-waybill-detail>';
-    h+='<div class="flex flex-wrap items-center gap-x-7 gap-y-2 text-sm text-text-secondary mb-4">';
-    [['所属网点',site],['所属客户',customer],['业务员',sales],['客服员',service],['操作员',settle]].forEach(function(item){h+='<div><span>'+tr(item[0])+'：</span><span class="text-text-primary">'+esc(item[1]||'—')+'</span></div>';});
-    h+='</div>';
+    if(!custView){
+        h+='<div class="flex flex-wrap items-center gap-x-7 gap-y-2 text-sm text-text-secondary mb-4">';
+        [['所属网点',site],['所属客户',customer],['业务员',sales],['客服员',service],['操作员',settle]].forEach(function(item){h+='<div><span>'+tr(item[0])+'：</span><span class="text-text-primary">'+esc(item[1]||'—')+'</span></div>';});
+        h+='</div>';
+    }
     h+='<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">';
-    h+=waybillDetailCard('bg-blue-50/40',[['运单号',waybill],['物流单号',logistics],['客户代码',custCode],['客户名称',customer]]);
+    h+=waybillDetailCard('bg-blue-50/40',custView
+        ?[['运单号',waybill],['物流单号',logistics],['所属产品',waybillCell(id,row,['所属产品','产品名称'],'—')]]
+        :[['运单号',waybill],['物流单号',logistics],['客户代码',custCode],['客户名称',customer]]);
     const settleVolumeWeight=(cbm&&cbm!=='0'&&cbm!=='—'?cbm+' CBM':'—')+' / '+(weight&&weight!=='0'&&weight!=='—'?weight+' KG':'—');
     h+=waybillDetailCard('bg-white',[['运输方式',transport],['目的仓库',pod],['国内仓库',pol],['结算体积/重量',settleVolumeWeight]]);
     h+=waybillDetailCard('bg-blue-50/40',[['件数',packages],['收货重量',weight],['收货体积',cbm],['收货体积重',waybillVolumeWeight(cbm)]]);
-    h+=waybillDetailCard('bg-white',[['运费',freight],['订单状态',status],['仓库异常备注',remark]]);
+    h+=waybillDetailCard('bg-white',custView
+        ?[['订单状态',status],['创建时间',waybillCell(id,row,['创建时间'],'—')],['仓库异常备注',remark]]
+        :[['运费',freight],['订单状态',status],['仓库异常备注',remark]]);
     h+='</div>';
     h+='<div class="text-sm text-text-secondary mb-3">'+tr('更多信息')+'</div>';
     h+='<div class="flex items-center gap-8 border-b border-surface-200 mb-4 overflow-x-auto">';
-    const detailTabs=id==='wb-manage'?['品名信息','费用信息','材积信息','指令日志','附件信息','轨迹信息','备注说明','操作日志','算费日志']:['品名信息','费用信息','材积信息','指令日志','附件信息','轨迹信息','备注说明'];
+    const detailTabs=custView?['品名信息','材积信息','附件信息','轨迹信息','备注说明']
+        :(id==='wb-manage'?['品名信息','费用信息','材积信息','指令日志','附件信息','轨迹信息','备注说明','操作日志','算费日志']:['品名信息','费用信息','材积信息','指令日志','附件信息','轨迹信息','备注说明']);
     detailTabs.forEach(function(tab,i){
         h+='<button type="button" data-detail-tab="'+esc(tab)+'" onclick="switchWaybillDetailTab(this)" class="waybill-detail-tab flex-shrink-0 py-2 text-sm border-b-2 '+(i===0?'border-primary-600 text-primary-700 font-semibold':'border-transparent text-text-secondary hover:text-primary-600')+'">'+tr(tab)+'</button>';
     });

@@ -50,13 +50,15 @@ function initApp(){
         return;
     }
     if(_currentTerminal==='oms'){
-        // OMS 端：默认进入客户端 APP 首页，并展开客户端菜单
+        // OMS 端：默认进入客户中心功能首页，并展开其所在的 L1 菜单组
         applyRuntimeEnhancements(document);
         setTimeout(function(){
-            var l1=document.querySelector('#sidebar-nav .menu-l1');
-            if(l1 && !l1.classList.contains('expanded'))toggleL1(l1);
+            var homeEl=document.querySelector('#sidebar-nav [data-id="oms-home"]');
+            var group=homeEl?homeEl.closest('.mb-1'):null;
+            var l1Toggle=group?group.querySelector('.menu-l1'):document.querySelector('#sidebar-nav .menu-l1');
+            if(l1Toggle && !l1Toggle.classList.contains('expanded'))toggleL1(l1Toggle);
             const initialTab=getInitialTabFromUrl();
-            navigateToTab('',initialTab||'client-app-home');
+            navigateToTab('',initialTab||'oms-home');
         },0);
         return;
     }

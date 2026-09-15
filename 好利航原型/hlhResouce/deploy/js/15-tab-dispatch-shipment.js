@@ -17,6 +17,7 @@ function renderTabContent(id){
     if(c&&c.pageMode==='trackMaintain')return generateTrackMaintainPage(id);
     if(c&&c.pageMode==='trackQuery')return generateTrackQueryPage(id);
     if(c&&c.pageMode==='wsHome')return generateWorkspaceHome(id);
+    if(c&&c.pageMode==='omsHome')return generateOmsHomePage(id);
     if(c&&c.pageMode==='roleDashboard')return generateRoleDashboard(id);
     if(c&&c.pageMode==='arDetail')return generateArDetailPage(id);
     if(c&&c.pageMode==='arBill')return generateArBillPage(id);

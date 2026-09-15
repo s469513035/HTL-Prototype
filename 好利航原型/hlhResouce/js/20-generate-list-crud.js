@@ -141,7 +141,7 @@ function generateListPage(id,page,statusFilter){
         h+='</div>';
         h+='</div>';
     }
-    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-ap-bill'||id==='fcl-ar-fee'||id==='fcl-ar-receipt'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust')){
+    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-ap-bill'||id==='fcl-ar-fee'||id==='fcl-ar-receipt'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust'||id==='oms-order-mgmt'||id==='oms-issue-mgmt')){
         const statusCounts={};
         statusCounts['']=allData.length;
         c.s.forEach(s=>{statusCounts[s]=allData.filter(row=>{
@@ -170,9 +170,11 @@ function generateListPage(id,page,statusFilter){
         h+='<th class="text-left text-xs font-semibold text-text-secondary px-4 py-3 whitespace-nowrap relative" style="position:sticky;right:0;z-index:20;background:#FFFFFF;white-space:nowrap;box-shadow:-4px 0 8px -4px rgba(0,0,0,0.1)">'+actionHeader+'</th>';
     }
     h+='</tr></thead><tbody>';
+    /* OMS 订单/问题件的明细已改为复用 TMS 那两个弹窗，双击与行内「查看」走同一个入口 */
+    const omsDblMap={'oms-order-mgmt':'openWaybillDetail','oms-issue-mgmt':'openCsIssueViewModal','oms-bill':'openOmsBillDetail'};
     pageData.forEach((row,idx)=>{
         const gi=start+idx;
-        h+='<tr class="'+(gi%2===1?'bg-surface-50/50':'')+' hover:bg-primary-50/30 border-b border-surface-100">';
+        h+='<tr'+(omsDblMap[id]?' ondblclick="'+omsDblMap[id]+'(\''+id+'\','+gi+')" style="cursor:pointer" title="'+esc(tr('双击查看明细'))+'"':'')+' class="'+(gi%2===1?'bg-surface-50/50':'')+' hover:bg-primary-50/30 border-b border-surface-100">';
         h+='<td class="px-4 py-3 text-sm whitespace-nowrap"><input type="checkbox" class="row-check" value="'+gi+'"></td>';
         visibleDataCols.forEach(function(col){
             const ci=col.index;
@@ -184,6 +186,7 @@ function generateListPage(id,page,statusFilter){
             if(ci===si||(c.statusBadgeCols&&c.statusBadgeCols.indexOf(th)>=0)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap">'+statusBadge(rawCell)+'</td>';}
             else if((id==='wb-manage'||id==='wb-client-manage')&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold font-mono" onclick="openWaybillDetail(\''+id+'\','+gi+')">'+esc(displayCell)+'</button></td>';}
             else if(id==='fin-fee-mgmt'&&th==='运单号'){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold font-mono" ondblclick="openFeeMgmtDetail(\''+id+'\','+gi+')" title="'+esc(tr('双击进入详情'))+'">'+esc(displayCell)+'</button></td>';}
+            else if(omsDblMap[id]&&ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'"><button type="button" class="text-primary-700 hover:text-primary-800 hover:underline underline-offset-2 cursor-pointer font-semibold font-mono" onclick="'+omsDblMap[id]+'(\''+id+'\','+gi+')">'+esc(displayCell)+'</button></td>';}
             else if(ci===0){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-medium font-mono text-primary-700" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}
             else if(th.includes('图片')){h+='<td class="px-4 py-3 text-sm whitespace-nowrap">'+renderNoPreImageThumbs(rawCell)+'</td>';}
             else if(id==='fin-fee-mgmt'&&['操作审核','海外确认','财务审核'].includes(th)){h+='<td class="px-4 py-3 text-sm whitespace-nowrap font-bold text-primary-700 bg-primary-50/50" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+titleCell+'">'+esc(displayCell)+'</td>';}
@@ -197,9 +200,13 @@ function generateListPage(id,page,statusFilter){
             var deleteAction=(id==='wb-manage'||id==='wb-client-manage')?'cancel':'delete';
             const rowBg=gi%2===1?'#F9FAFB':'#FFFFFF';
             const airScanIds=['wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan'];
-            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc'].concat(airScanIds).includes(id);
-            const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc'].concat(airScanIds).includes(id);
-            const viewClick=(id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':(id==='wh-pallet-info'?'openPalletInfoDetailModal(\''+id+'\','+gi+')':(id==='ow-pickup'?'openOverseasPickupDetail(\''+id+'\','+gi+')':(id==='ow-arrival'?'openOverseasArrivalDetail(\''+id+'\','+gi+')':(id==='ow-outbound'?'openOverseasOutboundDetail(\''+id+'\','+gi+')':(id==='cs-issue-track'?'openCsIssueViewModal(\''+id+'\','+gi+')':(id==='approval-mine'?'openApprovalDetail(\''+id+'\','+gi+')':(id==='approval-msg'?'openApprovalMsgDetail(\''+id+'\','+gi+')':((id==='ow-inventory'||id==='wh-stock-check')?'openOverseasInventoryDetail(\''+id+'\','+gi+')':(id==='ow-pallet-info'?'openOwPalletInfoDetailModal(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')'))))))))))));
+            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt'].concat(airScanIds).includes(id);
+            const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt'].concat(airScanIds).includes(id);
+            /* OMS 订单/问题件复用 TMS 的明细弹窗，行内「查看」与双击走同一个入口；
+             * 不往下面那条已经很深的三元链上再套两层。oms-bill 不在此列，维持原行为。 */
+            const omsReuseView=(id==='oms-order-mgmt'||id==='oms-issue-mgmt')?omsDblMap[id]:'';
+            const viewClick=omsReuseView?(omsReuseView+'(\''+id+'\','+gi+')'):
+                ((id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':(id==='wh-pallet-info'?'openPalletInfoDetailModal(\''+id+'\','+gi+')':(id==='ow-pickup'?'openOverseasPickupDetail(\''+id+'\','+gi+')':(id==='ow-arrival'?'openOverseasArrivalDetail(\''+id+'\','+gi+')':(id==='ow-outbound'?'openOverseasOutboundDetail(\''+id+'\','+gi+')':(id==='cs-issue-track'?'openCsIssueViewModal(\''+id+'\','+gi+')':(id==='approval-mine'?'openApprovalDetail(\''+id+'\','+gi+')':(id==='approval-msg'?'openApprovalMsgDetail(\''+id+'\','+gi+')':((id==='ow-inventory'||id==='wh-stock-check')?'openOverseasInventoryDetail(\''+id+'\','+gi+')':(id==='ow-pallet-info'?'openOwPalletInfoDetailModal(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')')))))))))))));
             let actionHtml='';
             if(id==='cfg-label-template'){
                 actionHtml='<a class="text-orange-500 hover:text-orange-600 cursor-pointer mr-3" onclick="openLabelTemplateModal(\'edit\',\''+id+'\','+gi+')">'+tr('修改')+'</a>'+

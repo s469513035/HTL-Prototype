@@ -50,20 +50,49 @@ function openTrackCfgModal(mode,id,rowIdx,rowData){
 }
 
 /* ===== 配舱计划 wh-final-alloc 弹窗集合 ===== */
+/* 体积改成有量级的真实值：一键配舱要按最大方数累加整票，原来那串 0.000006
+ * 永远也装不满一个柜，功能没法演示。time 是预报时间，一键配舱按它先到先配。 */
 var _finalAllocUnselectedSeed=[
-    {no:'XJWCS2',pcs:6,canPcs:6,canWt:6,canVol:'0.000006',outWt:6,outVol:'0.000006',sub:[{no:'H-XJWCS2-001',pcs:6,canPcs:6,canWt:6,canVol:'0.000006',outWt:6,outVol:'0.000006'}]},
-    {no:'XJWCS3',pcs:2,canPcs:2,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002',sub:[{no:'H-XJWCS3-001',pcs:2,canPcs:2,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002'}]},
-    {no:'YP20260626',pcs:6,canPcs:6,canWt:6,canVol:'0.000006',outWt:6,outVol:'0.000006',sub:[{no:'H-YP20260626-001',pcs:6,canPcs:6,canWt:6,canVol:'0.000006',outWt:6,outVol:'0.000006'}]},
-    {no:'YPC-20260626003',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004',sub:[{no:'H-YPC-20260626003-001',pcs:4,canPcs:4,canWt:4,canVol:'0.000004',outWt:4,outVol:'0.000004'}]},
-    {no:'YPC-TY',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014',sub:[{no:'H-YPC-TY-001',pcs:14,canPcs:14,canWt:14,canVol:'0.000014',outWt:14,outVol:'0.000014'}]}
+    {no:'XJWCS2',pcs:6,canPcs:6,canWt:420,canVol:'2.850000',outWt:420,outVol:'2.850000',time:'2026-06-24 09:15',
+     name:'蓝牙耳机',packageType:'纸箱',customsType:'一般贸易',service:'报关',whRemark:'外箱完好',
+     sub:[{no:'H-XJWCS2-001',pcs:6,canPcs:6,canWt:420,canVol:'2.850000',outWt:420,outVol:'2.850000',
+           name:'蓝牙耳机',packageType:'纸箱',customsType:'一般贸易',service:'报关',whRemark:'外箱完好'}]},
+    {no:'XJWCS3',pcs:2,canPcs:2,canWt:160,canVol:'1.120000',outWt:160,outVol:'1.120000',time:'2026-06-24 14:40',
+     name:'女装连衣裙',packageType:'编织袋',customsType:'买单报关',service:'—',whRemark:'—',
+     sub:[{no:'H-XJWCS3-001',pcs:2,canPcs:2,canWt:160,canVol:'1.120000',outWt:160,outVol:'1.120000',
+           name:'女装连衣裙',packageType:'编织袋',customsType:'买单报关',service:'—',whRemark:'—'}]},
+    {no:'YP20260626',pcs:6,canPcs:6,canWt:530,canVol:'3.640000',outWt:530,outVol:'3.640000',time:'2026-06-25 10:05',
+     name:'五金工具套装',packageType:'木箱',customsType:'一般贸易',service:'报关、木箱',whRemark:'需加固',
+     sub:[{no:'H-YP20260626-001',pcs:6,canPcs:6,canWt:530,canVol:'3.640000',outWt:530,outVol:'3.640000',
+           name:'五金工具套装',packageType:'木箱',customsType:'一般贸易',service:'报关、木箱',whRemark:'需加固'}]},
+    {no:'YPC-20260626003',pcs:4,canPcs:4,canWt:280,canVol:'1.960000',outWt:280,outVol:'1.960000',time:'2026-06-25 16:20',
+     name:'家用小电器',packageType:'纸箱',customsType:'跨境电商9610',service:'带电',whRemark:'带电，单独码放',
+     sub:[{no:'H-YPC-20260626003-001',pcs:4,canPcs:4,canWt:280,canVol:'1.960000',outWt:280,outVol:'1.960000',
+           name:'家用小电器',packageType:'纸箱',customsType:'跨境电商9610',service:'带电',whRemark:'带电，单独码放'}]},
+    {no:'YPC-TY',pcs:14,canPcs:14,canWt:1180,canVol:'8.420000',outWt:1180,outVol:'8.420000',time:'2026-06-26 08:50',
+     name:'LED灯具',packageType:'托盘',customsType:'市场采购',service:'贴箱唛',whRemark:'整托入仓',
+     sub:[{no:'H-YPC-TY-001',pcs:14,canPcs:14,canWt:1180,canVol:'8.420000',outWt:1180,outVol:'8.420000',
+           name:'LED灯具',packageType:'托盘',customsType:'市场采购',service:'贴箱唛',whRemark:'整托入仓'}]},
+    {no:'YPC-20260627001',pcs:9,canPcs:9,canWt:760,canVol:'5.310000',outWt:760,outVol:'5.310000',time:'2026-06-27 11:30',
+     name:'纺织面料',packageType:'卷装',customsType:'一般贸易',service:'合并报关',whRemark:'—',
+     sub:[{no:'H-YPC-20260627001-001',pcs:9,canPcs:9,canWt:760,canVol:'5.310000',outWt:760,outVol:'5.310000',
+           name:'纺织面料',packageType:'卷装',customsType:'一般贸易',service:'合并报关',whRemark:'—'}]},
+    {no:'YPC-20260627002',pcs:3,canPcs:3,canWt:210,canVol:'1.480000',outWt:210,outVol:'1.480000',time:'2026-06-27 15:10',
+     name:'化妆品',packageType:'纸箱',customsType:'免报关',service:'—',whRemark:'易碎，勿压',
+     sub:[{no:'H-YPC-20260627002-001',pcs:3,canPcs:3,canWt:210,canVol:'1.480000',outWt:210,outVol:'1.480000',
+           name:'化妆品',packageType:'纸箱',customsType:'免报关',service:'—',whRemark:'易碎，勿压'}]}
 ];
 /* 空运按袋配舱：一行就是一袋，袋在国内装好就封了，配舱阶段不再往里看运单，
  * 所以这份种子不带 sub —— 表格也就没有主子表可展开。 */
 var _finalAllocBagSeed=[
-    {no:'BAG-20260626-001',pcs:4,canPcs:4,canWt:38,canVol:'0.180000',outWt:38,outVol:'0.180000'},
-    {no:'BAG-20260626-002',pcs:3,canPcs:3,canWt:26,canVol:'0.120000',outWt:26,outVol:'0.120000'},
-    {no:'BAG-20260626-003',pcs:2,canPcs:2,canWt:15,canVol:'0.070000',outWt:15,outVol:'0.070000'},
-    {no:'BAG-20260627-001',pcs:6,canPcs:6,canWt:54,canVol:'0.260000',outWt:54,outVol:'0.260000'}
+    {no:'BAG-20260626-001',pcs:4,canPcs:4,canWt:38,canVol:'0.180000',outWt:38,outVol:'0.180000',time:'2026-06-26 09:00',
+     name:'蓝牙耳机',packageType:'编织袋',customsType:'跨境电商9610',service:'—',whRemark:'—'},
+    {no:'BAG-20260626-002',pcs:3,canPcs:3,canWt:26,canVol:'0.120000',outWt:26,outVol:'0.120000',time:'2026-06-26 11:20',
+     name:'手机配件',packageType:'编织袋',customsType:'买单报关',service:'带电',whRemark:'带电'},
+    {no:'BAG-20260626-003',pcs:2,canPcs:2,canWt:15,canVol:'0.070000',outWt:15,outVol:'0.070000',time:'2026-06-26 15:45',
+     name:'服装配件',packageType:'编织袋',customsType:'免报关',service:'—',whRemark:'—'},
+    {no:'BAG-20260627-001',pcs:6,canPcs:6,canWt:54,canVol:'0.260000',outWt:54,outVol:'0.260000',time:'2026-06-27 10:30',
+     name:'运动器材',packageType:'编织袋',customsType:'一般贸易',service:'报关',whRemark:'—'}
 ];
 
 var _finalAllocState={mode:'add',unselected:[],selected:[],expanded:{},filterTransport:'',query:{},
@@ -77,12 +106,18 @@ var _FA_QUERY_FIELDS=[
     {key:'unitNo',type:'text'},
     {key:'country',label:'收件国家',type:'select',options:['美国','尼日利亚','塞内加尔','科特迪瓦','多哥','喀麦隆']},
     {key:'destWarehouse',label:'收件仓库',type:'select',options:['拉各斯仓','达喀尔仓','阿比让仓','洛美仓','杜阿拉仓','LAX-Amazon FBA']},
-    {key:'category',label:'品名大类',type:'select',options:['普货','电子产品','服装鞋帽','五金工具','家居用品','食品','化妆品','其他']},
-    {key:'custType',label:'客户类型',type:'select',options:['直客','货代','合作客户']},
+    /* 包装类型与下单录入/入仓操作/运单管理共用 PACKAGE_TYPE_OPTIONS（04-table-catalog.js） */
+    {key:'packageType',label:'包装类型',type:'select',options:function(){return (typeof PACKAGE_TYPE_OPTIONS!=='undefined')?PACKAGE_TYPE_OPTIONS:[];}},
+    /* 客户：选项要到运行时才取得到（crm 客户档案在本文件之后加载），
+     * 所以 options 允许写成函数，渲染时才求值 —— 写成数组会在加载期就 ReferenceError */
+    {key:'customer',label:'客户',type:'select',options:function(){return (typeof getCrmCustomerOptions==='function')?getCrmCustomerOptions():[];}},
+    {key:'custLevel',label:'客户等级',type:'select',options:['A类','B类','C类','D类']},
     {key:'forecastTime',label:'预报时间',type:'date'},
     /* 与运单模块「修改附加服务」用的是同一份选项，别另起一套 */
     {key:'service',label:'附加服务',type:'select',options:['报关','合并报关','拆分报关','带电','带磁','贴箱唛']}
 ];
+/* 报关类型：配舱时要按报关方式分柜，和附加服务里的「报关」不是一回事 */
+var FA_CUSTOMS_TYPES=['一般贸易','买单报关','市场采购','跨境电商9610','免报关'];
 
 function _finalAllocClone(arr){return JSON.parse(JSON.stringify(arr));}
 
@@ -163,6 +198,25 @@ function _finalAllocResetState(mode,headerInit,selectedInit,filterTransport){
     _finalAllocState.header=Object.assign({no:'',transport:'海运',bl:'',country:'',containerNo:'',label:''},headerInit||{});
 }
 
+/* 单号后面的两列（品名 / 包装类型）与数字后面的三列（报关类型 / 附加服务 / 仓库备注）。
+ * 主行和子行共用，列数才不会对不上 —— 两处各写一遍迟早会错位。 */
+function _faTextCells(r){
+    return '<td class="px-2 py-2 whitespace-nowrap">'+esc(r.name||'—')+'</td>'+
+           '<td class="px-2 py-2 whitespace-nowrap">'+esc(tr(r.packageType||'—'))+'</td>';
+}
+function _faTailCells(r){
+    return '<td class="px-2 py-2 whitespace-nowrap">'+esc(tr(r.customsType||'—'))+'</td>'+
+           '<td class="px-2 py-2 whitespace-nowrap">'+esc(r.service||'—')+'</td>'+
+           '<td class="px-2 py-2 max-w-[140px] truncate" title="'+esc(r.whRemark||'')+'">'+esc(r.whRemark||'—')+'</td>';
+}
+/* 合计条：原来是一行灰色小字，配舱时最该盯的方数被淹没。
+ * 改成分格的统计块，方数用主色大号字，并给出「已选/未选」的对比感。 */
+function _faTotalCell(label,value,strong){
+    return '<div class="flex flex-col gap-0.5 px-3 py-1.5 border-r border-surface-200 last:border-r-0">'+
+        '<span class="text-[11px] text-text-muted whitespace-nowrap">'+esc(tr(label))+'</span>'+
+        '<span class="'+(strong?'text-base font-bold text-primary-700':'text-sm font-semibold text-text-primary')+' whitespace-nowrap">'+value+'</span></div>';
+}
+
 function _finalAllocPanelTable(side){
     const isLeft=side==='unselected';
     const rows=isLeft?_finalAllocState.unselected:_finalAllocState.selected;
@@ -171,10 +225,14 @@ function _finalAllocPanelTable(side){
     // 首列列名随运输方式变：空运=袋号，其余=运单号；空运还不走主子表
     const unit=_finalAllocUnitLabel();
     const isAir=_finalAllocIsAir();
-    const cols=isLeft?[unit,'件数','可配件数','可配实重','可配体积','实际重量','实际体积']
-                     :[unit,'件数','出货重量','出货体积'];
+    /* 品名/包装类型跟在单号后面（挑货时先看这两个），报关类型/附加服务/仓库备注
+     * 是配柜时的约束条件，放数字后面。两侧保持同样的顺序，左右对照时不用重新找列。 */
+    const cols=isLeft?[unit,'品名','包装类型','件数','可配件数','可配实重','可配体积','实际重量','实际体积','报关类型','附加服务','仓库备注']
+                     :[unit,'品名','包装类型','件数','出货重量','出货体积','报关类型','附加服务','仓库备注'];
     const colspan=cols.length+2;
-    let h='<div class="border border-surface-200 rounded-lg overflow-hidden bg-white"><div class="overflow-auto" style="max-height:520px"><table class="w-full text-xs" style="border-collapse:separate;border-spacing:0">';
+    /* 列多了必须给最小宽度，否则在半幅弹窗里会被压成一团；外层是 overflow-auto，超出就横向滚 */
+    const minW=isLeft?980:760;
+    let h='<div class="border border-surface-200 rounded-lg overflow-hidden bg-white"><div class="overflow-auto" style="max-height:520px"><table class="w-full text-xs" style="border-collapse:separate;border-spacing:0;min-width:'+minW+'px">';
     /* 表头统一走全站的 bg-surface-50 + text-text-secondary，不再用写死的 #EFF6FF */
     const thCls='px-2 py-2 text-left font-semibold text-text-secondary border-b border-surface-200';
     h+='<thead class="bg-surface-50 text-text-secondary sticky top-0 z-10"><tr>';
@@ -194,35 +252,39 @@ function _finalAllocPanelTable(side){
         /* 空运一行就是一袋，没有下钻的子行，展开箭头也就不给了 */
         h+='<td class="px-2 py-2 font-medium text-primary-700 whitespace-nowrap">'+
             (isAir?'':'<span class="cursor-pointer mr-1 text-text-muted" onclick="finalAllocToggleRow(\''+side+'\','+i+')">'+arrow+'</span>')+esc(r.no)+'</td>';
+        h+=_faTextCells(r);
         if(isLeft){
             h+='<td class="px-2 py-2 text-right">'+r.pcs+'</td>';
             h+='<td class="px-2 py-2 text-right">'+r.canPcs+'</td>';
             h+='<td class="px-2 py-2 text-right">'+r.canWt+'</td>';
             h+='<td class="px-2 py-2 text-right">'+r.canVol+'</td>';
             h+='<td class="px-2 py-2 text-right">'+r.outWt+'</td>';
-            h+='<td class="px-2 py-2 text-right">'+r.outVol+'</td></tr>';
+            h+='<td class="px-2 py-2 text-right">'+r.outVol+'</td>';
         }else{
             h+='<td class="px-2 py-2 text-right">'+r.pcs+'</td>';
             h+='<td class="px-2 py-2 text-right">'+r.outWt+'</td>';
-            h+='<td class="px-2 py-2 text-right">'+r.outVol+'</td></tr>';
+            h+='<td class="px-2 py-2 text-right">'+r.outVol+'</td>';
         }
+        h+=_faTailCells(r)+'</tr>';
         if(!isAir&&expanded&&r.sub){
             r.sub.forEach(function(s,si){
                 h+='<tr class="bg-surface-50/60 border-b border-surface-100"><td class="px-2 py-2 text-text-muted">'+(i+1)+'.'+(si+1)+'</td>';
                 h+='<td class="px-2 py-2"><input type="checkbox" class="final-alloc-sub-check rounded border-surface-300 text-primary-600" data-side="'+side+'" data-pidx="'+i+'" data-sidx="'+si+'" onchange="finalAllocSyncParent(this)"></td>';
                 h+='<td class="px-2 py-2 pl-6 text-text-secondary whitespace-nowrap">'+esc(s.no)+'</td>';
+                h+=_faTextCells(s);
                 if(isLeft){
                     h+='<td class="px-2 py-2 text-right">'+s.pcs+'</td>';
                     h+='<td class="px-2 py-2 text-right">'+s.canPcs+'</td>';
                     h+='<td class="px-2 py-2 text-right">'+s.canWt+'</td>';
                     h+='<td class="px-2 py-2 text-right">'+s.canVol+'</td>';
                     h+='<td class="px-2 py-2 text-right">'+s.outWt+'</td>';
-                    h+='<td class="px-2 py-2 text-right">'+s.outVol+'</td></tr>';
+                    h+='<td class="px-2 py-2 text-right">'+s.outVol+'</td>';
                 }else{
                     h+='<td class="px-2 py-2 text-right">'+s.pcs+'</td>';
                     h+='<td class="px-2 py-2 text-right">'+s.outWt+'</td>';
-                    h+='<td class="px-2 py-2 text-right">'+s.outVol+'</td></tr>';
+                    h+='<td class="px-2 py-2 text-right">'+s.outVol+'</td>';
                 }
+                h+=_faTailCells(s)+'</tr>';
             });
         }
     });
@@ -232,20 +294,23 @@ function _finalAllocPanelTable(side){
     const totalCan=rows.reduce(function(a,b){return a+(+b.canPcs||0);},0);
     const totalOutWt=rows.reduce(function(a,b){return a+(+b.outWt||0);},0);
     const totalOutVol=rows.reduce(function(a,b){return a+(parseFloat(b.outVol)||0);},0);
-    h+='<div class="flex items-center gap-4 px-3 py-2 border-t border-surface-200 bg-surface-50/40 text-xs text-text-secondary">';
-    h+='<span class="font-medium text-text-primary">'+tr('总合计')+'：</span>';
+    h+='<div class="border-t-2 border-primary-200 bg-primary-50/40">';
+    h+='<div class="flex items-stretch flex-wrap">';
+    h+='<div class="flex items-center px-3 py-1.5 border-r border-surface-200">'+
+       '<span class="text-xs font-bold text-primary-700 whitespace-nowrap">'+tr('总合计')+'</span></div>';
     if(isLeft){
-        h+='<span>'+tr('总票数')+': '+totalPcs+'</span>';
-        h+='<span>'+tr('可配件数')+': '+totalCan+'</span>';
-        h+='<span>'+tr('实际重量')+': '+totalOutWt+'</span>';
-        h+='<span>'+tr('实际方数')+': '+totalOutVol.toFixed(6)+'</span>';
+        h+=_faTotalCell('总票数',rows.length,false);
+        h+=_faTotalCell('总件数',totalPcs,false);
+        h+=_faTotalCell('可配件数',totalCan,false);
+        h+=_faTotalCell('实际重量',totalOutWt.toLocaleString()+' KG',false);
+        h+=_faTotalCell('实际方数',totalOutVol.toFixed(3)+' CBM',true);
     }else{
-        h+='<span>'+tr('总票数')+': '+rows.length+'</span>';
-        h+='<span>'+tr('总件数')+': '+totalPcs+'</span>';
-        h+='<span>'+tr('出货重量')+': '+totalOutWt+'</span>';
-        h+='<span>'+tr('出货体积')+': '+totalOutVol.toFixed(6)+'</span>';
+        h+=_faTotalCell('总票数',rows.length,false);
+        h+=_faTotalCell('总件数',totalPcs,false);
+        h+=_faTotalCell('出货重量',totalOutWt.toLocaleString()+' KG',false);
+        h+=_faTotalCell('出货体积',totalOutVol.toFixed(3)+' CBM',true);
     }
-    h+='</div></div>';
+    h+='</div></div></div>';
     return h;
 }
 
@@ -266,8 +331,10 @@ function _finalAllocLeftPanel(showAdvanced){
         const val=_finalAllocState.query[q.key]||'';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr(label)+'</label>';
         if(q.type==='select'){
+            /* options 可以是数组，也可以是函数（选项依赖后加载的模块，渲染时才求值） */
+            const opts=(typeof q.options==='function')?(q.options()||[]):(q.options||[]);
             h+='<select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-q-'+q.key+'"><option value="">'+tr('请选择')+tr(label)+'</option>';
-            q.options.forEach(function(o){h+='<option'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});
+            opts.forEach(function(o){h+='<option'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});
             h+='</select>';
         }else if(q.type==='date'){
             h+='<input type="date" value="'+esc(val)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-q-'+q.key+'">';
@@ -283,6 +350,7 @@ function _finalAllocLeftPanel(showAdvanced){
     const btnPrimary='h-8 px-3 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg cursor-pointer';
     const btnGhost='h-8 px-3 text-xs font-medium text-text-secondary bg-white border border-surface-200 hover:bg-surface-50 rounded-lg cursor-pointer';
     h+='<button class="'+btnPrimary+'" onclick="showToast(tr(\'查询完成\'))">'+tr('查询')+'</button>';
+    h+='<button class="'+btnPrimary+'" onclick="openFinalAllocAutoModal()">'+tr('一键配舱')+'</button>';
     /* 空运是平铺的袋列表，没有可展开的子行，这两个按钮就不给了 */
     if(!_finalAllocIsAir()){
         h+='<button class="'+btnGhost+'" onclick="finalAllocExpandAll(true)">'+tr('全部展开')+'</button>';
@@ -290,6 +358,111 @@ function _finalAllocLeftPanel(showAdvanced){
     }
     h+='</div>';
     return h;
+}
+
+/* ===== 一键配舱 =====
+ * 录最大方数 → 按预报时间先到先配、整票累加（不拆票）→ 装不下就停 →
+ * 弹出拉取结果（票数/件数/重量/体积/装载率）→ 确认后整批移到右侧。
+ * 用独立浮层而不是 #crud-modal：配舱弹窗本身占着 crud-modal，套用会把它冲掉
+ *（与 PDA 的「录入清点件数」同一套做法）。 */
+var _faAutoPicked=[];
+function _faAutoOverlay(inner){
+    var old=document.getElementById('fa-auto-modal');
+    if(old)old.remove();
+    var m=document.createElement('div');
+    m.id='fa-auto-modal';
+    m.className='fixed inset-0 z-[999] flex items-center justify-center bg-black/40 p-6';
+    m.innerHTML='<div class="w-full max-w-md rounded-2xl bg-white shadow-xl overflow-hidden">'+inner+'</div>';
+    document.body.appendChild(m);
+    return m;
+}
+function closeFinalAllocAutoModal(){
+    var m=document.getElementById('fa-auto-modal');
+    if(m)m.remove();
+}
+function openFinalAllocAutoModal(){
+    finalAllocSyncForm();
+    if(!_finalAllocState.unselected.length){showToast(tr('未选数据里没有可配的货'));return;}
+    var unit=_finalAllocUnitLabel();
+    var h='<div class="px-4 py-3 border-b border-surface-200 text-sm font-semibold text-text-primary">'+tr('一键配舱')+'</div>';
+    h+='<div class="p-4 space-y-3">';
+    h+='<div class="rounded-lg bg-primary-50/60 border border-primary-100 px-3 py-2 text-xs text-primary-700">'+
+       tr('按预报时间从早到晚整票拉取，累计体积不超过最大方数；不拆票。')+'</div>';
+    h+='<div><div class="text-xs text-text-secondary mb-1">'+tr('最大方数')+'（CBM）<span class="text-red-500 ml-1">*</span></div>'+
+       '<input id="fa-auto-max" type="number" min="0" step="0.001" value="28" class="w-full h-10 px-3 rounded-lg border border-surface-200 bg-surface-50 text-base text-text-primary"></div>';
+    h+='<div class="text-[11px] text-text-muted">'+tr('当前未选')+' '+_finalAllocState.unselected.length+' '+tr(unit==='袋号'?'袋':'票')+
+       '，'+tr('合计')+' '+_faSumVol(_finalAllocState.unselected).toFixed(3)+' CBM</div>';
+    h+='</div>';
+    h+='<div class="grid grid-cols-2 gap-2 px-4 pb-4">'+
+       '<button type="button" onclick="closeFinalAllocAutoModal()" class="h-10 rounded-lg border border-surface-200 text-sm text-text-secondary cursor-pointer">'+tr('取消')+'</button>'+
+       '<button type="button" onclick="runFinalAllocAutoPick()" class="h-10 rounded-lg bg-primary-600 text-white text-sm font-medium cursor-pointer">'+tr('开始拉取')+'</button>'+
+       '</div>';
+    _faAutoOverlay(h);
+    setTimeout(function(){var el=document.getElementById('fa-auto-max');if(el){el.focus();el.select();}},50);
+}
+function _faSumVol(rows){
+    return (rows||[]).reduce(function(a,b){return a+(parseFloat(b.outVol)||0);},0);
+}
+/* 按预报时间升序；没有 time 的排到最后，保持原相对次序 */
+function _faByTime(rows){
+    return (rows||[]).map(function(r,i){return {r:r,i:i};}).sort(function(a,b){
+        var ta=String(a.r.time||''),tb=String(b.r.time||'');
+        if(ta&&tb&&ta!==tb)return ta<tb?-1:1;
+        if(ta&&!tb)return -1;
+        if(!ta&&tb)return 1;
+        return a.i-b.i;
+    }).map(function(x){return x.r;});
+}
+function runFinalAllocAutoPick(){
+    var el=document.getElementById('fa-auto-max');
+    var max=el?parseFloat(el.value):NaN;
+    if(isNaN(max)||max<=0){showToast(tr('请输入正确的最大方数'));if(el)el.focus();return;}
+    var picked=[],vol=0;
+    _faByTime(_finalAllocState.unselected).forEach(function(r){
+        var v=parseFloat(r.outVol)||0;
+        if(vol+v<=max){picked.push(r);vol+=v;}
+    });
+    if(!picked.length){
+        showToast(tr('最大方数太小，最早那票就装不下'));
+        return;
+    }
+    _faAutoPicked=picked;
+    var pcs=picked.reduce(function(a,b){return a+(+b.pcs||0);},0);
+    var wt=picked.reduce(function(a,b){return a+(+b.outWt||0);},0);
+    var rate=max?(vol/max*100):0;
+    var unit=_finalAllocUnitLabel()==='袋号'?'袋':'票';
+    var h='<div class="px-4 py-3 border-b border-surface-200 text-sm font-semibold text-text-primary">'+tr('确认拉取结果')+'</div>';
+    h+='<div class="p-4 space-y-3">';
+    h+='<div class="grid grid-cols-2 gap-2">';
+    [[unit==='袋'?'拉取袋数':'拉取票数',picked.length+' '+tr(unit)],['总件数',pcs],
+     ['总重量',wt.toLocaleString()+' KG'],['总体积',vol.toFixed(3)+' CBM']].forEach(function(p,i){
+        h+='<div class="rounded-lg border border-surface-200 px-3 py-2">'+
+           '<div class="text-[11px] text-text-muted">'+esc(tr(p[0]))+'</div>'+
+           '<div class="'+(i===3?'text-base font-bold text-primary-700':'text-sm font-semibold text-text-primary')+' mt-0.5">'+esc(String(p[1]))+'</div></div>';
+    });
+    h+='</div>';
+    h+='<div class="rounded-lg bg-surface-50 border border-surface-200 px-3 py-2 text-xs text-text-secondary">'+
+       tr('最大方数')+' '+max.toFixed(3)+' CBM · '+tr('装载率')+' <span class="font-bold text-primary-700">'+rate.toFixed(1)+'%</span>'+
+       ' · '+tr('剩余')+' '+(max-vol).toFixed(3)+' CBM</div>';
+    var restCount=_finalAllocState.unselected.length-picked.length;
+    if(restCount>0)h+='<div class="text-[11px] text-text-muted">'+tr('还有')+' '+restCount+' '+tr(unit)+tr('装不下，留在未选列表')+'</div>';
+    h+='</div>';
+    h+='<div class="grid grid-cols-2 gap-2 px-4 pb-4">'+
+       '<button type="button" onclick="openFinalAllocAutoModal()" class="h-10 rounded-lg border border-surface-200 text-sm text-text-secondary cursor-pointer">'+tr('重新设置')+'</button>'+
+       '<button type="button" onclick="confirmFinalAllocAutoPick()" class="h-10 rounded-lg bg-primary-600 text-white text-sm font-medium cursor-pointer">'+tr('确认拉入')+'</button>'+
+       '</div>';
+    _faAutoOverlay(h);
+}
+function confirmFinalAllocAutoPick(){
+    if(!_faAutoPicked.length){closeFinalAllocAutoModal();return;}
+    var picked=_faAutoPicked;
+    _finalAllocState.unselected=_finalAllocState.unselected.filter(function(r){return picked.indexOf(r)<0;});
+    picked.forEach(function(r){_finalAllocState.selected.push(r);});
+    _finalAllocState.expanded={};
+    _faAutoPicked=[];
+    closeFinalAllocAutoModal();
+    finalAllocRerender();
+    showToast(tr('已一键配舱')+' '+picked.length+' '+tr(_finalAllocUnitLabel()==='袋号'?'袋':'票'));
 }
 
 function _finalAllocRightPanel(showHeader){

@@ -2,8 +2,8 @@
    多单号标签式查询 + 历史记录 + 轨迹卡片（可展开时间轴）+ 子单轨迹弹窗。
    配色沿用主体蓝白风格：查询按钮/时间轴节点用 primary，状态徽章走全局 statusBadge。 */
 
-var _tqTags=['H2608180007','H2608180006','H2608220003'];
-var _tqHistory=['H2608220003','H2608180006','H2608180007'];
+var _tqTags=['H2609050001','H2608180006','H2608220003'];
+var _tqHistory=['H2608280002','H2608220003','H2608180007','H2609050001'];
 var _tqExpanded={};      /* 主单展开状态 code -> true */
 var _tqSubExpanded={};   /* 子单展开状态 subCode -> true */
 var _tqSubOwner='';      /* 子单轨迹弹窗当前对应的主单号 */
@@ -12,16 +12,42 @@ var _tqSubOwner='';      /* 子单轨迹弹窗当前对应的主单号 */
 var _tqHideOperator=false;
 
 var TQ_ORDERS={
-'H2608180006':{orderTime:'2026-08-18 11:15:05',country:'US',status:'已到货',subCount:4,events:[
+/* 海运 · 深圳→达喀尔：已离港在途（进度 2/4，当前节点 pulse 演示） */
+'H2609050001':{orderTime:'2026-09-05 10:20:31',country:'达喀尔港',status:'已离港',subCount:6,events:[
+    {time:'2026-09-11 08:40:12',by:'天地总部管理员',loc:'南海海域',cn:'船舶正常航行中（船名 COSCO STAR / 航次 0612W）',en:'Vessel sailing normally (COSCO STAR / Voyage 0612W)'},
+    {time:'2026-09-08 19:25:40',by:'天地总部管理员',loc:'深圳盐田港',cn:'已离港，预计 10-03 抵达达喀尔港',en:'Departed from port, ETA Dakar Port on 10-03'},
+    {time:'2026-09-08 09:12:05',by:'天地总部管理员',loc:'深圳盐田港',cn:'报关放行，货物已装船',en:'Customs released, cargo loaded on board'},
+    {time:'2026-09-07 16:48:33',by:'天地仓管理员',loc:'深圳盐田仓',cn:'配舱出库完成，货柜已拖至码头',en:'Load plan outbound completed, container hauled to terminal'},
+    {time:'2026-09-06 14:22:18',by:'天地仓管理员',loc:'深圳盐田仓',cn:'仓库收货已完成（42件 / 860.5KG / 3.28CBM）',en:'Warehouse receipt completed (42pcs / 860.5KG / 3.28CBM)'},
+    {time:'2026-09-05 10:20:31',by:'天地总部管理员',loc:'',cn:'客户已提交预报',en:'Customer has submitted order'}
+]},
+/* 海运 · 深圳→拉各斯：已到港清关中（进度 3/4） */
+'H2608280002':{orderTime:'2026-08-28 09:05:12',country:'拉各斯港',status:'已到港',subCount:3,events:[
+    {time:'2026-09-13 11:30:22',by:'天地海外仓管理员',loc:'拉各斯港',cn:'到港清关中，预计 2 天完成',en:'Arrived at port, customs clearance in progress, est. 2 days'},
+    {time:'2026-09-13 06:15:48',by:'天地海外仓管理员',loc:'拉各斯港',cn:'船舶已抵港，等待靠泊卸货',en:'Vessel arrived, waiting for berth'},
+    {time:'2026-09-02 21:40:05',by:'天地总部管理员',loc:'深圳盐田港',cn:'已离港（船名 MAERSK LAGOS / 航次 0836W）',en:'Departed (MAERSK LAGOS / Voyage 0836W)'},
+    {time:'2026-08-31 15:52:30',by:'天地仓管理员',loc:'深圳盐田仓',cn:'配舱出库完成，货柜已拖至码头',en:'Load plan outbound completed, container hauled to terminal'},
+    {time:'2026-08-29 10:18:44',by:'天地仓管理员',loc:'深圳盐田仓',cn:'仓库收货已完成（55件 / 1,120KG / 4.31CBM）',en:'Warehouse receipt completed (55pcs / 1,120KG / 4.31CBM)'},
+    {time:'2026-08-28 09:05:12',by:'天地总部管理员',loc:'',cn:'客户已提交预报',en:'Customer has submitted order'}
+]},
+/* 空运 · 美国线：已签收（进度 4/4 全完成演示） */
+'H2608180006':{orderTime:'2026-08-18 11:15:05',country:'US',status:'已签收',subCount:4,events:[
+    {time:'2026-08-20 15:30:26',by:'天地海外仓管理员',loc:'洛杉矶海外仓',cn:'客户已签收，运单完结',en:'Signed by customer, shipment closed'},
+    {time:'2026-08-19 09:42:11',by:'天地海外仓管理员',loc:'洛杉矶机场',cn:'已到港，转海外仓派送',en:'Arrived at airport, transferred to overseas warehouse for delivery'},
+    {time:'2026-08-18 22:05:47',by:'天地总部管理员',loc:'广州白云机场',cn:'航班已起飞（CA985）',en:'Flight departed (CA985)'},
     {time:'2026-08-18 11:31:58',by:'天地总部管理员',loc:'',cn:'终配舱登记已完成',en:'The final cabin allocation registration has been completed'},
     {time:'2026-08-18 11:25:32',by:'天地仓管理员',loc:'',cn:'仓库收货已完成',en:'The warehouse receipt process has been completed'},
     {time:'2026-08-18 11:15:05',by:'天地总部管理员',loc:'',cn:'客户已提交预报',en:'Customer has submitted order'}
 ]},
-'H2608180007':{orderTime:'2026-08-18 11:15:07',country:'US',status:'已到货',subCount:3,events:[
+/* 空运 · 美国线：在途（进度 2/4） */
+'H2608180007':{orderTime:'2026-08-18 11:15:07',country:'US',status:'已离港',subCount:3,events:[
+    {time:'2026-08-19 01:12:33',by:'天地总部管理员',loc:'太平洋上空',cn:'航班飞行中，预计 08-19 22:40 抵达',en:'Flight in transit, ETA 08-19 22:40'},
+    {time:'2026-08-18 23:48:09',by:'天地总部管理员',loc:'广州白云机场',cn:'航班已起飞（CA987）',en:'Flight departed (CA987)'},
     {time:'2026-08-18 11:31:58',by:'天地总部管理员',loc:'',cn:'终配舱登记已完成',en:'The final cabin allocation registration has been completed'},
     {time:'2026-08-18 11:25:22',by:'天地仓管理员',loc:'',cn:'仓库收货已完成',en:'The warehouse receipt process has been completed'},
     {time:'2026-08-18 11:15:07',by:'天地总部管理员',loc:'',cn:'客户已提交预报',en:'Customer has submitted order'}
 ]},
+/* 空运 · 美国线：刚入仓（进度 1/4） */
 'H2608220003':{orderTime:'2026-08-22 09:54:44',country:'US',status:'已到货',subCount:2,events:[
     {time:'2026-08-22 10:40:17',by:'天地仓管理员',loc:'',cn:'仓库收货已完成',en:'The warehouse receipt process has been completed'},
     {time:'2026-08-22 09:54:44',by:'天地总部管理员',loc:'',cn:'客户已提交预报',en:'Customer has submitted order'}
@@ -43,34 +69,95 @@ function tqBoxIconHtml(){
         '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>';
 }
 
-/* ---------- 查询栏 ---------- */
-function tqSearchBarHtml(){
-    var h='<div class="flex items-center justify-center gap-2 flex-wrap">';
-    h+='<div class="flex items-center gap-1.5 flex-wrap min-h-[38px] w-[560px] max-w-full px-2 py-1.5 border border-surface-200 rounded-lg bg-white">';
-    h+='<span id="tq-tags" class="contents">'+tqTagsHtml()+'</span>';
-    h+='<input id="tq-input" onkeydown="tqInputKey(event)" class="flex-1 min-w-[120px] h-7 px-1 text-sm bg-transparent outline-none" placeholder="'+esc(tr('输入运单号后回车，可输入多个'))+'">';
-    h+='<button type="button" onclick="tqClearTags()" title="'+esc(tr('清空'))+'" class="w-5 h-5 rounded-full text-text-muted hover:bg-surface-100 hover:text-text-secondary cursor-pointer leading-none">×</button>';
+/* ---------- 进度条：已下单→已入仓→已离港→已到港→已签收 ---------- */
+var TQ_PROGRESS_STEPS=['已下单','已入仓','已离港','已到港','已签收'];
+function tqProgressOf(status){
+    var map={'草稿':0,'已预报':0,'已确认':0,'已到货':1,'已配舱':1,'已出库':2,'已离港':2,'在途':2,'已到港':3,'海外已到仓':3,'海外已出仓':3,'已签收':4,'已退件':4,'已取消':0};
+    return map[status]!==undefined?map[status]:0;
+}
+function tqProgressHtml(status){
+    var cur=tqProgressOf(status);
+    var h='<div class="flex items-start select-none">';
+    TQ_PROGRESS_STEPS.forEach(function(step,i){
+        var done=i<cur,curr=i===cur;
+        h+='<div class="flex flex-col items-center flex-shrink-0 w-12">';
+        if(curr)h+='<span class="w-3.5 h-3.5 rounded-full bg-primary-600 ring-4 ring-primary-100 pulse"></span>';
+        else if(done)h+='<span class="w-2.5 h-2.5 rounded-full bg-primary-500 mt-1"></span>';
+        else h+='<span class="w-2.5 h-2.5 rounded-full border-2 border-surface-300 bg-white mt-1"></span>';
+        h+='<span class="mt-1.5 text-[11px] whitespace-nowrap '+(curr?'font-semibold text-primary-700':(done?'text-text-secondary':'text-text-muted'))+'">'+tr(step)+'</span></div>';
+        if(i<TQ_PROGRESS_STEPS.length-1)h+='<div class="flex-1 h-0 mt-[9px] mx-1 border-t-2 '+(i<cur?'border-primary-400':'border-dashed border-surface-300')+'"></div>';
+    });
     h+='</div>';
-    h+='<button type="button" onclick="tqRunQuery()" class="h-9 px-5 inline-flex items-center gap-1.5 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">';
+    return h;
+}
+/* 按当前语言取事件文案：zh→中文，en/fr/pt→英文（无英文回退中文） */
+function tqEventText(e){
+    if(!e)return '';
+    if(_currentLang!=='zh'&&e.en)return e.en;
+    return e.cn||e.en||'';
+}
+/* 运输方式图标：空运金 / 海运蓝（fill 图标，飞机与货船） */
+function tqTransportIconHtml(isAir){
+    var style=isAir?'background:#FAF3E3;color:#B8892F':'background:#EAF3F9;color:#1F6FA8';
+    var svg=isAir
+        ?'<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M21.5 15.5v-2l-8-5V3.2c0-.7-.5-1.2-1.2-1.2S11 2.5 11 3.2v5.3l-8 5v2l8-2.5v5.2l-2.2 1.5v1.3l3.5-1 3.5 1v-1.3L13.5 18.2V13l8 2.5z"/></svg>'
+        :'<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 21c-1.4 0-2.8-.5-4-1.3-2.4 1.7-5.6 1.7-8 0-1.2.8-2.6 1.3-4 1.3H2v-2h1.7L6 13V5c0-.6.4-1 1-1h3V2h4v2h3c.6 0 1 .4 1 1v8l2.3 6H22v2h-2zM8 11.7l4 1.3 4-1.3V6H8v5.7z"/></svg>';
+    return '<span class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="'+style+'" title="'+esc(tr(isAir?'空运':'海运'))+'">'+svg+'</span>';
+}
+/* 路线虚线上的移动载具小图标 */
+function tqRouteVehicleHtml(isAir){
+    var svg=isAir
+        ?'<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M21.5 15.5v-2l-8-5V3.2c0-.7-.5-1.2-1.2-1.2S11 2.5 11 3.2v5.3l-8 5v2l8-2.5v5.2l-2.2 1.5v1.3l3.5-1 3.5 1v-1.3L13.5 18.2V13l8 2.5z"/></svg>'
+        :'<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 21c-1.4 0-2.8-.5-4-1.3-2.4 1.7-5.6 1.7-8 0-1.2.8-2.6 1.3-4 1.3H2v-2h1.7L6 13V5c0-.6.4-1 1-1h3V2h4v2h3c.6 0 1 .4 1 1v8l2.3 6H22v2h-2zM8 11.7l4 1.3 4-1.3V6H8v5.7z"/></svg>';
+    return '<span class="absolute left-1/2 -translate-x-1/2 bg-white px-1 '+(isAir?'text-gold-500':'text-primary-500')+'" style="top:-9px">'+svg+'</span>';
+}
+function tqPinIconHtml(){
+    return '<svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><circle cx="12" cy="11" r="3" stroke-width="2"/></svg>';
+}
+/* 空状态：插画 + 引导 */
+function tqEmptyStateHtml(){
+    return '<div class="py-16 flex flex-col items-center justify-center text-center">'+
+        '<svg class="w-16 h-16 text-surface-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>'+
+        '<div class="text-sm font-medium text-text-secondary mt-4">'+tr('输入运单号查询物流轨迹')+'</div>'+
+        '<div class="text-xs text-text-muted mt-1.5">'+tr('支持一次粘贴多个单号，或从上方历史记录快速选择')+'</div></div>';
+}
+
+/* ---------- 查询栏：白色卡片（图标前缀大输入框 + 查询按钮 + 内嵌历史记录） ---------- */
+function tqSearchBarHtml(){
+    var h='<div class="bg-white rounded-xl border border-surface-200 px-4 py-3.5 shadow-sm">';
+    h+='<div class="flex items-stretch gap-2 flex-wrap">';
+    /* 输入框：搜索图标前缀 + tags + input + 清空 */
+    h+='<div class="flex items-center gap-1.5 flex-wrap flex-1 min-w-[280px] min-h-[44px] pl-3 pr-2 py-1.5 border border-surface-200 rounded-lg bg-surface-50 focus-within:bg-white focus-within:border-primary-400 transition-colors">';
+    h+='<svg class="w-4 h-4 text-text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
+    h+='<span id="tq-tags" class="contents">'+tqTagsHtml()+'</span>';
+    h+='<input id="tq-input" onkeydown="tqInputKey(event)" class="flex-1 min-w-[140px] h-8 px-1 text-sm bg-transparent outline-none" placeholder="'+esc(tr('输入运单号后回车，可输入多个'))+'">';
+    h+='<button type="button" onclick="tqClearTags()" title="'+esc(tr('清空'))+'" class="w-6 h-6 rounded-full text-text-muted hover:bg-surface-200 hover:text-text-secondary cursor-pointer leading-none flex-shrink-0">×</button>';
+    h+='</div>';
+    /* 查询按钮：与输入框同高 */
+    h+='<button type="button" onclick="tqRunQuery()" class="h-11 px-6 inline-flex items-center gap-1.5 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer flex-shrink-0">';
     h+='<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>'+tr('查询')+'</button>';
+    h+='</div>';
+    h+=tqHistoryHtml();
     h+='</div>';
     return h;
 }
 
 function tqTagsHtml(){
     return _tqTags.map(function(t,i){
-        return '<span class="inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded bg-primary-50 border border-primary-100 text-primary-700 text-xs whitespace-nowrap">'+esc(t)+
+        return '<span class="inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded-md bg-primary-50 border border-primary-100 text-primary-700 text-xs font-mono whitespace-nowrap">'+esc(t)+
             '<button type="button" onclick="tqRemoveTag('+i+')" class="w-4 h-4 rounded hover:bg-primary-100 cursor-pointer leading-none">×</button></span>';
     }).join('');
 }
 
+/* 历史记录：内嵌搜索卡片底部，时钟图标 + chips（hover 转主色，样式与标签呼应） */
 function tqHistoryHtml(){
     if(!_tqHistory.length)return '<div id="tq-history"></div>';
-    var h='<div id="tq-history" class="flex items-center justify-center gap-2 flex-wrap mt-3 text-xs">';
-    h+='<span class="text-text-secondary">'+tr('历史记录')+'：</span>';
+    var h='<div id="tq-history" class="flex items-center gap-2 flex-wrap mt-3 pt-3 border-t border-surface-100 text-xs">';
+    h+='<span class="inline-flex items-center gap-1 text-text-muted flex-shrink-0">'+
+        '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'+tr('历史记录')+'：</span>';
     _tqHistory.forEach(function(t,i){
-        h+='<span class="inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded border border-surface-200 bg-surface-50 text-text-secondary whitespace-nowrap">';
-        h+='<button type="button" onclick="tqUseHistory(\''+esc(t)+'\')" class="cursor-pointer hover:text-primary-600">'+esc(t)+'</button>';
+        h+='<span class="inline-flex items-center gap-1 h-6 pl-2.5 pr-1 rounded-md border border-surface-200 bg-surface-50 text-text-secondary hover:border-primary-300 hover:bg-primary-50 transition-colors whitespace-nowrap">';
+        h+='<button type="button" onclick="tqUseHistory(\''+esc(t)+'\')" class="cursor-pointer hover:text-primary-600 font-mono">'+esc(t)+'</button>';
         h+='<button type="button" onclick="tqRemoveHistory('+i+')" class="w-4 h-4 rounded hover:bg-surface-200 cursor-pointer leading-none">×</button></span>';
     });
     h+='</div>';
@@ -84,24 +171,32 @@ function tqCardHtml(code,o,opts){
     var last=tqLatest(o);
     var expanded=!!opts.expanded;
     var toggle=opts.onToggle||'';
-    var h='<div class="rounded-xl border border-surface-200 bg-white overflow-hidden">';
-    h+='<div class="flex items-start gap-4 px-4 py-3 '+(expanded?'bg-surface-50/70':'bg-white hover:bg-surface-50/50')+(toggle?' cursor-pointer':'')+'"'+(toggle?' onclick="'+toggle+'"':'')+'>';
-    h+='<div class="flex items-center gap-3 w-56 flex-shrink-0">'+tqBoxIconHtml();
-    h+='<div class="min-w-0"><div class="text-sm font-medium text-primary-700 truncate">'+esc(code)+'</div>';
-    h+='<div class="mt-1.5">'+statusBadge(o.status||'已预报')+'</div></div></div>';
-    h+='<div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-1.5 text-xs">';
-    h+=tqField('下单时间',o.orderTime)+tqField('运单号',opts.wbNo||code)+tqField('客户单号',opts.custNo||code);
-    h+=tqField('收件国家',o.country)+tqField('轨迹时间',last.time)+tqField('轨迹发生地',last.loc||'-');
-    h+='<div class="md:col-span-3"><span class="text-text-secondary">'+tr('轨迹内容')+'：</span>'+
-        '<span class="text-text-primary font-medium">'+esc(last.cn||'')+'</span>'+
-        (last.en?'<span class="ml-2 text-primary-600">'+esc(last.en)+'</span>':'')+'</div>';
-    h+='</div>';
-    h+='<div class="flex items-center gap-2 flex-shrink-0">';
+    var isAir=(o.country==='US'); /* 演示：美国线走空运图标，其余海运 */
+    var h='<div class="rounded-xl border border-surface-200 bg-white overflow-hidden card-hover">';
+    h+='<div class="px-4 pt-3.5 pb-3 '+(expanded?'bg-surface-50/70':'bg-white hover:bg-surface-50/50')+(toggle?' cursor-pointer':'')+'"'+(toggle?' onclick="'+toggle+'"':'')+'>';
+    /* 头部：运输图标 + 单号 + 路线 + 状态 */
+    h+='<div class="flex items-center gap-3 flex-wrap">';
+    h+=tqTransportIconHtml(isAir);
+    h+='<div class="min-w-0"><div class="text-sm font-semibold text-primary-700 font-mono">'+esc(code)+'</div>'+
+       '<div class="text-[11px] text-text-muted mt-0.5">'+tr('下单时间')+' '+esc(o.orderTime)+'</div></div>';
+    h+='<div class="flex items-center gap-2 flex-1 min-w-[170px] justify-center px-2">'+
+       '<span class="text-xs font-medium text-text-primary whitespace-nowrap">'+tr('深圳')+'</span>'+
+       '<span class="relative flex-1 max-w-[130px] border-t-2 border-dashed '+(isAir?'border-gold-400':'border-primary-300')+'">'+tqRouteVehicleHtml(isAir)+'</span>'+
+       '<span class="text-xs font-medium text-text-primary whitespace-nowrap">'+esc(o.country)+'</span></div>';
+    h+='<div class="flex items-center gap-2.5 ml-auto flex-shrink-0">'+statusBadge(o.status||'已预报');
     if(opts.showSub){
         h+='<button type="button" onclick="event.stopPropagation();openTqSubModal(\''+esc(code)+'\')" class="h-7 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">'+tr('子单轨迹')+'</button>';
     }
     if(toggle)h+=tqChevronHtml(expanded);
     h+='</div></div>';
+    /* 进度条 */
+    h+='<div class="mt-4 pr-1">'+tqProgressHtml(o.status)+'</div>';
+    /* 最新动态摘要条 */
+    h+='<div class="mt-2 flex items-center gap-2 text-xs rounded-lg bg-primary-50/60 border border-primary-100 px-3 py-2">'+
+       '<span class="w-1.5 h-1.5 rounded-full bg-primary-600 flex-shrink-0"></span>'+
+       '<span class="text-text-primary font-medium truncate">'+esc(tqEventText(last))+'</span>'+
+       '<span class="ml-auto text-text-muted whitespace-nowrap flex-shrink-0">'+esc(last.time)+'</span></div>';
+    h+='</div>';
     if(expanded)h+='<div class="px-4 py-3 border-t border-surface-100">'+tqTimelineHtml(o.events)+'</div>';
     h+='</div>';
     return h;
@@ -119,17 +214,25 @@ function tqChevronHtml(expanded){
 function tqTimelineHtml(events){
     events=events||[];
     if(!events.length)return '<div class="py-6 text-center text-xs text-text-muted">'+tr('暂无轨迹')+'</div>';
-    var h='<div class="relative pl-9">';
-    h+='<div class="absolute left-[11px] top-6 bottom-3 w-px bg-primary-200"></div>';
+    var h='<div class="relative pl-8">';
+    h+='<div class="absolute left-[13px] top-2 bottom-2 w-px bg-surface-300"></div>';
     events.forEach(function(e,i){
-        h+='<div class="relative pb-4 last:pb-0">';
-        h+='<div class="absolute -left-9 top-0 w-6 h-6 rounded-full border-2 border-primary-500 bg-white text-primary-600 text-[11px] font-semibold flex items-center justify-center">'+(i+1)+'</div>';
-        h+='<div class="text-xs text-text-primary">'+esc(e.time||'')+
-            '<span class="ml-2 text-text-secondary">【'+
-            (_tqHideOperator?'':(tr('创建人')+'：'+esc(e.by||'-')+'　'))+
-            tr('发生地')+'：'+esc(e.loc||'-')+'】</span></div>';
-        h+='<div class="mt-1 text-xs"><span class="text-text-primary font-medium">'+esc(e.cn||'')+'</span>'+
-            (e.en?'<span class="ml-2 text-primary-600">'+esc(e.en)+'</span>':'')+'</div>';
+        var isCur=i===0;
+        var abnormal=/延误|异常|查验|破损|扣留/.test(e.cn||'');
+        h+='<div class="relative pb-4 last:pb-0'+(abnormal?' rounded-r-lg bg-amber-50/70 py-1.5 pr-2':'')+'">';
+        if(isCur)h+='<span class="absolute -left-[26px] top-0.5 w-3.5 h-3.5 rounded-full bg-primary-600 ring-4 ring-primary-100"></span>';
+        else h+='<span class="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full '+(abnormal?'bg-amber-500':'border-2 border-surface-300 bg-white')+'"></span>';
+        h+='<div class="flex items-center gap-2 flex-wrap">'+
+            '<span class="text-xs font-medium '+(isCur?'text-primary-700':'text-text-primary')+'">'+esc(tqEventText(e))+'</span>'+
+            (isCur?'<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary-600 text-white">'+tr('当前节点')+'</span>':'')+
+            (abnormal?'<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700">'+tr('异常')+'</span>':'')+
+            '</div>';
+        h+='<div class="mt-1 flex items-center gap-1.5 text-[11px] text-text-muted flex-wrap">'+
+            tqPinIconHtml()+'<span>'+esc(e.loc||'-')+'</span>'+
+            '<span class="text-surface-300">|</span><span>'+esc(e.time||'')+'</span>'+
+            (_tqHideOperator?'':'<span class="text-surface-300">|</span><span>'+esc(tr('创建人'))+' '+esc(e.by||'-')+'</span>')+
+            '</div>';
+        if(!_tqHideOperator&&e.en&&_currentLang==='zh')h+='<div class="mt-0.5 text-[11px] text-primary-600">'+esc(e.en)+'</div>';
         h+='</div>';
     });
     h+='</div>';
@@ -139,7 +242,7 @@ function tqTimelineHtml(events){
 /* ---------- 结果区 ---------- */
 function tqResultsHtml(){
     if(!_tqTags.length){
-        return '<div class="py-20 text-center text-sm text-text-muted">'+tr('请输入运单号后点击查询')+'</div>';
+        return tqEmptyStateHtml();
     }
     return '<div class="space-y-3">'+_tqTags.slice().sort().map(function(code){
         var o=tqOrderOf(code);
@@ -152,7 +255,7 @@ function generateTrackQueryPage(id){
     _tqHideOperator=String(id||'').indexOf('oms-')===0;
     let h='<div class="h-full overflow-auto bg-surface-50">';
     h+='<div class="max-w-[1600px] mx-auto px-6 py-5">';
-    h+='<div class="mb-5">'+tqSearchBarHtml()+tqHistoryHtml()+'</div>';
+    h+='<div class="mb-5">'+tqSearchBarHtml()+'</div>';
     h+='<div id="tq-results">'+tqResultsHtml()+'</div>';
     h+='</div></div>';
     return h;

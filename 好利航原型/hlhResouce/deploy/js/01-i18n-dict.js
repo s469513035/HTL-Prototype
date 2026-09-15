@@ -1445,3 +1445,20 @@ Object.assign(_manualI18n.pt,{
     '已下单':'Pedido feito','业务确认':'Confirmação comercial','国内仓入仓':'Entrada armazém nacional','配舱出库':'Saída plano de carga','海外仓签收':'Assinado armazém overseas','好利航总部':'Sede HOLLY TRANS','深圳':'Shenzhen'
 });
 
+/* ========== 轨迹查询 UI 优化（39-track-query.js）三语补充 ========== */
+Object.assign(_manualI18n.en,{
+    '异常':'Abnormal','下单时间':'Order Time','子单轨迹':'Sub-order Tracking','历史记录':'History','暂无轨迹':'No tracking yet',
+    '输入运单号查询物流轨迹':'Enter waybill number to track shipment','支持一次粘贴多个单号，或从上方历史记录快速选择':'Paste multiple numbers at once, or pick from history above',
+    '创建人':'Created By'
+});
+Object.assign(_manualI18n.fr,{
+    '异常':'Anormal','下单时间':'Heure commande','子单轨迹':'Suivi sous-colis','历史记录':'Historique','暂无轨迹':'Pas encore de suivi',
+    '输入运单号查询物流轨迹':'Saisir un N° expédition pour suivre','支持一次粘贴多个单号，或从上方历史记录快速选择':'Collez plusieurs numéros, ou choisissez dans l’historique',
+    '创建人':'Créé par'
+});
+Object.assign(_manualI18n.pt,{
+    '异常':'Anormal','下单时间':'Hora do pedido','子单轨迹':'Rastreio de sub-volume','历史记录':'Histórico','暂无轨迹':'Sem rastreio ainda',
+    '输入运单号查询物流轨迹':'Digite o número da guia para rastrear','支持一次粘贴多个单号，或从上方历史记录快速选择':'Cole vários números, ou escolha no histórico acima',
+    '已入仓':'Entrada concluída','已到港':'Chegou ao porto','当前节点':'Nó atual','空运':'Aéreo','海运':'Marítimo','收件国家':'País destinatário','创建人':'Criado por'
+});
+

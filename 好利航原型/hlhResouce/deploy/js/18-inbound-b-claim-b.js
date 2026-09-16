@@ -423,11 +423,11 @@ function generateWarehouseInboundPage(id){
     const inboundProductOptions=((TC['prod-manage']&&TC['prod-manage'].d)||[]).map(function(r){return r&&r[1];}).filter(Boolean);
     const inboundCustomerOptions=getCrmCustomerOptions();
     const basic=[
-        /* 快递单号回车 → 弹出录入窗口（客户/产品/货物类型/包装类型/品名），确认后带回页面并计入分板 */
+        /* 第一行 = 快递单号 + 所属客户 + 目的仓库（+到货仓库凑满四列），扫单后最先要核对的三个信息 */
         {label:'快递单号',value:'SF10086523',id:'warehouse-inbound-waybill',onkeydown:"if(event.key==='Enter'){event.preventDefault();openManualInboundEntryModal();}"},
-        {label:'到货仓库',type:'select',required:true,options:warehouseOptions,value:currentAccountWarehouse()},
-        {label:'所属客户',value:inboundCustomerOptions[0]||'',id:'warehouse-inbound-customer',list:'crm-customer-options',placeholder:'输入客户代码/名称模糊筛选',onchange:'handleWarehouseInboundCustomerChange(this)',span:'md:col-start-1'},
+        {label:'所属客户',value:inboundCustomerOptions[0]||'',id:'warehouse-inbound-customer',list:'crm-customer-options',placeholder:'输入客户代码/名称模糊筛选',onchange:'handleWarehouseInboundCustomerChange(this)'},
         {label:'目的仓库',required:true,type:'select',id:'warehouse-inbound-dest',options:['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓','特马海外仓','蒙罗维亚海外仓','科纳克里海外仓','班珠尔海外仓'],value:'达喀尔海外仓'},
+        {label:'到货仓库',type:'select',required:true,options:warehouseOptions,value:currentAccountWarehouse()},
         {label:'产品',type:'select',id:'warehouse-inbound-product',options:inboundProductOptions.length?inboundProductOptions:['西非海运专线','西非空运专线'],onchange:'handleWarehouseProductChange(this)'},
         {label:'货物类型',type:'select',required:true,id:'warehouse-inbound-cargo-type',options:['普货','敏感货'],value:'普货'},
         /* 包装类型与下单录入、运单管理共用 PACKAGE_TYPE_OPTIONS（04-table-catalog.js） */
@@ -461,14 +461,13 @@ function generateWarehouseInboundPage(id){
         '<div id="warehouse-inbound-services" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 min-h-[42px]">'+
             '<span class="text-xs text-text-muted">'+tr('请先选择产品')+'</span>'+
         '</div>'+
-        /* 附加服务下面：是否生成问题件 + 操作备注；勾了问题件，备注就是问题描述（必填） */
-        '<div class="mt-3 grid grid-cols-1 md:grid-cols-4 gap-4 items-start">'+
-            '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('是否生成问题件')+'</label>'+
-                '<label class="w-full h-10 inline-flex items-center gap-2 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 cursor-pointer">'+
+        /* 附加服务下面：勾选框自带「登记为问题件」文案，不再加标题；备注单行展示 */
+        '<div class="mt-3 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">'+
+            '<label class="h-10 inline-flex items-center gap-2 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 cursor-pointer">'+
                 '<input type="checkbox" id="warehouse-inbound-issue" class="rounded border-surface-300 text-primary-600" onchange="toggleWarehouseInboundIssueLabel()">'+
-                '<span class="text-text-secondary">'+tr('登记为问题件')+'</span></label></div>'+
+                '<span class="text-text-secondary">'+tr('登记为问题件')+'</span></label>'+
             '<div class="flex flex-col gap-1.5 md:col-span-3"><label class="text-sm font-medium text-text-secondary" id="warehouse-inbound-remark-label">'+tr('操作备注')+'</label>'+
-                '<textarea id="warehouse-inbound-remark" rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入操作备注'))+'"></textarea></div>'+
+                '<input type="text" id="warehouse-inbound-remark" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" placeholder="'+esc(tr('请输入操作备注'))+'"></div>'+
         '</div>'+
     '</section>';
     /* 分板明细（参考快递入仓的分板操作）：整页最后一个板块 —— 收货信息都填完了，
@@ -585,12 +584,11 @@ function openManualInboundEntryModal(){
         ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
             return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" data-mie-svc="'+esc(o)+'" class="rounded border-surface-300 text-primary-600"'+(pageSvc.indexOf(o)>=0?' checked':'')+'><span>'+esc(tr(o))+'</span></label>';
         }).join('')+'</div></div>';
-    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('是否生成问题件')+'</label>'+
-        '<label class="w-full h-10 inline-flex items-center gap-2 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 cursor-pointer">'+
+    h+='<label class="h-10 inline-flex items-center gap-2 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 cursor-pointer self-end">'+
         '<input type="checkbox" id="mie-issue" class="rounded border-surface-300 text-primary-600" onchange="toggleMieIssueLabel()"'+(docChecked('warehouse-inbound-issue')?' checked':'')+'>'+
-        '<span class="text-text-secondary">'+tr('登记为问题件')+'</span></label></div>';
+        '<span class="text-text-secondary">'+tr('登记为问题件')+'</span></label>';
     h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'" id="mie-remark-label">'+(docChecked('warehouse-inbound-issue')?tr('问题描述'):tr('操作备注'))+'</label>'+
-        '<textarea id="mie-remark" rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(docChecked('warehouse-inbound-issue')?tr('请输入问题描述'):tr('请输入操作备注'))+'">'+esc(manualInboundPageVal('warehouse-inbound-remark'))+'</textarea></div>';
+        '<input type="text" id="mie-remark" class="'+fldCls+'" placeholder="'+esc(docChecked('warehouse-inbound-issue')?tr('请输入问题描述'):tr('请输入操作备注'))+'" value="'+esc(manualInboundPageVal('warehouse-inbound-remark'))+'"></div>';
     h+='</div></div>';
     bodyEl.innerHTML=h;
     footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+

@@ -423,19 +423,20 @@ function generateWarehouseInboundPage(id){
     const inboundProductOptions=((TC['prod-manage']&&TC['prod-manage'].d)||[]).map(function(r){return r&&r[1];}).filter(Boolean);
     const inboundCustomerOptions=getCrmCustomerOptions();
     const basic=[
-        {label:'快递单号',value:'SF10086523'},
+        /* 快递单号回车 → 弹出录入窗口（客户/产品/货物类型/包装类型/品名），确认后带回页面并计入分板 */
+        {label:'快递单号',value:'SF10086523',id:'warehouse-inbound-waybill',onkeydown:"if(event.key==='Enter'){event.preventDefault();openManualInboundEntryModal();}"},
         {label:'到货仓库',type:'select',required:true,options:warehouseOptions,value:currentAccountWarehouse()},
         {label:'所属客户',value:inboundCustomerOptions[0]||'',id:'warehouse-inbound-customer',list:'crm-customer-options',placeholder:'输入客户代码/名称模糊筛选',onchange:'handleWarehouseInboundCustomerChange(this)',span:'md:col-start-1'},
         {label:'目的仓库',required:true,type:'select',id:'warehouse-inbound-dest',options:['达喀尔海外仓','拉各斯海外仓','阿比让海外仓','杜阿拉海外仓','洛美海外仓','特马海外仓','蒙罗维亚海外仓','科纳克里海外仓','班珠尔海外仓'],value:'达喀尔海外仓'},
-        {label:'产品',type:'select',options:inboundProductOptions.length?inboundProductOptions:['西非海运专线','西非空运专线'],onchange:'handleWarehouseProductChange(this)'},
-        {label:'货物类型',type:'select',required:true,options:['普货','敏感货'],value:'普货'},
+        {label:'产品',type:'select',id:'warehouse-inbound-product',options:inboundProductOptions.length?inboundProductOptions:['西非海运专线','西非空运专线'],onchange:'handleWarehouseProductChange(this)'},
+        {label:'货物类型',type:'select',required:true,id:'warehouse-inbound-cargo-type',options:['普货','敏感货'],value:'普货'},
         /* 包装类型与下单录入、运单管理共用 PACKAGE_TYPE_OPTIONS（04-table-catalog.js） */
-        {label:'包装类型',type:'select',required:true,options:PACKAGE_TYPE_OPTIONS,value:'纸箱'},
-        {label:'品名',required:true,value:'',placeholder:'输入品名信息',list:'product-name-options',oninput:'handleWarehouseProductNameInput(this)',onblur:'handleCargoNameCommit(this)'},
+        {label:'包装类型',type:'select',required:true,id:'warehouse-inbound-package',options:PACKAGE_TYPE_OPTIONS,value:'纸箱'},
+        {label:'品名',required:true,id:'warehouse-inbound-product-name',value:'',placeholder:'输入品名信息',list:'product-name-options',oninput:'handleWarehouseProductNameInput(this)',onblur:'handleCargoNameCommit(this)'},
         {label:'长(cm)',type:'number',value:''},
         {label:'宽(cm)',type:'number',value:''},
         {label:'高(cm)',type:'number',value:''},
-        {label:'重量(KG)',type:'number',value:''}
+        {label:'重量(KG)',type:'number',id:'warehouse-inbound-weight',value:''}
     ];
     const cargoRows=[
         {name:'电子产品',type:'敏感货',pcs:'10',weight:'25',length:'60',width:'50',height:'45',brand:'否',remark:'带电小家电配件'},
@@ -501,6 +502,95 @@ function generateWarehouseInboundPage(id){
 
 function setupWarehouseInboundRemarkToggles(){
     return;
+}
+
+/* ===== 手动入仓 · 快递单号回车录入窗口 =====
+ * 回车 → 弹窗补录 客户/产品/货物类型/包装类型/品名（预填页面已有值）→
+ * 确认后带回页面输入框，并按规则计入分板明细：
+ *   产品含「空运」→ 空运板，否则海运板；目的仓库映射国家优先精确匹配，
+ *   匹配不上退到同运输方式的第一块待封板，再退到任意待封板。
+ * 弹窗走 #crud-modal —— 手动入仓是整页（不占 crud-modal），与分拣方案弹窗同一路数。 */
+var MANUAL_INBOUND_DEST_COUNTRY={'达喀尔海外仓':'塞内加尔','拉各斯海外仓':'尼日利亚','阿比让海外仓':'科特迪瓦','杜阿拉海外仓':'喀麦隆','洛美海外仓':'多哥','特马海外仓':'加纳','蒙罗维亚海外仓':'利比里亚','科纳克里海外仓':'几内亚','班珠尔海外仓':'冈比亚'};
+function manualInboundPageVal(id){
+    var el=document.getElementById(id);
+    return el?(el.value||''):'';
+}
+function openManualInboundEntryModal(){
+    var waybill=manualInboundPageVal('warehouse-inbound-waybill');
+    if(!waybill){showToast(tr('请先输入快递单号'));return;}
+    const titleEl=document.getElementById('crud-modal-title');
+    const bodyEl=document.getElementById('crud-modal-body');
+    const footerEl=document.getElementById('crud-modal-footer');
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='52%';
+    titleEl.textContent=tr('录入货件信息')+' - '+waybill;
+    const productOptions=(TC['prod-manage']&&TC['prod-manage'].d||[]).map(function(r){return r&&r[1];}).filter(Boolean);
+    const fldCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    const lblCls='text-sm font-medium text-text-secondary';
+    const sel=function(id,options,val){
+        var h='<select id="'+id+'" class="'+fldCls+'">';
+        (options&&options.length?options:['西非海运专线','西非空运专线']).forEach(function(o){
+            h+='<option value="'+esc(o)+'"'+(o===val?' selected':'')+'>'+esc(o)+'</option>';
+        });
+        return h+'</select>';
+    };
+    let h='<div class="space-y-4">';
+    h+='<div class="bg-primary-50 border border-primary-100 rounded-lg px-3 py-2 text-xs text-primary-700">'+tr('确认后数据带入页面输入框，并按 产品运输方式 + 目的仓库国家 计入对应的分板明细。')+'</div>';
+    h+='<div class="grid grid-cols-2 gap-x-5 gap-y-4">';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('客户')+'</label><input id="mie-customer" list="crm-customer-options" class="'+fldCls+'" placeholder="'+esc(tr('输入客户代码/名称'))+'" value="'+esc(manualInboundPageVal('warehouse-inbound-customer'))+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('产品')+'</label>'+sel('mie-product',productOptions,manualInboundPageVal('warehouse-inbound-product'))+'</div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('货物类型')+'</label>'+sel('mie-cargo-type',['普货','敏感货'],manualInboundPageVal('warehouse-inbound-cargo-type')||'普货')+'</div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('包装类型')+'</label>'+sel('mie-package',PACKAGE_TYPE_OPTIONS,manualInboundPageVal('warehouse-inbound-package')||'纸箱')+'</div>';
+    h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="'+lblCls+'">'+tr('品名')+'</label><input id="mie-name" list="product-name-options" class="'+fldCls+'" placeholder="'+esc(tr('输入品名信息'))+'" value="'+esc(manualInboundPageVal('warehouse-inbound-product-name'))+'"></div>';
+    h+='</div></div>';
+    bodyEl.innerHTML=h;
+    footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="confirmManualInboundEntryModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+    setTimeout(function(){var el=document.getElementById('mie-customer');if(el)el.focus();},50);
+}
+function confirmManualInboundEntryModal(){
+    const g=function(id){var el=document.getElementById(id);return el?(el.value||''):'';};
+    var customer=g('mie-customer');
+    var product=g('mie-product');
+    var name=g('mie-name');
+    if(!customer||!product||!name){showToast(tr('请填写客户、产品和品名'));return;}
+    var cargoType=g('mie-cargo-type')||'普货';
+    var packageType=g('mie-package')||'纸箱';
+    /* 带回页面输入框，并触发页面自己的联动（客户带目的仓库、产品带附加服务） */
+    var back=function(id,val){var el=document.getElementById(id);if(el)el.value=val;};
+    back('warehouse-inbound-customer',customer);
+    back('warehouse-inbound-product',product);
+    back('warehouse-inbound-cargo-type',cargoType);
+    back('warehouse-inbound-package',packageType);
+    back('warehouse-inbound-product-name',name);
+    /* 客户联动只在目的仓库还空着时触发 —— 用户已经选了目的仓库就不覆盖，
+     * 否则带入客户会把手选的仓库冲掉，分板匹配跟着串 */
+    if(!manualInboundPageVal('warehouse-inbound-dest')&&typeof handleWarehouseInboundCustomerChange==='function'){
+        var custEl=document.getElementById('warehouse-inbound-customer');
+        if(custEl)handleWarehouseInboundCustomerChange(custEl);
+    }
+    if(typeof handleWarehouseProductChange==='function'){
+        var prodEl=document.getElementById('warehouse-inbound-product');
+        if(prodEl)handleWarehouseProductChange(prodEl);
+    }
+    /* 按规则计入分板明细 */
+    var st=ensureExpressInboundState();
+    var open=st.pallets.filter(function(p){return !p.sealed;});
+    closeCrudModal();
+    if(!open.length){showToast(tr('数据已带入页面，暂无待封板分板，请先「新增分板」'));return;}
+    var transport=/空运/.test(product)?'空运':'海运';
+    var country=MANUAL_INBOUND_DEST_COUNTRY[manualInboundPageVal('warehouse-inbound-dest')]||'';
+    var target=open.filter(function(p){return p.transport===transport&&country&&p.country===country;})[0]
+             ||open.filter(function(p){return p.transport===transport;})[0]
+             ||open[0];
+    var pcs=1;   /* 快递一件一录：每确认一次计 1 件，重量按页面重量字段累计 */
+    target.count+=pcs;
+    var addW=parseFloat(manualInboundPageVal('warehouse-inbound-weight'))||0;
+    var oldW=parseFloat(String(target.weight||'0').replace(/[^\d.]/g,''))||0;
+    target.weight=(oldW+addW).toFixed(1)+'KG';
+    renderExpressInboundPallets();
+    showToast(tr('已带入')+' '+target.palletNo+'（'+esc(tr(target.transport))+' / '+esc(tr(target.country||'—'))+'）');
 }
 
 function toggleNoPreClaimChildren(btn,key){

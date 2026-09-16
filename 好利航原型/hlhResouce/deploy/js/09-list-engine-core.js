@@ -495,7 +495,7 @@ function renderField(f){
         });
         input+='</select>';
     }else if(f.type==='textarea'){
-        const eventAttrs=(f.oninput?' oninput="'+f.oninput+'"':'')+(f.onblur?' onblur="'+f.onblur+'"':'')+(f.onchange?' onchange="'+f.onchange+'"':'');
+        const eventAttrs=(f.oninput?' oninput="'+f.oninput+'"':'')+(f.onblur?' onblur="'+f.onblur+'"':'')+(f.onchange?' onchange="'+f.onchange+'"':'')+(f.onkeydown?' onkeydown="'+f.onkeydown+'"':'');
         input='<textarea rows="'+(f.rows||3)+'" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-none" placeholder="'+esc(placeholder)+'"'+idAttr+attrs+eventAttrs+'>'+esc(fieldValue)+'</textarea>';
     }else if(f.type==='checkboxGroup'){
         input='<div class="grid grid-cols-2 gap-2 min-h-10 rounded-lg border border-surface-200 bg-surface-50 p-2">';
@@ -519,7 +519,7 @@ function renderField(f){
         });
         input+='</div>';
     }else{
-        const eventAttrs=(f.oninput?' oninput="'+f.oninput+'"':'')+(f.onblur?' onblur="'+f.onblur+'"':'')+(f.onchange?' onchange="'+f.onchange+'"':'');
+        const eventAttrs=(f.oninput?' oninput="'+f.oninput+'"':'')+(f.onblur?' onblur="'+f.onblur+'"':'')+(f.onchange?' onchange="'+f.onchange+'"':'')+(f.onkeydown?' onkeydown="'+f.onkeydown+'"':'');
         const listAttr=f.list?' list="'+esc(f.list)+'"':'';
         input='<input type="'+(f.type||'text')+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50'+(f.readonly?' cursor-not-allowed':'')+'" placeholder="'+esc(placeholder)+'" value="'+esc(fieldValue)+'"'+idAttr+attrs+listAttr+eventAttrs+'>';
     }

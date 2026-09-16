@@ -142,6 +142,11 @@ function applyOmsLayout(){
     if(!sidebar)return;
     if(!horizontal){
         sidebar.classList.remove('hidden');
+        /* 横版时侧边栏菜单被清空了，切回竖版必须重建 —— 而且要走未包裹的原始
+         * renderMenu：走 wrapped 版会再次触发 applyOmsLayout，自己调自己套娃。
+         * 只在为空时重建，正常登录流程 renderMenu 刚画完不重复渲染。 */
+        var nav=document.getElementById('sidebar-nav');
+        if(nav&&!nav.innerHTML&&_renderMenuOmsLayout)_renderMenuOmsLayout();
         return;
     }
     sidebar.classList.add('hidden');

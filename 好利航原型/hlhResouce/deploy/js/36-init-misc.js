@@ -50,7 +50,10 @@ function initApp(){
         return;
     }
     if(_currentTerminal==='oms'){
-        // OMS 端：默认进入客户中心功能首页，并展开其所在的 L1 菜单组
+        // OMS 端：默认进入客户中心功能首页，并展开其所在的 L1 菜单组。
+        // 标签页只留「功能首页」——「工作台」是 TMS 的首页，OMS 没有对应菜单，
+        // 留着只会在标签栏上多一个点进去内容和菜单对不上的页签
+        _openTabs=[];
         applyRuntimeEnhancements(document);
         setTimeout(function(){
             var homeEl=document.querySelector('#sidebar-nav [data-id="oms-home"]');

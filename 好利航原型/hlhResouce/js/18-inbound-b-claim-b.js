@@ -232,12 +232,14 @@ function generateWarehouseMultiInboundPage(id){
     h+=warehouseField('包装类型','<select id="warehouse-multi-package" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50">'+PACKAGE_TYPE_OPTIONS.map(function(o){return '<option value="'+esc(o)+'">'+esc(tr(o))+'</option>';}).join('')+'</select>',true);
     /* 品名：可编辑，挂品名库 datalist 模糊匹配 */
     h+=warehouseField('品名','<input id="warehouse-multi-product-name" list="product-name-options" value="" placeholder="'+esc(tr('输入品名信息'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50">',true);
-    /* 登记为问题件勾选框（原库位库区的位置）；勾选后下面的操作备注变问题说明 */
-    h+='<div class="flex items-end"><label class="w-full h-8 inline-flex items-center gap-2 px-2 text-sm border border-surface-200 rounded bg-surface-50 cursor-pointer">'+
+    /* 登记为问题件与操作备注同一行：勾选框占 1/3，备注占 2/3；勾选后备注变问题说明 */
+    h+='<div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-x-3 items-end">'+
+        '<div><label class="w-full h-8 inline-flex items-center gap-2 px-2 text-sm border border-surface-200 rounded bg-surface-50 cursor-pointer">'+
         '<input type="checkbox" id="warehouse-multi-issue" class="rounded border-surface-300 text-primary-600" onchange="toggleWarehouseMultiIssueLabel()">'+
-        '<span class="text-text-secondary">'+tr('登记为问题件')+'</span></label></div>';
-    h+='<div data-field-label="操作备注" class="md:col-span-2 min-w-0 flex flex-col gap-1.5"><label id="warehouse-multi-remark-label" class="text-sm font-medium text-text-secondary truncate">'+tr('操作备注')+'</label>'+
-        '<input type="text" id="warehouse-multi-remark" placeholder="'+esc(tr('请输入操作备注'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white focus:border-primary-300"></div>';
+        '<span class="text-text-secondary">'+tr('登记为问题件')+'</span></label></div>'+
+        '<div class="md:col-span-2 min-w-0 flex flex-col gap-1.5"><label id="warehouse-multi-remark-label" class="text-sm font-medium text-text-secondary truncate">'+tr('操作备注')+'</label>'+
+        '<input type="text" id="warehouse-multi-remark" placeholder="'+esc(tr('请输入操作备注'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white focus:border-primary-300"></div>'+
+    '</div>';
     h+='</div>';
     h+='<div class="mt-3"><label class="block text-sm font-medium text-text-secondary mb-2">'+tr('附加服务')+'</label><div id="warehouse-multi-services" class="flex flex-wrap gap-2 min-h-[42px] rounded border border-surface-200 bg-surface-50 px-2 py-2"><span class="text-xs text-text-muted">'+tr('请先选择产品')+'</span></div></div>';
     h+='</section>';

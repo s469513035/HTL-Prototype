@@ -1003,6 +1003,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='freightRecalc')click='openFreightRecalcConfirm(\''+id+'\')';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
     else if(action.key==='finalAllocAdjust')click='openFinalAllocAdjustModal(\''+id+'\')';
+    else if(action.key==='finalAllocExAdjust')click='openFinalAllocExAdjustModal(\''+id+'\')';
     else if(action.key==='finalAllocLinkBL')click='openFinalAllocLinkBLModal(\''+id+'\')';
     else if(action.key==='allocBarcode')click='openFinalAllocBarcodeModal(\''+id+'\')';
     else if(action.key==='finalAllocDelete')click='deleteFinalAllocSelected(\''+id+'\')';
@@ -1292,6 +1293,8 @@ function getToolbarActions(id){
             {key:'search',label:'查询',variant:'primary'},
             {type:'add',label:'新增',variant:'primary'},
             {key:'finalAllocAdjust',label:'调整',variant:'primary'},
+            /* 异常调整：已出仓之后才用得上，走另一套（只按单号查、单号必填） */
+            {key:'finalAllocExAdjust',label:'异常调整'},
             {key:'finalAllocLinkBL',label:'关联主单'},
             {key:'allocBarcode',label:'配舱条码打印'},
             {key:'finalAllocDelete',label:'删除',variant:'danger'},

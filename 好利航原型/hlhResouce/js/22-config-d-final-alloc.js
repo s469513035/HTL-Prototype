@@ -195,6 +195,7 @@ function _finalAllocResetState(mode,headerInit,selectedInit,filterTransport){
     _finalAllocState.selected=selectedInit?_finalAllocClone(selectedInit):[];
     _finalAllocState.expanded={};
     _finalAllocState.query={};
+    _finalAllocState.exQueried=false;   /* 异常调整用：是否已按单号查过（决定空态提示措辞） */
     _finalAllocState.header=Object.assign({no:'',transport:'海运',bl:'',country:'',containerNo:'',label:''},headerInit||{});
 }
 
@@ -241,7 +242,10 @@ function _finalAllocPanelTable(side){
     cols.forEach(function(c){h+='<th class="'+thCls+' whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';
     if(!rows.length){
-        h+='<tr><td colspan="'+colspan+'" class="px-3 py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+        /* 异常调整的左表在查询前本来就是空的，直说原因，别让人以为没货 */
+        const emptyMsg=(isLeft&&_finalAllocState.mode==='exAdjust'&&!_finalAllocState.exQueried)
+            ?(tr('请先输入')+tr(unit)+tr('查询')) : tr('暂无数据');
+        h+='<tr><td colspan="'+colspan+'" class="px-3 py-12 text-center text-text-muted">'+emptyMsg+'</td></tr>';
     }
     rows.forEach(function(r,i){
         const expKey=side+'-'+i;
@@ -314,11 +318,34 @@ function _finalAllocPanelTable(side){
     return h;
 }
 
-function _finalAllocLeftPanel(showAdvanced){
+function _finalAllocLeftPanel(mode){
+    /* 异常调整：只给单号一个查询条件，运输方式跟着这单走（不给切），也不给一键配舱 ——
+     * 出仓后是定点增减，不是再整片捞货 */
+    const isEx=mode==='exAdjust';
     let h='';
     h+='<div class="text-sm font-semibold text-text-primary mb-2">'+tr('未选数据')+'</div>';
     /* 查询行 */
     h+='<div class="bg-white border border-surface-200 rounded-lg p-3 mb-3">';
+    if(isEx){
+        const unitLabel=_finalAllocUnitLabel();
+        const val=_finalAllocState.query.unitNo||'';
+        h+='<div class="flex items-end gap-2">';
+        h+='<div class="flex-1 min-w-0 flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr(unitLabel)+'<span class="text-red-500 ml-0.5">*</span></label>'+
+            '<input type="text" value="'+esc(val)+'" placeholder="'+tr('请输入')+tr(unitLabel)+tr('查询')+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-q-unitNo" '+
+            'onkeydown="if(event.key===\'Enter\'){event.preventDefault();finalAllocExQuery();}"></div>';
+        h+='<button class="h-8 px-3 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg cursor-pointer" onclick="finalAllocExQuery()">'+tr('查询')+'</button>';
+        h+='</div>';
+        h+='<div class="mt-2 text-[11px] text-text-muted">'+tr('异常调整仅支持按单号查询，单号不能为空；查出后选入右侧即为补配，从右侧移除即为撤配。')+'</div>';
+        h+='</div>';
+        if(!_finalAllocIsAir()){
+            const btnGhost='h-8 px-3 text-xs font-medium text-text-secondary bg-white border border-surface-200 hover:bg-surface-50 rounded-lg cursor-pointer';
+            h+='<div class="flex flex-wrap gap-2 mb-2">';
+            h+='<button class="'+btnGhost+'" onclick="finalAllocExpandAll(true)">'+tr('全部展开')+'</button>';
+            h+='<button class="'+btnGhost+'" onclick="finalAllocExpandAll(false)">'+tr('全部收起')+'</button>';
+            h+='</div>';
+        }
+        return h;
+    }
     /* 这个下拉决定了未选货源是按袋还是按运单来的，所以两个面板表的首列名跟着它走。
      * option 显式写 value（中文原值），切到英文/法文界面时比较才不会失效。 */
     const ft=_finalAllocState.filterTransport||'';
@@ -494,7 +521,7 @@ function _finalAllocBodyHtml(mode){
     let h='<div class="flex flex-col gap-3">';
     /* 控件行：左(查询+按钮) 与 右(表头) 顶部对齐（高度可不同） */
     h+='<div class="flex gap-4 items-start">';
-    h+='<div class="flex-1 min-w-0">'+_finalAllocLeftPanel(mode==='add')+'</div>';
+    h+='<div class="flex-1 min-w-0">'+_finalAllocLeftPanel(mode)+'</div>';
     h+='<div class="flex-shrink-0" style="width:40px"></div>';
     h+='<div class="flex-1 min-w-0">'+_finalAllocRightPanel(true)+'</div>';
     h+='</div>';
@@ -593,23 +620,32 @@ function openFinalAllocAddModal(id){
     document.getElementById('crud-modal').classList.add('show');
 }
 
-function openFinalAllocAdjustModal(id,rowIdx){
-    const idx=(rowIdx===undefined||rowIdx<0)?getSelectedRowIndex():rowIdx;
-    if(idx<0){openActionModal('selectRequired',id,-1);return;}
-    const row=(_listData[id]||TC[id].d)[idx]||[];
+/* 从列表行拼出弹窗要的表头与已配明细。调整与异常调整共用，
+ * 两处各写一遍的话，列名一改就会有一处漏掉。 */
+function _faPresetFromRow(id,row){
     /* 全部按表头名取，不再按下标 —— 这张表的列序已经调过几轮了 */
     const presetNo=faListCell(id,row,'配舱单号');
-    const presetLabel=faListCell(id,row,'标签编号');
-    const presetBL=faListCell(id,row,'Job No');
-    const presetCountry=faListCell(id,row,'国家');
-    const presetContainer=faListCell(id,row,'柜号');
     const presetTransport=faListCell(id,row,'运输方式','海运');
     /* 已选行的首列跟着运输方式走：空运配的是袋，给个袋号；其余仍是预配单号 */
     const presetUnitNo=presetTransport==='空运'
         ?presetNo.replace(/^ZPCD-/,'BAG-').replace(/-终配/,'')
         :presetNo.replace(/-终配/,'-预配').replace(/^ZPCD-/,'YPC-');
-    const presetSelected=[{no:presetUnitNo,pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002',sub:[{no:'H82606240002',pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002'}]}];
-    _finalAllocResetState('edit',{no:presetNo,label:presetLabel,transport:presetTransport,bl:presetBL,country:presetCountry,containerNo:presetContainer},presetSelected,presetTransport);
+    return {
+        transport:presetTransport,
+        header:{no:presetNo,label:faListCell(id,row,'标签编号'),transport:presetTransport,
+            bl:faListCell(id,row,'Job No'),country:faListCell(id,row,'国家'),
+            containerNo:faListCell(id,row,'柜号')},
+        selected:[{no:presetUnitNo,pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002',
+            sub:[{no:'H82606240002',pcs:2,canPcs:0,canWt:2,canVol:'0.000002',outWt:2,outVol:'0.000002'}]}]
+    };
+}
+
+function openFinalAllocAdjustModal(id,rowIdx){
+    const idx=(rowIdx===undefined||rowIdx<0)?getSelectedRowIndex():rowIdx;
+    if(idx<0){openActionModal('selectRequired',id,-1);return;}
+    const row=(_listData[id]||TC[id].d)[idx]||[];
+    const p=_faPresetFromRow(id,row);
+    _finalAllocResetState('edit',p.header,p.selected,p.transport);
     _finalAllocState.expanded['selected-0']=true;
     const titleEl=document.getElementById('crud-modal-title');
     const bodyEl=document.getElementById('crud-modal-body');
@@ -622,12 +658,64 @@ function openFinalAllocAdjustModal(id,rowIdx){
     document.getElementById('crud-modal').classList.add('show');
 }
 
+/* ===== 异常调整 =====
+ * 货已经出仓了才用得上：漏配的补进去、错配的拿出来。和「调整」两点不同 ——
+ * 1. 只针对「已出仓」的配舱单（待出仓的走普通调整就行，没必要走异常流程）；
+ * 2. 左侧只按单号查，且单号必填：出仓后不该再按国家/客户这类条件整片捞货源，
+ *    只能拿着具体单号定点增减，货源池也因此不预载，查过才有。 */
+function openFinalAllocExAdjustModal(id,rowIdx){
+    const idx=(rowIdx===undefined||rowIdx<0)?getSelectedRowIndex():rowIdx;
+    if(idx<0){openActionModal('selectRequired',id,-1);return;}
+    const row=(_listData[id]||TC[id].d)[idx]||[];
+    const status=faListCell(id,row,'配舱状态');
+    if(status!=='已出仓'){
+        showToast(tr('异常调整仅针对「已出仓」的配舱单')+'，'+tr('当前为')+'「'+tr(status||'—')+'」');
+        return;
+    }
+    const p=_faPresetFromRow(id,row);
+    _finalAllocResetState('exAdjust',p.header,p.selected,p.transport);
+    /* 货源池清空：必须先按单号查出来才能选入 */
+    _finalAllocState.unselected=[];
+    _finalAllocState.exQueried=false;
+    _finalAllocState.expanded['selected-0']=true;
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='92%';
+    document.getElementById('crud-modal-title').textContent=tr('异常调整')+' - '+esc(p.header.no);
+    document.getElementById('crud-modal-body').innerHTML=_finalAllocBodyHtml('exAdjust');
+    document.getElementById('crud-modal-footer').innerHTML=finalAllocFooterHtml('finalAllocSubmit(\'exAdjust\',\''+id+'\')','确认');
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+/* 异常调整的查询：单号必填，空的直接拦下 —— 不允许空条件把整池货拉出来 */
+function finalAllocExQuery(){
+    finalAllocSyncForm();
+    const no=String(_finalAllocState.query.unitNo||'').trim();
+    if(!no){
+        showToast(tr('单号不能为空')+'，'+tr('请输入')+tr(_finalAllocUnitLabel())+tr('后查询'));
+        _finalAllocState.unselected=[];
+        _finalAllocState.exQueried=false;
+        finalAllocRerender();
+        return;
+    }
+    const key=no.toLowerCase();
+    const hit=_finalAllocClone(_finalAllocPoolSeed()).filter(function(r){
+        if(String(r.no||'').toLowerCase().indexOf(key)>=0)return true;
+        return (r.sub||[]).some(function(s){return String(s.no||'').toLowerCase().indexOf(key)>=0;});
+    });
+    _finalAllocState.unselected=hit;
+    _finalAllocState.exQueried=true;
+    _finalAllocState.expanded={};
+    finalAllocRerender();
+    showToast(hit.length?(tr('查询到')+' '+hit.length+' '+tr('条')):(tr('未查询到该单号')+'：'+no));
+}
+
 function finalAllocSubmit(mode,id){
-    if(!_finalAllocState.selected.length){showToast(tr('请先选入数据再提交'));return;}
+    /* 异常调整允许把明细减到空（整单撤配），其余模式仍要求至少一条 */
+    if(mode!=='exAdjust'&&!_finalAllocState.selected.length){showToast(tr('请先选入数据再提交'));return;}
     finalAllocSyncHeader();
     if(!_finalAllocState.header.no){showToast(tr('配舱单号必填'));return;}
     closeCrudModal();
-    showToast(tr(mode==='add'?'终配舱登记成功':'终配舱调整成功'));
+    showToast(tr(mode==='add'?'终配舱登记成功':(mode==='exAdjust'?'异常调整成功':'终配舱调整成功')));
 }
 
 /* 批量删除配舱单：仅允许删除「配舱状态=待出仓」的配舱单，非待出仓的自动跳过 */

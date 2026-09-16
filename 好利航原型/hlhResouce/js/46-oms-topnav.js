@@ -75,7 +75,9 @@ function topNavDropdownItems(node,l1Label,isL1){
 }
 
 function renderTopNavHtml(){
-    var h='<div class="h-12 bg-white border-b border-surface-200 flex items-center px-4 gap-1 flex-shrink-0 z-30 relative">';
+    /* z-40：下面的标签页栏是 z-30，同层级按 DOM 顺序后者会盖住前者 ——
+     * 下拉被顶在 topnav 的层叠上下文里出不来，必须整栏高过它 */
+    var h='<div class="h-12 bg-white border-b border-surface-200 flex items-center px-4 gap-1 flex-shrink-0 z-40 relative">';
     /* 左端：Logo + 系统名（横版没有侧边栏，品牌区搬到这里） */
     h+='<div class="flex items-center gap-2.5 pr-4 mr-2 border-r border-surface-200 flex-shrink-0">';
     h+='<div class="w-7 h-7 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg></div>';

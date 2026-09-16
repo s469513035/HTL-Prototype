@@ -209,7 +209,10 @@ const menuData=[
 {id:'oms-issue-mgmt',label:'问题件管理',langKey:'oms_issue',page:'oms-cw',tab:'oms-issue-mgmt'},
 {id:'oms-track-query',label:'轨迹查询',langKey:'oms_track',page:'oms-cw',tab:'oms-track-query'}
 ]},
+/* 账单管理不配当一级菜单 —— 和 订单管理/客服 同级但内容太少，收进「结算」分组 */
+{id:'oms-fin-group',label:'结算',children:[
 {id:'oms-bill',label:'账单管理',langKey:'oms_bill',page:'oms-cw',tab:'oms-bill'}
+]},
 ]}
 ];
 

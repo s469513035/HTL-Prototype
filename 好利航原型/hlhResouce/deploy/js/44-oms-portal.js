@@ -70,29 +70,43 @@ var _OMS_BILLS=[
     ['PC-202607-01','BILL-20260702','月结','USD','10,420.00','10,420.00','0.00','2026-07-02 18:00','张财务','2026-07-15','已付款'],
     ['PC-202605-02','BILL-20260528','月结','USD','6,980.00','5,000.00','1,980.00','2026-05-28 18:00','张财务','2026-06-15','已逾期']
 ];
-/* 账单费用明细（按账单号）：运单号|费用名称|金额|币别 */
+/* 账单费用明细（按账单号）：
+ * 运单号|费用名称|品名|货物类型|件数|重量(KG)|体积(CBM)|单价|金额|币别
+ * 品名与件重体与该运单在订单管理里的数据一致；单价按费用性质给（海/空运费按方或按公斤，杂费按票）。 */
 var _OMS_BILL_FEES={
     'BILL-20260910':[
-        ['WB-20260909004','海运费','1,620.00','USD'],['WB-20260909004','报关费','45.00','USD'],
-        ['WB-20260908005','空运费','1,980.00','USD'],['WB-20260908005','带电附加费','120.00','USD'],
-        ['WB-20260906006','海运费','3,650.00','USD'],['WB-20260906006','仓储操作费','60.00','USD'],
-        ['WB-20260904007','海运费','2,340.00','USD'],['WB-20260904007','文件费','25.00','USD']
+        ['WB-20260909004','海运费','汽车配件','普货','30','655.20','2.450','661.22 /CBM','1,620.00','USD'],
+        ['WB-20260909004','报关费','汽车配件','普货','30','655.20','2.450','45.00 /票','45.00','USD'],
+        ['WB-20260908005','空运费','手机壳','敏感货','12','208.60','0.860','9.49 /KG','1,980.00','USD'],
+        ['WB-20260908005','带电附加费','手机壳','敏感货','12','208.60','0.860','10.00 /件','120.00','USD'],
+        ['WB-20260906006','海运费','LED灯具、太阳能板','普货','88','1,890.30','7.920','460.86 /CBM','3,650.00','USD'],
+        ['WB-20260906006','仓储操作费','LED灯具、太阳能板','普货','88','1,890.30','7.920','60.00 /票','60.00','USD'],
+        ['WB-20260904007','海运费','纺织面料','普货','55','1,120.00','4.310','542.92 /CBM','2,340.00','USD'],
+        ['WB-20260904007','文件费','纺织面料','普货','55','1,120.00','4.310','25.00 /票','25.00','USD']
     ],
     'BILL-20260901':[
-        ['WB-20260902008','空运费','3,120.00','USD'],['WB-20260830009','海运费','2,050.00','USD'],
-        ['WB-20260830009','清关费','180.00','USD'],['WB-20260828010','海运费','1,760.00','USD'],
-        ['WB-20260825011','空运费','2,280.00','USD'],['WB-20260822012','海运费','3,090.00','USD'],
-        ['WB-20260822012','仓储费','120.00','USD'],['WB-20260819013','海运费','1,480.00','USD']
+        ['WB-20260902008','空运费','智能手表','敏感货','25','486.40','1.950','6.42 /KG','3,120.00','USD'],
+        ['WB-20260830009','海运费','厨房用品','普货','47','980.70','3.760','545.21 /CBM','2,050.00','USD'],
+        ['WB-20260830009','清关费','厨房用品','普货','47','980.70','3.760','180.00 /票','180.00','USD'],
+        ['WB-20260828010','海运费','儿童玩具','普货','36','742.10','2.980','590.60 /CBM','1,760.00','USD'],
+        ['WB-20260825011','空运费','运动器材','普货','15','296.30','1.040','7.69 /KG','2,280.00','USD'],
+        ['WB-20260822012','海运费','建材样品','普货','72','1,508.90','6.150','502.44 /CBM','3,090.00','USD'],
+        ['WB-20260822012','仓储费','建材样品','普货','72','1,508.90','6.150','120.00 /票','120.00','USD'],
+        ['WB-20260819013','海运费','宠物用品','普货','28','590.40','2.220','666.67 /CBM','1,480.00','USD']
     ],
     'BILL-20260822':[
-        ['WB-20260815014','空运费','1,350.00','USD'],['WB-20260811015','海运费','2,860.00','USD'],
-        ['WB-20260808016','海运费','2,240.00','USD'],['WB-20260805017','空运费','1,790.00','USD'],
-        ['WB-20260802018','海运费','1,480.00','USD']
+        ['WB-20260815014','空运费','化妆品','敏感货','9','168.20','0.620','8.03 /KG','1,350.00','USD'],
+        ['WB-20260811015','海运费','服装鞋帽','普货','52','1,050.00','5.200','550.00 /CBM','2,860.00','USD'],
+        ['WB-20260808016','海运费','家居用品','普货','44','920.00','4.100','546.34 /CBM','2,240.00','USD'],
+        ['WB-20260805017','空运费','蓝牙耳机','敏感货','16','220.50','0.980','8.12 /KG','1,790.00','USD'],
+        ['WB-20260802018','海运费','五金工具','普货','38','860.00','3.400','435.29 /CBM','1,480.00','USD']
     ]
 };
 function omsBillFeesOf(no,fallbackAmount){
     if(_OMS_BILL_FEES[no])return _OMS_BILL_FEES[no];
-    return [['WB-20260700001','海运费',fallbackAmount,'USD'],['WB-20260700001','报关费','45.00','USD'],['WB-20260700001','文件费','25.00','USD']];
+    return [['WB-20260700001','海运费','日用百货','普货','40','800.00','3.600','550.00 /CBM',fallbackAmount,'USD'],
+        ['WB-20260700001','报关费','日用百货','普货','40','800.00','3.600','45.00 /票','45.00','USD'],
+        ['WB-20260700001','文件费','日用百货','普货','40','800.00','3.600','25.00 /票','25.00','USD']];
 }
 
 /* ---------- 消息与待办 ---------- */
@@ -372,27 +386,39 @@ function openOmsBillDetail(id,gi){
     h+='</div>';
 
     h+=omsSectionTitle('费用明细');
-    h+='<div class="rounded-lg border border-surface-200 overflow-hidden"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
-       '<th class="px-3 py-2 text-left text-xs font-semibold">'+tr('运单号')+'</th>'+
-       '<th class="px-3 py-2 text-left text-xs font-semibold">'+tr('费用名称')+'</th>'+
-       '<th class="px-3 py-2 text-right text-xs font-semibold">'+tr('金额')+'</th>'+
-       '<th class="px-3 py-2 text-right text-xs font-semibold">'+tr('币别')+'</th></tr></thead><tbody>';
+    h+='<div class="rounded-lg border border-surface-200 overflow-hidden overflow-x-auto"><table class="w-full text-sm" style="min-width:980px"><thead class="bg-surface-50 text-text-secondary"><tr>'+
+       '<th class="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap">'+tr('运单号')+'</th>'+
+       '<th class="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap">'+tr('费用名称')+'</th>'+
+       '<th class="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap">'+tr('品名')+'</th>'+
+       '<th class="px-3 py-2 text-left text-xs font-semibold whitespace-nowrap">'+tr('货物类型')+'</th>'+
+       '<th class="px-3 py-2 text-right text-xs font-semibold whitespace-nowrap">'+tr('件数')+'</th>'+
+       '<th class="px-3 py-2 text-right text-xs font-semibold whitespace-nowrap">'+tr('重量(KG)')+'</th>'+
+       '<th class="px-3 py-2 text-right text-xs font-semibold whitespace-nowrap">'+tr('体积(CBM)')+'</th>'+
+       '<th class="px-3 py-2 text-right text-xs font-semibold whitespace-nowrap">'+tr('单价')+'</th>'+
+       '<th class="px-3 py-2 text-right text-xs font-semibold whitespace-nowrap">'+tr('金额')+'</th>'+
+       '<th class="px-3 py-2 text-right text-xs font-semibold whitespace-nowrap">'+tr('币别')+'</th></tr></thead><tbody>';
     var total=0;
     fees.forEach(function(f){
-        total+=parseFloat(String(f[2]).replace(/,/g,''))||0;
-        h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-mono text-primary-700">'+esc(f[0])+'</td>'+
-           '<td class="px-3 py-2 text-text-primary">'+esc(tr(f[1]))+'</td>'+
-           '<td class="px-3 py-2 text-right font-mono text-text-secondary">'+esc(f[2])+'</td>'+
-           '<td class="px-3 py-2 text-right text-text-secondary">'+esc(f[3])+'</td></tr>';
+        total+=parseFloat(String(f[8]).replace(/,/g,''))||0;
+        h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-mono text-primary-700 whitespace-nowrap">'+esc(f[0])+'</td>'+
+           '<td class="px-3 py-2 text-text-primary whitespace-nowrap">'+esc(tr(f[1]))+'</td>'+
+           '<td class="px-3 py-2 text-text-primary whitespace-nowrap">'+esc(tr(f[2]))+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(tr(f[3]))+'</td>'+
+           '<td class="px-3 py-2 text-right font-mono text-text-secondary">'+esc(f[4])+'</td>'+
+           '<td class="px-3 py-2 text-right font-mono text-text-secondary">'+esc(f[5])+'</td>'+
+           '<td class="px-3 py-2 text-right font-mono text-text-secondary">'+esc(f[6])+'</td>'+
+           '<td class="px-3 py-2 text-right font-mono text-text-secondary whitespace-nowrap">'+esc(f[7])+'</td>'+
+           '<td class="px-3 py-2 text-right font-mono font-semibold text-text-primary whitespace-nowrap">'+esc(f[8])+'</td>'+
+           '<td class="px-3 py-2 text-right text-text-secondary">'+esc(f[9])+'</td></tr>';
     });
-    h+='</tbody><tfoot class="bg-primary-50/60"><tr><td colspan="2" class="px-3 py-2 font-semibold text-primary-700">'+tr('合计')+'（'+fees.length+' '+tr('条')+'）</td>'+
-       '<td class="px-3 py-2 text-right font-mono font-semibold text-primary-700">'+total.toLocaleString('en-US',{minimumFractionDigits:2})+'</td>'+
+    h+='</tbody><tfoot class="bg-primary-50/60"><tr><td colspan="8" class="px-3 py-2 font-semibold text-primary-700">'+tr('合计')+'（'+fees.length+' '+tr('条')+'）</td>'+
+       '<td class="px-3 py-2 text-right font-mono font-semibold text-primary-700 whitespace-nowrap">'+total.toLocaleString('en-US',{minimumFractionDigits:2})+'</td>'+
        '<td class="px-3 py-2 text-right text-primary-700 font-semibold">'+esc(g('币别'))+'</td></tr></tfoot></table></div>';
 
     omsOpenCrud(tr('账单明细')+' - '+no,h,
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>'+
         '<button onclick="omsDownloadBills(\''+id+'\',['+gi+'])" class="px-4 py-2 text-sm font-medium text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('账单下载')+'</button>',
-        '62%');
+        '72%');
 }
 /* 工具栏「账单明细」：勾选一条进入明细 */
 function omsOpenSelectedBillDetail(id){

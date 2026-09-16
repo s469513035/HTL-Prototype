@@ -191,7 +191,6 @@ function generateOmsHomePage(id){
     var issues=TC['oms-issue-mgmt'].d;
     var bills=TC['oms-bill'].d;
     var ordStatus=function(r){return omsCell('oms-order-mgmt',r,'运单状态');};
-    var issStatus=function(r){return omsCell('oms-issue-mgmt',r,'问题状态');};
     var inTransit=orders.filter(function(r){return ['已配舱','已出库','已离港','已到港'].indexOf(ordStatus(r))>=0;}).length;
     /* 待确认 = 业务确认之前的状态，与 TMS 业务确认的前置状态一致 */
     var toConfirm=orders.filter(function(r){return ['已预报','已到货'].indexOf(ordStatus(r))>=0;}).length;
@@ -231,24 +230,20 @@ function generateOmsHomePage(id){
     });
     h+='</div>';
 
-    h+='<div class="grid grid-cols-1 xl:grid-cols-3 gap-5">';
-    /* 左列：最新订单 + 问题件动态 */
-    h+='<div class="xl:col-span-2 space-y-5">';
-    h+=omsHomeOrdersCard(orders.slice(0,5));
-    h+=omsHomeIssuesCard(issues.filter(function(r){return ['待处理','处理中'].indexOf(issStatus(r))>=0;}).slice(0,3));
-    h+='</div>';
-    /* 右列：客户信息 + 消息 + 待办 */
-    h+='<div class="space-y-5">';
+    /* 中间一排三张卡：客户信息 / 消息通知 / 跟进动态（问题件 + 工单两个插页），
+     * items-stretch + 卡片 h-full 保证三张卡底边对齐 */
+    h+='<div class="grid grid-cols-1 xl:grid-cols-3 gap-5 items-stretch">';
     h+=omsHomeCustCard();
     h+=omsHomeMessagesCard();
-    h+=omsHomeWorkOrdersCard();
+    h+=omsHomeDynamicsCard(issues);
     h+='</div>';
-    h+='</div>';
+    /* 最新订单放最下面，整行铺满 */
+    h+='<div class="mt-5">'+omsHomeOrdersCard(orders.slice(0,5))+'</div>';
     h+='</div>';
     return h;
 }
-function omsHomeCardShell(title,tab,badge,inner){
-    var h='<div class="bg-white rounded-xl border border-surface-200 p-5">';
+function omsHomeCardShell(title,tab,badge,inner,cls){
+    var h='<div class="bg-white rounded-xl border border-surface-200 p-5'+(cls?' '+cls:'')+'">';
     h+='<div class="flex items-center justify-between mb-4"><div class="flex items-center gap-2">'+
        '<span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-base font-semibold text-text-primary">'+esc(tr(title))+'</span>';
     if(badge>0)h+='<span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-50 text-red-600 text-xs font-semibold">'+badge+'</span>';
@@ -278,23 +273,6 @@ function omsHomeOrdersCard(rows){
     h+='</tbody></table></div>';
     return omsHomeCardShell('最新订单','oms-order-mgmt',0,h);
 }
-function omsHomeIssuesCard(rows){
-    var inner;
-    if(!rows.length)inner='<div class="py-8 text-center text-sm text-text-muted">'+tr('暂无进行中的问题件')+'</div>';
-    else{
-        inner='<div class="space-y-2">';
-        rows.forEach(function(r){
-            var gi=TC['oms-issue-mgmt'].d.indexOf(r);
-            var g=function(n){return omsCell('oms-issue-mgmt',r,n);};
-            inner+='<div class="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-surface-50 hover:bg-primary-50/50 cursor-pointer" ondblclick="openCsIssueViewModal(\'oms-issue-mgmt\','+gi+')">'+
-                '<span class="inline-block px-2 py-0.5 rounded text-xs flex-shrink-0 mt-0.5 bg-amber-50 text-amber-600">'+esc(tr(g('问题类型名称')))+'</span>'+
-                '<div class="flex-1 min-w-0"><div class="text-sm text-text-primary truncate">'+esc(g('问题描述'))+'</div>'+
-                '<div class="text-xs text-text-muted mt-0.5">'+esc(g('问题件单号'))+' · '+esc(g('最新响应时间'))+'</div></div>'+statusBadge(g('问题状态'))+'</div>';
-        });
-        inner+='</div>';
-    }
-    return omsHomeCardShell('问题件动态','oms-issue-mgmt',rows.length,inner);
-}
 function omsHomeCustCard(){
     var c=_OMS_CUST;
     var rows=[['客户代码',c.code],['客户全称',c.fullName],['客户等级',tr(c.level)],['结算周期',tr(c.settleCycle)],['所属业务员',c.sales],['专属客服',c.cs],['客户邮箱',c.email],['合作起始',c.joinDate]];
@@ -303,7 +281,7 @@ function omsHomeCustCard(){
         h+='<div class="flex items-start justify-between gap-3 text-sm"><span class="text-text-muted flex-shrink-0">'+esc(tr(p[0]))+'</span><span class="text-text-primary font-medium text-right break-all">'+esc(String(p[1]))+'</span></div>';
     });
     h+='</div>';
-    return omsHomeCardShell('客户信息',null,0,h);
+    return omsHomeCardShell('客户信息',null,0,h,'h-full flex flex-col');
 }
 function omsHomeMessagesCard(){
     var h='<div class="space-y-2">';
@@ -314,12 +292,32 @@ function omsHomeMessagesCard(){
             '<div class="text-xs text-text-muted mt-1">'+esc(tr(m.type))+' · '+esc(m.time)+'</div></div></div>';
     });
     h+='</div>';
-    return omsHomeCardShell('消息通知',null,_OMS_MESSAGES.filter(function(m){return m.unread;}).length,h);
+    return omsHomeCardShell('消息通知',null,_OMS_MESSAGES.filter(function(m){return m.unread;}).length,h,'h-full flex flex-col');
 }
-/* 工单动态：取代原「待办事项」。按时间倒序展示工单进展，
- * 处理中的带红色计数徽标，点击进对应页面。 */
-function omsHomeWorkOrdersCard(){
-    var rows=_OMS_WORK_ORDERS.slice().sort(function(a,b){return a.time<b.time?1:-1;});
+
+/* ===== 跟进动态：问题件 / 工单 两个插页合并在一张卡里 ===== */
+var _omsHomeDynTab='issue';
+function omsSwitchHomeDynTab(t){
+    _omsHomeDynTab=(t==='work')?'work':'issue';
+    var mc=document.getElementById('main-content');
+    if(mc){mc.innerHTML=generateOmsHomePage('oms-home');
+        if(typeof applyRuntimeEnhancements==='function')applyRuntimeEnhancements(mc);}
+}
+function omsHomeIssuesInner(rows){
+    if(!rows.length)return '<div class="py-8 text-center text-sm text-text-muted">'+tr('暂无进行中的问题件')+'</div>';
+    var inner='<div class="space-y-2">';
+    rows.forEach(function(r){
+        var gi=TC['oms-issue-mgmt'].d.indexOf(r);
+        var g=function(n){return omsCell('oms-issue-mgmt',r,n);};
+        inner+='<div class="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-surface-50 hover:bg-primary-50/50 cursor-pointer" ondblclick="openCsIssueViewModal(\'oms-issue-mgmt\','+gi+')">'+
+            '<span class="inline-block px-2 py-0.5 rounded text-xs flex-shrink-0 mt-0.5 bg-amber-50 text-amber-600">'+esc(tr(g('问题类型名称')))+'</span>'+
+            '<div class="flex-1 min-w-0"><div class="text-sm text-text-primary truncate">'+esc(g('问题描述'))+'</div>'+
+            '<div class="text-xs text-text-muted mt-0.5">'+esc(g('问题件单号'))+' · '+esc(g('最新响应时间'))+'</div></div>'+statusBadge(g('问题状态'))+'</div>';
+    });
+    return inner+'</div>';
+}
+function omsHomeWorkOrdersInner(rows){
+    if(!rows.length)return '<div class="py-8 text-center text-sm text-text-muted">'+tr('暂无工单动态')+'</div>';
     var h='<div class="space-y-2">';
     rows.forEach(function(w){
         h+='<div onclick="navigateToTab(\'\',\''+w.tab+'\')" class="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-surface-50 hover:bg-primary-50/50 cursor-pointer border-l-[3px] '+(w.status==='处理中'?'border-primary-500':'border-surface-300')+'">'+
@@ -330,9 +328,21 @@ function omsHomeWorkOrdersCard(){
             '<div class="text-sm text-text-primary leading-snug mt-1.5">'+esc(w.content)+'</div>'+
             '<div class="text-xs text-text-muted mt-1">'+esc(w.time)+'</div></div></div>';
     });
-    h+='</div>';
-    var open=_OMS_WORK_ORDERS.filter(function(w){return w.status==='处理中';}).length;
-    return omsHomeCardShell('工单动态',null,open,h);
+    return h+'</div>';
+}
+function omsHomeDynamicsCard(issues){
+    var openIssues=issues.filter(function(r){return ['待处理','处理中'].indexOf(omsCell('oms-issue-mgmt',r,'问题状态'))>=0;});
+    var workRows=_OMS_WORK_ORDERS.slice().sort(function(a,b){return a.time<b.time?1:-1;});
+    var openWorks=_OMS_WORK_ORDERS.filter(function(w){return w.status==='处理中';}).length;
+    var tab=_omsHomeDynTab;
+    var tabBtn=function(key,label,n){
+        var on=tab===key;
+        return '<button type="button" onclick="omsSwitchHomeDynTab(\''+key+'\')" class="h-8 px-3 rounded-lg text-xs font-medium '+(on?'bg-primary-600 text-white':'bg-surface-50 text-text-secondary border border-surface-200 hover:bg-surface-100 cursor-pointer')+'">'+tr(label)+'（'+n+'）</button>';
+    };
+    var inner='<div class="flex items-center gap-2 mb-3">'+tabBtn('issue','问题件',openIssues.length)+tabBtn('work','工单',openWorks)+'</div>';
+    inner+= tab==='issue'?omsHomeIssuesInner(openIssues.slice(0,4)):omsHomeWorkOrdersInner(workRows.slice(0,4));
+    return omsHomeCardShell('跟进动态',tab==='issue'?'oms-issue-mgmt':null,
+        tab==='issue'?openIssues.length:openWorks,inner,'h-full flex flex-col');
 }
 
 /* ================= 账单管理 ================= */

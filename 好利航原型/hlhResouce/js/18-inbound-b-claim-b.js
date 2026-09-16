@@ -465,6 +465,9 @@ function generateWarehouseInboundPage(id){
             '<span class="text-xs text-text-muted">'+tr('请先选择产品')+'</span>'+
         '</div>'+
     '</section>';
+    /* 分板明细（参考快递入仓的分板操作）：整页最后一个板块 —— 收货信息都填完了，
+     * 再按分拣方案生成分板、封板打库位，符合先收货后装板的作业顺序 */
+    h+=buildInboundPalletSectionHtml();
     if(mode==='second'){
     h+='<section><div class="border border-surface-200 rounded-xl overflow-hidden"><div class="flex items-center justify-between px-4 py-3 bg-surface-50 cursor-pointer hover:bg-surface-100 transition-colors" onclick="toggleCargoDetail(this)"><div class="text-sm font-semibold text-text-primary">'+tr('货物明细')+'</div><svg class="w-5 h-5 text-text-muted transition-transform cargo-detail-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"'+detailArrowStyle+'><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div><div class="cargo-detail-content '+detailContentClass+'">';
     h+='<div class="flex justify-end px-4 pt-3"><button type="button" onclick="addShipmentCargoRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('新增品名')+'</button></div>';
@@ -492,7 +495,7 @@ function generateWarehouseInboundPage(id){
         '<button type="button" onclick="openActionModal(\'resetEntry\',\''+id+'\',-1)" class="h-9 px-5 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('重置')+'</button>'+
         '</div>';
     h+='</form></div>';
-    setTimeout(function(){refreshShipmentCargoIndexes();calcShipmentCargoSummary();applyRuntimeEnhancements(document.getElementById('main-content'));var _wc=document.getElementById('warehouse-inbound-customer');if(_wc)fillDestWarehouseFromCustomer(_wc.value,'warehouse-inbound-dest');},0);
+    setTimeout(function(){refreshShipmentCargoIndexes();calcShipmentCargoSummary();if(typeof renderExpressInboundPallets==='function')renderExpressInboundPallets();applyRuntimeEnhancements(document.getElementById('main-content'));var _wc=document.getElementById('warehouse-inbound-customer');if(_wc)fillDestWarehouseFromCustomer(_wc.value,'warehouse-inbound-dest');},0);
     return h;
 }
 

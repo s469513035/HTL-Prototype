@@ -321,23 +321,10 @@ function resetExpressInbound(){
     showToast(tr('已重置'));
 }
 
-function generateExpressInboundPage(id){
-    ensureExpressInboundState();
-    const warehouseOptions=getWarehouseNameOptions();
-    const basic=[
-        {label:'到货仓库',type:'select',required:true,options:warehouseOptions,value:currentAccountWarehouse()},
-        {label:'到货时间',type:'datetime-local',value:nowDateTimeLocalSeconds()},
-        {label:'操作人',value:'张仓管'},
-        {label:'操作备注',value:'',placeholder:'请输入操作备注',span:'md:col-span-4'}
-    ];
-    let h='';
-    h+='<div class="h-full overflow-auto p-5">';
-    h+='<form class="space-y-5">';
-    h+='<div class="bg-white rounded-xl border border-surface-200 p-5">';
-    h+='<div class="flex items-center justify-between gap-4 mb-5"><h2 class="text-lg font-semibold text-text-primary">'+tr('快递入仓(分拣装板)')+'</h2><span class="badge bg-blue-100 text-blue-700">'+tr('作业中')+'</span></div>';
-    h+='<div class="space-y-6">';
-    h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
-    h+='<section>'+
+/* 分板明细板块（快递入仓与手动入仓共用）：待封板/已封板插页 + 新增分板 + 托盘表。
+ * 两页不会同时渲染，元素 id 与渲染函数共用一套是安全的。 */
+function buildInboundPalletSectionHtml(){
+    return '<section>'+
         '<div class="flex items-center justify-between mb-3 flex-wrap gap-2">'+
             '<div class="text-sm font-semibold text-text-primary">'+tr('分板明细')+'</div>'+
             '<div class="flex items-center gap-2">'+
@@ -362,6 +349,25 @@ function generateExpressInboundPage(id){
             '</tr></thead><tbody id="express-inbound-pallets-body"></tbody></table></div>'+
         '</div>'+
     '</section>';
+}
+
+function generateExpressInboundPage(id){
+    ensureExpressInboundState();
+    const warehouseOptions=getWarehouseNameOptions();
+    const basic=[
+        {label:'到货仓库',type:'select',required:true,options:warehouseOptions,value:currentAccountWarehouse()},
+        {label:'到货时间',type:'datetime-local',value:nowDateTimeLocalSeconds()},
+        {label:'操作人',value:'张仓管'},
+        {label:'操作备注',value:'',placeholder:'请输入操作备注',span:'md:col-span-4'}
+    ];
+    let h='';
+    h+='<div class="h-full overflow-auto p-5">';
+    h+='<form class="space-y-5">';
+    h+='<div class="bg-white rounded-xl border border-surface-200 p-5">';
+    h+='<div class="flex items-center justify-between gap-4 mb-5"><h2 class="text-lg font-semibold text-text-primary">'+tr('快递入仓(分拣装板)')+'</h2><span class="badge bg-blue-100 text-blue-700">'+tr('作业中')+'</span></div>';
+    h+='<div class="space-y-6">';
+    h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
+    h+=buildInboundPalletSectionHtml();
     h+='<section>'+
         '<div class="text-sm font-semibold text-text-primary mb-3">'+tr('扫描信息')+'</div>'+
         '<div class="flex gap-2 mb-3">'+

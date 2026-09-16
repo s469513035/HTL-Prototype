@@ -230,8 +230,14 @@ function generateWarehouseMultiInboundPage(id){
     h+=warehouseField('件数','<input id="warehouse-multi-forecast" readonly value="" placeholder="'+esc(tr('扫描运单号后自动带出'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-100 cursor-not-allowed text-text-secondary">',false);
     /* 包装类型：一票多件也要录，与一票一件、下单录入共用 PACKAGE_TYPE_OPTIONS */
     h+=warehouseField('包装类型','<select id="warehouse-multi-package" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50">'+PACKAGE_TYPE_OPTIONS.map(function(o){return '<option value="'+esc(o)+'">'+esc(tr(o))+'</option>';}).join('')+'</select>',true);
-    h+=warehouseField('库位库区','<input id="warehouse-multi-zone" value="" placeholder="'+esc(tr('请输入库位库区'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50">',false,'md:col-span-2');
-    h+=warehouseField('操作备注',warehouseInlineInput('text','','请输入操作备注','', ''),false,'md:col-span-2');
+    /* 品名：可编辑，挂品名库 datalist 模糊匹配 */
+    h+=warehouseField('品名','<input id="warehouse-multi-product-name" list="product-name-options" value="" placeholder="'+esc(tr('输入品名信息'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50">',true);
+    /* 登记为问题件勾选框（原库位库区的位置）；勾选后下面的操作备注变问题说明 */
+    h+='<div class="flex items-end"><label class="w-full h-8 inline-flex items-center gap-2 px-2 text-sm border border-surface-200 rounded bg-surface-50 cursor-pointer">'+
+        '<input type="checkbox" id="warehouse-multi-issue" class="rounded border-surface-300 text-primary-600" onchange="toggleWarehouseMultiIssueLabel()">'+
+        '<span class="text-text-secondary">'+tr('登记为问题件')+'</span></label></div>';
+    h+='<div data-field-label="操作备注" class="md:col-span-2 min-w-0 flex flex-col gap-1.5"><label id="warehouse-multi-remark-label" class="text-sm font-medium text-text-secondary truncate">'+tr('操作备注')+'</label>'+
+        '<input type="text" id="warehouse-multi-remark" placeholder="'+esc(tr('请输入操作备注'))+'" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white focus:border-primary-300"></div>';
     h+='</div>';
     h+='<div class="mt-3"><label class="block text-sm font-medium text-text-secondary mb-2">'+tr('附加服务')+'</label><div id="warehouse-multi-services" class="flex flex-wrap gap-2 min-h-[42px] rounded border border-surface-200 bg-surface-50 px-2 py-2"><span class="text-xs text-text-muted">'+tr('请先选择产品')+'</span></div></div>';
     h+='</section>';
@@ -243,6 +249,11 @@ function generateWarehouseMultiInboundPage(id){
     h+='</section>';
     h+='</div>';
     h+='<div class="space-y-3">';
+    /* 库位库区挪到右列最上面：收货核对在左、落位上架在右，和尺寸维护一起都是入库现场右侧的动作 */
+    h+='<section class="bg-white border border-primary-100 shadow-sm p-4">';
+    h+=warehouseSectionTitle('库位库区');
+    h+='<input id="warehouse-multi-zone" value="" placeholder="'+esc(tr('请输入库位库区，例如 A-01-03'))+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded bg-surface-50 focus:bg-white focus:border-primary-300">';
+    h+='</section>';
     h+='<section class="bg-white border border-primary-100 shadow-sm p-4">';
     h+=warehouseSectionTitle('尺寸维护');
     h+='<div class="mb-3"><label class="block text-sm font-medium text-text-secondary mb-2">'+tr('重量选择')+'</label><div class="flex items-center gap-4 text-sm"><label class="inline-flex items-center gap-1.5"><input type="radio" name="wm-weight" checked class="text-primary-600">'+tr('单件重')+'</label><label class="inline-flex items-center gap-1.5"><input type="radio" name="wm-weight" class="text-primary-600">'+tr('总重量')+'</label></div></div>';
@@ -260,6 +271,15 @@ function generateWarehouseMultiInboundPage(id){
     h+='</form></div>';
     setTimeout(function(){refreshWarehouseMultiIndexes();calcWarehouseMultiSummary();applyRuntimeEnhancements(document.getElementById('main-content'));},0);
     return h;
+}
+
+/* 一票多件：勾了问题件，操作备注变问题说明（必填），取消勾选改回来 */
+function toggleWarehouseMultiIssueLabel(){
+    var issue=!!(document.getElementById('warehouse-multi-issue')||{}).checked;
+    var label=document.getElementById('warehouse-multi-remark-label');
+    var input=document.getElementById('warehouse-multi-remark');
+    if(label)label.innerHTML=issue?(tr('问题说明')+' <span class="text-red-500">*</span>'):tr('操作备注');
+    if(input)input.placeholder=issue?tr('请输入问题说明'):tr('请输入操作备注');
 }
 
 var _productServices={

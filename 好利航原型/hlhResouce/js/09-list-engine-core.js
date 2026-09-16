@@ -34,8 +34,13 @@ var _noPreClaimPage=1;
 var _noPreForecastPage=1;
 var _noPreClaimPageSize=100;
 var _lclCargoTab='普货';   /* 价格维护按货物类型分插页：普货 / 敏感货 */
-/* 散货销售报价的币别维度：价格维护里每个计重范围同时维护这三种币别的单价 */
+/* 散货销售报价的币别维度：价格维护里每个计重范围同时维护这三种币别的单价。
+ * LCL_QUOTE_CURRENCIES 是基准三币别；某张报价单可以通过「新增币种」再加列，
+ * 加的列存在 _lclQuoteCurrencies 里，随弹窗打开重置（每张单自己的币别集） */
 var LCL_QUOTE_CURRENCIES=['人民币','美金','西法'];
+var _lclQuoteCurrencies=null;
+/* 「新增币种」的候选：西非航线常用的收款币别，基准三币别之外的 */
+var LCL_CURRENCY_CANDIDATES=['欧元','英镑','港币','日元','韩元','奈拉','迪拉姆','兰特'];
 /* 价格维护的扁平数据模型：一行 = 计重范围 × 币别 的一条单价（横向矩阵按 weightSeg 透视还原） */
 var _lclWeightPriceRows=[
     {weightSeg:'0-1',currency:'人民币',price:'14',cargoType:'普货'},

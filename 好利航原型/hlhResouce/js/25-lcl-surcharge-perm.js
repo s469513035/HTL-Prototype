@@ -290,6 +290,7 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
     titleEl.textContent=modeLabel+tr(c.t);
     const isView=mode==='view';
     _lclCargoTab='普货';   /* 每次打开默认停在普货插页 */
+    _lclQuoteCurrencies=LCL_QUOTE_CURRENCIES.slice();   /* 币别集随弹窗打开重置：每张单自己的 */
     const data=_listData[id]||expandData(id);
     const lastCode=data.length&&data[data.length-1][0]?data[data.length-1][0]:'QP000';
     const lm=lastCode.match(/^(.*?)(\d+)$/);
@@ -336,8 +337,9 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('计重类型')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['重量','体积'],'重量')+'</select></div>';
     html+='<div class="md:col-span-4 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y"'+(isView?' readonly':'')+'>'+tr('按客户、产品、发货仓库和目的仓库维护散货报价。')+'</textarea></div>';
     html+='</div></div>';
-    /* 横向/纵向切换已去掉：只保留币别矩阵一种视图，少一个概念少一次误触 */
-    html+='<div class="border border-surface-200 rounded-xl overflow-hidden"><div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3"><div class="text-sm font-semibold text-text-primary">'+tr('价格维护')+'</div>'+(isView?'':'<div class="flex items-center gap-2"><button type="button" onclick="addLclWeightPriceRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button></div>')+'</div>';
+    /* 横向/纵向切换已去掉：只保留币别矩阵一种视图，少一个概念少一次误触。
+     * 「新增币种」给矩阵动态加一列（选币种 → 确认 → 列表列增加），查看态不给 */
+    html+='<div class="border border-surface-200 rounded-xl overflow-hidden"><div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3"><div class="text-sm font-semibold text-text-primary">'+tr('价格维护')+'</div>'+(isView?'':'<div class="flex items-center gap-2"><button type="button" onclick="addLclWeightPriceRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button><button type="button" onclick="openLclCurrencyPicker()" class="h-8 px-3 text-xs font-medium text-text-secondary bg-white border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">+ '+tr('新增币种')+'</button></div>')+'</div>';
     html+='<div id="lcl-cargo-tabs" class="flex gap-2 border-b border-surface-200 px-4">'+lclCargoTabsHtml()+'</div>';
     html+='<div id="lcl-weight-price-wrap">'+renderLclWeightPriceTable()+'</div></div>';
     html+='</div>';
@@ -421,7 +423,8 @@ function getLclHorizontalModel(){
         cells[seg][row.currency||'人民币']=row.price||'';
     });
     if(!segments.length){segments.push('');cells['']={};}
-    return {segments:segments,cells:cells,currencies:LCL_QUOTE_CURRENCIES};
+    /* 列 = 当前单的币别集（基准三种 + 本单通过「新增币种」加进来的） */
+    return {segments:segments,cells:cells,currencies:(_lclQuoteCurrencies||LCL_QUOTE_CURRENCIES)};
 }
 
 /* 用当前插页采集到的行替换该货物类型的行，其它插页数据原样保留 */
@@ -480,11 +483,66 @@ function renderLclWeightPriceWrap(){
 
 function addLclWeightPriceRow(){
     captureLclWeightPriceRows();
-    /* 新增一行 = 新的计重范围，三种币别一起补上（空价格） */
-    LCL_QUOTE_CURRENCIES.forEach(function(cur){
+    /* 新增一行 = 新的计重范围，当前币别集（含新加的币种）一起补上空价格 */
+    (_lclQuoteCurrencies||LCL_QUOTE_CURRENCIES).forEach(function(cur){
         _lclWeightPriceRows.push(defaultLclWeightPriceRow({weightSeg:'',currency:cur,cargoType:_lclCargoTab}));
     });
     renderLclWeightPriceWrap();
+}
+
+/* ===== 新增币种：选币种 → 确认 → 矩阵加一列 =====
+ * 用独立浮层而不是 #crud-modal：报价弹窗本身占着 crud-modal，
+ * 套用会把它冲掉（与配舱的一键配舱、PDA 的清点件数同一套做法）。 */
+var _lclCurrencyPick='';
+function lclCurrencyPickerHtml(options){
+    var h='<div class="px-4 py-3 border-b border-surface-200 text-sm font-semibold text-text-primary">'+tr('新增币种')+'</div>';
+    h+='<div class="p-4 space-y-3">';
+    h+='<div class="text-xs text-text-secondary">'+tr('选择要加入价格维护的币种，确认后列表增加该币别列。')+'</div>';
+    h+='<div id="lcl-currency-chips" class="flex flex-wrap gap-2">';
+    options.forEach(function(c){
+        h+='<button type="button" data-currency-chip="'+esc(c)+'" onclick="pickLclCurrencyChip(this,\''+esc(c)+'\')" class="h-9 px-3.5 rounded-lg border border-surface-200 bg-white text-sm text-text-secondary hover:border-primary-300 hover:bg-primary-50 cursor-pointer transition-colors">'+esc(c)+'</button>';
+    });
+    h+='</div></div>';
+    h+='<div class="grid grid-cols-2 gap-2 px-4 pb-4">'+
+        '<button type="button" onclick="closeLclCurrencyPicker()" class="h-10 rounded-lg border border-surface-200 text-sm text-text-secondary cursor-pointer">'+tr('取消')+'</button>'+
+        '<button type="button" onclick="confirmLclCurrencyPicker()" class="h-10 rounded-lg bg-primary-600 text-white text-sm font-medium cursor-pointer">'+tr('确认')+'</button></div>';
+    return h;
+}
+function openLclCurrencyPicker(){
+    var current=(_lclQuoteCurrencies||LCL_QUOTE_CURRENCIES);
+    var options=LCL_CURRENCY_CANDIDATES.filter(function(c){return current.indexOf(c)<0;});
+    if(!options.length){showToast(tr('已包含全部可选币种'));return;}
+    _lclCurrencyPick='';
+    var old=document.getElementById('lcl-currency-modal');
+    if(old)old.remove();
+    var m=document.createElement('div');
+    m.id='lcl-currency-modal';
+    m.className='fixed inset-0 z-[999] flex items-center justify-center bg-black/40 p-6';
+    m.innerHTML='<div class="w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden">'+lclCurrencyPickerHtml(options)+'</div>';
+    document.body.appendChild(m);
+}
+function closeLclCurrencyPicker(){
+    var m=document.getElementById('lcl-currency-modal');
+    if(m)m.remove();
+}
+function pickLclCurrencyChip(btn,name){
+    _lclCurrencyPick=name;
+    var box=document.getElementById('lcl-currency-chips');
+    if(box)Array.from(box.querySelectorAll('[data-currency-chip]')).forEach(function(b){
+        b.className='h-9 px-3.5 rounded-lg border border-surface-200 bg-white text-sm text-text-secondary hover:border-primary-300 hover:bg-primary-50 cursor-pointer transition-colors';
+    });
+    btn.className='h-9 px-3.5 rounded-lg border border-primary-600 bg-primary-600 text-white text-sm font-medium cursor-pointer transition-colors';
+}
+function confirmLclCurrencyPicker(){
+    if(!_lclCurrencyPick){showToast(tr('请选择币种'));return;}
+    var add=_lclCurrencyPick;
+    if((_lclQuoteCurrencies||LCL_QUOTE_CURRENCIES).indexOf(add)>=0){closeLclCurrencyPicker();return;}
+    /* 先把已填的单价收回数据模型，再加列重画 —— 不收的话重画会丢掉未保存的编辑 */
+    captureLclWeightPriceRows();
+    (_lclQuoteCurrencies=_lclQuoteCurrencies||LCL_QUOTE_CURRENCIES.slice()).push(add);
+    closeLclCurrencyPicker();
+    renderLclWeightPriceWrap();
+    showToast(tr('已新增币种')+'「'+add+'」，'+tr('列表已增加该币别列'));
 }
 
 /* 切换货物类型插页（切换前先保存当前插页的编辑内容） */

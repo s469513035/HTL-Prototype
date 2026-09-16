@@ -461,6 +461,15 @@ function generateWarehouseInboundPage(id){
         '<div id="warehouse-inbound-services" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 min-h-[42px]">'+
             '<span class="text-xs text-text-muted">'+tr('请先选择产品')+'</span>'+
         '</div>'+
+        /* 附加服务下面：是否生成问题件 + 操作备注；勾了问题件，备注就是问题描述（必填） */
+        '<div class="mt-3 grid grid-cols-1 md:grid-cols-4 gap-4 items-start">'+
+            '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('是否生成问题件')+'</label>'+
+                '<label class="w-full h-10 inline-flex items-center gap-2 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 cursor-pointer">'+
+                '<input type="checkbox" id="warehouse-inbound-issue" class="rounded border-surface-300 text-primary-600" onchange="toggleWarehouseInboundIssueLabel()">'+
+                '<span class="text-text-secondary">'+tr('登记为问题件')+'</span></label></div>'+
+            '<div class="flex flex-col gap-1.5 md:col-span-3"><label class="text-sm font-medium text-text-secondary" id="warehouse-inbound-remark-label">'+tr('操作备注')+'</label>'+
+                '<textarea id="warehouse-inbound-remark" rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入操作备注'))+'"></textarea></div>'+
+        '</div>'+
     '</section>';
     /* 分板明细（参考快递入仓的分板操作）：整页最后一个板块 —— 收货信息都填完了，
      * 再按分拣方案生成分板、封板打库位，符合先收货后装板的作业顺序 */
@@ -511,6 +520,37 @@ function manualInboundPageVal(id){
     var el=document.getElementById(id);
     return el?(el.value||''):'';
 }
+/* 页面附加服务区当前勾了哪些（预填弹窗用） */
+function manualInboundCheckedServices(){
+    var box=document.getElementById('warehouse-inbound-services');
+    var out=[];
+    if(box){
+        Array.from(box.querySelectorAll('[data-cb-label]')).forEach(function(cb){
+            if(cb.checked)out.push(cb.dataset.cbLabel);
+        });
+    }
+    return out;
+}
+function docChecked(id){
+    var el=document.getElementById(id);
+    return !!(el&&el.checked);
+}
+/* 页面：勾了问题件 -> 操作备注变问题描述（必填），取消勾选改回来 */
+function toggleWarehouseInboundIssueLabel(){
+    var issue=docChecked('warehouse-inbound-issue');
+    var label=document.getElementById('warehouse-inbound-remark-label');
+    var area=document.getElementById('warehouse-inbound-remark');
+    if(label)label.innerHTML=issue?(tr('问题描述')+' <span class="text-red-500">*</span>'):tr('操作备注');
+    if(area)area.placeholder=issue?tr('请输入问题描述'):tr('请输入操作备注');
+}
+/* 弹窗内同样一套切换 */
+function toggleMieIssueLabel(){
+    var issue=docChecked('mie-issue');
+    var label=document.getElementById('mie-remark-label');
+    var area=document.getElementById('mie-remark');
+    if(label)label.innerHTML=issue?(tr('问题描述')+' <span class="text-red-500">*</span>'):tr('操作备注');
+    if(area)area.placeholder=issue?tr('请输入问题描述'):tr('请输入操作备注');
+}
 function openManualInboundEntryModal(){
     var waybill=manualInboundPageVal('warehouse-inbound-waybill');
     if(!waybill){showToast(tr('请先输入快递单号'));return;}
@@ -538,6 +578,19 @@ function openManualInboundEntryModal(){
     h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('货物类型')+'</label>'+sel('mie-cargo-type',['普货','敏感货'],manualInboundPageVal('warehouse-inbound-cargo-type')||'普货')+'</div>';
     h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('包装类型')+'</label>'+sel('mie-package',PACKAGE_TYPE_OPTIONS,manualInboundPageVal('warehouse-inbound-package')||'纸箱')+'</div>';
     h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="'+lblCls+'">'+tr('品名')+'</label><input id="mie-name" list="product-name-options" class="'+fldCls+'" placeholder="'+esc(tr('输入品名信息'))+'" value="'+esc(manualInboundPageVal('warehouse-inbound-product-name'))+'"></div>';
+    /* 附加服务（预填页面已勾的）+ 是否生成问题件 + 操作备注（勾了问题件就变问题描述） */
+    var pageSvc=manualInboundCheckedServices();
+    h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="'+lblCls+'">'+tr('附加服务')+'</label>'+
+        '<div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 min-h-[42px]">'+
+        ['报关','木箱','仿牌','带电','带磁','贴箱唛'].map(function(o){
+            return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" data-mie-svc="'+esc(o)+'" class="rounded border-surface-300 text-primary-600"'+(pageSvc.indexOf(o)>=0?' checked':'')+'><span>'+esc(tr(o))+'</span></label>';
+        }).join('')+'</div></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'">'+tr('是否生成问题件')+'</label>'+
+        '<label class="w-full h-10 inline-flex items-center gap-2 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 cursor-pointer">'+
+        '<input type="checkbox" id="mie-issue" class="rounded border-surface-300 text-primary-600" onchange="toggleMieIssueLabel()"'+(docChecked('warehouse-inbound-issue')?' checked':'')+'>'+
+        '<span class="text-text-secondary">'+tr('登记为问题件')+'</span></label></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'" id="mie-remark-label">'+(docChecked('warehouse-inbound-issue')?tr('问题描述'):tr('操作备注'))+'</label>'+
+        '<textarea id="mie-remark" rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(docChecked('warehouse-inbound-issue')?tr('请输入问题描述'):tr('请输入操作备注'))+'">'+esc(manualInboundPageVal('warehouse-inbound-remark'))+'</textarea></div>';
     h+='</div></div>';
     bodyEl.innerHTML=h;
     footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
@@ -551,6 +604,10 @@ function confirmManualInboundEntryModal(){
     var product=g('mie-product');
     var name=g('mie-name');
     if(!customer||!product||!name){showToast(tr('请填写客户、产品和品名'));return;}
+    var issue=docChecked('mie-issue');
+    var remark=g('mie-remark');
+    /* 勾了问题件，备注就是问题描述，必填 */
+    if(issue&&!remark.trim()){showToast(tr('请填写问题描述'));return;}
     var cargoType=g('mie-cargo-type')||'普货';
     var packageType=g('mie-package')||'纸箱';
     /* 带回页面输入框，并触发页面自己的联动（客户带目的仓库、产品带附加服务） */
@@ -560,21 +617,39 @@ function confirmManualInboundEntryModal(){
     back('warehouse-inbound-cargo-type',cargoType);
     back('warehouse-inbound-package',packageType);
     back('warehouse-inbound-product-name',name);
+    back('warehouse-inbound-remark',remark);
+    /* 问题件勾选状态带回页面，标签跟着切换 */
+    var pageIssue=document.getElementById('warehouse-inbound-issue');
+    if(pageIssue){pageIssue.checked=issue;toggleWarehouseInboundIssueLabel();}
     /* 客户联动只在目的仓库还空着时触发 —— 用户已经选了目的仓库就不覆盖，
      * 否则带入客户会把手选的仓库冲掉，分板匹配跟着串 */
     if(!manualInboundPageVal('warehouse-inbound-dest')&&typeof handleWarehouseInboundCustomerChange==='function'){
         var custEl=document.getElementById('warehouse-inbound-customer');
         if(custEl)handleWarehouseInboundCustomerChange(custEl);
     }
+    /* 产品联动会按新产品重画服务区，必须先触发 —— 服务勾选的带回放在它后面，
+     * 否则刚勾上的会被重画冲掉 */
     if(typeof handleWarehouseProductChange==='function'){
         var prodEl=document.getElementById('warehouse-inbound-product');
         if(prodEl)handleWarehouseProductChange(prodEl);
+    }
+    /* 附加服务：勾选状态带回页面的服务区 */
+    var svcBox=document.getElementById('warehouse-inbound-services');
+    var picked=[];
+    document.querySelectorAll('[data-mie-svc]').forEach(function(cb){
+        if(cb.checked)picked.push(cb.dataset.mieSvc);
+    });
+    if(svcBox){
+        Array.from(svcBox.querySelectorAll('[data-cb-label]')).forEach(function(cb){
+            cb.checked=picked.indexOf(cb.dataset.cbLabel)>=0;
+        });
     }
     /* 按规则计入分板明细 */
     var st=ensureExpressInboundState();
     var open=st.pallets.filter(function(p){return !p.sealed;});
     closeCrudModal();
-    if(!open.length){showToast(tr('数据已带入页面，暂无待封板分板，请先「新增分板」'));return;}
+    var issueMsg=issue?('，'+tr('已登记问题件')):'';
+    if(!open.length){showToast(tr('数据已带入页面，暂无待封板分板，请先「新增分板」')+issueMsg);return;}
     var transport=/空运/.test(product)?'空运':'海运';
     var country=MANUAL_INBOUND_DEST_COUNTRY[manualInboundPageVal('warehouse-inbound-dest')]||'';
     var target=open.filter(function(p){return p.transport===transport&&country&&p.country===country;})[0]
@@ -586,7 +661,7 @@ function confirmManualInboundEntryModal(){
     var oldW=parseFloat(String(target.weight||'0').replace(/[^\d.]/g,''))||0;
     target.weight=(oldW+addW).toFixed(1)+'KG';
     renderExpressInboundPallets();
-    showToast(tr('已带入')+' '+target.palletNo+'（'+esc(tr(target.transport))+' / '+esc(tr(target.country||'—'))+'）');
+    showToast(tr('已带入')+' '+target.palletNo+'（'+esc(tr(target.transport))+' / '+esc(tr(target.country||'—'))+'）'+issueMsg);
 }
 
 function toggleNoPreClaimChildren(btn,key){

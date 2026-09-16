@@ -443,10 +443,7 @@ function generateWarehouseInboundPage(id){
         {name:'服装配件',type:'普货',pcs:'6',weight:'12',length:'45',width:'35',height:'30',brand:'否',remark:'纸箱包装'},
         {name:'五金工具',type:'普货',pcs:'4',weight:'18',length:'50',width:'40',height:'28',brand:'否',remark:'需加固'}
     ];
-    const zoneBind=[
-        {label:'货区',type:'select',required:true,options:['A区','B区','C区','异常区','待认领区'],value:'A区'},
-        {label:'托盘号',value:'TP-YT-001'}
-    ];
+    /* 货区托盘绑定板块已去掉：库位在分板封板时录入，收货阶段不用再绑托盘 */
     const detailOpen=mode==='second';
     const detailContentClass=detailOpen?'':'hidden';
     const detailArrowStyle=detailOpen?' style="transform:rotate(180deg)"':'';
@@ -460,7 +457,6 @@ function generateWarehouseInboundPage(id){
     h+='<div class="flex items-center justify-between gap-4 mb-5"><div><h2 class="text-lg font-semibold text-text-primary">'+tr(title)+'</h2></div><span class="badge bg-blue-100 text-blue-700">'+tr(status)+'</span></div>';
     h+='<div class="space-y-6">';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
-    h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('货区托盘绑定')+'</div>'+renderFields(zoneBind,4)+'</section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
         '<div id="warehouse-inbound-services" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 min-h-[42px]">'+
             '<span class="text-xs text-text-muted">'+tr('请先选择产品')+'</span>'+

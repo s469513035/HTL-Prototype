@@ -340,7 +340,10 @@ function omsHomeDynamicsCard(issues){
         return '<button type="button" onclick="omsSwitchHomeDynTab(\''+key+'\')" class="h-8 px-3 rounded-lg text-xs font-medium '+(on?'bg-primary-600 text-white':'bg-surface-50 text-text-secondary border border-surface-200 hover:bg-surface-100 cursor-pointer')+'">'+tr(label)+'（'+n+'）</button>';
     };
     var inner='<div class="flex items-center gap-2 mb-3">'+tabBtn('issue','问题件',openIssues.length)+tabBtn('work','工单',openWorks)+'</div>';
-    inner+= tab==='issue'?omsHomeIssuesInner(openIssues.slice(0,4)):omsHomeWorkOrdersInner(workRows.slice(0,4));
+    /* 内容区固定高度 + 最多 3 条 + 超出滚动：两个插页的条目高度不一样，
+     * 不固定的话切插页整卡跟着伸缩，中间一排的对齐就白做了 */
+    inner+='<div style="height:280px;overflow-y:auto">'+
+        (tab==='issue'?omsHomeIssuesInner(openIssues.slice(0,3)):omsHomeWorkOrdersInner(workRows.slice(0,3)))+'</div>';
     return omsHomeCardShell('跟进动态',tab==='issue'?'oms-issue-mgmt':null,
         tab==='issue'?openIssues.length:openWorks,inner,'h-full flex flex-col');
 }

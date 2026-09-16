@@ -305,7 +305,30 @@ function generateShipmentEntryPage(id,options){
     h+='<div class="lg:col-span-4 space-y-4">';
     h+='<div class="bg-white rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('产品渠道说明')+'</div><div class="rounded-lg border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-700" id="shipment-channel-desc">'+tr('适合普货和常规敏感货，默认走深圳/广州仓集货，报价按散货海运产品规则带出。')+'</div></div>';
     h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
-    h+='<div class="bg-white rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用预估')+'</div><div class="space-y-2 text-sm text-text-secondary"><div class="flex justify-between gap-2"><span>'+tr('预计重量')+'</span><span class="font-medium text-text-primary text-right" id="shipment-est-weight">0 KG</span></div><div class="flex justify-between gap-2"><span>'+tr('预计体积')+'</span><span class="font-medium text-text-primary text-right" id="shipment-est-cbm">0 CBM</span></div><div class="flex justify-between gap-2"><span>'+tr('参考运费')+'</span><span class="font-medium text-primary-600 text-right" id="shipment-ref-fee">USD 0</span></div></div></div>';
+    /* OMS（客户端新增订单）：费用预估改为展示各币别的参考单价，不展示按录入算出来的费用 ——
+     * 价格是渠道维护的参考价，给客户一个量级预期，不让系统现场算账。
+     * TMS 管理端仍保留原来的重量/体积/参考运费预估。 */
+    if(!isAdmin){
+        var refPrices=[
+            ['USD','280.00 /CBM','4.80 /KG'],
+            ['CNY','2,000.00 /CBM','34.00 /KG'],
+            ['XOF','165,000.00 /CBM','2,800.00 /KG']
+        ];
+        h+='<div class="bg-white rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('参考单价')+'</div>'+
+           '<div class="rounded-lg border border-surface-200 overflow-hidden"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
+           '<th class="px-3 py-2 text-left text-xs font-semibold">'+tr('币别')+'</th>'+
+           '<th class="px-3 py-2 text-right text-xs font-semibold">'+tr('海运')+'</th>'+
+           '<th class="px-3 py-2 text-right text-xs font-semibold">'+tr('空运')+'</th></tr></thead><tbody>'+
+           refPrices.map(function(p){
+               return '<tr class="border-t border-surface-100"><td class="px-3 py-2 font-semibold text-primary-700">'+p[0]+'</td>'+
+                   '<td class="px-3 py-2 text-right font-mono text-text-primary">'+p[1]+'</td>'+
+                   '<td class="px-3 py-2 text-right font-mono text-text-primary">'+p[2]+'</td></tr>';
+           }).join('')+
+           '</tbody></table></div>'+
+           '<div class="mt-2 text-[11px] text-text-muted leading-relaxed">'+tr('以上为渠道维护的参考单价，最终以账单为准；海运按体积计费，空运按重量计费。')+'</div></div>';
+    }else{
+        h+='<div class="bg-white rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用预估')+'</div><div class="space-y-2 text-sm text-text-secondary"><div class="flex justify-between gap-2"><span>'+tr('预计重量')+'</span><span class="font-medium text-text-primary text-right" id="shipment-est-weight">0 KG</span></div><div class="flex justify-between gap-2"><span>'+tr('预计体积')+'</span><span class="font-medium text-text-primary text-right" id="shipment-est-cbm">0 CBM</span></div><div class="flex justify-between gap-2"><span>'+tr('参考运费')+'</span><span class="font-medium text-primary-600 text-right" id="shipment-ref-fee">USD 0</span></div></div></div>';
+    }
     h+='<div class="bg-white rounded-xl border border-surface-200 p-4"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('入仓要求')+'</div><div class="space-y-2 text-sm text-text-secondary leading-relaxed"><div>'+tr('报关资料：商业发票、装箱单')+'</div><div>'+tr('仓库时段：09:00-18:00')+'</div><div>'+tr('标签要求：外箱粘贴客户代号')+'</div></div></div>';
     h+='</div>';
     h+='</div>';

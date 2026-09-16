@@ -27,21 +27,22 @@ var _OMS_CUST={
 /* ---------- 订单种子数据 ---------- */
 /* 字段按 TMS 端运单管理（wb-manage）裁剪而来：去掉客户名称/客户代码（客户自己的门户，冗余）、
  * 所属业务员/客服/操作（内部信息）、运费（费用统一在账单管理看）。
+ * 插页状态与 TMS 管理端对齐（去掉 OMS 早期的「草稿」：未提交的不进订单管理，只留在新增订单页）。
  * 列序：运单号|物流单号|所属产品|国内仓库|目的仓库|运输方式|件数|重量(KG)|体积(CBM)|运单状态|仓库异常备注|问题件状态|创建时间 */
 var _OMS_ORDERS=[
-    ['WB-20260912001','SF10086523','西非海运专线','深圳盐田仓','达喀尔海外仓','海运','42','860.50','3.280','草稿','','正常','2026-09-12 09:15'],
-    ['WB-20260911002','YT98876543','西非空运专线','广州南沙仓','拉各斯海外仓','空运','18','320.00','1.120','已预报','','正常','2026-09-11 14:20'],
-    ['WB-20260910003','JD30088991','西非海运专线','上海浦东仓','阿比让海外仓','海运','65','1,240.80','5.600','已预报','','正常','2026-09-10 10:30'],
-    ['WB-20260909004','SF10080112','西非海运专线','深圳盐田仓','特马海外仓','海运','30','655.20','2.450','已确认','','正常','2026-09-09 16:45'],
-    ['WB-20260908005','EMS99005566','西非空运专线','广州南沙仓','杜阿拉海外仓','空运','12','208.60','0.860','已配舱','带电货物待补 MSDS','待处理','2026-09-08 11:05'],
-    ['WB-20260906006','JD30077812','西非海运专线','深圳盐田仓','达喀尔海外仓','海运','88','1,890.30','7.920','已出库','','正常','2026-09-06 15:30'],
-    ['WB-20260904007','SF10075588','西非海运专线','广州南沙仓','拉各斯海外仓','海运','55','1,120.00','4.310','已离港','分拣件数与预报不符','处理中','2026-09-04 08:50'],
-    ['WB-20260902008','YT98855221','西非空运专线','上海浦东仓','阿比让海外仓','空运','25','486.40','1.950','已离港','','正常','2026-09-02 13:25'],
-    ['WB-20260830009','JD30066534','西非海运专线','深圳盐田仓','特马海外仓','海运','47','980.70','3.760','已到港','','待处理','2026-08-30 09:40'],
-    ['WB-20260828010','SF10062219','西非海运专线','广州南沙仓','达喀尔海外仓','海运','36','742.10','2.980','已到港','','正常','2026-08-28 17:10'],
+    ['WB-20260912001','SF10086523','西非海运专线','深圳盐田仓','达喀尔海外仓','海运','42','860.50','3.280','已预报','','正常','2026-09-12 09:15'],
+    ['WB-20260911002','YT98876543','西非空运专线','广州南沙仓','拉各斯海外仓','空运','18','320.00','1.120','已到货','','正常','2026-09-11 14:20'],
+    ['WB-20260910003','JD30088991','西非海运专线','上海浦东仓','阿比让海外仓','海运','65','1,240.80','5.600','已确认','','正常','2026-09-10 10:30'],
+    ['WB-20260909004','SF10080112','西非海运专线','深圳盐田仓','特马海外仓','海运','30','655.20','2.450','已配舱','','正常','2026-09-09 16:45'],
+    ['WB-20260908005','EMS99005566','西非空运专线','广州南沙仓','杜阿拉海外仓','空运','12','208.60','0.860','已出库','带电货物待补 MSDS','待处理','2026-09-08 11:05'],
+    ['WB-20260906006','JD30077812','西非海运专线','深圳盐田仓','达喀尔海外仓','海运','88','1,890.30','7.920','已离港','','正常','2026-09-06 15:30'],
+    ['WB-20260904007','SF10075588','西非海运专线','广州南沙仓','拉各斯海外仓','海运','55','1,120.00','4.310','已到港','分拣件数与预报不符','处理中','2026-09-04 08:50'],
+    ['WB-20260902008','YT98855221','西非空运专线','上海浦东仓','阿比让海外仓','空运','25','486.40','1.950','海外已到仓','','正常','2026-09-02 13:25'],
+    ['WB-20260830009','JD30066534','西非海运专线','深圳盐田仓','特马海外仓','海运','47','980.70','3.760','海外已出仓','','待处理','2026-08-30 09:40'],
+    ['WB-20260828010','SF10062219','西非海运专线','广州南沙仓','达喀尔海外仓','海运','36','742.10','2.980','已签收','','正常','2026-08-28 17:10'],
     ['WB-20260825011','YT98841076','西非空运专线','上海浦东仓','拉各斯海外仓','空运','15','296.30','1.040','已签收','到货外箱破损 2 件','处理中','2026-08-25 10:20'],
     ['WB-20260822012','JD30055890','西非海运专线','深圳盐田仓','杜阿拉海外仓','海运','72','1,508.90','6.150','已签收','','已关闭','2026-08-22 14:55'],
-    ['WB-20260819013','SF10053342','西非海运专线','广州南沙仓','阿比让海外仓','海运','28','590.40','2.220','已签收','单件超长 1.8m','已关闭','2026-08-19 09:30'],
+    ['WB-20260819013','SF10053342','西非海运专线','广州南沙仓','阿比让海外仓','海运','28','590.40','2.220','已退件','单件超长 1.8m','已关闭','2026-08-19 09:30'],
     ['WB-20260815014','YT98829908','西非空运专线','上海浦东仓','特马海外仓','空运','9','168.20','0.620','已取消','','正常','2026-08-15 16:00']
 ];
 /* ---------- 问题件种子数据 ---------- */
@@ -57,16 +58,17 @@ var _OMS_ISSUES=[
     ['ISS-20260828006','尺寸异常','WB-20260819013','单件超长 1.8m，确认是否加收超长费','已关闭','2026-08-29 11:20','客户确认按标准加收，已完结','西非海运专线']
 ];
 /* ---------- 账单种子数据 ---------- */
-/* 列序：账单号|账单周期|币别|账单金额|已付金额|待付金额|到期日|账单状态 */
+/* 列序：批次号|账单号|结算周期|币别|账单金额|已付金额|待付金额|账单发送时间|发送人|到期日|账单状态
+ * 结算周期 = 结算方式（票结/月结），不再是「2026-09 上半月」那种账期描述。 */
 var _OMS_BILLS=[
-    ['BILL-20260910','2026-09 上半月','USD','8,950.00','0.00','8,950.00','2026-09-25','待付款'],
-    ['BILL-20260901','2026-08 下半月','USD','12,860.00','6,000.00','6,860.00','2026-09-20','部分付款'],
-    ['BILL-20260822','2026-08 上半月','USD','9,720.00','9,720.00','0.00','2026-09-05','已付款'],
-    ['BILL-20260810','2026-07 下半月','USD','15,340.00','15,340.00','0.00','2026-08-25','已付款'],
-    ['BILL-20260728','2026-07 上半月','USD','11,080.00','11,080.00','0.00','2026-08-10','已付款'],
-    ['BILL-20260715','2026-06 下半月','USD','7,650.00','7,650.00','0.00','2026-07-30','已付款'],
-    ['BILL-20260702','2026-06 上半月','USD','10,420.00','10,420.00','0.00','2026-07-15','已付款'],
-    ['BILL-20260528','2026-05 下半月','USD','6,980.00','5,000.00','1,980.00','2026-06-15','已逾期']
+    ['PC-202609-01','BILL-20260910','月结','USD','8,950.00','0.00','8,950.00','2026-09-10 18:00','张财务','2026-09-25','待付款'],
+    ['PC-202609-01','BILL-20260901','月结','USD','12,860.00','6,000.00','6,860.00','2026-09-01 18:00','张财务','2026-09-20','部分付款'],
+    ['PC-202608-02','BILL-20260822','月结','USD','9,720.00','9,720.00','0.00','2026-08-22 17:30','张财务','2026-09-05','已付款'],
+    ['PC-202608-02','BILL-20260810','票结','USD','15,340.00','15,340.00','0.00','2026-08-10 12:00','李财务','2026-08-25','已付款'],
+    ['PC-202607-02','BILL-20260728','票结','USD','11,080.00','11,080.00','0.00','2026-07-28 15:00','李财务','2026-08-10','已付款'],
+    ['PC-202607-01','BILL-20260715','票结','USD','7,650.00','7,650.00','0.00','2026-07-15 11:00','张财务','2026-07-30','已付款'],
+    ['PC-202607-01','BILL-20260702','月结','USD','10,420.00','10,420.00','0.00','2026-07-02 18:00','张财务','2026-07-15','已付款'],
+    ['PC-202605-02','BILL-20260528','月结','USD','6,980.00','5,000.00','1,980.00','2026-05-28 18:00','张财务','2026-06-15','已逾期']
 ];
 /* 账单费用明细（按账单号）：运单号|费用名称|金额|币别 */
 var _OMS_BILL_FEES={
@@ -102,14 +104,18 @@ var _OMS_MESSAGES=[
     {type:'轨迹',content:'运单 WB-20260830009 已到港（特马港），等待清关',time:'2026-09-10 08:15',unread:false},
     {type:'账单',content:'账单 BILL-20260901 已核销 6,000.00 USD，余 6,860.00 USD 待付',time:'2026-09-09 15:30',unread:false}
 ];
-var _OMS_TODOS=[
-    {type:'订单确认',content:'2 条订单待确认（WB-20260911002 等）',tab:'oms-order-mgmt',time:'2026-09-13'},
-    {type:'账单付款',content:'账单 BILL-20260910 将于 09-25 到期，待付 8,950.00 USD',tab:'oms-bill',time:'2026-09-12'},
-    {type:'问题件跟进',content:'2 条问题件待处理，请及时查看客服反馈',tab:'oms-issue-mgmt',time:'2026-09-11'}
+/* ---------- 工单动态（功能首页右列） ----------
+ * 原「待办事项」改版：不再只是「去处理」的入口，而是把工单的最新进展推给客户看。 */
+var _OMS_WORK_ORDERS=[
+    {no:'WO-20260913001',type:'问题件工单',content:'客服已上传破损货物定损照片，等待保险核定金额','time':'2026-09-13 10:30',status:'处理中',tab:'oms-issue-mgmt'},
+    {no:'WO-20260912002',type:'订舱工单',content:'WB-20260911002 舱位已确认，配舱回执已同步','time':'2026-09-12 16:20',status:'已完成',tab:'oms-order-mgmt'},
+    {no:'WO-20260911003',type:'费用工单',content:'仓储费异议已受理，财务正在复核计费明细','time':'2026-09-11 14:05',status:'处理中',tab:'oms-bill'},
+    {no:'WO-20260910004',type:'资料工单',content:'空运带电货物 MSDS 文件已收到，资料补充完成','time':'2026-09-10 09:40',status:'已完成',tab:'oms-issue-mgmt'}
 ];
 
 /* ---------- 标准列表注册 ---------- */
-var _OMS_ORDER_STATUSES=['草稿','已预报','已确认','已配舱','已出库','已离港','已到港','已签收','已取消'];
+/* 插页状态与 TMS 运单管理（wb-manage）一致；「草稿」已去掉 —— 未提交的单只留在新增订单页 */
+var _OMS_ORDER_STATUSES=['已预报','已到货','已确认','已配舱','已出库','已离港','已到港','海外已到仓','海外已出仓','已签收','已退件','已取消'];
 addPrototypeTable('oms-order-mgmt','订单管理','运单号|物流单号|所属产品|国内仓库|目的仓库|运输方式|件数|重量(KG)|体积(CBM)|运单状态|仓库异常备注|问题件状态|创建时间|操作',_OMS_ORDER_STATUSES,_OMS_ORDERS,[
     {label:'运单号',type:'text'},
     {label:'物流单号',type:'text'},
@@ -135,13 +141,16 @@ addPrototypeTable('oms-issue-mgmt','问题件管理','问题件单号|问题类�
 TC['oms-issue-mgmt'].noExpand=true;
 
 var _OMS_BILL_STATUSES=['待付款','部分付款','已付款','已逾期'];
-addPrototypeTable('oms-bill','账单管理','账单号|账单周期|币别|账单金额|已付金额|待付金额|到期日|账单状态',_OMS_BILL_STATUSES,_OMS_BILLS,[
+addPrototypeTable('oms-bill','账单管理','批次号|账单号|结算周期|币别|账单金额|已付金额|待付金额|账单发送时间|发送人|到期日|账单状态|操作',_OMS_BILL_STATUSES,_OMS_BILLS,[
+    {label:'批次号',type:'text'},
     {label:'账单号',type:'text'},
-    {label:'账单周期',type:'text'},
+    {label:'结算周期',type:'select',options:['票结','月结']},
     {label:'账单状态',type:'select',options:_OMS_BILL_STATUSES},
     {label:'到期日',type:'date'}
 ]);
 TC['oms-bill'].noExpand=true;
+/* 账单列表不显示引擎自动补的 创建人/修改人 审计列（noAutoAudit 是引擎现成开关） */
+TC['oms-bill'].noAutoAudit=true;
 
 /* ---------- 小工具 ---------- */
 function omsNow(){
@@ -184,9 +193,10 @@ function generateOmsHomePage(id){
     var ordStatus=function(r){return omsCell('oms-order-mgmt',r,'运单状态');};
     var issStatus=function(r){return omsCell('oms-issue-mgmt',r,'问题状态');};
     var inTransit=orders.filter(function(r){return ['已配舱','已出库','已离港','已到港'].indexOf(ordStatus(r))>=0;}).length;
-    var toConfirm=orders.filter(function(r){return ['草稿','已预报'].indexOf(ordStatus(r))>=0;}).length;
+    /* 待确认 = 业务确认之前的状态，与 TMS 业务确认的前置状态一致 */
+    var toConfirm=orders.filter(function(r){return ['已预报','已到货'].indexOf(ordStatus(r))>=0;}).length;
     var unpaid=0;
-    bills.forEach(function(r){unpaid+=parseFloat(String(r[5]).replace(/,/g,''))||0;});
+    bills.forEach(function(r){unpaid+=parseFloat(String(omsCell('oms-bill',r,'待付金额')).replace(/,/g,''))||0;});
 
     var kpis=[
         {label:'本月订单',value:orders.length,unit:'票',tab:'oms-order-mgmt',color:'from-primary-600 to-primary-500'},
@@ -231,7 +241,7 @@ function generateOmsHomePage(id){
     h+='<div class="space-y-5">';
     h+=omsHomeCustCard();
     h+=omsHomeMessagesCard();
-    h+=omsHomeTodosCard();
+    h+=omsHomeWorkOrdersCard();
     h+='</div>';
     h+='</div>';
     h+='</div>';
@@ -306,35 +316,46 @@ function omsHomeMessagesCard(){
     h+='</div>';
     return omsHomeCardShell('消息通知',null,_OMS_MESSAGES.filter(function(m){return m.unread;}).length,h);
 }
-function omsHomeTodosCard(){
+/* 工单动态：取代原「待办事项」。按时间倒序展示工单进展，
+ * 处理中的带红色计数徽标，点击进对应页面。 */
+function omsHomeWorkOrdersCard(){
+    var rows=_OMS_WORK_ORDERS.slice().sort(function(a,b){return a.time<b.time?1:-1;});
     var h='<div class="space-y-2">';
-    _OMS_TODOS.forEach(function(t){
-        h+='<div onclick="navigateToTab(\'\',\''+t.tab+'\')" class="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-surface-50 hover:bg-primary-50/50 cursor-pointer border-l-[3px]" style="border-left-color:#D9A441">'+
-            '<div class="flex-1 min-w-0"><div class="text-sm text-text-primary leading-snug">'+esc(t.content)+'</div>'+
-            '<div class="text-xs text-text-muted mt-1">'+esc(tr(t.type))+' · '+esc(t.time)+'</div></div>'+
-            '<span class="text-xs text-primary-600 flex-shrink-0 mt-0.5">'+tr('去处理')+' →</span></div>';
+    rows.forEach(function(w){
+        h+='<div onclick="navigateToTab(\'\',\''+w.tab+'\')" class="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-surface-50 hover:bg-primary-50/50 cursor-pointer border-l-[3px] '+(w.status==='处理中'?'border-primary-500':'border-surface-300')+'">'+
+            '<div class="flex-1 min-w-0">'+
+            '<div class="flex items-center gap-2"><span class="text-xs font-semibold text-text-primary">'+esc(w.no)+'</span>'+
+            '<span class="inline-block px-1.5 py-0.5 rounded text-[11px] bg-primary-50 text-primary-600">'+esc(tr(w.type))+'</span>'+
+            '<span class="ml-auto flex-shrink-0">'+statusBadge(w.status)+'</span></div>'+
+            '<div class="text-sm text-text-primary leading-snug mt-1.5">'+esc(w.content)+'</div>'+
+            '<div class="text-xs text-text-muted mt-1">'+esc(w.time)+'</div></div></div>';
     });
     h+='</div>';
-    return omsHomeCardShell('待办事项',null,_OMS_TODOS.length,h);
+    var open=_OMS_WORK_ORDERS.filter(function(w){return w.status==='处理中';}).length;
+    return omsHomeCardShell('工单动态',null,open,h);
 }
 
 /* ================= 账单管理 ================= */
 
-/* 账单明细弹窗（双击行触发） */
+/* 账单明细弹窗（行内「查看」/ 双击 / 工具栏「账单明细」共用这一个入口） */
 function openOmsBillDetail(id,gi){
     var row=omsRowOf(id,gi);
     if(!row)return;
-    var no=row[0];
-    var fees=omsBillFeesOf(no,row[3]);
+    var g=function(n){return omsCell(id,row,n);};
+    var no=g('账单号');
+    var fees=omsBillFeesOf(no,g('账单金额'));
 
     var h='<div class="grid grid-cols-2 md:grid-cols-4 gap-4 rounded-xl border border-surface-200 bg-surface-50/50 p-4">';
     h+=omsInfoCell('账单号','<span class="font-mono font-semibold text-primary-700">'+esc(no)+'</span>');
-    h+=omsInfoCell('账单周期',esc(tr(row[1])));
-    h+=omsInfoCell('账单状态',statusBadge(row[7]));
-    h+=omsInfoCell('到期日',esc(row[6]));
-    h+=omsInfoCell('账单金额','<span class="font-semibold">'+esc(row[3])+' '+esc(row[2])+'</span>');
-    h+=omsInfoCell('已付金额','<span class="text-success-600 font-semibold" style="color:#1F9D66">'+esc(row[4])+' '+esc(row[2])+'</span>');
-    h+=omsInfoCell('待付金额','<span class="font-semibold" style="color:#D97706">'+esc(row[5])+' '+esc(row[2])+'</span>');
+    h+=omsInfoCell('批次号','<span class="font-mono">'+esc(g('批次号'))+'</span>');
+    h+=omsInfoCell('结算周期',esc(tr(g('结算周期'))));
+    h+=omsInfoCell('账单状态',statusBadge(g('账单状态')));
+    h+=omsInfoCell('账单金额','<span class="font-semibold">'+esc(g('账单金额'))+' '+esc(g('币别'))+'</span>');
+    h+=omsInfoCell('已付金额','<span class="text-success-600 font-semibold" style="color:#1F9D66">'+esc(g('已付金额'))+' '+esc(g('币别'))+'</span>');
+    h+=omsInfoCell('待付金额','<span class="font-semibold" style="color:#D97706">'+esc(g('待付金额'))+' '+esc(g('币别'))+'</span>');
+    h+=omsInfoCell('到期日',esc(g('到期日')));
+    h+=omsInfoCell('账单发送时间',esc(g('账单发送时间')||'—'));
+    h+=omsInfoCell('发送人',esc(g('发送人')||'—'));
     h+='</div>';
 
     h+=omsSectionTitle('费用明细');
@@ -353,11 +374,11 @@ function openOmsBillDetail(id,gi){
     });
     h+='</tbody><tfoot class="bg-primary-50/60"><tr><td colspan="2" class="px-3 py-2 font-semibold text-primary-700">'+tr('合计')+'（'+fees.length+' '+tr('条')+'）</td>'+
        '<td class="px-3 py-2 text-right font-mono font-semibold text-primary-700">'+total.toLocaleString('en-US',{minimumFractionDigits:2})+'</td>'+
-       '<td class="px-3 py-2 text-right text-primary-700 font-semibold">'+esc(row[2])+'</td></tr></tfoot></table></div>';
+       '<td class="px-3 py-2 text-right text-primary-700 font-semibold">'+esc(g('币别'))+'</td></tr></tfoot></table></div>';
 
     omsOpenCrud(tr('账单明细')+' - '+no,h,
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>'+
-        '<button onclick="closeCrudModal();showToast(\''+tr('对账单PDF已生成')+'\')" class="px-4 py-2 text-sm font-medium text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('导出对账单')+'</button>',
+        '<button onclick="omsDownloadBills(\''+id+'\',['+gi+'])" class="px-4 py-2 text-sm font-medium text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('账单下载')+'</button>',
         '62%');
 }
 /* 工具栏「账单明细」：勾选一条进入明细 */
@@ -365,4 +386,12 @@ function omsOpenSelectedBillDetail(id){
     var indices=getSelectedRowIndices();
     if(!indices.length){showToast(tr('请先勾选一条账单'));return;}
     openOmsBillDetail(id,indices[0]);
+}
+/* 账单下载：工具栏按勾选批量，明细弹窗里按当前这条 */
+function omsDownloadBills(id,indices){
+    indices=indices||(typeof getSelectedRowIndices==='function'?getSelectedRowIndices():[]);
+    if(!indices.length){showToast(tr('请先勾选要下载的账单'));return;}
+    var nos=indices.map(function(i){var r=omsRowOf(id,i);return r?omsCell(id,r,'账单号'):'';}).filter(Boolean);
+    closeCrudModal();
+    showToast(tr('账单PDF已生成')+'（'+nos.length+' '+tr('个')+'），'+tr('已开始下载')+'：'+nos.slice(0,3).join('、')+(nos.length>3?'…':''));
 }

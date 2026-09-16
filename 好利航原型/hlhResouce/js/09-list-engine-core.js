@@ -33,7 +33,6 @@ var _activeSurchargeDetailRow=null;
 var _noPreClaimPage=1;
 var _noPreForecastPage=1;
 var _noPreClaimPageSize=100;
-var _lclWeightPriceMode='vertical';
 var _lclCargoTab='普货';   /* 价格维护按货物类型分插页：普货 / 敏感货 */
 /* 散货销售报价的币别维度：价格维护里每个计重范围同时维护这三种币别的单价 */
 var LCL_QUOTE_CURRENCIES=['人民币','美金','西法'];

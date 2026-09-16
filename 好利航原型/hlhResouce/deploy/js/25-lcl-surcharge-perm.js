@@ -331,7 +331,8 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
     }else{
         html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('状态')+'</label><select id="lq-status" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['已启用','已禁用'],status)+'</select></div>';
     }
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('所属币别')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['CNY','USD','EUR','GBP'],'USD')+'</select></div>';
+    /* 「默认币别」：报价展示与导出用的主币别；下方价格维护按 人民币/美金/西法 三币别同时维护 */
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('默认币别')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(LCL_QUOTE_CURRENCIES,'人民币')+'</select></div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('计重类型')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['重量','体积'],'重量')+'</select></div>';
     html+='<div class="md:col-span-4 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y"'+(isView?' readonly':'')+'>'+tr('按客户、产品、发货仓库和目的仓库维护散货报价。')+'</textarea></div>';
     html+='</div></div>';
@@ -393,41 +394,33 @@ function lclExcelInput(value,extraClass){
 
 function defaultLclWeightPriceRow(base){
     base=base||{};
-    return {groupId:base.groupId||nextLclWeightPriceGroupId(),weightSeg:base.weightSeg||'',price:base.price||'',cargoType:base.cargoType||'普货',weightType:base.weightType||'重量',billingMode:base.billingMode||'单价'};
-}
-
-function nextLclWeightPriceGroupId(){
-    let max=0;
-    (_lclWeightPriceRows||[]).forEach(function(row){
-        const m=String((row&&row.groupId)||'').match(/lcl-g-(\d+)/);
-        if(m)max=Math.max(max,parseInt(m[1],10)||0);
-    });
-    return 'lcl-g-'+(max+1);
+    return {weightSeg:base.weightSeg||'',currency:base.currency||'人民币',price:base.price||'',cargoType:base.cargoType||'普货'};
 }
 
 /* 当前插页（货物类型）下的价格行 */
 function lclTabRows(){
     return (_lclWeightPriceRows||[]).filter(function(r){return (r.cargoType||'普货')===_lclCargoTab;});
 }
+/* 当前插页下有多少个计重范围（插页徽标用，一行扁平数据 = 一个范围 × 一个币别） */
+function lclTabSegmentCount(){
+    const seen=[];
+    lclTabRows().forEach(function(r){const s=r.weightSeg||'';if(!seen.includes(s))seen.push(s);});
+    return seen.length;
+}
+/* 横向矩阵模型：行 = 计重范围（纵向），列 = 币别（横向），格 = 单价。
+ * 扁平行按 weightSeg 透视还原成矩阵；矩阵里没维护到的 币别×范围 补空格。 */
 function getLclHorizontalModel(){
     const tabRows=lclTabRows();
-    const source=tabRows.length?tabRows:[defaultLclWeightPriceRow({groupId:nextLclWeightPriceGroupId(),weightSeg:'0-1',price:'',cargoType:_lclCargoTab})];
     const segments=[];
-    const groups=[];
-    const groupMap={};
-    source.forEach(function(row,idx){
+    const cells={};
+    tabRows.forEach(function(row){
         const seg=row.weightSeg||'';
         if(!segments.includes(seg))segments.push(seg);
-        const key=row.groupId||('auto-'+(row.cargoType||'普货')+'-'+(row.currency||'USD')+'-'+(row.billingMode||'单价')+'-'+(row.billingUnit||'KGS'));
-        if(!groupMap[key]){
-            groupMap[key]={groupId:row.groupId||('lcl-g-auto-'+idx),cargoType:row.cargoType||'普货',weightType:row.weightType||'重量',currency:row.currency||'USD',billingMode:row.billingMode||'单价',billingUnit:row.billingUnit||'KGS',prices:{}};
-            groups.push(groupMap[key]);
-        }
-        groupMap[key].prices[seg]=row.price||'';
+        if(!cells[seg])cells[seg]={};
+        cells[seg][row.currency||'人民币']=row.price||'';
     });
-    if(!segments.length)segments.push('');
-    if(!groups.length)groups.push({groupId:nextLclWeightPriceGroupId(),cargoType:'普货',weightType:'重量',currency:'USD',billingMode:'单价',billingUnit:'KGS',prices:{}});
-    return {segments:segments,groups:groups};
+    if(!segments.length){segments.push('');cells['']={};}
+    return {segments:segments,cells:cells,currencies:LCL_QUOTE_CURRENCIES};
 }
 
 /* 用当前插页采集到的行替换该货物类型的行，其它插页数据原样保留 */
@@ -441,28 +434,18 @@ function captureLclWeightPriceRows(){
     if(vertical){
         mergeLclTabRows(Array.from(vertical.querySelectorAll('tbody tr')).map(function(row){
             return {
-                groupId:row.dataset.groupId||nextLclWeightPriceGroupId(),
                 weightSeg:(row.querySelector('[data-field="weightSeg"]')||{}).value||'',
                 price:(row.querySelector('[data-field="price"]')||{}).value||'',
                 cargoType:_lclCargoTab,
-                currency:(row.querySelector('[data-field="currency"]')||{}).value||'USD',
-                billingMode:(row.querySelector('[data-field="billingMode"]')||{}).value||'单价',
-                billingUnit:(row.querySelector('[data-field="billingUnit"]')||{}).value||'KGS'
+                currency:(row.querySelector('[data-field="currency"]')||{}).value||'人民币'
             };
         }));
     }else if(horizontal){
-        const weightInputs=Array.from(horizontal.querySelectorAll('thead [data-horizontal-weight-seg]'));
-        const segments=weightInputs.map(function(input){return input.value||'';});
         const nextRows=[];
-        Array.from(horizontal.querySelectorAll('tbody tr[data-horizontal-row]')).forEach(function(row){
-            const groupId=row.dataset.groupId||nextLclWeightPriceGroupId();
-            const cargoType=_lclCargoTab;
-            const currency=(row.querySelector('[data-horizontal-currency]')||{}).value||'USD';
-            const billingMode=(row.querySelector('[data-horizontal-billing-mode]')||{}).value||'单价';
-            const billingUnit=(row.querySelector('[data-horizontal-billing-unit]')||{}).value||'KGS';
-            const prices=Array.from(row.querySelectorAll('[data-horizontal-price]'));
-            segments.forEach(function(seg,i){
-                nextRows.push({groupId:groupId,weightSeg:seg,price:(prices[i]||{}).value||'',cargoType:cargoType,currency:currency,billingMode:billingMode,billingUnit:billingUnit});
+        Array.from(horizontal.querySelectorAll('tbody tr[data-horizontal-seg-row]')).forEach(function(row){
+            const seg=(row.querySelector('[data-horizontal-weight-seg]')||{}).value||'';
+            Array.from(row.querySelectorAll('[data-horizontal-price]')).forEach(function(input){
+                nextRows.push({weightSeg:seg,price:input.value||'',cargoType:_lclCargoTab,currency:input.dataset.currency||'人民币'});
             });
         });
         mergeLclTabRows(nextRows);
@@ -472,41 +455,39 @@ function captureLclWeightPriceRows(){
 
 function renderLclWeightPriceTable(mode){
     mode=mode||_lclWeightPriceMode;
-    const tabRows=lclTabRows();
-    const rows=tabRows.length?tabRows:[{weightSeg:'',price:'',cargoType:_lclCargoTab,billingMode:'单价'}];
     let html='';
     if(mode==='horizontal'){
+        /* 横向币别、纵向计重范围：一行一个范围，三种币别各一列单价 */
         const matrix=getLclHorizontalModel();
-        html+='<div class="overflow-auto max-h-[360px]" id="lcl-weight-price-horizontal"><table class="w-max min-w-full text-xs border-collapse">';
-        html+='<thead><tr class="bg-[#EFF6FF] text-text-secondary">';
-        ['计费方式'].forEach(function(hd){html+='<th rowspan="2" class="text-left px-3 py-2 border border-surface-200 min-w-[110px] bg-[#EFF6FF]">'+tr(hd)+'</th>';});
-        html+='<th colspan="'+Math.max(matrix.segments.length,1)+'" class="text-left px-3 py-2 border border-surface-200">'+tr('重量段')+'</th>';
-        html+='<th rowspan="2" class="sticky right-0 z-20 text-center px-3 py-2 border border-surface-200 min-w-[96px] bg-[#EFF6FF] shadow-[-6px_0_8px_-8px_rgba(15,23,42,.45)]">'+tr('操作')+'</th></tr>';
-        html+='<tr class="bg-[#EFF6FF] text-text-secondary">';
-        matrix.segments.forEach(function(seg){
-            html+='<th class="px-2 py-1 border border-surface-200 min-w-[128px]"><div class="flex items-center gap-1">'+
-                '<input data-excel-cell data-horizontal-weight-seg onpaste="handleLclExcelPaste(event,this)" class="w-full h-8 px-2 text-xs border border-surface-200 rounded bg-white outline-none focus:bg-primary-50" value="'+esc(seg||'')+'">'+
-                '</div></th>';
+        html+='<div class="overflow-auto max-h-[360px]" id="lcl-weight-price-horizontal"><table class="w-full min-w-[640px] text-xs border-collapse">';
+        html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary">';
+        html+='<th class="text-left px-3 py-2 border border-surface-200 min-w-[140px] bg-[#EFF6FF]">'+tr('计重范围')+'</th>';
+        matrix.currencies.forEach(function(cur){
+            html+='<th class="text-right px-3 py-2 border border-surface-200 min-w-[130px] bg-[#EFF6FF]">'+tr(cur)+tr('单价')+'</th>';
         });
-        html+='</tr></thead><tbody>';
-        matrix.groups.forEach(function(group){
-            html+='<tr data-horizontal-row data-group-id="'+esc(group.groupId)+'" class="hover:bg-primary-50/30">';
-            html+='<td class="border border-surface-200 bg-white"><select data-horizontal-billing-mode class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['单价','总价'],group.billingMode||'单价')+'</select></td>';
-            matrix.segments.forEach(function(seg){
-                html+='<td class="min-w-[128px] border border-surface-200 bg-white">'+lclExcelInput(group.prices[seg]||'','text-right').replace('data-excel-cell','data-excel-cell data-horizontal-price')+'</td>';
+        html+='<th class="sticky right-0 z-20 text-center px-3 py-2 border border-surface-200 min-w-[96px] bg-[#EFF6FF] shadow-[-6px_0_8px_-8px_rgba(15,23,42,.45)]">'+tr('操作')+'</th></tr></thead><tbody>';
+        matrix.segments.forEach(function(seg){
+            html+='<tr data-horizontal-seg-row class="hover:bg-primary-50/30">';
+            html+='<td class="border border-surface-200 bg-white"><input data-excel-cell data-horizontal-weight-seg onpaste="handleLclExcelPaste(event,this)" class="w-full h-9 px-2 text-xs border border-surface-200 rounded bg-white outline-none focus:bg-primary-50" value="'+esc(seg||'')+'" placeholder="'+esc(tr('如 0-1'))+'"></td>';
+            matrix.currencies.forEach(function(cur){
+                html+='<td class="border border-surface-200 bg-white">'+lclExcelInput((matrix.cells[seg]||{})[cur]||'','text-right').replace('data-excel-cell','data-excel-cell data-horizontal-price data-currency="'+esc(cur)+'"')+'</td>';
             });
-            html+='<td class="sticky right-0 z-10 border border-surface-200 text-center bg-white shadow-[-6px_0_8px_-8px_rgba(15,23,42,.45)]"><button type="button" onclick="removeLclHorizontalRow(\''+esc(group.groupId)+'\')" class="h-8 px-3 text-xs text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td>';
+            /* onclick 属性本身用双引号包裹，参数只能用单引号 —— JSON.stringify 的双引号会把属性截断 */
+            html+='<td class="sticky right-0 z-10 border border-surface-200 text-center bg-white shadow-[-6px_0_8px_-8px_rgba(15,23,42,.45)]"><button type="button" onclick="removeLclHorizontalRow(\''+esc(String(seg)).replace(/'/g,'&#39;')+'\')" class="h-8 px-3 text-xs text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td>';
             html+='</tr>';
         });
         html+='</tbody></table></div>';
     }else{
-        html+='<div class="overflow-auto max-h-[360px]" id="lcl-weight-price-vertical"><table class="w-full min-w-[760px] text-xs border-collapse">';
-        html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary"><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('重量段')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('单价/总价')+'</th><th class="text-left px-3 py-2 border border-surface-200">'+tr('计费方式')+'</th><th class="text-center px-3 py-2 border border-surface-200">'+tr('操作')+'</th></tr></thead><tbody>';
+        /* 纵向扁平：一行 = 计重范围 × 币别 的一条单价 */
+        const tabRows=lclTabRows();
+        const rows=tabRows.length?tabRows:[defaultLclWeightPriceRow({cargoType:_lclCargoTab})];
+        html+='<div class="overflow-auto max-h-[360px]" id="lcl-weight-price-vertical"><table class="w-full min-w-[640px] text-xs border-collapse">';
+        html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary"><th class="text-left px-3 py-2 border border-surface-200 min-w-[160px]">'+tr('计重范围')+'</th><th class="text-left px-3 py-2 border border-surface-200 min-w-[140px]">'+tr('币别')+'</th><th class="text-right px-3 py-2 border border-surface-200">'+tr('单价')+'</th><th class="text-center px-3 py-2 border border-surface-200">'+tr('操作')+'</th></tr></thead><tbody>';
         rows.forEach(function(row,idx){
-            html+='<tr data-group-id="'+esc(row.groupId||nextLclWeightPriceGroupId())+'" class="hover:bg-primary-50/30">';
+            html+='<tr class="hover:bg-primary-50/30">';
             html+='<td class="border border-surface-200 bg-white">'+lclExcelInput(row.weightSeg)+'<input type="hidden" data-field="weightSeg" value="'+esc(row.weightSeg||'')+'"></td>';
+            html+='<td class="border border-surface-200 bg-white"><select data-field="currency" class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(LCL_QUOTE_CURRENCIES,row.currency||'人民币')+'</select></td>';
             html+='<td class="border border-surface-200 bg-white">'+lclExcelInput(row.price,'text-right')+'<input type="hidden" data-field="price" value="'+esc(row.price||'')+'"></td>';
-            html+='<td class="border border-surface-200 bg-white"><select data-field="billingMode" class="w-full h-9 px-2 border-0 bg-transparent outline-none">'+selectOptionsHtml(['单价','总价'],row.billingMode||'单价')+'</select></td>';
             html+='<td class="border border-surface-200 text-center bg-white"><button type="button" onclick="removeLclWeightPriceRow('+idx+')" class="text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td></tr>';
         });
         html+='</tbody></table></div>';
@@ -546,15 +527,14 @@ function addLclWeightPriceRow(){
     syncVisibleLclExcelInputs();
     captureLclWeightPriceRows();
     if(_lclWeightPriceMode==='horizontal'){
-        const matrix=getLclHorizontalModel();
-        const base=matrix.groups[0]||{currency:'USD',billingMode:'单价',billingUnit:'KGS'};
-        const groupId=nextLclWeightPriceGroupId();
-        matrix.segments.forEach(function(seg){
-            _lclWeightPriceRows.push(defaultLclWeightPriceRow({groupId:groupId,weightSeg:seg,price:'',cargoType:_lclCargoTab,currency:base.currency,billingMode:base.billingMode,billingUnit:base.billingUnit}));
+        /* 横向下新增一行 = 新的计重范围，三种币别一起补上（空价格） */
+        LCL_QUOTE_CURRENCIES.forEach(function(cur){
+            _lclWeightPriceRows.push(defaultLclWeightPriceRow({weightSeg:'',currency:cur,cargoType:_lclCargoTab}));
         });
     }else{
-        const base=lclTabRows()[0]||defaultLclWeightPriceRow({cargoType:_lclCargoTab});
-        _lclWeightPriceRows.push(defaultLclWeightPriceRow({groupId:base.groupId,weightSeg:'',price:'',cargoType:_lclCargoTab,currency:base.currency,billingMode:base.billingMode,billingUnit:base.billingUnit}));
+        /* 纵向下新增一行 = 补一条当前默认币别的单价 */
+        const base=lclTabRows()[0];
+        _lclWeightPriceRows.push(defaultLclWeightPriceRow({cargoType:_lclCargoTab,currency:base?base.currency:'人民币'}));
     }
     renderLclWeightPriceWrap(_lclWeightPriceMode);
 }
@@ -569,9 +549,13 @@ function switchLclCargoTab(tab){
     renderLclWeightPriceWrap(_lclWeightPriceMode);
 }
 function lclCargoTabsHtml(){
+    /* 徽标按计重范围数显示（一条范围维护三种币别，按扁平行数显示会是三倍，误导） */
     return ['普货','敏感货'].map(function(t){
         var on=_lclCargoTab===t;
-        var n=(_lclWeightPriceRows||[]).filter(function(r){return (r.cargoType||'普货')===t;}).length;
+        var saved=_lclCargoTab;
+        _lclCargoTab=t;
+        var n=lclTabSegmentCount();
+        _lclCargoTab=saved;
         return '<button type="button" onclick="switchLclCargoTab(\''+t+'\')" class="'+(on?'px-3 py-2 text-sm font-semibold text-primary-600 border-b-2 border-primary-600':'px-3 py-2 text-sm font-medium text-text-secondary border-b-2 border-transparent hover:text-primary-600')+' cursor-pointer">'+tr(t)+'（'+n+'）</button>';
     }).join('');
 }
@@ -590,10 +574,13 @@ function removeLclWeightPriceRow(idx){
     renderLclWeightPriceWrap(_lclWeightPriceMode);
 }
 
-function removeLclHorizontalRow(groupId){
+/* 横向下删除的是整个计重范围（该范围下三种币别一起删） */
+function removeLclHorizontalRow(seg){
     syncVisibleLclExcelInputs();
     captureLclWeightPriceRows();
-    _lclWeightPriceRows=_lclWeightPriceRows.filter(function(row){return row.groupId!==groupId;});
+    _lclWeightPriceRows=_lclWeightPriceRows.filter(function(row){
+        return !((row.cargoType||'普货')===_lclCargoTab&&(row.weightSeg||'')===seg);
+    });
     if(_lclWeightPriceRows.length===0)_lclWeightPriceRows.push(defaultLclWeightPriceRow());
     renderLclWeightPriceWrap(_lclWeightPriceMode);
 }

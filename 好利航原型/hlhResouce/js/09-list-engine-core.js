@@ -35,13 +35,28 @@ var _noPreForecastPage=1;
 var _noPreClaimPageSize=100;
 var _lclWeightPriceMode='vertical';
 var _lclCargoTab='普货';   /* 价格维护按货物类型分插页：普货 / 敏感货 */
+/* 散货销售报价的币别维度：价格维护里每个计重范围同时维护这三种币别的单价 */
+var LCL_QUOTE_CURRENCIES=['人民币','美金','西法'];
+/* 价格维护的扁平数据模型：一行 = 计重范围 × 币别 的一条单价（横向矩阵按 weightSeg 透视还原） */
 var _lclWeightPriceRows=[
-    {groupId:'lcl-g-1',weightSeg:'0-1',price:'1',cargoType:'普货',billingMode:'单价',billingUnit:'KGS'},
-    {groupId:'lcl-g-1',weightSeg:'2-4',price:'2',cargoType:'普货',billingMode:'单价',billingUnit:'KGS'},
-    {groupId:'lcl-g-1',weightSeg:'5-100',price:'3',cargoType:'普货',billingMode:'单价',billingUnit:'KGS'},
-    {groupId:'lcl-g-2',weightSeg:'0-1',price:'2',cargoType:'敏感货',billingMode:'单价',billingUnit:'KGS'},
-    {groupId:'lcl-g-2',weightSeg:'2-4',price:'3.5',cargoType:'敏感货',billingMode:'单价',billingUnit:'KGS'},
-    {groupId:'lcl-g-2',weightSeg:'5-100',price:'5',cargoType:'敏感货',billingMode:'单价',billingUnit:'KGS'}
+    {weightSeg:'0-1',currency:'人民币',price:'14',cargoType:'普货'},
+    {weightSeg:'0-1',currency:'美金',price:'2.0',cargoType:'普货'},
+    {weightSeg:'0-1',currency:'西法',price:'1,250',cargoType:'普货'},
+    {weightSeg:'2-4',currency:'人民币',price:'11',cargoType:'普货'},
+    {weightSeg:'2-4',currency:'美金',price:'1.6',cargoType:'普货'},
+    {weightSeg:'2-4',currency:'西法',price:'1,000',cargoType:'普货'},
+    {weightSeg:'5-100',currency:'人民币',price:'9',cargoType:'普货'},
+    {weightSeg:'5-100',currency:'美金',price:'1.3',cargoType:'普货'},
+    {weightSeg:'5-100',currency:'西法',price:'820',cargoType:'普货'},
+    {weightSeg:'0-1',currency:'人民币',price:'22',cargoType:'敏感货'},
+    {weightSeg:'0-1',currency:'美金',price:'3.2',cargoType:'敏感货'},
+    {weightSeg:'0-1',currency:'西法',price:'2,000',cargoType:'敏感货'},
+    {weightSeg:'2-4',currency:'人民币',price:'18',cargoType:'敏感货'},
+    {weightSeg:'2-4',currency:'美金',price:'2.6',cargoType:'敏感货'},
+    {weightSeg:'2-4',currency:'西法',price:'1,650',cargoType:'敏感货'},
+    {weightSeg:'5-100',currency:'人民币',price:'15',cargoType:'敏感货'},
+    {weightSeg:'5-100',currency:'美金',price:'2.2',cargoType:'敏感货'},
+    {weightSeg:'5-100',currency:'西法',price:'1,380',cargoType:'敏感货'}
 ];
 
 function incrementTrailingNumber(value,index){

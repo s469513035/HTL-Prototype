@@ -322,10 +322,13 @@ function resetExpressInbound(){
 }
 
 /* 分板明细板块（快递入仓与手动入仓共用）：待封板/已封板插页 + 新增分板 + 托盘表。
- * 两页不会同时渲染，元素 id 与渲染函数共用一套是安全的。 */
-function buildInboundPalletSectionHtml(){
-    return '<section>'+
-        '<div class="flex items-center justify-between mb-3 flex-wrap gap-2">'+
+ * 两页不会同时渲染，元素 id 与渲染函数共用一套是安全的。
+ * opts.fitHeight：手动入仓把整个板块限在约 1/3 视口高 —— 头部固定、
+ * 表格区 flex-1 min-h-0 内部滚动，不把页面撑长。 */
+function buildInboundPalletSectionHtml(opts){
+    var fit=opts&&opts.fitHeight;
+    return '<section'+(fit?' style="min-height:0;flex:1;display:flex;flex-direction:column"':'')+'>'+
+        '<div class="flex items-center justify-between mb-3 flex-wrap gap-2'+(fit?' flex-shrink-0':'')+'">'+
             '<div class="text-sm font-semibold text-text-primary">'+tr('分板明细')+'</div>'+
             '<div class="flex items-center gap-2">'+
                 '<div class="inline-flex rounded-lg border border-surface-200 overflow-hidden">'+
@@ -335,8 +338,8 @@ function buildInboundPalletSectionHtml(){
                 '<button type="button" onclick="openExpressInboundSchemeModal()" class="h-8 px-3 text-xs font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">+ '+tr('新增分板')+'</button>'+
             '</div>'+
         '</div>'+
-        '<div class="border border-surface-200 rounded-lg overflow-hidden">'+
-            '<div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
+        '<div class="border border-surface-200 rounded-lg overflow-hidden'+(fit?' flex-1 min-h-0 flex flex-col':'')+'">'+
+            '<div class="overflow-auto'+(fit?' flex-1 min-h-0':'')+'"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>'+
                 '<th class="px-3 py-2 text-left">'+tr('托盘号')+'</th>'+
                 '<th class="px-3 py-2 text-left">'+tr('格口号')+'</th>'+
                 '<th class="px-3 py-2 text-left">'+tr('国家')+'</th>'+

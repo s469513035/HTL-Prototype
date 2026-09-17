@@ -483,10 +483,18 @@ function generateWarehouseInboundPage(id){
         '<div id="warehouse-inbound-services" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 min-h-[42px]">'+
             '<span class="text-xs text-text-muted">'+tr('请先选择产品')+'</span>'+
         '</div>'+
+        /* 登记问题件与操作备注（主界面，附加服务下）：勾选后备注变问题描述必填 */
+        '<div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">'+
+            '<div><label class="w-full h-10 inline-flex items-center gap-2 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 cursor-pointer">'+
+            '<input type="checkbox" id="warehouse-inbound-issue" class="rounded border-surface-300 text-primary-600" onchange="toggleWarehouseInboundIssueLabel()">'+
+            '<span class="text-text-secondary">'+tr('登记为问题件')+'</span></label></div>'+
+            '<div class="md:col-span-2 min-w-0 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary" id="warehouse-inbound-remark-label">'+tr('操作备注')+'</label>'+
+            '<input type="text" id="warehouse-inbound-remark" placeholder="'+esc(tr('请输入操作备注'))+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white focus:border-primary-300"></div>'+
+        '</div>'+
     '</section>';
-    /* 分板明细（参考快递入仓的分板操作）：整页最后一个板块 —— 收货信息都填完了，
-     * 再按分拣方案生成分板、封板打库位，符合先收货后装板的作业顺序 */
-    h+=buildInboundPalletSectionHtml();
+    /* 分板明细（参考快递入仓的分板操作）：紧跟附加服务之后、整页约 1/3 固定高度 ——
+     * 扫一件看一眼板，放上面比垫在页尾好用 */
+    h+='<div style="height:33vh;display:flex;flex-direction:column;overflow:hidden">'+buildInboundPalletSectionHtml({fitHeight:true})+'</div>';
     if(mode==='second'){
     h+='<section><div class="border border-surface-200 rounded-xl overflow-hidden"><div class="flex items-center justify-between px-4 py-3 bg-surface-50 cursor-pointer hover:bg-surface-100 transition-colors" onclick="toggleCargoDetail(this)"><div class="text-sm font-semibold text-text-primary">'+tr('货物明细')+'</div><svg class="w-5 h-5 text-text-muted transition-transform cargo-detail-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"'+detailArrowStyle+'><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div><div class="cargo-detail-content '+detailContentClass+'">';
     h+='<div class="flex justify-end px-4 pt-3"><button type="button" onclick="addShipmentCargoRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('新增品名')+'</button></div>';
@@ -548,10 +556,20 @@ function docChecked(id){
     var el=document.getElementById(id);
     return !!(el&&el.checked);
 }
-/* 问题件勾选与备注已收进回车弹窗（页面不再展示），两次打开之间用这两个变量记住上次录入 */
+/* 问题件勾选与备注：主界面（附加服务下）与回车弹窗各展示一份，
+ * 弹窗打开时预填主界面当前值、确认后带回 —— _manualInboundIssue/Remark
+ * 作为两者共享的状态。 */
 var _manualInboundIssue=false;
 var _manualInboundRemark='';
-/* 弹窗内：勾了问题件 -> 操作备注变问题描述（必填），取消勾选改回来 */
+/* 页面：勾了问题件 -> 操作备注变问题描述（必填），取消勾选改回来 */
+function toggleWarehouseInboundIssueLabel(){
+    var issue=docChecked('warehouse-inbound-issue');
+    var label=document.getElementById('warehouse-inbound-remark-label');
+    var area=document.getElementById('warehouse-inbound-remark');
+    if(label)label.innerHTML=issue?(tr('问题描述')+' <span class="text-red-500">*</span>'):tr('操作备注');
+    if(area)area.placeholder=issue?tr('请输入问题描述'):tr('请输入操作备注');
+}
+/* 弹窗内：同样一套切换 */
 function toggleMieIssueLabel(){
     var issue=docChecked('mie-issue');
     var label=document.getElementById('mie-remark-label');
@@ -594,10 +612,10 @@ function openManualInboundEntryModal(){
             return '<label class="inline-flex items-center gap-1 text-sm text-text-secondary cursor-pointer"><input type="checkbox" data-mie-svc="'+esc(o)+'" class="rounded border-surface-300 text-primary-600"'+(pageSvc.indexOf(o)>=0?' checked':'')+'><span>'+esc(tr(o))+'</span></label>';
         }).join('')+'</div></div>';
     h+='<label class="h-10 inline-flex items-center gap-2 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 cursor-pointer self-end">'+
-        '<input type="checkbox" id="mie-issue" class="rounded border-surface-300 text-primary-600" onchange="toggleMieIssueLabel()"'+(_manualInboundIssue?' checked':'')+'>'+
+        '<input type="checkbox" id="mie-issue" class="rounded border-surface-300 text-primary-600" onchange="toggleMieIssueLabel()"'+(docChecked('warehouse-inbound-issue')?' checked':'')+'>'+
         '<span class="text-text-secondary">'+tr('登记为问题件')+'</span></label>';
-    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'" id="mie-remark-label">'+(_manualInboundIssue?tr('问题描述'):tr('操作备注'))+'</label>'+
-        '<input type="text" id="mie-remark" class="'+fldCls+'" placeholder="'+esc(_manualInboundIssue?tr('请输入问题描述'):tr('请输入操作备注'))+'" value="'+esc(_manualInboundRemark)+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="'+lblCls+'" id="mie-remark-label">'+(docChecked('warehouse-inbound-issue')?tr('问题描述'):tr('操作备注'))+'</label>'+
+        '<input type="text" id="mie-remark" class="'+fldCls+'" placeholder="'+esc(docChecked('warehouse-inbound-issue')?tr('请输入问题描述'):tr('请输入操作备注'))+'" value="'+esc(manualInboundPageVal('warehouse-inbound-remark'))+'"></div>';
     h+='</div></div>';
     bodyEl.innerHTML=h;
     footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
@@ -624,9 +642,11 @@ function confirmManualInboundEntryModal(){
     back('warehouse-inbound-cargo-type',cargoType);
     back('warehouse-inbound-package',packageType);
     back('warehouse-inbound-product-name',name);
-    /* 问题件与备注留在弹窗上下文里（页面不再展示），记住本次录入供下次打开预填 */
-    _manualInboundIssue=issue;
-    _manualInboundRemark=remark;
+    /* 问题件与备注带回主界面（字段在附加服务下展示），标签跟着切换 */
+    var pageIssue=document.getElementById('warehouse-inbound-issue');
+    if(pageIssue){pageIssue.checked=issue;}
+    back('warehouse-inbound-remark',remark);
+    if(typeof toggleWarehouseInboundIssueLabel==='function')toggleWarehouseInboundIssueLabel();
     /* 客户联动只在目的仓库还空着时触发 —— 用户已经选了目的仓库就不覆盖，
      * 否则带入客户会把手选的仓库冲掉，分板匹配跟着串 */
     if(!manualInboundPageVal('warehouse-inbound-dest')&&typeof handleWarehouseInboundCustomerChange==='function'){

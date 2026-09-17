@@ -454,11 +454,7 @@ function generateWarehouseInboundPage(id){
         {label:'货物类型',type:'select',required:true,id:'warehouse-inbound-cargo-type',options:['普货','敏感货'],value:'普货'},
         /* 包装类型与下单录入、运单管理共用 PACKAGE_TYPE_OPTIONS（04-table-catalog.js） */
         {label:'包装类型',type:'select',required:true,id:'warehouse-inbound-package',options:PACKAGE_TYPE_OPTIONS,value:'纸箱'},
-        {label:'品名',required:true,id:'warehouse-inbound-product-name',value:'',placeholder:'输入品名信息',list:'product-name-options',oninput:'handleWarehouseProductNameInput(this)',onblur:'handleCargoNameCommit(this)'},
-        {label:'长(cm)',type:'number',value:''},
-        {label:'宽(cm)',type:'number',value:''},
-        {label:'高(cm)',type:'number',value:''},
-        {label:'重量(KG)',type:'number',id:'warehouse-inbound-weight',value:''}
+        {label:'品名',required:true,id:'warehouse-inbound-product-name',value:'',placeholder:'输入品名信息',list:'product-name-options',oninput:'handleWarehouseProductNameInput(this)',onblur:'handleCargoNameCommit(this)'}
     ];
     const cargoRows=[
         {name:'电子产品',type:'敏感货',pcs:'10',weight:'25',length:'60',width:'50',height:'45',brand:'否',remark:'带电小家电配件'},
@@ -478,6 +474,9 @@ function generateWarehouseInboundPage(id){
     h+='<div class="bg-white rounded-xl border border-surface-200 p-5">';
     h+='<div class="flex items-center justify-between gap-4 mb-5"><div><h2 class="text-lg font-semibold text-text-primary">'+tr(title)+'</h2></div><span class="badge bg-blue-100 text-blue-700">'+tr(status)+'</span></div>';
     h+='<div class="space-y-6">';
+    /* 分板明细（参考快递入仓的分板操作）：放基础信息上面、整页约 1/3 固定高度 ——
+     * 扫单入库的作业动线是先看板上有什么、再录这一件 */
+    h+='<div style="height:33vh;display:flex;flex-direction:column;overflow:hidden">'+buildInboundPalletSectionHtml({fitHeight:true})+'</div>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
         '<div id="warehouse-inbound-services" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 min-h-[42px]">'+
@@ -491,10 +490,14 @@ function generateWarehouseInboundPage(id){
             '<div class="md:col-span-2 min-w-0 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary" id="warehouse-inbound-remark-label">'+tr('操作备注')+'</label>'+
             '<input type="text" id="warehouse-inbound-remark" placeholder="'+esc(tr('请输入操作备注'))+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white focus:border-primary-300"></div>'+
         '</div>'+
+        /* 长宽高、重量（问题件/备注行下面）：量完尺寸顺手录，和问题件一起都是收货现场的判断 */
+        '<div class="mt-3 grid grid-cols-1 md:grid-cols-4 gap-4">'+
+            '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('长(cm)')+'</label><input type="number" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white"></div>'+
+            '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('宽(cm)')+'</label><input type="number" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white"></div>'+
+            '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('高(cm)')+'</label><input type="number" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white"></div>'+
+            '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('重量(KG)')+'</label><input type="number" id="warehouse-inbound-weight" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white"></div>'+
+        '</div>'+
     '</section>';
-    /* 分板明细（参考快递入仓的分板操作）：紧跟附加服务之后、整页约 1/3 固定高度 ——
-     * 扫一件看一眼板，放上面比垫在页尾好用 */
-    h+='<div style="height:33vh;display:flex;flex-direction:column;overflow:hidden">'+buildInboundPalletSectionHtml({fitHeight:true})+'</div>';
     if(mode==='second'){
     h+='<section><div class="border border-surface-200 rounded-xl overflow-hidden"><div class="flex items-center justify-between px-4 py-3 bg-surface-50 cursor-pointer hover:bg-surface-100 transition-colors" onclick="toggleCargoDetail(this)"><div class="text-sm font-semibold text-text-primary">'+tr('货物明细')+'</div><svg class="w-5 h-5 text-text-muted transition-transform cargo-detail-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"'+detailArrowStyle+'><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div><div class="cargo-detail-content '+detailContentClass+'">';
     h+='<div class="flex justify-end px-4 pt-3"><button type="button" onclick="addShipmentCargoRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('新增品名')+'</button></div>';

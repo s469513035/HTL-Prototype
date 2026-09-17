@@ -105,7 +105,7 @@ var FCL_AGENT_OPTIONS=['MAERSK','COSCO','CMA CGM','MSC','ONE','鹏程拖车','�
 
 /* ① 预估成本明细 —— 订舱时按 Job 拆出来的成本基线，后面拿它跟代理实际成本比 */
 addPrototypeTable('fcl-est-cost','预估成本明细',
-    '批次号|Job No|费用科目|供应商|币别|金额|来源|备注|录入人|录入时间|状态|操作',
+    '费用编号|Job No|费用科目|供应商|币别|金额|来源|备注|录入人|录入时间|状态|操作',
     ['草稿','已确认','已作废'],[
     ['FEC-20260613001','FBK-20260613001','海运费','MAERSK','USD','4120','报价带出','','张财务','2026-06-13 15:20','已确认'],
     ['FEC-20260613002','FBK-20260613001','拖车费','鹏程拖车','CNY','1800','人工录入','蛇口提柜，含押车','张财务','2026-06-13 15:25','已确认'],
@@ -113,7 +113,7 @@ addPrototypeTable('fcl-est-cost','预估成本明细',
     ['FEC-20260612004','FBK-20260612002','海运费','COSCO','USD','5180','报价带出','2×40HQ 整柜价','张财务','2026-06-12 16:40','已确认'],
     ['FEC-20260612005','FBK-20260612002','附加费','COSCO','USD','120','系统计算','与海运费重复计入，已作废','张财务','2026-06-12 16:42','已作废']
 ],[
-    {label:'批次号',type:'text'},
+    {label:'费用编号',type:'text'},
     {label:'Job No',type:'text'},
     {label:'费用科目',type:'select',options:FCL_FEE_KINDS},
     {label:'供应商',type:'select',options:FCL_AGENT_OPTIONS},
@@ -121,8 +121,8 @@ addPrototypeTable('fcl-est-cost','预估成本明细',
     {label:'状态',type:'select',options:['草稿','已确认','已作废']}
 ]);
 /* 弹窗只留 Job No / 费用科目 / 供应商 / 币别 / 金额 / 备注 六个字段：
- * 批次号由后台按录入批次生成、来源是系统按数据来路自动打的标，两个都不给人填。 */
-TC['fcl-est-cost'].modalExcludedFields=['批次号','来源','录入人','录入时间','状态'];
+ * 费用编号由后台按录入批次生成、来源是系统按数据来路自动打的标，两个都不给人填。 */
+TC['fcl-est-cost'].modalExcludedFields=['费用编号','来源','录入人','录入时间','状态'];
 TC['fcl-est-cost'].fieldOptions={
     '费用科目':FCL_FEE_KINDS,'供应商':FCL_AGENT_OPTIONS,
     '币别':FCL_CURRENCY_OPTIONS
@@ -282,6 +282,11 @@ function fclFinBatchStatus(id,statusCol,from,to,opLabel){
 /* ④ 应收费用明细：待确认 -> 已确认 */
 function openArFeeConfirm(id){
     fclFinBatchStatus(id||'fcl-ar-fee','费用确认状态',['待确认'],'已确认','费用确认');
+}
+/* ① 预估成本明细：作废 —— 草稿/已确认 可作废（录错或预估不再有效），
+ * 已作废的跳过。作废后该行不再参与预估金额带出（agentCostEstimateOf 已按状态过滤）。 */
+function voidEstCostRows(id){
+    fclFinBatchStatus(id||'fcl-est-cost','状态',['草稿','已确认'],'已作废','作废');
 }
 /* 对账容差：差异率和差异金额同时落在容差内才算「对账一致」，
  * 否则判「有差异」等人工处理。以后要做成业务配置项，先集中放这里。 */

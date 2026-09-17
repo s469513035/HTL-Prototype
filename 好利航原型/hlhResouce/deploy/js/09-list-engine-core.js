@@ -997,6 +997,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='importBillHead')click='openBillHeadImport(\''+id+'\')';
     else if(action.key==='allocAgentBill')click='openAgentBillAlloc(\''+id+'\')';
     else if(action.key==='voidAgentBill')click='voidAgentBillRows(\''+id+'\')';
+    else if(action.key==='voidEstCost')click='voidEstCostRows(\''+id+'\')';
     else if(action.key==='costDiffDetail')click='openCostDiffDetail(\''+id+'\')';
     else if(action.key==='allocToShipment')click='openShipmentAlloc(\''+id+'\')';
     else if(action.key==='applyPayment')click='openPaymentApply(\''+id+'\')';
@@ -1590,10 +1591,11 @@ function getToolbarActions(id){
         if(id==='fcl-customer-audit')base.push({key:'audit',label:'审核数据'});
         if(['fcl-edi-api','fcl-provider-api'].includes(id))base.push({key:'sync',label:'同步数据'});
         /* 整柜财务 5 张表各自的业务动作 */
-        /* 预估成本明细：成本基线由报价/订舱带出，页面上只做新增和导出，
+        /* 预估成本明细：成本基线由报价/订舱带出，页面上只做新增/作废/导出，
          * 不给「编辑数据 / 查看详情 / 确认成本」这三个动作 */
         if(id==='fcl-est-cost'){
             for(var ei=base.length-1;ei>=0;ei--)if(base[ei].type==='edit'||base[ei].type==='view')base.splice(ei,1);
+            base.push({key:'voidEstCost',label:'作废',variant:'danger'});
         }
         /* 代理账单：导入 → 一级分摊（票数/件数/体积/重量/预估比例）→ 作废 */
         if(id==='fcl-agent-bill')base.push({key:'importBillHead',label:'账单导入'},{key:'allocAgentBill',label:'费用分摊',variant:'primary'},{key:'voidAgentBill',label:'作废账单',variant:'danger'});

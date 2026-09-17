@@ -14,6 +14,17 @@ var _arBillSeed=[
 {bn:'RB2604110006',batch:'PC2604110006',cust:'星星玩具电商',cur:'人民币',amt:'845.38',basecur:'人民币',rmb:'845.38',used:'7.36',unused:'838',cyc:'出货月结',due:'2026-04-30 23:59:59',st:'部分核销',rk:'测试账单0411',src:'人工录入',ct:'2026-04-11 16:15:57',fees:[{wb:'H2604110006',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'845.38',cur:'人民币',rate:'1',rmb:'845.38'}]},
 {bn:'RB2604110005',batch:'PC2604110005',cust:'星星玩具电商',cur:'人民币',amt:'845.38',basecur:'人民币',rmb:'845.38',used:'7.36',unused:'838',cyc:'出货月结',due:'2026-04-30 23:59:59',st:'部分核销',rk:'测试账单0411',src:'人工录入',ct:'2026-04-11 16:14:58',fees:[{wb:'H2604110005',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'845.38',cur:'人民币',rate:'1',rmb:'845.38'}]}
 ];
+/* 发送记录：账单发出去才有发送人/发送时间，没发过的两列留空。
+ * 种子里给几笔历史账单补上已发送，其余留空，方便演示「发送账单」与重发。 */
+(function(){
+    var sent={'RB2606140001':['张财务','2026-06-14 15:02:11'],
+              'RB2605240002':['张财务','2026-05-24 09:31:40'],
+              'RB2605240001':['张财务','2026-05-24 09:31:40']};
+    _arBillSeed.forEach(function(b){
+        var s=sent[b.bn]||['',''];
+        b.sender=s[0];b.sentAt=s[1];
+    });
+})();
 var _arBillRows=_arBillSeed.slice();
 
 function _arBillV(id){return ((document.getElementById(id)||{}).value||'').trim();}
@@ -25,7 +36,7 @@ function renderArBillRows(){
     var rows=_arBillRows.filter(function(b){
         return (!bn||String(b.bn).indexOf(bn)>=0)&&(!ba||String(b.batch).indexOf(ba)>=0)&&(!cu||String(b.cust).indexOf(cu)>=0);
     });
-    if(!rows.length)return '<tr><td colspan="15" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    if(!rows.length)return '<tr><td colspan="17" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
     return rows.map(function(b,i){
         var h='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
         h+='<td class="px-3 py-2.5 text-text-muted">'+(i+1)+'</td>';
@@ -43,6 +54,9 @@ function renderArBillRows(){
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.rk||'')+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.src)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.ct)+'</td>';
+        /* 没发过就明写「未发送」，留空会让人以为是数据缺失 */
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+(b.sender?esc(b.sender):'<span class="text-text-muted">'+tr('未发送')+'</span>')+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+(b.sentAt?esc(b.sentAt):'<span class="text-text-muted">—</span>')+'</td>';
         h+='</tr>';
         return h;
     }).join('');
@@ -67,6 +81,90 @@ function arBillDownloadSelected(){
     var names=bns.slice(0,3).join('、')+(bns.length>3?('等 '+bns.length+' 个'):'');
     showToast(tr('正在下载账单')+'：'+names);
 }
+/* ===== 发送账单 =====
+ * 勾选（可多选）→ 弹窗确认 → 写入发送人与发送时间。
+ * 发送是对外动作，所以先给一个能看清「发给谁、发哪几笔、有没有重发」的确认窗，
+ * 而不是点一下就发出去。已发过的不拦，但在窗里单独点出来，重发会覆盖原记录。 */
+function arBillCurrentSender(){
+    if(typeof DEMO_ACCOUNTS!=='undefined'&&typeof _currentAccount!=='undefined'){
+        var a=DEMO_ACCOUNTS.filter(function(x){return x.id===_currentAccount;})[0];
+        if(a&&a.name)return a.name;
+    }
+    return '系统管理员';
+}
+function arBillNowText(){
+    if(typeof nowDateTimeLocalSeconds==='function')return nowDateTimeLocalSeconds().replace('T',' ');
+    var d=new Date(),p=function(n){return String(n).padStart(2,'0');};
+    return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+}
+var _arBillSendCtx={bns:[],sender:'',at:''};
+function openArBillSendModal(){
+    var bns=arBillCheckedBns();
+    if(!bns.length){ showToast(tr('请先勾选要发送的账单')); return; }
+    var targets=bns.map(_arBillFind).filter(Boolean);
+    if(!targets.length){ showToast(tr('未找到所选账单')); return; }
+    var resend=targets.filter(function(b){return !!b.sentAt;});
+    var sender=arBillCurrentSender(),at=arBillNowText();
+    _arBillSendCtx={bns:targets.map(function(b){return b.bn;}),sender:sender,at:at};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=tr('发送账单');
+    var ro='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary';
+    var h='<div class="space-y-5">';
+    h+='<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 text-sm text-text-secondary">'+
+       tr('本次将发送')+'：<span class="font-semibold text-text-primary">'+targets.length+'</span> '+tr('笔账单')+
+       '，'+tr('发送后将记录发送人与发送时间。')+'</div>';
+    if(resend.length){
+        h+='<div class="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-700">'+
+           tr('其中')+' <span class="font-semibold">'+resend.length+'</span> '+tr('笔已发送过')+'（'+esc(resend.slice(0,3).map(function(b){return b.bn;}).join('、'))+(resend.length>3?'…':'')+'），'+
+           tr('确认后按本次发送记录覆盖。')+'</div>';
+    }
+    h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发送人')+'</label><input readonly value="'+esc(_arBillSendCtx.sender)+'" class="'+ro+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发送时间')+'</label><input readonly value="'+esc(_arBillSendCtx.at)+'" class="'+ro+'"></div>';
+    h+='</div>';
+    /* 明细表：让人在点确认前看清到底发的是哪几笔、发给哪些客户 */
+    h+='<div><div class="flex items-center gap-2 mb-3"><span class="w-1 h-4 bg-amber-400 rounded-full"></span><span class="text-sm font-semibold text-text-primary">'+tr('发送明细')+'</span></div>';
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto" style="max-height:320px"><table class="w-full text-sm"><thead class="sticky top-0"><tr class="bg-[#EFF6FF] text-text-secondary">';
+    h+='<th class="px-3 py-2.5 text-left font-semibold" style="width:48px">#</th>';
+    ['应收账单号','客户名称','币别','金额(原币)','账单到期时间','发送状态'].forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    h+='</tr></thead><tbody>';
+    targets.forEach(function(b,i){
+        h+='<tr class="border-t border-surface-100">';
+        h+='<td class="px-3 py-2.5 text-text-muted">'+(i+1)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap font-medium text-primary-700">'+esc(b.bn)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.cust)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.cur)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(b.amt)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.due)+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap">'+(b.sentAt
+            ?'<span class="badge bg-amber-100 text-amber-700">'+tr('重发')+'</span> <span class="text-xs text-text-muted">'+esc(b.sentAt)+'</span>'
+            :'<span class="badge bg-blue-100 text-blue-700">'+tr('首次发送')+'</span>')+'</td>';
+        h+='</tr>';
+    });
+    h+='</tbody></table></div></div>';
+    h+='</div>';
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="confirmArBillSend()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认发送')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function confirmArBillSend(){
+    var ctx=_arBillSendCtx||{};
+    var bns=ctx.bns||[];
+    if(!bns.length){ showToast(tr('没有可发送的账单')); return; }
+    var n=0;
+    bns.forEach(function(bn){
+        var b=_arBillFind(bn);
+        if(!b)return;
+        b.sender=ctx.sender;b.sentAt=ctx.at;n++;
+    });
+    closeCrudModal();
+    renderArBillTable();
+    showToast(tr('已发送')+' '+n+' '+tr('笔账单')+'，'+tr('发送人')+'：'+ctx.sender);
+}
+
 /* 删除账单：仅「待核销」（未核销）账单可删除；删除后账单从列表移除，
    其关联的应收费用明细释放回未制单状态，可重新制单。 */
 function arBillDeleteSelected(){
@@ -142,6 +240,8 @@ function openArBillDetail(bn){
     h+=fld('应收账单号',b.bn)+fld('账单批次号',b.batch)+fld('客户名称',b.cust);
     h+=fld('币别',b.cur)+fld('金额（原币）',b.amt)+fld('账单结算周期',b.cyc);
     h+=fld('账单到期时间',b.due)+fld('账单创建时间',b.ct);
+    /* 发送记录：没发过就写「未发送」，空输入框看不出是没发还是没取到 */
+    h+=fld('发送人',b.sender||tr('未发送'))+fld('发送时间',b.sentAt||tr('未发送'));
     h+='</div></div>';
     h+='<div>'+sec('费用明细')+arBillFeeTableHtml(b)+'</div>';
     h+='</div>';
@@ -163,12 +263,13 @@ function generateArBillPage(id){
     h+='<div class="px-4 py-3 flex items-center gap-2 flex-wrap">';
     h+='<button onclick="renderArBillTable()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';
     h+='<button onclick="arBillDetailSelected()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('详情')+'</button>';
+    h+='<button onclick="openArBillSendModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('发送账单')+'</button>';
     /* 「下载账单」按钮已隐藏（arBillDownloadSelected 保留备用） */
     h+='<button onclick="arBillDeleteSelected()" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('删除')+'</button>';
     h+='</div></div>';
-    h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto"><table class="w-full text-sm" style="min-width:1900px;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
+    h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto"><table class="w-full text-sm" style="min-width:2100px;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     h+='<th class="px-3 py-3 text-left font-semibold" style="width:40px">#</th><th class="px-3 py-3 text-left font-semibold" style="width:40px"><input type="checkbox" onchange="document.querySelectorAll(\'.arbill-check\').forEach(function(c){c.checked=this.checked;}.bind(this))"></th>';
-    ['应收账单号','账单批次号','客户名称','币别','金额(原币)','已核销金额','待核销金额','结算周期','账单到期时间','核销状态','备注','数据来源','创建时间'].forEach(function(c){h+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    ['应收账单号','账单批次号','客户名称','币别','金额(原币)','已核销金额','待核销金额','结算周期','账单到期时间','核销状态','备注','数据来源','创建时间','发送人','发送时间'].forEach(function(c){h+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody id="arbill-tbody">'+renderArBillRows()+'</tbody></table></div></div>';
     h+='</div>';
     return h;

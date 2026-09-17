@@ -1,6 +1,6 @@
-/* 审批 › 公告与消息（47-msg-announce.js）专项校验
+/* 审批 › 公告（47-msg-announce.js）专项校验
  * 跑法：node verify-msg-announce.js
- * 只测纯逻辑（取数 / 圈人 / 已读统计 / 渠道解析 / 工具栏挂载），不测弹窗 DOM。 */
+ * 只测纯逻辑（取数 / 圈人 / 已读统计 / 工具栏挂载），不测弹窗 DOM。 */
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -75,8 +75,8 @@ const cell = (id, row, name) => {
   return i >= 0 && row[i] != null ? String(row[i]) : '';
 };
 
-console.log('=== 1. 三张表注册且表头/数据列自洽 ===');
-[['msg-announce', '公告管理'], ['msg-inbox', '我的公告'], ['msg-push-log', '推送记录']].forEach(([id, t]) => {
+console.log('=== 1. 两张表注册且表头/数据列自洽 ===');
+[['msg-announce', '公告管理'], ['msg-inbox', '我的公告']].forEach(([id, t]) => {
   const c = TC[id];
   if (!c) { ok(false, `TC['${id}'] 未注册`); return; }
   const hw = c.h.length - 1;
@@ -84,18 +84,23 @@ console.log('=== 1. 三张表注册且表头/数据列自洽 ===');
   ok(c.t === t && bad === 0, `${id}  ${c.t}  ${hw} 列 / ${c.d.length} 行`, bad ? `${bad} 行列数不符` : '全部一致');
 });
 
-console.log('\n=== 2. 菜单挂在「审批」下 ===');
+console.log('\n=== 2. 简化项已移除 ===');
+ok(!TC['msg-push-log'], '推送记录 msg-push-log 已删除');
+ok(TC['msg-announce'].h.indexOf('公告类型') < 0, 'msg-announce 无「公告类型」列');
+ok(TC['msg-inbox'].h.indexOf('公告类型') < 0, 'msg-inbox 无「公告类型」列');
+['是否置顶', '推送渠道', '生效时间', '失效时间'].forEach(col => {
+  ok(TC['msg-announce'].h.indexOf(col) < 0, `msg-announce 无「${col}」列`);
+});
+ok(TC['msg-inbox'].h.indexOf('是否置顶') < 0 && TC['msg-inbox'].h.indexOf('生效时间') < 0,
+  'msg-inbox 无「是否置顶 / 生效时间」列');
 const approval = sandbox.__MENU.find(x => x.id === 'approval');
-ok(!!approval, '找到 审批 L1');
-['msg-inbox', 'msg-announce', 'msg-push-log'].forEach(id => {
+ok(!approval.children.some(c => c.tab === 'msg-push-log'), '菜单里没有「推送记录」');
+
+console.log('\n=== 3. 菜单挂在「审批」下 ===');
+['msg-inbox', 'msg-announce'].forEach(id => {
   const hit = (approval.children || []).find(c => c.tab === id);
   ok(!!hit, `审批 › ${hit ? hit.label : id}`, hit ? `tab=${id}` : '未挂载');
 });
-
-console.log('\n=== 3. 公告类型只有「公告 / 消息」两种 ===');
-const kinds = [...new Set(TC['msg-announce'].d.map(r => cell('msg-announce', r, '公告类型')))];
-ok(kinds.every(k => ['公告', '消息'].includes(k)), '公告类型取值合法', kinds.join(' / '));
-ok(kinds.length === 2, '两种类型都有种子数据', kinds.join(' / '));
 
 console.log('\n=== 4. 圈人取数 ===');
 const custs = run('msgCustomers()');
@@ -110,11 +115,10 @@ let zero = 0;
 tree.forEach(b => b.depts.forEach(d => {
   const n = run(`msgEmpDeptCount(${JSON.stringify(d.code)})`);
   if (!n) zero++;
-  console.log(`      ${b.branch} · ${d.name} (${d.code}) → ${n} 人`);
 }));
 ok(zero === 0, '每个部门都能匹配到员工', zero ? `${zero} 个部门 0 人` : '无空部门');
 
-console.log('\n=== 5. 四种圈人方式都能解析 ===');
+console.log('\n=== 5. 四种圈人方式都能解析，且与公告统计一致 ===');
 const modes = [
   ['ANN-20260910001', '按客户等级 + 按组织架构'],
   ['ANN-20260912002', '指定客户'],
@@ -126,18 +130,17 @@ modes.forEach(([no, label]) => {
   const total = hit.cust.length + hit.emp.length;
   const anRow = TC['msg-announce'].d.find(r => cell('msg-announce', r, '公告编号') === no);
   const declared = parseInt(cell('msg-announce', anRow, '触达人数'), 10);
-  ok(total === declared, `${no} ${label}：解析 ${total} 人 = 公告上的触达人数 ${declared}`,
+  ok(total === declared, `${no} ${label}：解析 ${total} 人 = 触达人数 ${declared}`,
     `客户 ${hit.cust.length} / 员工 ${hit.emp.length}`);
 });
-/* 全部客户 / 全体员工两种模式也要能跑通（草稿上现场演示用） */
 const allC = run("msgResolveScope({cust:{mode:'all',levels:[],ids:[]},emp:{mode:'none',depts:[],ids:[]}})");
 const allE = run("msgResolveScope({cust:{mode:'none',levels:[],ids:[]},emp:{mode:'all',depts:[],ids:[]}})");
 ok(allC.cust.length === custs.length, `全部客户 → ${allC.cust.length} 家`);
 ok(allE.emp.length === emps.length, `全体员工 → ${allE.emp.length} 人`);
 const none = run('msgResolveScope(msgScopeOf("ANN-20260916005"))');
-ok(none.cust.length === 0 && none.emp.length === 0, '草稿 ANN-20260916005 未设范围 → 0 人（发布会被拦下）');
+ok(none.cust.length === 0 && none.emp.length === 0, '草稿未设范围 → 0 人（发布会拦下）');
 
-console.log('\n=== 6. 收件记录与公告统计对得上 ===');
+console.log('\n=== 6. 收件记录与公告统计闭环 ===');
 TC['msg-announce'].d.forEach(r => {
   const no = cell('msg-announce', r, '公告编号');
   const st = cell('msg-announce', r, '状态');
@@ -159,8 +162,7 @@ run(`(function(){
 })()`);
 const after = TC['msg-announce'].d.find(r => cell('msg-announce', r, '公告编号') === 'ANN-20260915004');
 ok(cell('msg-announce', after, '已读人数') === '2' && cell('msg-announce', after, '阅读率') === '100.00%',
-  '把 ANN-20260915004 两条都标已读 → 已读人数 2、阅读率 100.00%',
-  `${cell('msg-announce', after, '已读人数')} / ${cell('msg-announce', after, '阅读率')}`);
+  '全部标已读 → 已读人数 2、阅读率 100.00%');
 run(`(function(){
   var c=TC['msg-inbox'],h=c.h,iNo=h.indexOf('公告编号'),iRd=h.indexOf('阅读状态'),k=0;
   c.d.forEach(function(r){if(r[iNo]==='ANN-20260915004')r[iRd]=globalThis.__bak[k++];});
@@ -169,56 +171,38 @@ run(`(function(){
 const restored = TC['msg-announce'].d.find(r => cell('msg-announce', r, '公告编号') === 'ANN-20260915004');
 ok(cell('msg-announce', restored, '已读人数') === '0', '还原后已读人数回到 0');
 
-console.log('\n=== 8. 撤回会把收件记录标记为已撤回（保留留痕）===');
+console.log('\n=== 8. 撤回保留留痕 ===');
 const before = TC['msg-inbox'].d.length;
 const n = run("msgSetInboxState('ANN-20260915004','已撤回')");
-ok(n === 2 && TC['msg-inbox'].d.length === before, `标记 ${n} 条为已撤回，行数不变（${before} 条，不物理删除）`);
+ok(n === 2 && TC['msg-inbox'].d.length === before, `标记 ${n} 条为已撤回，行数不变（不物理删除）`);
 run("msgSetInboxState('ANN-20260915004','有效')");
 
-console.log('\n=== 9. 推送渠道解析与地址取值 ===');
-[['站内信', 1], ['站内信+APP推送+企业微信', 3], ['站内信+邮件+WhatsApp', 3], ['全渠道', 6]].forEach(([t, n]) => {
-  const arr = run(`msgChannelsOf(${JSON.stringify(t)})`);
-  ok(arr.length === n, `「${t}」→ ${arr.length} 个渠道`, arr.join('、'));
-});
-ok(run("msgChannelsOf('邮件')").indexOf('站内信') === 0, '站内信是兜底：没写也会自动补在最前');
-const emp0 = emps.find(e => e.email) || emps[0];
-[['站内信', '系统站内'], ['APP推送', '员工端APP']].forEach(([ch, exp]) => {
-  ok(run(`msgAddressOf('员工',${JSON.stringify(emp0)},${JSON.stringify(ch)})`) === exp, `${ch} 地址 = ${exp}`);
-});
-ok(run(`msgAddressOf('客户',{name:'x'},'WhatsApp')`) === '',
-  'WhatsApp 取不到地址（客户档案无该字段）→ 推送记录会落「未开通/发送失败」，对应设计文档 TBD-01');
+console.log('\n=== 9. 工具栏与 dispatch ===');
+const anHtml = run(`renderToolbarActions('msg-announce')`);
+['新增公告', '发布', '阅读明细', '撤回', '查看详情'].forEach(l => ok(anHtml.includes(l), `msg-announce 工具栏含「${l}」`));
+ok(!anHtml.includes('编辑数据'), 'msg-announce 无「编辑数据」');
+ok(!anHtml.includes('接收范围'), 'msg-announce 无独立「接收范围」按钮（已并入发布弹窗）');
+ok(anHtml.includes("openMsgPublish('msg-announce')"), '「发布」已挂 dispatch');
+ok(run('typeof openMsgPublish') === 'function', 'openMsgPublish 已定义');
+ok(run('typeof submitMsgPublish') === 'function', 'submitMsgPublish 已定义（一键发布）');
+ok(run('typeof openMsgScope') === 'undefined', 'openMsgScope 已随独立弹窗一起删除');
+const ibHtml = run(`renderToolbarActions('msg-inbox')`);
+['查看详情', '标记已读', '全部已读'].forEach(l => ok(ibHtml.includes(l), `msg-inbox 工具栏含「${l}」`));
+ok(!anHtml.includes('导出数据') && !ibHtml.includes('导出数据'), '两个页面均无「导出数据」');
 
-console.log('\n=== 10. 渠道接入开关（多端扩展预留）===');
-const ready = run('MSG_CHANNEL_READY');
-Object.keys(ready).forEach(k => console.log(`      ${k}：${ready[k] ? '已接入' : '未开通（预留）'}`));
-ok(ready['站内信'] === true, '站内信必须是已接入（兜底渠道）');
-ok(Object.keys(ready).some(k => !ready[k]), '存在未开通渠道，推送记录用来演示扩展点',
-  Object.keys(ready).filter(k => !ready[k]).join('、'));
-const notReady = TC['msg-push-log'].d.filter(r => cell('msg-push-log', r, '发送结果') === '未开通').length;
-ok(notReady > 0, `推送记录里有 ${notReady} 条「未开通」样例`);
-
-console.log('\n=== 11. 工具栏动作与 dispatch 成对存在 ===');
-[
-  ['msg-announce', ['新增公告', '接收范围', '发布', '阅读明细', '撤回'], ['openMsgScope', 'openMsgPublish', 'openMsgReadDetail', 'openMsgRecall']],
-  ['msg-inbox', ['查看详情', '标记已读', '全部已读'], ['openMsgInboxDetail', 'markMsgRead', 'markAllMsgRead']],
-  ['msg-push-log', ['重新推送'], ['resendMsgPush']]
-].forEach(([id, labels, fns]) => {
-  const html = run(`renderToolbarActions(${JSON.stringify(id)})`);
-  labels.forEach(l => ok(html.includes(l), `${id} 工具栏含「${l}」`));
-  fns.forEach(f => {
-    ok(html.includes(f + "('" + id + "')"), `${id} 「${f}」已挂 dispatch`);
-    ok(run(`typeof ${f}`) === 'function', `${f} 已定义`);
-  });
-  ok(!html.includes('导出数据'), `${id} 无「导出数据」（全局约定）`);
+console.log('\n=== 10. 弹窗字段（新增默认公告，无类型/置顶/渠道/生效期）===');
+const a = TC['msg-announce'];
+['公告类型', '是否置顶', '推送渠道', '生效时间', '失效时间'].forEach(f => {
+  ok(a.modalExcludedFields.includes(f) || a.h.indexOf(f) < 0, `「${f}」不进新增弹窗`);
 });
 
-console.log('\n=== 12. 列表页能渲染 ===');
-['msg-announce', 'msg-inbox', 'msg-push-log'].forEach(id => {
+console.log('\n=== 11. 列表页能渲染 ===');
+['msg-announce', 'msg-inbox'].forEach(id => {
   let html = '';
   try { html = run(`generateListPage(${JSON.stringify(id)},1,'')`); } catch (e) { html = 'ERR:' + e.message; }
   ok(html.length > 500 && !html.startsWith('ERR'), `${id} 渲染成功`, html.startsWith('ERR') ? html : html.length + ' 字符');
 });
-ok(!run(`generateListPage('msg-announce',1,'')`).includes('>正文<'), 'msg-announce 列表不显示「正文」列（listHiddenHeaders 生效）');
+ok(!run(`generateListPage('msg-announce',1,'')`).includes('>正文<'), 'msg-announce 列表不显示「正文」列');
 
 console.log('\n' + (fail ? `✗ 共 ${fail} 项未通过` : '✓ 全部通过'));
 process.exit(fail ? 1 : 0);

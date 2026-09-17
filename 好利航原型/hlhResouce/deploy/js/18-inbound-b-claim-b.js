@@ -474,9 +474,9 @@ function generateWarehouseInboundPage(id){
     h+='<div class="bg-white rounded-xl border border-surface-200 p-5">';
     h+='<div class="flex items-center justify-between gap-4 mb-5"><div><h2 class="text-lg font-semibold text-text-primary">'+tr(title)+'</h2></div><span class="badge bg-blue-100 text-blue-700">'+tr(status)+'</span></div>';
     h+='<div class="space-y-6">';
-    /* 分板明细（参考快递入仓的分板操作）：放基础信息上面、整页约 1/4 固定高度 ——
+    /* 分板明细（参考快递入仓的分板操作）：放基础信息上面、整页约 1/5 固定高度 ——
      * 扫单入库的作业动线是先看板上有什么、再录这一件 */
-    h+='<div style="height:25vh;display:flex;flex-direction:column;overflow:hidden">'+buildInboundPalletSectionHtml({fitHeight:true})+'</div>';
+    h+='<div style="height:20vh;display:flex;flex-direction:column;overflow:hidden">'+buildInboundPalletSectionHtml({fitHeight:true})+'</div>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基础信息')+'</div>'+renderFields(basic,4)+'</section>';
     h+='<section><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附加服务')+'</div>'+
         '<div id="warehouse-inbound-services" class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-surface-200 bg-surface-50 px-3 py-2 min-h-[42px]">'+

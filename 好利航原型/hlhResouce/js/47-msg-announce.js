@@ -78,49 +78,47 @@ TC['msg-announce'].statusBadgeCols=['优先级'];
  * 二、我的公告（接收端）—— 发布时按命中的人一人一行展开，已读未读记在这里
  * ========================================================================== */
 addPrototypeTable('msg-inbox','我的公告',
-    '收件编号|公告编号|标题|业务分类|优先级|接收方|接收人|接收账号|发布人|发布时间|阅读状态|阅读时间|状态|操作',
+    '公告编号|标题|业务分类|优先级|接收人|发布人|发布时间|阅读状态|阅读时间|操作',
     ['未读','已读'],[
     /* ANN-20260910001：客户 A 类 3 家 + 商务部 3 人，已读 4 */
-    ['MIB-20260910001','ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','客户','华运达国际货运','C10001','张建国','2026-09-10 09:00','已读','2026-09-10 10:12','有效'],
-    ['MIB-20260910002','ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','客户','恒通货运代理','C10003','张建国','2026-09-10 09:00','已读','2026-09-10 11:40','有效'],
-    ['MIB-20260910003','ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','客户','锦程国际贸易','C10005','张建国','2026-09-10 09:00','未读','','有效'],
-    ['MIB-20260910004','ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','员工','谢舒婷','WH-Amy','张建国','2026-09-10 09:00','已读','2026-09-10 09:35','有效'],
-    ['MIB-20260910005','ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','员工','许倩','WH-Viola','张建国','2026-09-10 09:00','已读','2026-09-11 08:20','有效'],
-    ['MIB-20260910006','ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','员工','胡依','WH-Kacey','张建国','2026-09-10 09:00','未读','','有效'],
+    ['ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','华运达国际货运','张建国','2026-09-10 09:00','已读','2026-09-10 10:12'],
+    ['ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','恒通货运代理','张建国','2026-09-10 09:00','已读','2026-09-10 11:40'],
+    ['ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','锦程国际贸易','张建国','2026-09-10 09:00','未读',''],
+    ['ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','谢舒婷','张建国','2026-09-10 09:00','已读','2026-09-10 09:35'],
+    ['ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','许倩','张建国','2026-09-10 09:00','已读','2026-09-11 08:20'],
+    ['ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要','胡依','张建国','2026-09-10 09:00','未读',''],
     /* ANN-20260912002：指定客户 2 家，已读 1 */
-    ['MIB-20260912007','ANN-20260912002','西非线 10 月起运价调整通知','价格政策','紧急','客户','华运达国际货运','C10001','李明辉','2026-09-12 14:30','已读','2026-09-12 16:05','有效'],
-    ['MIB-20260912008','ANN-20260912002','西非线 10 月起运价调整通知','价格政策','紧急','客户','恒通货运代理','C10003','李明辉','2026-09-12 14:30','未读','','有效'],
+    ['ANN-20260912002','西非线 10 月起运价调整通知','价格政策','紧急','华运达国际货运','李明辉','2026-09-12 14:30','已读','2026-09-12 16:05'],
+    ['ANN-20260912002','西非线 10 月起运价调整通知','价格政策','紧急','恒通货运代理','李明辉','2026-09-12 14:30','未读',''],
     /* ANN-20260914003：财务部 9 人，已读 3 */
-    ['MIB-20260914009','ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','员工','王红梅','SZ-Sunny','张建国','2026-09-14 18:00','已读','2026-09-14 18:22','有效'],
-    ['MIB-20260914010','ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','员工','黄妙玲','SZ-Yami','张建国','2026-09-14 18:00','已读','2026-09-14 19:03','有效'],
-    ['MIB-20260914011','ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','员工','雷芳','SZ-Apple','张建国','2026-09-14 18:00','已读','2026-09-15 08:41','有效'],
-    ['MIB-20260914012','ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','员工','廖德慧','SZ-Loni','张建国','2026-09-14 18:00','未读','','有效'],
-    ['MIB-20260914013','ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','员工','郭昌慈','SZ-Summer','张建国','2026-09-14 18:00','未读','','有效'],
-    ['MIB-20260914014','ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','员工','张会敏','GZ-Demi','张建国','2026-09-14 18:00','未读','','有效'],
-    ['MIB-20260914015','ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','员工','陈丽琪','GZ-Niki','张建国','2026-09-14 18:00','未读','','有效'],
-    ['MIB-20260914016','ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','员工','孔莹','WH-Calm','张建国','2026-09-14 18:00','未读','','有效'],
-    ['MIB-20260914017','ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','员工','唐燕','NB-Lily','张建国','2026-09-14 18:00','未读','','有效'],
+    ['ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','王红梅','张建国','2026-09-14 18:00','已读','2026-09-14 18:22'],
+    ['ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','黄妙玲','张建国','2026-09-14 18:00','已读','2026-09-14 19:03'],
+    ['ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','雷芳','张建国','2026-09-14 18:00','已读','2026-09-15 08:41'],
+    ['ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','廖德慧','张建国','2026-09-14 18:00','未读',''],
+    ['ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','郭昌慈','张建国','2026-09-14 18:00','未读',''],
+    ['ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','张会敏','张建国','2026-09-14 18:00','未读',''],
+    ['ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','陈丽琪','张建国','2026-09-14 18:00','未读',''],
+    ['ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','孔莹','张建国','2026-09-14 18:00','未读',''],
+    ['ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要','唐燕','张建国','2026-09-14 18:00','未读',''],
     /* ANN-20260915004：指定员工 2 人，全部未读 */
-    ['MIB-20260915018','ANN-20260915004','本周五全仓盘点，仓库组请配合','操作规范','普通','员工','王红梅','SZ-Sunny','王海波','2026-09-15 08:30','未读','','有效'],
-    ['MIB-20260915019','ANN-20260915004','本周五全仓盘点，仓库组请配合','操作规范','普通','员工','黄小艳','SZ-Yoyo','王海波','2026-09-15 08:30','未读','','有效']
+    ['ANN-20260915004','本周五全仓盘点，仓库组请配合','操作规范','普通','王红梅','王海波','2026-09-15 08:30','未读',''],
+    ['ANN-20260915004','本周五全仓盘点，仓库组请配合','操作规范','普通','黄小艳','王海波','2026-09-15 08:30','未读','']
 ],[
     {label:'公告编号',type:'text'},
     {label:'标题',type:'text'},
     {label:'业务分类',type:'select',options:MSG_CATEGORY_OPTIONS},
     {label:'优先级',type:'select',options:MSG_PRIORITY_OPTIONS},
-    {label:'接收方',type:'select',options:['客户','员工']},
     {label:'接收人',type:'text'},
     {label:'阅读状态',type:'select',options:['未读','已读']}
 ]);
 TC['msg-inbox'].noExpand=true;
 TC['msg-inbox'].noAutoAudit=true;
-/* 插页按「阅读状态」分：默认取数规则会先命中「状态」列，必须显式指定
- *（同 approval-msg 的做法，见 40-approval-message.js） */
+/* 插页按「阅读状态」分（表里已无「状态」列，这里仍是唯一依据） */
 TC['msg-inbox'].statusMatch=function(row,tab,headers){
     var i=headers.indexOf('阅读状态');
     return i>=0&&row[i]===tab;
 };
-TC['msg-inbox'].statusBadgeCols=['优先级','状态'];
+TC['msg-inbox'].statusBadgeCols=['优先级'];
 
 /* ==========================================================================
  * 三、取数helper —— 接收人从哪来
@@ -481,14 +479,12 @@ function submitMsgPublish(){
     var people=hit.cust.map(function(x){return {side:'客户',p:x};})
         .concat(hit.emp.map(function(x){return {side:'员工',p:x};}));
     people.forEach(function(it){
-        var acct=it.side==='客户'?(it.p.code||''):(it.p.account||'');
         fclPushRow('msg-inbox',{
-            '收件编号':fclSeqNo('MIB','msg-inbox'),
             '公告编号':no,'标题':base['标题'],
             '业务分类':base['业务分类'],'优先级':base['优先级'],
-            '接收方':it.side,'接收人':it.p.name,'接收账号':acct,
+            '接收人':it.p.name,
             '发布人':who,'发布时间':now,
-            '阅读状态':'未读','阅读时间':'','状态':'有效'
+            '阅读状态':'未读','阅读时间':''
         });
     });
     fclFinSet(id,row,'接收方',msgScopeReceiverText(_msgScopeDraft,hit));
@@ -545,41 +541,43 @@ function submitMsgRecall(){
     var reason=String((el&&el.value)||'').trim();
     if(!reason){showToast(tr('请填写撤回原因'));return;}
     var no=fclFinGet(id,row,'公告编号');
-    var n=msgSetInboxState(no,'已撤回');
+    /* 收件行没有「状态」列了：撤回 = 从「我的公告」直接移除这些收件行 */
+    var n=msgRemoveInboxOf(no);
     fclFinSet(id,row,'状态','已撤回');
     fclFinSet(id,row,'撤回原因',reason);
+    msgRefreshReadStats(no);
     if(typeof _listData!=='undefined')delete _listData['msg-inbox'];
     closeCrudModal();
     fclFinRefresh(id);
     if(typeof updateNotifBadge==='function')updateNotifBadge();
-    showToast(tr('已撤回')+'，'+n+' '+tr('条收件记录标记为已撤回（保留留痕）'));
+    showToast(tr('已撤回')+'，'+tr('移除')+' '+n+' '+tr('条收件记录（公告侧保留撤回原因留痕）'));
 }
-function msgSetInboxState(no,state){
+/* 撤回时把该公告的收件行整个删掉 —— 收件表没有状态列可标记了。
+ * 发布侧仍留有撤回原因与触达记录，事后可查。 */
+function msgRemoveInboxOf(no){
     var c=TC['msg-inbox'];
     if(!c||!c.d||!no)return 0;
-    var h=c.h||[],iNo=h.indexOf('公告编号'),iSt=h.indexOf('状态');
-    if(iNo<0||iSt<0)return 0;
+    var h=c.h||[],iNo=h.indexOf('公告编号');
+    if(iNo<0)return 0;
     var n=0;
-    c.d.forEach(function(r){
-        if(String(r[iNo]||'')!==no)return;
-        r[iSt]=state;n++;
-    });
+    for(var i=c.d.length-1;i>=0;i--){
+        if(String(c.d[i][iNo]||'')===no){c.d.splice(i,1);n++;}
+    }
     return n;
 }
 
 /* ==========================================================================
  * 六、已读未读
  * ========================================================================== */
-/* 收件行改已读后，回写公告上的 已读人数 / 阅读率（撤回的行不计入分母） */
+/* 收件行改已读后，回写公告上的 已读人数 / 阅读率 */
 function msgRefreshReadStats(no){
     var ib=TC['msg-inbox'],an=TC['msg-announce'];
     if(!ib||!ib.d||!an||!an.d||!no)return;
-    var h=ib.h||[],iNo=h.indexOf('公告编号'),iRd=h.indexOf('阅读状态'),iSt=h.indexOf('状态');
+    var h=ib.h||[],iNo=h.indexOf('公告编号'),iRd=h.indexOf('阅读状态');
     if(iNo<0||iRd<0)return;
     var total=0,read=0;
     ib.d.forEach(function(r){
         if(String(r[iNo]||'')!==no)return;
-        if(iSt>=0&&String(r[iSt]||'')==='已撤回')return;
         total++;
         if(String(r[iRd]||'')==='已读')read++;
     });
@@ -594,9 +592,8 @@ function msgRefreshReadStats(no){
     });
 }
 function msgMarkRowRead(row,h){
-    var iRd=h.indexOf('阅读状态'),iTm=h.indexOf('阅读时间'),iSt=h.indexOf('状态');
+    var iRd=h.indexOf('阅读状态'),iTm=h.indexOf('阅读时间');
     if(iRd<0)return false;
-    if(iSt>=0&&String(row[iSt]||'')==='已撤回')return false;
     if(String(row[iRd]||'')==='已读')return false;
     row[iRd]='已读';
     if(iTm>=0)row[iTm]=fclNow();
@@ -613,7 +610,7 @@ function markMsgRead(id){
         if(!src)return;
         if(msgMarkRowRead(src,h)){n++;nos[msgCell(id,src,'公告编号')]=1;}
     });
-    if(!n){showToast(tr('所选公告都已是已读（或已撤回）'));return;}
+    if(!n){showToast(tr('所选公告都已是已读'));return;}
     Object.keys(nos).forEach(msgRefreshReadStats);
     if(typeof _listData!=='undefined')delete _listData[id];
     fclFinRefresh(id);
@@ -625,8 +622,8 @@ function markAllMsgRead(id){
     var c=TC[id];
     if(!c||!c.d){showToast(tr('没有数据'));return;}
     var h=c.h||[],pending=c.d.filter(function(r){
-        var iRd=h.indexOf('阅读状态'),iSt=h.indexOf('状态');
-        return String(r[iRd]||'')==='未读'&&(iSt<0||String(r[iSt]||'')!=='已撤回');
+        var iRd=h.indexOf('阅读状态');
+        return String(r[iRd]||'')==='未读';
     });
     if(!pending.length){showToast(tr('没有未读公告'));return;}
     openConfirmTip(tr('确认把全部')+' '+pending.length+' '+tr('条未读公告标记为已读？'),function(){
@@ -641,15 +638,20 @@ function markAllMsgRead(id){
         showToast(tr('已全部标记已读')+' '+pending.length+' '+tr('条'));
     });
 }
-/* 列表里的行是 expandData 拷出来的副本，改它不落库；按收件编号找回种子行 */
+/* 列表里的行是 expandData 拷出来的副本，改它不落库。
+ * 收件编号列已去掉，改用 公告编号+接收人+阅读时间 三元组定位种子行 ——
+ * 同一公告同一接收人只有一行，三元组在表内唯一。 */
 function msgInboxSeedRow(listRow){
     var c=TC['msg-inbox'];
     if(!c||!c.d||!listRow)return null;
-    var h=c.h||[],i=h.indexOf('收件编号');
-    if(i<0)return null;
-    var key=String(listRow[i]||'');
-    if(!key)return null;
-    return c.d.find(function(r){return String(r[i]||'')===key;})||null;
+    var h=c.h||[],iN=h.indexOf('公告编号'),iP=h.indexOf('接收人'),iT=h.indexOf('阅读时间');
+    if(iN<0)return null;
+    var kN=String(listRow[iN]||''),kP=iP>=0?String(listRow[iP]||''):'';
+    var kT=iT>=0?String(listRow[iT]||''):'';
+    if(!kN)return null;
+    return c.d.find(function(r){
+        return String(r[iN]||'')===kN&&(iP<0||String(r[iP]||'')===kP)&&(iT<0||String(r[iT]||'')===kT);
+    })||null;
 }
 
 /* ==========================================================================
@@ -705,13 +707,12 @@ function openMsgInboxDetail(id,rowIdx){
     var b='';
     if(!an){
         b='<div class="py-12 text-center text-sm text-text-muted">'+tr('找不到对应的公告正文')+'（'+esc(no)+'）</div>';
+    }else if(msgCell('msg-announce',an,'状态')==='已撤回'){
+        /* 撤回后收件行会被移除；万一还有残留行打开，提示撤回而不是显示正文 */
+        b='<div class="py-12 text-center text-sm text-red-600">'+tr('这条公告已被发布人撤回')+'：'+
+          esc(msgCell('msg-announce',an,'撤回原因'))+'</div>';
     }else{
         b=msgBodyCardHtml(an);
-        var state=msgCell(id,listRow,'状态');
-        if(state==='已撤回'){
-            b='<div class="mb-3 px-3 py-2 rounded-lg bg-red-50 border border-red-100 text-sm text-red-600">'+
-              tr('这条公告已被发布人撤回')+'：'+esc(msgCell('msg-announce',an,'撤回原因'))+'</div>'+b;
-        }
     }
     /* 打开即标记已读 —— 这是「已读」最自然的产生方式 */
     var src=msgInboxSeedRow(listRow),marked=false;
@@ -752,7 +753,7 @@ function openMsgReadDetail(id){
        tr('未读')+' <span class="font-semibold text-amber-600">'+(list.length-readN)+'</span>　'+
        tr('阅读率')+' <span class="font-semibold text-text-primary">'+
        (list.length?((readN/list.length*100).toFixed(2)+'%'):'—')+'</span></div></div>';
-    var cols=['接收方','接收人','接收账号','阅读状态','阅读时间','状态'];
+    var cols=['接收人','阅读状态','阅读时间'];
     b+='<div class="border border-surface-200 rounded-lg overflow-auto max-h-96"><table class="w-full text-sm">'+
        '<thead class="bg-surface-50 sticky top-0"><tr>'+
        cols.map(function(t){return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+

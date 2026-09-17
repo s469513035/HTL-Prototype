@@ -87,12 +87,15 @@ console.log('=== 1. 两张表注册且表头/数据列自洽 ===');
 console.log('\n=== 2. 简化项已移除 ===');
 ok(!TC['msg-push-log'], '推送记录 msg-push-log 已删除');
 ok(TC['msg-announce'].h.indexOf('公告类型') < 0, 'msg-announce 无「公告类型」列');
-ok(TC['msg-inbox'].h.indexOf('公告类型') < 0, 'msg-inbox 无「公告类型」列');
 ['是否置顶', '推送渠道', '生效时间', '失效时间'].forEach(col => {
   ok(TC['msg-announce'].h.indexOf(col) < 0, `msg-announce 无「${col}」列`);
 });
-ok(TC['msg-inbox'].h.indexOf('是否置顶') < 0 && TC['msg-inbox'].h.indexOf('生效时间') < 0,
-  'msg-inbox 无「是否置顶 / 生效时间」列');
+/* 2026-09-17 二次简化：我的公告再砍四列 */
+['收件编号', '接收方', '接收账号', '状态'].forEach(col => {
+  ok(TC['msg-inbox'].h.indexOf(col) < 0, `msg-inbox 无「${col}」列`);
+});
+ok(TC['msg-announce'].h.indexOf('状态') >= 0 && TC['msg-announce'].h.indexOf('接收方') >= 0,
+  'msg-announce 侧的 状态/接收方 保留（发布端要管生命周期与触达范围）');
 const approval = sandbox.__MENU.find(x => x.id === 'approval');
 ok(!approval.children.some(c => c.tab === 'msg-push-log'), '菜单里没有「推送记录」');
 
@@ -171,13 +174,20 @@ run(`(function(){
 const restored = TC['msg-announce'].d.find(r => cell('msg-announce', r, '公告编号') === 'ANN-20260915004');
 ok(cell('msg-announce', restored, '已读人数') === '0', '还原后已读人数回到 0');
 
-console.log('\n=== 8. 撤回保留留痕 ===');
+console.log('\n=== 8. 撤回 = 移除收件行，公告侧留痕 ===');
 const before = TC['msg-inbox'].d.length;
-const n = run("msgSetInboxState('ANN-20260915004','已撤回')");
-ok(n === 2 && TC['msg-inbox'].d.length === before, `标记 ${n} 条为已撤回，行数不变（不物理删除）`);
-run("msgSetInboxState('ANN-20260915004','有效')");
+const n = run("msgRemoveInboxOf('ANN-20260915004')");
+ok(n === 2 && TC['msg-inbox'].d.length === before - 2,
+  `移除 ${n} 条收件行（${before} → ${TC['msg-inbox'].d.length}）`);
+const recalled = TC['msg-announce'].d.find(r => cell('msg-announce', r, '公告编号') === 'ANN-20260915004');
+run("msgRefreshReadStats('ANN-20260915004')");
+const recalculated = TC['msg-announce'].d.find(r => cell('msg-announce', r, '公告编号') === 'ANN-20260915004');
+ok(cell('msg-announce', recalculated, '触达人数') === '0',
+  '移除后重算统计 → 触达人数 0（收件行删了，分母也归零）',
+  `${cell('msg-announce', recalculated, '触达人数')} / 阅读率 ${cell('msg-announce', recalculated, '阅读率')}`);
 
 console.log('\n=== 9. 工具栏与 dispatch ===');
+run("msgRefreshReadStats('ANN-20260915004')");   // 撤回后恢复统计基线（上面第 8 组改了数据）
 const anHtml = run(`renderToolbarActions('msg-announce')`);
 ['新增公告', '发布', '阅读明细', '撤回', '查看详情'].forEach(l => ok(anHtml.includes(l), `msg-announce 工具栏含「${l}」`));
 ok(!anHtml.includes('编辑数据'), 'msg-announce 无「编辑数据」');

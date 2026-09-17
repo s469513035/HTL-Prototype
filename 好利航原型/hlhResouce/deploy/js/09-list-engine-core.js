@@ -988,6 +988,14 @@ function renderToolbarAction(action,id){
     else if(action.key==='importAgentBill')click='openAgentBillImportModal(\''+id+'\')';
     else if(action.key==='allocAgentCost')click='openAgentCostAlloc(\''+id+'\')';
     else if(action.key==='reconcileCost')click='openAgentCostReconcile(\''+id+'\')';
+    else if(action.key==='msgScope')click='openMsgScope(\''+id+'\')';
+    else if(action.key==='msgPublish')click='openMsgPublish(\''+id+'\')';
+    else if(action.key==='msgReadDetail')click='openMsgReadDetail(\''+id+'\')';
+    else if(action.key==='msgRecall')click='openMsgRecall(\''+id+'\')';
+    else if(action.key==='msgInboxDetail')click='openMsgInboxDetail(\''+id+'\')';
+    else if(action.key==='msgMarkRead')click='markMsgRead(\''+id+'\')';
+    else if(action.key==='msgMarkAllRead')click='markAllMsgRead(\''+id+'\')';
+    else if(action.key==='msgResend')click='resendMsgPush(\''+id+'\')';
     else if(action.key==='importBillHead')click='openBillHeadImport(\''+id+'\')';
     else if(action.key==='allocAgentBill')click='openAgentBillAlloc(\''+id+'\')';
     else if(action.key==='voidAgentBill')click='voidAgentBillRows(\''+id+'\')';
@@ -1725,6 +1733,34 @@ function getToolbarActions(id){
             {key:'msgDetail',label:'查看详情',variant:'primary'}
         ];
     }
+    /* ===== 公告与消息（47-msg-announce.js）===== */
+    if(id==='msg-announce'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {type:'add',label:'新增公告',variant:'primary'},
+            {type:'edit',label:'编辑数据'},
+            {type:'view',label:'查看详情'},
+            {key:'msgScope',label:'接收范围',variant:'primary'},
+            {key:'msgPublish',label:'发布',variant:'success'},
+            {key:'msgReadDetail',label:'阅读明细'},
+            {key:'msgRecall',label:'撤回',variant:'danger'}
+        ];
+    }
+    if(id==='msg-inbox'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'msgInboxDetail',label:'查看详情',variant:'primary'},
+            {key:'msgMarkRead',label:'标记已读'},
+            {key:'msgMarkAllRead',label:'全部已读'}
+        ];
+    }
+    if(id==='msg-push-log'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {type:'view',label:'查看详情'},
+            {key:'msgResend',label:'重新推送'}
+        ];
+    }
     if(id==='ow-inventory'||id==='wh-stock-check'){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
@@ -1744,7 +1780,9 @@ function getToolbarActions(id){
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
 var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
 /* 单票成本明细全部由「分摊到票」生成，手工编辑会让它和来源成本行对不上 */
-'fcl-shipment-cost'];
+'fcl-shipment-cost',
+/* 我的公告 / 推送记录都是发布时生成的流水，只读 */
+'msg-inbox','msg-push-log'];
 var _rowNoDeleteIds=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','prod-surcharge','fin-bank-voucher','prod-price-lcl','biz-track-cfg','wh-stock-check','approval-mine','approval-msg','cs-issue-track','cs-issue-type','wb-op-instruction','crm-cust','wb-manage'];
 function listRowCanEdit(id){return _rowNoEditIds.indexOf(id)<0;}
 /* _rowNoDeleteIds / listRowCanDelete：自 2026-09 全局取消通用删除后已无调用点，

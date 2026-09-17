@@ -205,7 +205,11 @@ function generateListPage(id,page,statusFilter){
             /* OMS 订单/问题件/账单的「查看」与双击走同一个入口（TMS 明细弹窗 / 账单明细）；
              * 不往下面那条已经很深的三元链上再套两层。 */
             const omsReuseView=(id==='oms-order-mgmt'||id==='oms-issue-mgmt'||id==='oms-bill')?omsDblMap[id]:'';
-            const viewClick=omsReuseView?(omsReuseView+'(\''+id+'\','+gi+')'):
+            /* 我的公告：行内「查看」= 打开正文并自动标记已读，与工具栏「查看详情」同一个入口。
+             * 同样走 map，不往下面那条三元链再套一层。 */
+            const msgReuseView=(id==='msg-inbox')?'openMsgInboxDetail':'';
+            const reuseView=msgReuseView||omsReuseView;
+            const viewClick=reuseView?(reuseView+'(\''+id+'\','+gi+')'):
                 ((id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':(id==='wh-pallet-info'?'openPalletInfoDetailModal(\''+id+'\','+gi+')':(id==='ow-pickup'?'openOverseasPickupDetail(\''+id+'\','+gi+')':(id==='ow-arrival'?'openOverseasArrivalDetail(\''+id+'\','+gi+')':(id==='ow-outbound'?'openOverseasOutboundDetail(\''+id+'\','+gi+')':(id==='cs-issue-track'?'openCsIssueViewModal(\''+id+'\','+gi+')':(id==='approval-mine'?'openApprovalDetail(\''+id+'\','+gi+')':(id==='approval-msg'?'openApprovalMsgDetail(\''+id+'\','+gi+')':((id==='ow-inventory'||id==='wh-stock-check')?'openOverseasInventoryDetail(\''+id+'\','+gi+')':(id==='ow-pallet-info'?'openOwPalletInfoDetailModal(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')')))))))))))));
             let actionHtml='';
             if(id==='cfg-label-template'){

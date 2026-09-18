@@ -230,15 +230,17 @@ function msgScopeOf(no){
     if(!_MSG_SCOPES[no])_MSG_SCOPES[no]=msgDefaultScope();
     return _MSG_SCOPES[no];
 }
-/* 把范围解析成真实接收人名单（客户 + 员工，各自去重） */
+/* 把范围解析成真实接收人名单（客户 + 员工，各自去重）。
+ * scope.type 存在时（发布弹窗的类型单选）只解析选中的那一侧 ——
+ * 另一侧即使在草稿里配过也不发，「单选」就是单选。 */
 function msgResolveScope(scope){
     var out={cust:[],emp:[]};
     if(!scope)return out;
-    var cs=scope.cust||{};
+    var cs=scope.type==='emp'?{mode:'none'}:(scope.cust||{});
     if(cs.mode==='all')out.cust=msgCustomers();
     else if(cs.mode==='level')out.cust=msgCustomers().filter(function(x){return (cs.levels||[]).indexOf(x.level)>=0;});
     else if(cs.mode==='pick')out.cust=msgCustomers().filter(function(x){return (cs.ids||[]).indexOf(x.name)>=0;});
-    var es=scope.emp||{};
+    var es=scope.type==='cust'?{mode:'none'}:(scope.emp||{});
     if(es.mode==='all')out.emp=msgEmployees();
     else if(es.mode==='dept'){
         out.emp=msgEmployees().filter(function(e){
@@ -254,7 +256,8 @@ function msgResolveScope(scope){
     });
     return out;
 }
-/* 「客户: 按客户等级(A类)(3)；员工: 按组织架构(商务部)(3)」这种人话摘要 */
+/* 「客户: 按客户等级(A类)(3)；员工: 按组织架构(商务部)(3)」这种人话摘要。
+ * 类型单选（scope.type）时只写选中侧 —— 另一侧没参与发送就别出现在摘要里 */
 function msgScopeSummary(scope,hit){
     var parts=[],cs=(scope&&scope.cust)||{},es=(scope&&scope.emp)||{};
     var tree=msgDeptTree(),deptName=function(code){
@@ -262,12 +265,16 @@ function msgScopeSummary(scope,hit){
             if(tree[i].depts[j].code===code)return tree[i].depts[j].name;
         return code;
     };
-    if(cs.mode==='all')parts.push(tr('客户')+': '+tr('全部客户')+'('+hit.cust.length+')');
-    else if(cs.mode==='level')parts.push(tr('客户')+': '+tr('按客户等级')+'('+(cs.levels||[]).join(', ')+')('+hit.cust.length+')');
-    else if(cs.mode==='pick')parts.push(tr('客户')+': '+tr('指定客户')+'('+hit.cust.length+')');
-    if(es.mode==='all')parts.push(tr('员工')+': '+tr('全体员工')+'('+hit.emp.length+')');
-    else if(es.mode==='dept')parts.push(tr('员工')+': '+tr('按组织架构')+'('+(es.depts||[]).map(deptName).join(', ')+')('+hit.emp.length+')');
-    else if(es.mode==='pick')parts.push(tr('员工')+': '+tr('指定员工')+'('+hit.emp.length+')');
+    if(!scope||scope.type!=='emp'){
+        if(cs.mode==='all')parts.push(tr('客户')+': '+tr('全部客户')+'('+hit.cust.length+')');
+        else if(cs.mode==='level')parts.push(tr('客户')+': '+tr('按客户等级')+'('+(cs.levels||[]).join(', ')+')('+hit.cust.length+')');
+        else if(cs.mode==='pick')parts.push(tr('客户')+': '+tr('指定客户')+'('+hit.cust.length+')');
+    }
+    if(!scope||scope.type!=='cust'){
+        if(es.mode==='all')parts.push(tr('员工')+': '+tr('全体员工')+'('+hit.emp.length+')');
+        else if(es.mode==='dept')parts.push(tr('员工')+': '+tr('按组织架构')+'('+(es.depts||[]).map(deptName).join(', ')+')('+hit.emp.length+')');
+        else if(es.mode==='pick')parts.push(tr('员工')+': '+tr('指定员工')+'('+hit.emp.length+')');
+    }
     return parts.join('；');
 }
 function msgScopeReceiverText(scope,hit){
@@ -296,13 +303,18 @@ function openMsgPublish(id){
     var no=fclFinGet(id,row,'公告编号');
     var s=msgScopeOf(no);
     _msgPubCtx={id:id,idx:idxs[0],no:no,title:fclFinGet(id,row,'标题')};
-    /* 范围草稿深拷一份，取消不污染已存范围 */
+    /* 范围草稿深拷一份，取消不污染已存范围。
+     * type = 消息类型单选（客户 / 员工）：默认取已配置过的一侧，都没配过就默认客户消息 */
     _msgScopeDraft={
+        type:(s.cust.mode&&s.cust.mode!=='none')?'cust':((s.emp.mode&&s.emp.mode!=='none')?'emp':'cust'),
         cust:{mode:s.cust.mode,levels:(s.cust.levels||[]).slice(),ids:(s.cust.ids||[]).slice()},
         emp:{mode:s.emp.mode,depts:(s.emp.depts||[]).slice(),ids:(s.emp.ids||[]).slice()}
     };
+    /* 选中侧如果从没配过，给个体面的默认（全部客户 / 全体员工），别让人面对空选项 */
+    var active=_msgScopeDraft[_msgScopeDraft.type];
+    if(!active.mode||active.mode==='none')active.mode='all';
     var panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='76%';
+    if(panel)panel.style.width='58%';
     document.getElementById('crud-modal-title').textContent=tr('发布公告')+' - '+_msgPubCtx.title;
     document.getElementById('crud-modal-body').innerHTML=msgPublishBodyHtml();
     document.getElementById('crud-modal-footer').innerHTML=
@@ -315,18 +327,46 @@ function msgPublishBodyHtml(){
     h+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
        esc(_msgPubCtx.no)+'　'+esc(_msgPubCtx.title)+
        '<div class="mt-1 text-xs text-text-muted">'+
-       esc(tr('选择接收范围后点「一键发布」：按命中名单在「我的公告」里一人一行展开，并开始记录已读未读。'))+
+       esc(tr('先选消息类型（客户 / 员工），再在下方选接收范围，点「一键发布」：按命中名单在「我的公告」里一人一行展开，并开始记录已读未读。'))+
        '</div></div>';
-    h+='<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">';
-    h+=msgScopeSidePanel('cust');
-    h+=msgScopeSidePanel('emp');
+    /* 消息类型单选：选了哪侧就只加载哪侧的范围 */
+    h+='<div class="mb-3 flex items-center gap-2 flex-wrap"><span class="text-sm font-medium text-text-secondary">'+tr('消息类型')+'</span>';
+    [['cust','客户消息'],['emp','员工消息']].forEach(function(t){
+        h+='<label class="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg cursor-pointer '+
+           (_msgScopeDraft.type===t[0]?'border-primary-500 bg-primary-50 text-primary-700':'border-surface-200 bg-white text-text-secondary hover:bg-surface-50')+'">'+
+           '<input type="radio" name="msg-type" value="'+t[0]+'"'+(_msgScopeDraft.type===t[0]?' checked':'')+
+           ' onchange="msgScopeSetType(\''+t[0]+'\')" class="text-primary-600">'+
+           '<span class="text-sm font-medium">'+tr(t[1])+'</span></label>';
+    });
     h+='</div>';
+    h+='<div data-msg-scope-wrap>'+msgScopeSidePanel(_msgScopeDraft.type)+'</div>';
     h+='<div data-msg-preview>'+msgScopePreviewHtml()+'</div>';
     return h;
 }
+/* 切换消息类型：条件区整块换成另一侧（两侧的勾选都留在草稿里，切回去还在） */
+function msgScopeSetType(side){
+    msgScopeReadUI();
+    _msgScopeDraft.type=side;
+    /* 新选中侧从没配过同样给默认（全部），别让发布落空 */
+    var active=_msgScopeDraft[side];
+    if(!active.mode||active.mode==='none')active.mode='all';
+    /* 类型按钮的选中态跟着换 */
+    document.querySelectorAll('input[name="msg-type"]').forEach(function(r){
+        var on=r.value===side;
+        r.checked=on;
+        var lbl=r.closest('label');
+        if(lbl)lbl.className='inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg cursor-pointer '+
+            (on?'border-primary-500 bg-primary-50 text-primary-700':'border-surface-200 bg-white text-text-secondary hover:bg-surface-50');
+    });
+    var wrap=document.querySelector('[data-msg-scope-wrap]');
+    if(wrap)wrap.innerHTML=msgScopeSidePanel(side);
+    msgScopeChanged();
+}
 function msgScopeSidePanel(side){
     var isCust=side==='cust';
-    var d=_msgScopeDraft[side],modes=isCust?MSG_CUST_MODES:MSG_EMP_MODES;
+    var d=_msgScopeDraft[side];
+    /* 「不发送」这一档已经被上面的类型单选取代，面板里不再出现 */
+    var modes=(isCust?MSG_CUST_MODES:MSG_EMP_MODES).filter(function(m){return m[0]!=='none';});
     var h='<div class="border border-surface-200 rounded-lg overflow-hidden" data-msg-side="'+side+'">';
     h+='<div class="px-3 py-2 bg-surface-50 flex items-center gap-2">'+
        '<span class="w-1 h-4 '+(isCust?'bg-primary-500':'bg-amber-500')+' rounded"></span>'+
@@ -448,9 +488,16 @@ function msgScopePreviewHtml(){
     var cls=total?'bg-success-50 border-success-100 text-success-700':'bg-amber-50 border-amber-100 text-amber-700';
     var h='<div class="mt-4 px-3 py-2.5 rounded-lg border '+cls+' text-sm">';
     if(total){
-        h+=tr('命中')+'：'+tr('客户')+' <span class="font-semibold">'+hit.cust.length+'</span> '+tr('家')+
-           '　'+tr('员工')+' <span class="font-semibold">'+hit.emp.length+'</span> '+tr('人')+
-           '　'+tr('合计')+' <span class="font-semibold">'+total+'</span> '+tr('个接收人');
+        /* 类型单选时只报选中侧的命中数，另一侧的 0 没有信息量 */
+        if(_msgScopeDraft&&_msgScopeDraft.type==='cust'){
+            h+=tr('命中')+'：'+tr('客户')+' <span class="font-semibold">'+hit.cust.length+'</span> '+tr('家');
+        }else if(_msgScopeDraft&&_msgScopeDraft.type==='emp'){
+            h+=tr('命中')+'：'+tr('员工')+' <span class="font-semibold">'+hit.emp.length+'</span> '+tr('人');
+        }else{
+            h+=tr('命中')+'：'+tr('客户')+' <span class="font-semibold">'+hit.cust.length+'</span> '+tr('家')+
+               '　'+tr('员工')+' <span class="font-semibold">'+hit.emp.length+'</span> '+tr('人')+
+               '　'+tr('合计')+' <span class="font-semibold">'+total+'</span> '+tr('个接收人');
+        }
         var names=hit.cust.slice(0,3).map(function(x){return x.name;})
             .concat(hit.emp.slice(0,3).map(function(x){return x.name;}));
         h+='<div class="mt-1 text-xs opacity-80">'+esc(names.join('、'))+(total>names.length?(' '+tr('等')+' '+total+' '+tr('人')):'')+'</div>';

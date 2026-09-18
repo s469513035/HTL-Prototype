@@ -200,7 +200,7 @@ function generateListPage(id,page,statusFilter){
             var deleteAction=(id==='wb-manage'||id==='wb-client-manage')?'cancel':'delete';
             const rowBg=gi%2===1?'#F9FAFB':'#FFFFFF';
             const airScanIds=['wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan'];
-            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt'].concat(airScanIds).includes(id);
+            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','fcl-agent-bill'].concat(airScanIds).includes(id);
             const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt'].concat(airScanIds).includes(id);
             /* OMS 订单/问题件/账单的「查看」与双击走同一个入口（TMS 明细弹窗 / 账单明细）；
              * 不往下面那条已经很深的三元链上再套两层。 */
@@ -208,7 +208,9 @@ function generateListPage(id,page,statusFilter){
             /* 我的公告：行内「查看」= 打开正文并自动标记已读，与工具栏「查看详情」同一个入口。
              * 同样走 map，不往下面那条三元链再套一层。 */
             const msgReuseView=(id==='msg-inbox')?'openMsgInboxDetail':'';
-            const reuseView=msgReuseView||omsReuseView;
+            /* 代理账单：行内「查看」= 看这张发票按 Job No 给的费用明细，与工具栏「查看详情」同一入口 */
+            const agentBillReuseView=(id==='fcl-agent-bill')?'openAgentBillDetail':'';
+            const reuseView=msgReuseView||omsReuseView||agentBillReuseView;
             const viewClick=reuseView?(reuseView+'(\''+id+'\','+gi+')'):
                 ((id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':(id==='wh-pallet-info'?'openPalletInfoDetailModal(\''+id+'\','+gi+')':(id==='ow-pickup'?'openOverseasPickupDetail(\''+id+'\','+gi+')':(id==='ow-arrival'?'openOverseasArrivalDetail(\''+id+'\','+gi+')':(id==='ow-outbound'?'openOverseasOutboundDetail(\''+id+'\','+gi+')':(id==='cs-issue-track'?'openCsIssueViewModal(\''+id+'\','+gi+')':(id==='approval-mine'?'openApprovalDetail(\''+id+'\','+gi+')':(id==='approval-msg'?'openApprovalMsgDetail(\''+id+'\','+gi+')':((id==='ow-inventory'||id==='wh-stock-check')?'openOverseasInventoryDetail(\''+id+'\','+gi+')':(id==='ow-pallet-info'?'openOwPalletInfoDetailModal(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')')))))))))))));
             let actionHtml='';

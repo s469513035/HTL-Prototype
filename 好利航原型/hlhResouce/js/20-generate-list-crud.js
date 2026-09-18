@@ -141,7 +141,7 @@ function generateListPage(id,page,statusFilter){
         h+='</div>';
         h+='</div>';
     }
-    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-ap-bill'||id==='fcl-ar-fee'||id==='fcl-ar-receipt'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust'||id==='oms-order-mgmt'||id==='oms-issue-mgmt')){
+    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-ap-bill'||id==='fcl-agent-bill'||id==='fcl-ar-fee'||id==='fcl-ar-receipt'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust'||id==='oms-order-mgmt'||id==='oms-issue-mgmt')){
         const statusCounts={};
         statusCounts['']=allData.length;
         c.s.forEach(s=>{statusCounts[s]=allData.filter(row=>{

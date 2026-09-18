@@ -31,19 +31,24 @@ var FCL_FEE_NAMES=['海运费','THC','文件费','封签费','燃油附加费','
  * ========================================================================== */
 addPrototypeTable('fcl-agent-bill','代理账单',
     '流水号|服务商|服务商账单号|账单周期|币别|账单金额|已分摊金额|未分摊金额|分摊方式|涉及Job数|导入人|导入时间|备注|账单状态|操作',
-    ['待分摊','部分分摊','已分摊','已作废'],[
-    ['AGB-20260615001','MAERSK','MSK-INV-260613','2026-06','USD','12600','4200','8400','按件数','3','张财务','2026-06-15 09:30','一张发票含 3 个柜，先摊了 FBK-20260613001','部分分摊'],
-    ['AGB-20260615002','COSCO','COS-INV-260612','2026-06','USD','5180','5180','0','按票数','1','张财务','2026-06-15 09:30','','已分摊'],
-    ['AGB-20260615003','MAERSK','MSK-THC-260615','2026-06','USD','1200','0','1200','','2','张财务','2026-06-15 14:10','目的港 THC，2 个柜合开','待分摊'],
-    ['AGB-20260616004','鹏程拖车','PC-260616-11','2026-06','CNY','5400','0','5400','','3','李操作','2026-06-16 10:05','6 月上半月拖车汇总，含 3 个柜','待分摊'],
-    ['AGB-20260616005','深圳报关行','SZ-CD-260616','2026-06','CNY','1050','0','1050','','3','李操作','2026-06-16 10:05','3 票报关费合开','待分摊']
+    /* 账单状态即对账-请款-核销的流转：
+     * 待对账 --[对账·确认费用]--> 待请款 --[生成账单]--> 待审核
+     * --[应付审批通过]--> 待核销 --[付款核销]--> 部分核销 -> 全部核销；作废独立 */
+    ['待对账','待请款','待审核','待核销','部分核销','全部核销','作废'],[
+    ['AGB-20260615001','MAERSK','MSK-INV-260613','2026-06','USD','12600','4200','8400','按件数','3','张财务','2026-06-15 09:30','一张发票含 3 个柜，先摊了 FBK-20260613001','待对账'],
+    ['AGB-20260615002','COSCO','COS-INV-260612','2026-06','USD','5180','5180','0','按票数','1','张财务','2026-06-15 09:30','','待请款'],
+    ['AGB-20260615003','MAERSK','MSK-THC-260615','2026-06','USD','1200','0','1200','','2','张财务','2026-06-15 14:10','目的港 THC，2 个柜合开','待审核'],
+    ['AGB-20260616004','鹏程拖车','PC-260616-11','2026-06','CNY','5400','0','5400','','3','李操作','2026-06-16 10:05','6 月上半月拖车汇总，含 3 个柜','待核销'],
+    ['AGB-20260616005','深圳报关行','SZ-CD-260616','2026-06','CNY','1050','0','1050','','3','李操作','2026-06-16 10:05','3 票报关费合开','部分核销'],
+    ['AGB-20260610006','CMA CGM','CMA-INV-260610','2026-06','USD','3600','3600','0','按票数','1','张财务','2026-06-10 11:20','','全部核销'],
+    ['AGB-20260608007','MSC','MSC-INV-260608','2026-06','USD','900','0','900','','1','李操作','2026-06-08 16:40','重复开票，已作废','作废']
 ],[
     {label:'流水号',type:'text'},
     {label:'服务商',type:'select',options:FCL_AGENT_OPTIONS},
     {label:'服务商账单号',type:'text'},
     {label:'账单周期',type:'text'},
     {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
-    {label:'账单状态',type:'select',options:['待分摊','部分分摊','已分摊','已作废']}
+    {label:'账单状态',type:'select',options:['待对账','待请款','待审核','待核销','部分核销','全部核销','作废']}
 ]);
 TC['fcl-agent-bill'].modalExcludedFields=['已分摊金额','未分摊金额','分摊方式','涉及Job数',
     '导入人','导入时间','账单状态'];
@@ -82,8 +87,31 @@ var _agentBillDetails={
         {job:'FBK-20260613001',feeName:'报关费',feeKind:'报关费',cur:'CNY',amt:'350',remark:''},
         {job:'FBK-20260612002',feeName:'报关费',feeKind:'报关费',cur:'CNY',amt:'350',remark:''},
         {job:'FBK-20260611003',feeName:'报关费',feeKind:'报关费',cur:'CNY',amt:'350',remark:''}
+    ],
+    'AGB-20260610006':[
+        {job:'FBK-20260609006',feeName:'海运费',feeKind:'海运费',cur:'USD',amt:'3600',remark:''}
+    ],
+    'AGB-20260608007':[
+        {job:'FBK-20260609006',feeName:'文件费',feeKind:'单证费',cur:'USD',amt:'900',remark:'与 CMA 发票重复'}
     ]
 };
+/* 服务商收款信息 —— 生成应付账单时带出，避免让人再去档案里翻。
+ * 服务商档案 base-provider 用的是中文全称（中远海运集运…），
+ * 代理账单用的是业内简称（COSCO…），两边名字对不上，这里按简称直接给一份。 */
+var FCL_AGENT_BANK={
+    'MAERSK':{payee:'MAERSK CHINA LTD',acct:'808-221-556677',bank:'汇丰银行深圳分行',term:'月结30天',swift:'HSBCCNSHSEN'},
+    'COSCO':{payee:'中远海运集装箱运输有限公司',acct:'4563-118-990011',bank:'中国银行上海分行',term:'票结',swift:'BKCHCNBJ300'},
+    'CMA CGM':{payee:'CMA CGM CHINA',acct:'6225-880-123456791',bank:'建设银行上海分行',term:'月结30天',swift:'PCBCCNBJSHX'},
+    'MSC':{payee:'地中海航运（中国）有限公司',acct:'6225-880-123456793',bank:'招商银行深圳分行',term:'月结30天',swift:'CMBCCNBS518'},
+    'ONE':{payee:'OCEAN NETWORK EXPRESS',acct:'7712-336-004488',bank:'三菱日联银行上海分行',term:'月结30天',swift:'BOTKCNSH'},
+    '鹏程拖车':{payee:'深圳鹏程运输有限公司',acct:'6225-905-778899',bank:'招商银行深圳蛇口支行',term:'月结15天',swift:''},
+    '深圳报关行':{payee:'深圳市中远报关有限公司',acct:'4000-772-113344',bank:'工商银行深圳福田支行',term:'月结30天',swift:''},
+    '广州报关行':{payee:'广州穗通报关有限公司',acct:'4000-663-220099',bank:'工商银行广州天河支行',term:'月结30天',swift:''},
+    '中外运':{payee:'中国外运华南有限公司',acct:'3602-118-445566',bank:'建设银行广州分行',term:'月结60天',swift:''}
+};
+function fclAgentBankOf(agent){
+    return FCL_AGENT_BANK[agent]||{payee:agent||'',acct:'',bank:'',term:'月结30天',swift:''};
+}
 function agentBillDetailsOf(billNo){return _agentBillDetails[billNo]||[];}
 /* 明细里出现的 Job 去重清单 —— 「涉及Job数」与详情弹窗的分组都用它 */
 function agentBillJobsOf(billNo){
@@ -168,6 +196,225 @@ function openAgentBillDetail(id,rowIdx){
     document.getElementById('crud-modal').classList.add('show');
 }
 function openSelectedAgentBillDetail(id){openAgentBillDetail(id||'fcl-agent-bill',-1);}
+
+/* ===== 代理账单：对账 =====
+ * 版式沿用代理实际成本的「差异分析」，但比的是这张发票的费用明细 vs 预估成本，
+ * 并按需求去掉「判定」列 —— 差异金额/差异率已经把问题说清楚了。
+ * 底部给「确认费用」：确认后账单从「待对账」进入「待请款」。 */
+function openAgentBillReconcile(id){
+    id=id||'fcl-agent-bill';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选要对账的代理账单'));return;}
+    if(idxs.length>1){showToast(tr('对账一次只能选一张账单'));return;}
+    var row=fclFinRows(id)[idxs[0]];
+    if(!row){showToast(tr('未找到账单'));return;}
+    var st=fclFinGet(id,row,'账单状态');
+    if(st==='作废'){showToast(tr('已作废的账单不能对账'));return;}
+    var billNo=fclFinGet(id,row,'流水号');
+    var cur=fclFinGet(id,row,'币别');
+    var list=agentBillDetailsOf(billNo);
+    var tolR=FCL_RECON_TOLERANCE.rate,tolA=FCL_RECON_TOLERANCE.amount;
+    var b='';
+    b+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
+       tr('流水号')+' <span class="font-semibold text-text-primary">'+esc(billNo)+'</span>　'+
+       tr('服务商')+' <span class="font-semibold text-text-primary">'+esc(fclFinGet(id,row,'服务商'))+'</span>　'+
+       tr('容差')+' ±'+tolR+'% / ±'+tolA+
+       '<div class="mt-1 text-xs text-text-muted">'+
+       esc(tr('按发票里每个 Job 的费用行，与「预估成本明细」同 Job 同费用科目的金额逐条比对。'))+
+       '</div></div>';
+    b+='<div class="border border-surface-200 rounded-lg overflow-auto" style="max-height:380px"><table class="w-full text-sm">'+
+       '<thead class="bg-surface-50 sticky top-0"><tr>'+
+       ['Job No','费用名称','币别','预估金额','账单金额','差异金额','差异率'].map(function(t){
+           return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';
+       }).join('')+'</tr></thead><tbody>';
+    if(!list.length){
+        b+='<tr><td colspan="7" class="px-3 py-12 text-center text-sm text-text-muted">'+tr('该账单暂无费用明细')+'</td></tr>';
+    }
+    var sumE=0,sumA=0,nDiff=0,nMiss=0,lastJob='';
+    list.forEach(function(d){
+        var est=fclEstMapOf(d.job)||{};
+        var e=est[d.feeName];
+        var ev=e?e.amt:null;
+        var av=fclParseMoney(d.amt)||0;
+        var diff=(ev===null)?null:+(av-ev).toFixed(2);
+        var rate=(ev)?((diff/ev*100).toFixed(2)+'%'):'—';
+        if(ev===null)nMiss++;
+        else if(Math.abs(diff)>tolA||(ev&&Math.abs(diff/ev*100)>tolR))nDiff++;
+        sumE+=(ev||0);sumA+=av;
+        var showJob=d.job!==lastJob;lastJob=d.job;
+        b+='<tr class="border-t border-surface-100">'+
+           '<td class="px-3 py-2 whitespace-nowrap '+(showJob?'font-medium text-primary-700':'text-text-muted')+'">'+(showJob?esc(d.job):'　〃')+'</td>'+
+           '<td class="px-3 py-2 text-text-primary whitespace-nowrap">'+esc(tr(d.feeName||''))+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(d.cur||cur)+'</td>'+
+           '<td class="px-3 py-2 text-text-primary">'+(ev===null?'<span class="text-amber-600">'+tr('预估缺项')+'</span>':ev.toFixed(2))+'</td>'+
+           '<td class="px-3 py-2 text-text-primary">'+av.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 '+(diff&&diff!==0?'text-red-600':'text-text-secondary')+'">'+(diff===null?'—':diff.toFixed(2))+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(rate)+'</td>'+
+           '</tr>';
+    });
+    if(list.length){
+        var sd=+(sumA-sumE).toFixed(2);
+        b+='<tr class="border-t-2 border-surface-200 bg-surface-50 font-semibold">'+
+           '<td class="px-3 py-2 text-text-primary" colspan="3">'+tr('合计')+'</td>'+
+           '<td class="px-3 py-2 text-text-primary">'+sumE.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 text-text-primary">'+sumA.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 '+(sd?'text-red-600':'text-text-secondary')+'">'+sd.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+(sumE?((sd/sumE*100).toFixed(2)+'%'):'—')+'</td></tr>';
+    }
+    b+='</tbody></table></div>';
+    b+='<div class="mt-3 text-sm text-text-secondary">'+
+       tr('预估缺项')+' <span class="font-semibold text-amber-600">'+nMiss+'</span> '+tr('项')+'　'+
+       tr('超容差')+' <span class="font-semibold text-red-600">'+nDiff+'</span> '+tr('项')+'</div>';
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='72%';
+    document.getElementById('crud-modal-title').textContent=tr('对账')+' - '+billNo;
+    document.getElementById('crud-modal-body').innerHTML=b;
+    var canConfirm=(st==='待对账');
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>'+
+        (canConfirm
+            ?'<button onclick="confirmAgentBillFee(\''+id+'\','+idxs[0]+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认费用')+'</button>'
+            :'<button disabled title="'+esc(tr('仅「待对账」的账单需要确认费用'))+'" class="px-4 py-2 text-sm font-medium text-text-muted bg-surface-100 rounded-lg cursor-not-allowed">'+tr('确认费用')+'（'+tr(st)+'）</button>');
+    document.getElementById('crud-modal').classList.add('show');
+}
+/* 确认费用：待对账 -> 待请款 */
+function confirmAgentBillFee(id,rowIdx){
+    id=id||'fcl-agent-bill';
+    var row=fclFinRows(id)[rowIdx];
+    if(!row){showToast(tr('未找到账单'));return;}
+    if(fclFinGet(id,row,'账单状态')!=='待对账'){showToast(tr('仅「待对账」的账单可确认费用'));return;}
+    fclFinSet(id,row,'账单状态','待请款');
+    closeCrudModal();
+    fclFinRefresh(id);
+    showToast(tr('费用已确认')+'：'+fclFinGet(id,row,'流水号')+'，'+tr('账单进入「待请款」'));
+}
+
+/* ===== 代理账单：生成账单（应付） =====
+ * 带出服务商收款信息 + 本张发票的费用明细，确认后写一条应付账单，
+ * 代理账单进入「待审核」（等应付那边审批）。 */
+function openAgentBillGenerateAp(id){
+    id=id||'fcl-agent-bill';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选要生成账单的代理账单'));return;}
+    if(idxs.length>1){showToast(tr('生成账单一次只能选一张'));return;}
+    var row=fclFinRows(id)[idxs[0]];
+    if(!row){showToast(tr('未找到账单'));return;}
+    var st=fclFinGet(id,row,'账单状态');
+    if(st!=='待请款'){showToast(tr('仅「待请款」的账单可生成应付账单，当前为')+'「'+tr(st)+'」');return;}
+    var billNo=fclFinGet(id,row,'流水号');
+    var agent=fclFinGet(id,row,'服务商');
+    var cur=fclFinGet(id,row,'币别');
+    var bank=fclAgentBankOf(agent);
+    var list=agentBillDetailsOf(billNo);
+    var jobs=agentBillJobsOf(billNo);
+    var total=list.reduce(function(s,d){return s+(fclParseMoney(d.amt)||0);},0);
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='72%';
+    document.getElementById('crud-modal-title').textContent=tr('生成应付账单')+' - '+billNo;
+    var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white';
+    var roCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary cursor-not-allowed';
+    var h='<div class="space-y-4">';
+    /* ① 服务商与收款信息 */
+    h+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
+       '<span class="text-sm font-semibold text-text-primary">'+tr('① 服务商与收款信息')+'</span></div>';
+    h+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
+    function fld(label,val,ro,fid){
+        return '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr(label)+'</label>'+
+            '<input'+(fid?' id="'+fid+'"':'')+(ro?' readonly':'')+' value="'+esc(val||'')+'" class="'+(ro?roCls:inCls)+'"></div>';
+    }
+    h+=fld('服务商',agent,true);
+    h+=fld('服务商账单号',fclFinGet(id,row,'服务商账单号'),true);
+    h+=fld('账单周期',fclFinGet(id,row,'账单周期'),true);
+    h+=fld('收款户名',bank.payee,false,'apgen-payee');
+    h+=fld('银行账号',bank.acct,false,'apgen-acct');
+    h+=fld('开户行',bank.bank,false,'apgen-bank');
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('账期')+'</label>'+
+       '<select id="apgen-term" class="'+inCls+'">'+['票结','月结15天','月结30天','月结60天'].map(function(o){
+           return '<option'+(o===bank.term?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('期望付款时间')+'</label>'+
+       '<input id="apgen-paydate" type="date" value="2026-09-30" class="'+inCls+'"></div>';
+    h+=fld('SWIFT',bank.swift,true);
+    h+='<div class="flex flex-col gap-1.5 md:col-span-3"><label class="text-sm font-medium text-text-secondary">'+tr('付款用途')+'</label>'+
+       '<input id="apgen-purpose" value="'+esc(agentBillMainFeeOf(billNo).feeName||tr('代理费用'))+'" class="'+inCls+'"></div>';
+    h+='</div></div>';
+    /* ② 费用明细 */
+    h+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
+       '<span class="text-sm font-semibold text-text-primary">'+tr('② 费用明细')+'</span>'+
+       '<span class="text-xs text-text-muted">'+tr('共')+' '+jobs.length+' '+tr('个 Job')+' / '+list.length+' '+tr('条费用')+'</span></div>';
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto" style="max-height:260px"><table class="w-full text-sm"><thead class="sticky top-0"><tr class="bg-[#EFF6FF] text-text-secondary">';
+    h+='<th class="px-3 py-2 text-left font-semibold" style="width:48px">#</th>';
+    ['Job No','费用名称','费用类别','币别','金额','备注'].forEach(function(t){h+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';});
+    h+='</tr></thead><tbody>';
+    if(!list.length)h+='<tr><td colspan="7" class="px-3 py-10 text-center text-text-muted">'+tr('该账单暂无费用明细')+'</td></tr>';
+    var lastJob2='';
+    list.forEach(function(d,i){
+        var showJob=d.job!==lastJob2;lastJob2=d.job;
+        h+='<tr class="border-t border-surface-100">';
+        h+='<td class="px-3 py-2 text-text-muted">'+(i+1)+'</td>';
+        h+='<td class="px-3 py-2 whitespace-nowrap '+(showJob?'font-medium text-primary-700':'text-text-muted')+'">'+(showJob?esc(d.job):'　〃')+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary">'+esc(tr(d.feeName||'—'))+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary">'+esc(tr(d.feeKind||'—'))+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary">'+esc(d.cur||cur)+'</td>';
+        h+='<td class="px-3 py-2 font-semibold text-blue-700">'+esc(d.amt||'')+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary">'+esc(d.remark||'')+'</td>';
+        h+='</tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div class="mt-2 text-sm text-text-secondary">'+tr('应付合计')+' <span class="font-semibold text-text-primary">'+cur+' '+total.toFixed(2)+'</span></div>';
+    h+='</div></div>';
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="confirmAgentBillGenerateAp(\''+id+'\','+idxs[0]+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认生成')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function confirmAgentBillGenerateAp(id,rowIdx){
+    id=id||'fcl-agent-bill';
+    var row=fclFinRows(id)[rowIdx];
+    if(!row){showToast(tr('未找到账单'));return;}
+    if(fclFinGet(id,row,'账单状态')!=='待请款'){showToast(tr('仅「待请款」的账单可生成应付账单'));return;}
+    var billNo=fclFinGet(id,row,'流水号');
+    var agent=fclFinGet(id,row,'服务商');
+    var cur=fclFinGet(id,row,'币别');
+    var list=agentBillDetailsOf(billNo);
+    if(!list.length){showToast(tr('该账单没有费用明细，无法生成应付账单'));return;}
+    var payee=((document.getElementById('apgen-payee')||{}).value||'').trim();
+    var acct=((document.getElementById('apgen-acct')||{}).value||'').trim();
+    var bankName=((document.getElementById('apgen-bank')||{}).value||'').trim();
+    if(!payee||!acct){showToast(tr('请填写收款户名与银行账号'));return;}
+    var term=((document.getElementById('apgen-term')||{}).value||'月结30天');
+    var payDate=((document.getElementById('apgen-paydate')||{}).value||'');
+    var purpose=((document.getElementById('apgen-purpose')||{}).value||'').trim();
+    var total=list.reduce(function(s,d){return s+(fclParseMoney(d.amt)||0);},0);
+    var apNo=fclSeqNo('FAP','fcl-ap-bill');
+    var payNo=fclSeqNo('PAY','fcl-ap-bill');
+    fclPushRow('fcl-ap-bill',{
+        '应付账单号':apNo,
+        '付款申请号':payNo,
+        '服务商':agent,
+        '账单周期':fclFinGet(id,row,'账单周期'),
+        '涉及Job数':String(agentBillJobsOf(billNo).length),
+        '费用行数':String(list.length),
+        '币别':cur,
+        '应付金额':total.toFixed(2),
+        '已付金额':'0',
+        '待付金额':total.toFixed(2),
+        '账期':term,
+        '付款用途':purpose||agentBillMainFeeOf(billNo).feeName,
+        '期望付款时间':payDate,
+        '到期日':payDate,
+        '收款账号':payee+' / '+bankName+' '+acct,
+        '申请人':fclWho(),
+        '申请时间':fclNow(),
+        '账单状态':'待审批'
+    });
+    /* 代理账单进入待审核（等应付那边审批） */
+    fclFinSet(id,row,'账单状态','待审核');
+    if(typeof _listData!=='undefined')delete _listData['fcl-ap-bill'];
+    closeCrudModal();
+    fclFinRefresh(id);
+    showToast(tr('已生成应付账单')+' '+apNo+'（'+cur+' '+total.toFixed(2)+'），'+tr('代理账单进入「待审核」'));
+}
 
 /* ==========================================================================
  * 二、柜内票清单 —— 一个柜里装了谁的货、多少件/体积/重量
@@ -589,8 +836,7 @@ function openAgentBillAlloc(id){
     var row=fclFinRows(id)[idxs[0]];
     if(!row){showToast(tr('未找到账单'));return;}
     var st=fclFinGet(id,row,'账单状态');
-    if(st==='已作废'){showToast(tr('已作废的账单不能分摊'));return;}
-    if(st==='已分摊'){showToast(tr('该账单已全额分摊，无需再摊'));return;}
+    if(st==='作废'){showToast(tr('已作废的账单不能分摊'));return;}
     var left=fclParseMoney(fclFinGet(id,row,'未分摊金额'));
     if(left===null)left=fclParseMoney(fclFinGet(id,row,'账单金额'));
     if(left===null||left<=0){showToast(tr('该账单没有可分摊金额'));return;}
@@ -704,7 +950,8 @@ function submitAgentBillAlloc(rows){
     fclFinSet(A.srcId,billRow,'未分摊金额',left.toFixed(2));
     fclFinSet(A.srcId,billRow,'分摊方式',basisLabel);
     fclFinSet(A.srcId,billRow,'涉及Job数',String(fclJobCountOfBill(A.billNo)));
-    fclFinSet(A.srcId,billRow,'账单状态',left<=0?'已分摊':'部分分摊');
+    /* 分摊进度只写「已分摊/未分摊金额」两列，不再动账单状态 ——
+     * 账单状态现在走 对账→请款→审核→核销 这条线，与分摊是两个维度 */
     if(typeof _listData!=='undefined')delete _listData[costId];
     closeCrudModal();
     fclFinRefresh(A.srcId);
@@ -1139,7 +1386,7 @@ function voidAgentBillRows(id){
     var rows=fclFinRows(id),ok=[],allocated=0,already=0;
     idxs.forEach(function(i){
         var row=rows[i];if(!row)return;
-        if(fclFinGet(id,row,'账单状态')==='已作废'){already++;return;}
+        if(fclFinGet(id,row,'账单状态')==='作废'){already++;return;}
         if((fclParseMoney(fclFinGet(id,row,'已分摊金额'))||0)>0){allocated++;return;}
         ok.push(row);
     });
@@ -1149,7 +1396,7 @@ function voidAgentBillRows(id){
     var msg=tr('确认作废')+' '+ok.length+' '+tr('张账单')+'？';
     if(allocated)msg+='（'+allocated+' '+tr('张已分摊将跳过')+'）';
     openConfirmTip(msg,function(){
-        ok.forEach(function(row){fclFinSet(id,row,'账单状态','已作废');});
+        ok.forEach(function(row){fclFinSet(id,row,'账单状态','作废');});
         fclFinRefresh(id);
         showToast(tr('已作废')+' '+ok.length+' '+tr('张'));
     });
@@ -1292,7 +1539,7 @@ function confirmBillHeadImport(id){
         map['涉及Job数']='0';
         map['导入人']=who;
         map['导入时间']=now;
-        map['账单状态']='待分摊';
+        map['账单状态']='待对账';
         fclPushRow(id,map);
         /* 新导入的账单还没有按 Job 的费用明细（等代理补明细或人工补录），
          * 先建空数组占位，详情弹窗会显示「该账单暂无费用明细」而不是报错 */
@@ -1301,5 +1548,5 @@ function confirmBillHeadImport(id){
     if(typeof _listData!=='undefined')delete _listData[id];
     closeCrudModal();
     fclFinRefresh(id);
-    showToast(tr('导入成功')+' '+rows.length+' '+tr('条')+'，'+tr('状态「待分摊」，请继续做「费用分摊」'));
+    showToast(tr('导入成功')+' '+rows.length+' '+tr('条')+'，'+tr('状态「待对账」，请继续做「对账」'));
 }

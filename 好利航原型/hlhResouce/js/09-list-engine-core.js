@@ -999,6 +999,8 @@ function renderToolbarAction(action,id){
     else if(action.key==='voidAgentBill')click='voidAgentBillRows(\''+id+'\')';
     else if(action.key==='voidEstCost')click='voidEstCostRows(\''+id+'\')';
     else if(action.key==='agentBillDetail')click='openSelectedAgentBillDetail(\''+id+'\')';
+    else if(action.key==='agentBillReconcile')click='openAgentBillReconcile(\''+id+'\')';
+    else if(action.key==='agentBillGenAp')click='openAgentBillGenerateAp(\''+id+'\')';
     else if(action.key==='costDiffDetail')click='openCostDiffDetail(\''+id+'\')';
     else if(action.key==='allocToShipment')click='openShipmentAlloc(\''+id+'\')';
     else if(action.key==='applyPayment')click='openPaymentApply(\''+id+'\')';
@@ -1602,9 +1604,13 @@ function getToolbarActions(id){
         /* 代理账单按供应商发票维度导入，费用明细挂在 Job No 上 ——
          * 页面上不给「编辑数据」（改发票得走重新导入），查看详情看的是明细 */
         if(id==='fcl-agent-bill'){
-            for(var bi=base.length-1;bi>=0;bi--)if(base[bi].type==='edit')base.splice(bi,1);
-            base.push({key:'agentBillDetail',label:'查看详情'},{key:'importBillHead',label:'账单导入'},
-                {key:'allocAgentBill',label:'费用分摊',variant:'primary'},{key:'voidAgentBill',label:'作废账单',variant:'danger'});
+            /* 去掉「编辑数据」与「查看详情」：改发票走重新导入，看明细走行内「查看」 */
+            for(var bi=base.length-1;bi>=0;bi--)if(base[bi].type==='edit'||base[bi].type==='view')base.splice(bi,1);
+            /* 对账 → 确认费用（待请款）→ 生成账单（待审核）；明细看行内「查看」 */
+            base.push({key:'importBillHead',label:'账单导入'},
+                {key:'agentBillReconcile',label:'对账',variant:'primary'},
+                {key:'agentBillGenAp',label:'生成账单',variant:'primary'},
+                {key:'allocAgentBill',label:'费用分摊'},{key:'voidAgentBill',label:'作废账单',variant:'danger'});
         }
         if(id==='fcl-agent-cost')base.push({key:'importAgentBill',label:'代账账单导入'},{key:'allocAgentCost',label:'手工分摊'},{key:'reconcileCost',label:'对账'},
             {key:'costDiffDetail',label:'差异分析'},{key:'allocToShipment',label:'分摊到票'},{key:'applyPayment',label:'付款申请',variant:'primary'});

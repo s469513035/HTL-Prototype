@@ -25,23 +25,23 @@ var FCL_FEE_NAMES=['海运费','THC','文件费','封签费','燃油附加费','
     '拖车费','报关费','查验费','单证费','仓储费','改单费','滞港费','其他'];
 
 /* ==========================================================================
- * 一、代理账单 —— 账单头即费用行粒度（一张发票的一笔费用一行）
- * 一张发票常常覆盖多个柜，所以「账单金额」是总额，
- * 「已分摊/未分摊金额」记录摊到 Job 上的进度，允许分多次摊完。
+ * 一、代理账单 —— 按供应商发票维度导入，一张发票一行
+ * 发票常常覆盖多个柜，费用明细由供应商按 Job No 给（见 _agentBillDetails），
+ * 账单头只留发票级信息：「账单金额」是总额，「涉及Job数」按明细去重算。
  * ========================================================================== */
 addPrototypeTable('fcl-agent-bill','代理账单',
-    '流水号|服务商|服务商账单号|账单周期|币别|账单金额|已分摊金额|未分摊金额|分摊方式|涉及Job数|导入人|导入时间|备注|账单状态|操作',
+    '流水号|服务商|服务商账单号|账单周期|币别|账单金额|涉及Job数|导入人|导入时间|备注|账单状态|操作',
     /* 账单状态即对账-请款-核销的流转：
      * 待对账 --[对账·确认费用]--> 待请款 --[生成账单]--> 待审核
      * --[应付审批通过]--> 待核销 --[付款核销]--> 部分核销 -> 全部核销；作废独立 */
     ['待对账','待请款','待审核','待核销','部分核销','全部核销','作废'],[
-    ['AGB-20260615001','MAERSK','MSK-INV-260613','2026-06','USD','12600','4200','8400','按件数','3','张财务','2026-06-15 09:30','一张发票含 3 个柜，先摊了 FBK-20260613001','待对账'],
-    ['AGB-20260615002','COSCO','COS-INV-260612','2026-06','USD','5180','5180','0','按票数','1','张财务','2026-06-15 09:30','','待请款'],
-    ['AGB-20260615003','MAERSK','MSK-THC-260615','2026-06','USD','1200','0','1200','','2','张财务','2026-06-15 14:10','目的港 THC，2 个柜合开','待审核'],
-    ['AGB-20260616004','鹏程拖车','PC-260616-11','2026-06','CNY','5400','0','5400','','3','李操作','2026-06-16 10:05','6 月上半月拖车汇总，含 3 个柜','待核销'],
-    ['AGB-20260616005','深圳报关行','SZ-CD-260616','2026-06','CNY','1050','0','1050','','3','李操作','2026-06-16 10:05','3 票报关费合开','部分核销'],
-    ['AGB-20260610006','CMA CGM','CMA-INV-260610','2026-06','USD','3600','3600','0','按票数','1','张财务','2026-06-10 11:20','','全部核销'],
-    ['AGB-20260608007','MSC','MSC-INV-260608','2026-06','USD','900','0','900','','1','李操作','2026-06-08 16:40','重复开票，已作废','作废']
+    ['AGB-20260615001','MAERSK','MSK-INV-260613','2026-06','USD','12600','3','张财务','2026-06-15 09:30','一张发票含 3 个柜','待对账'],
+    ['AGB-20260615002','COSCO','COS-INV-260612','2026-06','USD','5180','1','张财务','2026-06-15 09:30','','待请款'],
+    ['AGB-20260615003','MAERSK','MSK-THC-260615','2026-06','USD','1200','2','张财务','2026-06-15 14:10','目的港 THC，2 个柜合开','待审核'],
+    ['AGB-20260616004','鹏程拖车','PC-260616-11','2026-06','CNY','5400','3','李操作','2026-06-16 10:05','6 月上半月拖车汇总，含 3 个柜','待核销'],
+    ['AGB-20260616005','深圳报关行','SZ-CD-260616','2026-06','CNY','1050','3','李操作','2026-06-16 10:05','3 票报关费合开','部分核销'],
+    ['AGB-20260610006','CMA CGM','CMA-INV-260610','2026-06','USD','3600','1','张财务','2026-06-10 11:20','','全部核销'],
+    ['AGB-20260608007','MSC','MSC-INV-260608','2026-06','USD','900','1','李操作','2026-06-08 16:40','重复开票，已作废','作废']
 ],[
     {label:'流水号',type:'text'},
     {label:'服务商',type:'select',options:FCL_AGENT_OPTIONS},
@@ -50,8 +50,7 @@ addPrototypeTable('fcl-agent-bill','代理账单',
     {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
     {label:'账单状态',type:'select',options:['待对账','待请款','待审核','待核销','部分核销','全部核销','作废']}
 ]);
-TC['fcl-agent-bill'].modalExcludedFields=['已分摊金额','未分摊金额','分摊方式','涉及Job数',
-    '导入人','导入时间','账单状态'];
+TC['fcl-agent-bill'].modalExcludedFields=['涉及Job数','导入人','导入时间','账单状态'];
 TC['fcl-agent-bill'].fieldOptions={
     '服务商':FCL_AGENT_OPTIONS,'币别':FCL_CURRENCY_OPTIONS
 };
@@ -151,7 +150,7 @@ function openAgentBillDetail(id,rowIdx){
     h+='<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-sm">';
     [['流水号',billNo],['服务商',fclFinGet(id,row,'服务商')],['服务商账单号',fclFinGet(id,row,'服务商账单号')],
      ['账单周期',fclFinGet(id,row,'账单周期')],['账单金额',cur+' '+fclFinGet(id,row,'账单金额')],
-     ['已分摊金额',fclFinGet(id,row,'已分摊金额')],['未分摊金额',fclFinGet(id,row,'未分摊金额')],
+     ['涉及Job数',fclFinGet(id,row,'涉及Job数')],['导入人',fclFinGet(id,row,'导入人')],
      ['账单状态',fclFinGet(id,row,'账单状态')]].forEach(function(p){
         h+='<div><span class="text-xs text-text-muted block">'+tr(p[0])+'</span><span class="font-medium text-text-primary">'+esc(p[1]||'—')+'</span></div>';
     });
@@ -619,10 +618,10 @@ function fclDueDateFrom(term){
 /* ==========================================================================
  * 五、分摊引擎 —— 一级（账单→Job）和二级（Job成本→票）共用一套
  *
- * ⚠ 一级（代理账单→Job）的入口已去掉：供应商本来就按 Job No 给费用明细，
- *   不需要我们再摊。下面所有 level===1 的分支目前走不到，保留是因为
- *   二级与它共用这套取数/算份/校验逻辑，拆开反而容易把二级改坏；
- *   哪天要恢复一级分摊，补一个入口函数设 _fclAlloc.level=1 即可。
+ * ⚠ 一级（代理账单→Job）已整套去掉：供应商本来就按 Job No 给费用明细，
+ *   不需要我们再摊。入口 openAgentBillAlloc 与落地 submitAgentBillAlloc 都已删除，
+ *   _fclAlloc.level 恒为 2。下面残留的 level===1 分支（取权重/标签/表头/按钮）
+ *   走不到但保留：二级与它共用这套取数与算份逻辑，硬拆容易把二级改坏。
  *
  * 权重口径：票数=每份记 1；件数/体积/重量=从柜内票清单取；
  *           预估成本比例只在一级有意义（预估是挂在 Job 上的）。
@@ -886,53 +885,9 @@ function submitFclAlloc(){
     var sum=rows.reduce(function(s,r){return s+(fclParseMoney(r.amt)||0);},0);
     var diff=+((_fclAlloc.total||0)-sum).toFixed(2);
     if(diff!==0){showToast(tr('各份合计与待分摊金额差')+' '+diff+'，'+tr('请调平后再提交'));return;}
-    if(_fclAlloc.level===1)submitAgentBillAlloc(rows);
-    else submitShipmentAlloc(rows);
+    submitShipmentAlloc(rows);   /* 一级分摊已去掉，这里只剩二级（Job 成本→柜内各票） */
 }
 
-/* 一级落地：往代理实际成本追加行，并回写账单的分摊进度 */
-function submitAgentBillAlloc(rows){
-    var A=_fclAlloc,basisLabel=fclAllocBasisLabel(A.basis);
-    var costId='fcl-agent-cost';
-    var billRow=fclFinRows(A.srcId)[A.srcIdx];
-    if(!billRow){showToast(tr('未找到账单'));return;}
-    var srcBillNo=fclFinGet(A.srcId,billRow,'服务商账单号');
-    rows.forEach(function(r){
-        var job=r.target.trim();
-        fclPushRow(costId,{
-            '实际成本号':fclSeqNo('FAC',costId),
-            '代理账单号':A.billNo,
-            'Job No':job,
-            '服务商':A.agent,
-            '费用名称':A.feeName,
-            '费用类别':A.feeKind,
-            '币别':A.currency,
-            '预估金额':fclEstAmountOf(job,A.feeName),
-            '实际金额':fclParseMoney(r.amt).toFixed(2),
-            '分摊方式':basisLabel,
-            '分摊权重':r.w,
-            '服务商账单号':srcBillNo,
-            '对账状态':'待对账'
-        });
-    });
-    /* 回写账单：已摊/未摊金额、涉及 Job 数（按实际成本表里的去重数，别用累加免得重复摊时算错） */
-    var total=fclParseMoney(fclFinGet(A.srcId,billRow,'账单金额'))||0;
-    var done=(fclParseMoney(fclFinGet(A.srcId,billRow,'已分摊金额'))||0)+
-             rows.reduce(function(s,r){return s+(fclParseMoney(r.amt)||0);},0);
-    var left=+(total-done).toFixed(2);
-    fclFinSet(A.srcId,billRow,'已分摊金额',done.toFixed(2));
-    fclFinSet(A.srcId,billRow,'未分摊金额',left.toFixed(2));
-    fclFinSet(A.srcId,billRow,'分摊方式',basisLabel);
-    fclFinSet(A.srcId,billRow,'涉及Job数',String(fclJobCountOfBill(A.billNo)));
-    /* 分摊进度只写「已分摊/未分摊金额」两列，不再动账单状态 ——
-     * 账单状态现在走 对账→请款→审核→核销 这条线，与分摊是两个维度 */
-    if(typeof _listData!=='undefined')delete _listData[costId];
-    closeCrudModal();
-    fclFinRefresh(A.srcId);
-    showToast(tr('已分摊到')+' '+rows.length+' '+tr('个 Job')+'，'+
-        tr('生成代理实际成本')+' '+rows.length+' '+tr('条')+'，'+
-        (left<=0?tr('账单已全额分摊'):(tr('剩余未分摊')+' '+left.toFixed(2))));
-}
 /* 某张代理账单已经摊到几个 Job 上（去重） */
 function fclJobCountOfBill(billNo){
     var c=TC['fcl-agent-cost'];
@@ -1352,23 +1307,26 @@ function openApBillDetail(id){
     document.getElementById('crud-modal').classList.add('show');
 }
 
-/* ===== 代理账单：作废 —— 已经摊出去的不让作废，否则实际成本会对不上账 ===== */
+/* ===== 代理账单：作废 —— 已请款（生成过应付账单）的不让作废，
+ * 否则应付那边挂着一张没来源的账单。要作废先去应付侧撤销。 */
+var AGENT_BILL_VOIDABLE=['待对账','待请款'];
 function voidAgentBillRows(id){
     id=id||'fcl-agent-bill';
     var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
     if(!idxs.length){showToast(tr('请先勾选需要作废的账单'));return;}
-    var rows=fclFinRows(id),ok=[],allocated=0,already=0;
+    var rows=fclFinRows(id),ok=[],locked=0,already=0;
     idxs.forEach(function(i){
         var row=rows[i];if(!row)return;
-        if(fclFinGet(id,row,'账单状态')==='作废'){already++;return;}
-        if((fclParseMoney(fclFinGet(id,row,'已分摊金额'))||0)>0){allocated++;return;}
+        var st=fclFinGet(id,row,'账单状态');
+        if(st==='作废'){already++;return;}
+        if(AGENT_BILL_VOIDABLE.indexOf(st)<0){locked++;return;}
         ok.push(row);
     });
     if(!ok.length){
-        showToast(allocated?tr('已分摊过的账单不能作废，请先撤销分摊'):tr('所选账单已是作废状态'));return;
+        showToast(locked?tr('已进入请款流程的账单不能作废，请先在应付侧撤销'):tr('所选账单已是作废状态'));return;
     }
     var msg=tr('确认作废')+' '+ok.length+' '+tr('张账单')+'？';
-    if(allocated)msg+='（'+allocated+' '+tr('张已分摊将跳过')+'）';
+    if(locked)msg+='（'+locked+' '+tr('张已请款将跳过')+'）';
     openConfirmTip(msg,function(){
         ok.forEach(function(row){fclFinSet(id,row,'账单状态','作废');});
         fclFinRefresh(id);
@@ -1383,8 +1341,7 @@ function voidAgentBillRows(id){
  * ========================================================================== */
 /* 费用名称已不在账单头（在按 Job 的费用明细里），导入模板的必填项随之只剩发票级四项 */
 var BILL_IMPORT_REQUIRED=['服务商','服务商账单号','币别','账单金额'];
-var BILL_IMPORT_EXCLUDE=['操作','流水号','已分摊金额','未分摊金额','分摊方式','涉及Job数',
-    '导入人','导入时间','账单状态'];
+var BILL_IMPORT_EXCLUDE=['操作','流水号','涉及Job数','导入人','导入时间','账单状态'];
 var _billImportRows=[];
 var _billImportFile='';
 function billImportColumns(id){
@@ -1505,11 +1462,8 @@ function confirmBillHeadImport(id){
     rows.forEach(function(r){
         var map={};
         cols.forEach(function(name,ci){map[name]=r.cells[ci]||'';});
-        var amt=fclParseMoney(map['账单金额']);
         var billNo=fclSeqNo('AGB',id);
         map['流水号']=billNo;
-        map['已分摊金额']='0';
-        map['未分摊金额']=(amt===null?'':amt.toFixed(2));
         map['涉及Job数']='0';
         map['导入人']=who;
         map['导入时间']=now;

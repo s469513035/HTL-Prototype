@@ -619,6 +619,11 @@ function fclDueDateFrom(term){
 /* ==========================================================================
  * 五、分摊引擎 —— 一级（账单→Job）和二级（Job成本→票）共用一套
  *
+ * ⚠ 一级（代理账单→Job）的入口已去掉：供应商本来就按 Job No 给费用明细，
+ *   不需要我们再摊。下面所有 level===1 的分支目前走不到，保留是因为
+ *   二级与它共用这套取数/算份/校验逻辑，拆开反而容易把二级改坏；
+ *   哪天要恢复一级分摊，补一个入口函数设 _fclAlloc.level=1 即可。
+ *
  * 权重口径：票数=每份记 1；件数/体积/重量=从柜内票清单取；
  *           预估成本比例只在一级有意义（预估是挂在 Job 上的）。
  * 金额算法：前 n-1 份向下取两位小数，最后一份 = 总额 - 前面之和，
@@ -826,39 +831,8 @@ function fclAllocOpenModal(title,headLine,tipLine){
     document.getElementById('crud-modal').classList.add('show');
 }
 
-/* ===== 一级分摊：代理账单 → Job =====
- * 允许分多次摊完：摊掉一部分后账单停在「部分分摊」，可以再来一次。 */
-function openAgentBillAlloc(id){
-    id=id||'fcl-agent-bill';
-    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
-    if(!idxs.length){showToast(tr('请先勾选需要分摊的代理账单'));return;}
-    if(idxs.length>1){showToast(tr('费用分摊一次只能选一张账单'));return;}
-    var row=fclFinRows(id)[idxs[0]];
-    if(!row){showToast(tr('未找到账单'));return;}
-    var st=fclFinGet(id,row,'账单状态');
-    if(st==='作废'){showToast(tr('已作废的账单不能分摊'));return;}
-    var left=fclParseMoney(fclFinGet(id,row,'未分摊金额'));
-    if(left===null)left=fclParseMoney(fclFinGet(id,row,'账单金额'));
-    if(left===null||left<=0){showToast(tr('该账单没有可分摊金额'));return;}
-    /* 费用名称/类别已不在账单头上（供应商按 Job 给明细），取明细里金额最大的那种代表本张账单 */
-    var mainFee=agentBillMainFeeOf(fclFinGet(id,row,'流水号'));
-    _fclAlloc={
-        level:1,srcId:id,srcIdx:idxs[0],total:left,
-        currency:fclFinGet(id,row,'币别'),
-        feeName:mainFee.feeName,
-        feeKind:mainFee.feeKind,
-        agent:fclFinGet(id,row,'服务商'),
-        billNo:fclFinGet(id,row,'流水号'),
-        costNo:'',job:'',basis:'count',
-        rows:[{target:'',label:'',w:'1',amt:''},{target:'',label:'',w:'1',amt:''}]
-    };
-    fclAllocCompute(true);
-    var head=esc(_fclAlloc.agent)+'　'+esc(_fclAlloc.feeName)+'　'+
-        tr('待分摊')+' <span class="font-semibold text-text-primary">'+esc(_fclAlloc.currency)+' '+left.toFixed(2)+'</span>'+
-        '　'+tr('账单号')+' '+esc(fclFinGet(id,row,'服务商账单号'));
-    fclAllocOpenModal(tr('费用分摊')+' - '+_fclAlloc.billNo,head,
-        tr('选择这笔费用要摊到哪几个 Job，按件数/体积/重量的基数取自「柜内票清单」；各份合计必须等于待分摊金额。未摊完可保存为「部分分摊」后续再摊。'));
-}
+/* 一级分摊（代理账单 → Job）已去掉：供应商本来就按 Job No 给费用明细，
+ * 不需要再由我们按件数/体积/重量去摊。分摊机制只保留二级（Job 成本 → 柜内各票）。 */
 
 /* ===== 二级分摊：Job 成本 → 柜内各票 =====
  * 拼柜时一个柜装了几个客户的货，柜成本得摊到票上才有单票毛利。 */

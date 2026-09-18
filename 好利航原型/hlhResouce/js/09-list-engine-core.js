@@ -995,7 +995,6 @@ function renderToolbarAction(action,id){
     else if(action.key==='msgMarkRead')click='markMsgRead(\''+id+'\')';
     else if(action.key==='msgMarkAllRead')click='markAllMsgRead(\''+id+'\')';
     else if(action.key==='importBillHead')click='openBillHeadImport(\''+id+'\')';
-    else if(action.key==='allocAgentBill')click='openAgentBillAlloc(\''+id+'\')';
     else if(action.key==='voidAgentBill')click='voidAgentBillRows(\''+id+'\')';
     else if(action.key==='voidEstCost')click='voidEstCostRows(\''+id+'\')';
     else if(action.key==='agentBillDetail')click='openSelectedAgentBillDetail(\''+id+'\')';
@@ -1610,7 +1609,7 @@ function getToolbarActions(id){
             base.push({key:'importBillHead',label:'账单导入'},
                 {key:'agentBillReconcile',label:'对账',variant:'primary'},
                 {key:'agentBillGenAp',label:'生成账单',variant:'primary'},
-                {key:'allocAgentBill',label:'费用分摊'},{key:'voidAgentBill',label:'作废账单',variant:'danger'});
+                {key:'voidAgentBill',label:'作废账单',variant:'danger'});
         }
         if(id==='fcl-agent-cost')base.push({key:'importAgentBill',label:'代账账单导入'},{key:'allocAgentCost',label:'手工分摊'},{key:'reconcileCost',label:'对账'},
             {key:'costDiffDetail',label:'差异分析'},{key:'allocToShipment',label:'分摊到票'},{key:'applyPayment',label:'付款申请',variant:'primary'});

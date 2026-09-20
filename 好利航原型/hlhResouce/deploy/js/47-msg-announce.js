@@ -26,51 +26,48 @@ var MSG_PRIORITY_OPTIONS=['普通','重要','紧急'];
  *    该页只管公告），列表里不再放类型列，新增弹窗也不出现类型字段。
  * ========================================================================== */
 addPrototypeTable('msg-announce','公告管理',
-    '公告编号|标题|业务分类|优先级|内容摘要|正文|附件|接收方|接收对象|触达人数|已读人数|阅读率|发布人|发布时间|撤回原因|状态|操作',
-    ['草稿','已发布','已撤回','已失效'],[
+    '公告编号|标题|业务分类|优先级|正文|附件|接收方|接收对象|触达人数|已读人数|阅读率|发布人|发布时间|状态|操作',
+    ['草稿','已发布','已作废'],[
     ['ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要',
-     '10/1-10/7 放假，9/28 为节前最后收货日，节后 10/8 恢复正常收货',
      '各位客户、同事：\n\n根据国家法定节假日安排，我司 2026 年国庆假期为 10 月 1 日至 10 月 7 日，共 7 天。\n\n一、收货安排\n1. 节前最后收货日：9 月 28 日 17:00（深圳/广州/上海仓同步）\n2. 节后恢复收货：10 月 8 日 09:00\n\n二、船期安排\n假期期间西非线正常开船，具体船期见附件。已订舱货物请于 9 月 28 日前送仓完毕。\n\n三、值班安排\n假期期间客服值班电话 0755-88888888，海外仓照常作业。\n\n请各位提前安排出货计划，谢谢配合。',
      '国庆船期表.xlsx;值班安排.pdf','客户+员工','客户: 按客户等级(A类)(3)；员工: 按组织架构(商务部)(3)',
-     '6','4','66.67%','张建国','2026-09-10 09:00','','已发布'],
+     '6','4','66.67%','张建国','2026-09-10 09:00','已发布'],
     ['ANN-20260912002','西非线 10 月起运价调整通知','价格政策','紧急',
-     '受旺季附加费影响，10 月 1 日起拉各斯/特马线整柜运价上调 USD 150/柜',
      '尊敬的客户：\n\n受旺季舱位紧张及船司附加费上调影响，自 2026 年 10 月 1 日（以开船日为准）起，我司西非线运价调整如下：\n\n1. 深圳/广州 → 拉各斯：40HQ 上调 USD 150/柜\n2. 深圳/广州 → 特马：40HQ 上调 USD 150/柜\n3. 散货拼箱：上调 USD 8/CBM\n\n10 月 1 日前已订舱并完成送仓的货物按原价执行。\n\n如有疑问请联系您的对接业务员。',
      '10月运价表.pdf','客户','客户: 指定客户(2)',
-     '2','1','50.00%','李明辉','2026-09-12 14:30','','已发布'],
+     '2','1','50.00%','李明辉','2026-09-12 14:30','已发布'],
     ['ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要',
-     '9 月 20 日 00:00-04:00 停机升级，财务相关功能全部不可用，请提前完成月结与付款登记',
      '财务部各位同事：\n\n为上线整柜代理成本模块，定于 2026 年 9 月 20 日（周日）00:00 - 04:00 进行停机升级。\n\n一、影响范围\n应收账单、收款核销、应付账单、付款登记、银行流水匹配全部不可用。\n\n二、请提前完成\n1. 9 月 19 日 18:00 前完成当月已确认账单的核销\n2. 待付款的应付账单请在 19 日前完成付款登记，避免跨期\n3. 升级期间如有紧急付款，走线下审批并于 20 日补录\n\n三、升级内容\n新增「代理账单导入 → 两级分摊 → 对账 → 付款申请」全链路，升级后请留意新菜单。',
      '','员工','员工: 按组织架构(财务部)(9)',
-     '9','3','33.33%','张建国','2026-09-14 18:00','','已发布'],
+     '9','3','33.33%','张建国','2026-09-14 18:00','已发布'],
     ['ANN-20260915004','本周五全仓盘点，仓库组请配合','操作规范','普通',
-     '9/19 全天盘点，当日暂停出库，请提前安排',
      '仓库组同事：\n\n本周五（9 月 19 日）进行月度全仓盘点，安排如下：\n\n1. 当日 08:00 起暂停出库作业，入库正常\n2. 盘点使用 PDA「国内库存盘点」功能，按货区分组\n3. 盘点差异当日 18:00 前提交操作主管复核\n\n请提前通知已预约当日提货的客户改期。',
      '','员工','员工: 指定员工(2)',
-     '2','0','0.00%','王海波','2026-09-15 08:30','','已发布'],
+     '2','0','0.00%','王海波','2026-09-15 08:30','已发布'],
     ['ANN-20260916005','11 月西非船期预告','船期航线','普通',
-     '11 月西非线船期预排，待船司确认后正式发布',
      '（拟稿中）11 月西非线船期预排表见附件，最终以船司确认为准。',
-     '','','','0','0','','','','','草稿']
+     '','','','0','0','','','','草稿']
 ],[
     {label:'公告编号',type:'text'},
     {label:'标题',type:'text'},
     {label:'业务分类',type:'select',options:MSG_CATEGORY_OPTIONS},
     {label:'优先级',type:'select',options:MSG_PRIORITY_OPTIONS},
     {label:'发布人',type:'text'},
-    {label:'状态',type:'select',options:['草稿','已发布','已撤回','已失效']}
+    {label:'状态',type:'select',options:['草稿','已发布','已作废']}
 ]);
-/* 正文太长、撤回原因平时为空，都不进列表；点「查看详情」看得到 */
-TC['msg-announce'].listHiddenHeaders=['正文','撤回原因'];
+/* 正文太长，不进列表；点「查看详情」看得到 */
+TC['msg-announce'].listHiddenHeaders=['正文'];
 /* 接收方/接收对象在发布弹窗里选，统计与发布信息由系统回写，都不给人手填 */
 TC['msg-announce'].modalExcludedFields=['接收方','接收对象','触达人数','已读人数','阅读率',
-    '发布人','发布时间','撤回原因','状态'];
+    '发布人','发布时间','状态'];
 TC['msg-announce'].fieldOptions={
     '业务分类':MSG_CATEGORY_OPTIONS,'优先级':MSG_PRIORITY_OPTIONS
 };
+/* 新增/查看走自己的邮件式弹窗 openMsgAnnounceModal（正文是富文本），
+ * 下面这几项只对通用弹窗生效，留着是兜底 */
 TC['msg-announce'].modalFieldTypes={'正文':'textarea'};
-TC['msg-announce'].modalFieldClass={'内容摘要':'modal-remark-full','正文':'modal-remark-full'};
-TC['msg-announce'].requiredOverrides={'标题':true,'正文':true,'内容摘要':false,'附件':false};
+TC['msg-announce'].modalFieldClass={'正文':'modal-remark-full'};
+TC['msg-announce'].requiredOverrides={'标题':true,'正文':true,'附件':false};
 TC['msg-announce'].modalCols=3;
 TC['msg-announce'].statusBadgeCols=['优先级'];
 
@@ -550,57 +547,65 @@ function submitMsgPublish(){
         '，'+tr('共')+' '+people.length+' '+tr('条收件记录，可在「我的公告」查看阅读情况'));
 }
 
-/* ===== 撤回 ===== */
-var _msgRecallCtx={id:'',idx:-1};
-function openMsgRecall(id){
+/* ===== 作废（原「撤回」）=====
+ * 草稿从没发出去过，作废只是把这条稿子废掉，确认一下就行；
+ * 已发布的已经躺在别人的「我的公告」里，作废要先把已读人数摆出来，
+ * 让发布人知道这条已经被多少人看过，再决定要不要废。 */
+var _msgVoidCtx={id:'',idx:-1};
+function openMsgVoid(id){
     id=id||'msg-announce';
     var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
-    if(!idxs.length){showToast(tr('请先勾选需要撤回的公告'));return;}
-    if(idxs.length>1){showToast(tr('撤回一次只能选一条'));return;}
+    if(!idxs.length){showToast(tr('请先勾选需要作废的公告'));return;}
+    if(idxs.length>1){showToast(tr('作废一次只能选一条'));return;}
     var row=fclFinRows(id)[idxs[0]];
     if(!row){showToast(tr('未找到公告'));return;}
     var st=fclFinGet(id,row,'状态');
-    if(st!=='已发布'){showToast(tr('该公告为')+'「'+tr(st)+'」，'+tr('只有已发布的可以撤回'));return;}
-    _msgRecallCtx={id:id,idx:idxs[0]};
+    if(st==='已作废'){showToast(tr('该公告已经是「已作废」，不用重复操作'));return;}
+    if(st!=='草稿'&&st!=='已发布'){showToast(tr('该公告为')+'「'+tr(st)+'」，'+tr('不能作废'));return;}
+    _msgVoidCtx={id:id,idx:idxs[0]};
+    var isDraft=st==='草稿';
     var b='';
-    b+='<div class="mb-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 text-sm text-amber-700">'+
-       esc(fclFinGet(id,row,'标题'))+'　'+tr('已触达')+' '+esc(fclFinGet(id,row,'触达人数'))+' '+tr('人')+
-       '<div class="mt-1 text-xs opacity-80">'+
-       esc(tr('撤回后各端立即不再显示，但收件记录保留留痕，便于事后追查这条公告当时发给了谁。'))+
-       '</div></div>';
-    b+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('撤回原因')+
-       '<span class="text-red-500 ml-1">*</span></label>'+
-       '<textarea id="msg-recall-reason" rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+
-       esc(tr('请说明撤回原因，例如：运价数字有误，改后重发'))+'"></textarea></div>';
+    b+='<div class="px-3 py-2.5 rounded-lg border '+(isDraft?'bg-surface-50 border-surface-200 text-text-secondary':'bg-amber-50 border-amber-100 text-amber-700')+' text-sm">';
+    b+='<div class="font-medium text-text-primary">'+esc(fclFinGet(id,row,'标题'))+'</div>';
+    if(isDraft){
+        b+='<div class="mt-1.5 text-xs">'+esc(tr('这条还是草稿，没有发出去过，作废后不再出现在待发布列表里。'))+'</div>';
+    }else{
+        /* 已发布：把触达与已读摆在最显眼的位置，这是发布人最需要知道的一件事 */
+        b+='<div class="mt-2 flex items-center gap-4 flex-wrap">'+
+           '<span>'+tr('已触达')+' <span class="font-semibold text-base">'+esc(fclFinGet(id,row,'触达人数')||'0')+'</span> '+tr('人')+'</span>'+
+           '<span>'+tr('其中已读')+' <span class="font-semibold text-base">'+esc(fclFinGet(id,row,'已读人数')||'0')+'</span> '+tr('人')+'</span>'+
+           '<span class="text-xs opacity-80">'+tr('阅读率')+' '+esc(fclFinGet(id,row,'阅读率')||'0.00%')+'</span>'+
+           '</div>';
+        b+='<div class="mt-2 text-xs opacity-80">'+
+           esc(tr('作废后这条公告立即从各端的「我的公告」移除，已读过的人也看不到了。确认要作废吗？'))+'</div>';
+    }
+    b+='</div>';
     var panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='48%';
-    document.getElementById('crud-modal-title').textContent=tr('撤回公告')+' - '+fclFinGet(id,row,'公告编号');
+    if(panel)panel.style.width='42%';
+    document.getElementById('crud-modal-title').textContent=tr('作废公告')+' - '+fclFinGet(id,row,'公告编号');
     document.getElementById('crud-modal-body').innerHTML=b;
     document.getElementById('crud-modal-footer').innerHTML=
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
-        '<button onclick="submitMsgRecall()" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 cursor-pointer ml-2">'+tr('确认撤回')+'</button>';
+        '<button onclick="submitMsgVoid()" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 cursor-pointer ml-2">'+tr('确认作废')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
 }
-function submitMsgRecall(){
-    var id=_msgRecallCtx.id,row=fclFinRows(id)[_msgRecallCtx.idx];
+function submitMsgVoid(){
+    var id=_msgVoidCtx.id,row=fclFinRows(id)[_msgVoidCtx.idx];
     if(!row){showToast(tr('未找到公告'));return;}
-    var el=document.getElementById('msg-recall-reason');
-    var reason=String((el&&el.value)||'').trim();
-    if(!reason){showToast(tr('请填写撤回原因'));return;}
-    var no=fclFinGet(id,row,'公告编号');
-    /* 收件行没有「状态」列了：撤回 = 从「我的公告」直接移除这些收件行 */
+    var no=fclFinGet(id,row,'公告编号'),wasDraft=fclFinGet(id,row,'状态')==='草稿';
+    /* 收件行没有「状态」列：作废 = 从「我的公告」直接移除这些收件行（草稿本来就没有） */
     var n=msgRemoveInboxOf(no);
-    fclFinSet(id,row,'状态','已撤回');
-    fclFinSet(id,row,'撤回原因',reason);
+    fclFinSet(id,row,'状态','已作废');
     msgRefreshReadStats(no);
     if(typeof _listData!=='undefined')delete _listData['msg-inbox'];
     closeCrudModal();
     fclFinRefresh(id);
     if(typeof updateNotifBadge==='function')updateNotifBadge();
-    showToast(tr('已撤回')+'，'+tr('移除')+' '+n+' '+tr('条收件记录（公告侧保留撤回原因留痕）'));
+    showToast(wasDraft?(tr('草稿已作废')+'：'+no)
+                      :(tr('已作废')+'，'+tr('移除')+' '+n+' '+tr('条收件记录')));
 }
-/* 撤回时把该公告的收件行整个删掉 —— 收件表没有状态列可标记了。
- * 发布侧仍留有撤回原因与触达记录，事后可查。 */
+/* 作废时把该公告的收件行整个删掉 —— 收件表没有状态列可标记了。
+ * 发布侧仍留有触达与已读统计，事后可查这条当时发给了多少人、多少人看过。 */
 function msgRemoveInboxOf(no){
     var c=TC['msg-inbox'];
     if(!c||!c.d||!no)return 0;
@@ -728,8 +733,8 @@ function msgBodyCardHtml(an){
        '</div></div>';
     h+='<div class="text-xs text-text-muted text-right">'+esc(g('发布人'))+'　'+esc(g('发布时间'))+'</div>';
     h+='</div>';
-    h+='<div class="rounded-lg border border-surface-200 bg-surface-50 px-4 py-3 text-sm text-text-primary whitespace-pre-wrap leading-relaxed">'+
-       esc(g('正文'))+'</div>';
+    h+='<div class="rounded-lg border border-surface-200 bg-surface-50 px-4 py-3 text-sm text-text-primary leading-relaxed msg-body-view">'+
+       msgBodyRenderHtml(g('正文'))+'</div>';
     var att=g('附件');
     if(att){
         h+='<div class="mt-3 flex flex-wrap gap-1.5">';
@@ -754,10 +759,9 @@ function openMsgInboxDetail(id,rowIdx){
     var b='';
     if(!an){
         b='<div class="py-12 text-center text-sm text-text-muted">'+tr('找不到对应的公告正文')+'（'+esc(no)+'）</div>';
-    }else if(msgCell('msg-announce',an,'状态')==='已撤回'){
-        /* 撤回后收件行会被移除；万一还有残留行打开，提示撤回而不是显示正文 */
-        b='<div class="py-12 text-center text-sm text-red-600">'+tr('这条公告已被发布人撤回')+'：'+
-          esc(msgCell('msg-announce',an,'撤回原因'))+'</div>';
+    }else if(msgCell('msg-announce',an,'状态')==='已作废'){
+        /* 作废后收件行会被移除；万一还有残留行打开，提示作废而不是显示正文 */
+        b='<div class="py-12 text-center text-sm text-red-600">'+tr('这条公告已被发布人作废')+'</div>';
     }else{
         b=msgBodyCardHtml(an);
     }
@@ -823,5 +827,228 @@ function openMsgReadDetail(id){
     document.getElementById('crud-modal-body').innerHTML=b;
     document.getElementById('crud-modal-footer').innerHTML=
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+/* ==========================================================================
+ * 八、公告新增 / 查看弹窗 —— 按写邮件的样子排
+ *
+ * 公告本来就是一封群发邮件：主题一行顶在最上面，分类/优先级/附件是信头，
+ * 正文占掉剩下所有高度并且能排版。原来用通用 CRUD 弹窗把这些字段摊成
+ * 三列栅格，正文只是其中一个 textarea，写起来完全不像在写一封公告。
+ *
+ * 正文存 HTML。老种子是带 \n 的纯文本，msgBodyRenderHtml 按内容判断：
+ * 认出标签就原样渲染，否则转义后按换行显示，两种都不会串版。
+ * ========================================================================== */
+function msgBodyLooksHtml(s){
+    return /<(p|div|br|ul|ol|li|b|strong|i|em|u|span|h[1-6]|font|table)\b[^>]*>/i.test(String(s||''));
+}
+function msgBodyRenderHtml(s){
+    s=String(s||'');
+    if(!s)return '<span class="text-text-muted">'+tr('（正文为空）')+'</span>';
+    return msgBodyLooksHtml(s)?s:('<div class="whitespace-pre-wrap">'+esc(s)+'</div>');
+}
+/* 纯文本摘录：列表提示、发布确认这些地方要的是一句话，不要标签 */
+function msgBodyPlainText(s){
+    s=String(s||'');
+    if(msgBodyLooksHtml(s)){
+        s=s.replace(/<br\s*\/?>/gi,'\n').replace(/<\/(p|div|li|h[1-6])>/gi,'\n').replace(/<[^>]+>/g,'');
+        s=s.replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+    }
+    return s.replace(/\n{3,}/g,'\n\n').trim();
+}
+
+/* ---------- 富文本编辑器 ---------- */
+var MSG_RICH_CMDS=[
+    ['bold','B','加粗','font-bold'],
+    ['italic','I','斜体','italic'],
+    ['underline','U','下划线','underline'],
+    ['insertUnorderedList','\u2022','无序列表',''],
+    ['insertOrderedList','1.','有序列表',''],
+    ['justifyLeft','\u2261','左对齐',''],
+    ['justifyCenter','\u2632','居中',''],
+    ['removeFormat','\u2327','清除格式','']
+];
+var MSG_RICH_SIZES=[['3','正文'],['1','小号'],['5','标题'],['6','大标题']];
+var MSG_RICH_COLORS=['#1F2937','#DC2626','#D9A441','#17475E','#059669'];
+function msgRichFocus(){
+    var ed=document.getElementById('msg-rich-body');
+    if(ed&&typeof ed.focus==='function')ed.focus();
+    return ed;
+}
+function msgRichExec(cmd,val){
+    msgRichFocus();
+    try{document.execCommand(cmd,false,val==null?null:val);}catch(e){}
+}
+function msgRichSize(sel){msgRichExec('fontSize',sel&&sel.value);}
+function msgRichColor(color){msgRichExec('foreColor',color);}
+function msgRichValue(){
+    var ed=document.getElementById('msg-rich-body');
+    if(!ed)return '';
+    var v=String(ed.innerHTML||'').trim();
+    /* contenteditable 清空后会留一个 <br>，别把它当正文存下去 */
+    return (v==='<br>'||v==='<div><br></div>')?'':v;
+}
+function msgRichEditorHtml(bodyHtml){
+    var h='<div class="border border-surface-200 rounded-lg overflow-hidden bg-white">';
+    h+='<div class="flex items-center gap-1 px-2 py-1.5 bg-surface-50 border-b border-surface-200 flex-wrap">';
+    MSG_RICH_CMDS.slice(0,3).forEach(function(c){
+        h+='<button type="button" title="'+esc(tr(c[2]))+'" onclick="msgRichExec(\''+c[0]+'\')" '+
+           'class="w-7 h-7 inline-flex items-center justify-center text-sm rounded hover:bg-surface-200 cursor-pointer '+c[3]+'">'+c[1]+'</button>';
+    });
+    h+='<span class="w-px h-4 bg-surface-300 mx-1"></span>';
+    h+='<select onchange="msgRichSize(this)" title="'+esc(tr('字号'))+'" class="h-7 px-1.5 text-xs border border-surface-200 rounded bg-white cursor-pointer">';
+    MSG_RICH_SIZES.forEach(function(s){h+='<option value="'+s[0]+'">'+esc(tr(s[1]))+'</option>';});
+    h+='</select>';
+    h+='<span class="inline-flex items-center gap-1 ml-1">';
+    MSG_RICH_COLORS.forEach(function(c){
+        h+='<button type="button" title="'+esc(tr('字体颜色'))+'" onclick="msgRichColor(\''+c+'\')" '+
+           'class="w-4 h-4 rounded-full border border-surface-300 cursor-pointer" style="background:'+c+'"></button>';
+    });
+    h+='</span>';
+    h+='<span class="w-px h-4 bg-surface-300 mx-1"></span>';
+    MSG_RICH_CMDS.slice(3).forEach(function(c){
+        h+='<button type="button" title="'+esc(tr(c[2]))+'" onclick="msgRichExec(\''+c[0]+'\')" '+
+           'class="w-7 h-7 inline-flex items-center justify-center text-sm rounded hover:bg-surface-200 cursor-pointer">'+c[1]+'</button>';
+    });
+    h+='</div>';
+    h+='<div id="msg-rich-body" contenteditable="true" data-msg-rich '+
+       'class="px-4 py-3 min-h-[260px] max-h-[46vh] overflow-auto text-sm leading-relaxed text-text-primary focus:outline-none">'+
+       msgBodyRenderHtml(bodyHtml).replace('<span class="text-text-muted">'+tr('（正文为空）')+'</span>','')+'</div>';
+    h+='</div>';
+    return h;
+}
+
+/* ---------- 新增 / 编辑：写公告 ---------- */
+var _msgAnnCtx={id:'',idx:-1,mode:'add',no:''};
+function openMsgAnnounceModal(mode,id,rowIdx,rowData){
+    id=id||'msg-announce';
+    var c=TC[id];
+    if(mode==='view')return openMsgAnnounceView(id,rowIdx,rowData);
+    var rows=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+    var row=rowData||(rowIdx>=0?rows[rowIdx]:null);
+    var g=function(n){return row?msgCell(id,row,n):'';};
+    var no=g('公告编号');
+    if(mode==='add'){
+        var all=c.d||[];
+        var last=(all[all.length-1]&&all[all.length-1][0])||'ANN-20260916005';
+        var lm=String(last).match(/^(.*?)(\d+)$/);
+        no=lm?lm[1]+String(parseInt(lm[2],10)+1).padStart(lm[2].length,'0'):'ANN-20260916006';
+    }
+    _msgAnnCtx={id:id,idx:rowIdx==null?-1:rowIdx,mode:mode,no:no};
+    var st=mode==='add'?'草稿':(g('状态')||'草稿');
+    var b='';
+    b+='<div class="space-y-3">';
+    /* 信头：编号与状态一行，跟邮件顶上的会话信息一个位置 */
+    b+='<div class="flex items-center justify-between gap-3 flex-wrap px-3 py-2 rounded-lg bg-surface-50 border border-surface-200">'+
+       '<span class="text-xs text-text-muted">'+tr('公告编号')+'　<span class="font-semibold text-text-secondary">'+esc(no)+'</span></span>'+
+       '<span class="text-xs">'+statusBadge(st)+'</span></div>';
+    /* 主题 */
+    b+='<div class="flex items-center gap-3 border-b border-surface-200 pb-2">'+
+       '<label class="text-sm font-medium text-text-secondary whitespace-nowrap">'+tr('标题')+'<span class="text-red-500 ml-0.5">*</span></label>'+
+       '<input id="msg-ann-title" type="text" value="'+esc(g('标题'))+'" placeholder="'+esc(tr('一句话说清这条公告要通知什么'))+'" '+
+       'class="flex-1 h-10 px-3 text-base font-medium border-0 bg-transparent focus:outline-none focus:ring-0 text-text-primary"></div>';
+    /* 信头第二行：分类 / 优先级 */
+    b+='<div class="flex items-center gap-4 flex-wrap border-b border-surface-200 pb-3">';
+    b+='<span class="inline-flex items-center gap-2"><label class="text-sm text-text-secondary whitespace-nowrap">'+tr('业务分类')+'</label>'+
+       '<select id="msg-ann-category" class="h-9 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50">'+
+       selectOptionsHtml(MSG_CATEGORY_OPTIONS,g('业务分类')||MSG_CATEGORY_OPTIONS[0])+'</select></span>';
+    b+='<span class="inline-flex items-center gap-2"><label class="text-sm text-text-secondary whitespace-nowrap">'+tr('优先级')+'</label>'+
+       '<select id="msg-ann-priority" class="h-9 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50">'+
+       selectOptionsHtml(MSG_PRIORITY_OPTIONS,g('优先级')||'普通')+'</select></span>';
+    b+='</div>';
+    /* 附件 */
+    b+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('附件')+'</label>'+
+       crudAttachmentFieldHtml('附件',g('附件'))+'</div>';
+    /* 正文：富文本，占掉剩下的高度 */
+    b+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('正文')+
+       '<span class="text-red-500 ml-0.5">*</span></label>'+msgRichEditorHtml(g('正文'))+'</div>';
+    b+='<div class="text-xs text-text-muted">'+
+       esc(tr('保存后仍是草稿，接收范围在列表勾选这条后点「发布」时再选。'))+'</div>';
+    b+='</div>';
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=(mode==='add'?tr('新增公告'):tr('编辑公告'))+' - '+no;
+    document.getElementById('crud-modal-body').innerHTML=b;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitMsgAnnounce()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('保存草稿')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function submitMsgAnnounce(){
+    var ctx=_msgAnnCtx,id=ctx.id;
+    var el=function(x){return document.getElementById(x);};
+    var title=String((el('msg-ann-title')||{}).value||'').trim();
+    var body=msgRichValue();
+    if(!title){showToast(tr('请填写标题'));return;}
+    if(!msgBodyPlainText(body)){showToast(tr('请填写正文'));return;}
+    var vals={
+        '标题':title,
+        '业务分类':String((el('msg-ann-category')||{}).value||''),
+        '优先级':String((el('msg-ann-priority')||{}).value||'普通'),
+        '正文':body,
+        '附件':(typeof crudAttachmentNames==='function')?crudAttachmentNames():''
+    };
+    if(ctx.mode==='add'){
+        vals['公告编号']=ctx.no;
+        vals['触达人数']='0';vals['已读人数']='0';vals['状态']='草稿';
+        fclPushRow(id,vals);
+    }else{
+        var row=fclFinRows(id)[ctx.idx];
+        if(!row){showToast(tr('未找到公告'));return;}
+        Object.keys(vals).forEach(function(k){fclFinSet(id,row,k,vals[k]);});
+    }
+    if(typeof _listData!=='undefined')delete _listData[id];
+    closeCrudModal();
+    fclFinRefresh(id);
+    showToast((ctx.mode==='add'?tr('已新增公告'):tr('已保存公告'))+'：'+ctx.no);
+}
+
+/* ---------- 查看详情：按读邮件的样子排 ---------- */
+function openMsgAnnounceView(id,rowIdx,rowData){
+    id=id||'msg-announce';
+    var rows=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(TC[id].d||[]);
+    var row=rowData||(rowIdx>=0?rows[rowIdx]:null);
+    if(!row){showToast(tr('未找到公告'));return;}
+    var g=function(n){return msgCell(id,row,n);};
+    var b='';
+    b+='<div class="space-y-3">';
+    /* 主题 + 标记 */
+    b+='<div><div class="text-lg font-semibold text-text-primary">'+esc(g('标题'))+'</div>'+
+       '<div class="mt-1.5 flex items-center gap-2 flex-wrap text-xs">'+
+       '<span class="px-1.5 py-0.5 rounded border '+msgPriorityCls(g('优先级'))+'">'+esc(tr(g('优先级')))+'</span>'+
+       '<span class="px-1.5 py-0.5 rounded border border-surface-200 bg-surface-50 text-text-secondary">'+esc(g('业务分类'))+'</span>'+
+       statusBadge(g('状态'))+
+       '<span class="text-text-muted">'+esc(g('公告编号'))+'</span>'+
+       '</div></div>';
+    /* 信头：谁发的、发给谁、看了多少 */
+    b+='<div class="rounded-lg border border-surface-200 bg-surface-50/60 px-3 py-2.5 text-xs text-text-secondary space-y-1">';
+    b+='<div><span class="text-text-muted">'+tr('发布人')+'：</span>'+(esc(g('发布人'))||'—')+
+       '　<span class="text-text-muted">'+tr('发布时间')+'：</span>'+(esc(g('发布时间'))||'—')+'</div>';
+    b+='<div><span class="text-text-muted">'+tr('接收方')+'：</span>'+(esc(g('接收方'))||'—')+'</div>';
+    b+='<div><span class="text-text-muted">'+tr('接收对象')+'：</span>'+(esc(g('接收对象'))||'—')+'</div>';
+    b+='<div><span class="text-text-muted">'+tr('触达人数')+'：</span><span class="font-semibold">'+(esc(g('触达人数'))||'0')+'</span>'+
+       '　<span class="text-text-muted">'+tr('已读人数')+'：</span><span class="font-semibold">'+(esc(g('已读人数'))||'0')+'</span>'+
+       '　<span class="text-text-muted">'+tr('阅读率')+'：</span>'+(esc(g('阅读率'))||'—')+'</div>';
+    b+='</div>';
+    /* 正文 */
+    b+='<div class="rounded-lg border border-surface-200 bg-white px-4 py-3 text-sm text-text-primary leading-relaxed msg-body-view min-h-[200px]">'+
+       msgBodyRenderHtml(g('正文'))+'</div>';
+    var att=g('附件');
+    if(att){
+        b+='<div class="flex flex-wrap gap-1.5">';
+        att.split(/[;,，]/).filter(Boolean).forEach(function(f){
+            b+=(typeof crudAttachmentChipHtml==='function')?crudAttachmentChipHtml(f.trim()):
+               ('<span class="px-2 py-1 text-xs rounded bg-surface-100 text-text-secondary">'+esc(f.trim())+'</span>');
+        });
+        b+='</div>';
+    }
+    b+='</div>';
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=tr('查看公告')+' - '+g('公告编号');
+    document.getElementById('crud-modal-body').innerHTML=b;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
 }

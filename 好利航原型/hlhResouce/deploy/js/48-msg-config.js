@@ -24,14 +24,28 @@ var MSG_CFG_BIZ_NODES=['订单已预报','已到仓','配舱完成','出仓完�
 /* 单据所属角色：消息按事件单据的这三类负责人动态解析 */
 var MSG_CFG_BIND_ROLES=['所属业务员','所属客服','所属操作'];
 
+/* 问题件类型：取「问题件类型」档案 cs-issue-type 里启用的，不写死一份 */
+function msgCfgIssueTypes(){
+    var c=TC['cs-issue-type'];
+    if(!c||!c.d)return [];
+    var h=c.h||[],ni=h.indexOf('问题件类型名称'),ai=h.indexOf('区域类型'),si=h.indexOf('启用状态');
+    var out=[];
+    c.d.forEach(function(r){
+        if(si>=0&&r[si]==='禁用')return;
+        var n=String(r[ni]||'').trim();
+        if(n&&!out.some(function(x){return x.name===n;}))out.push({name:n,area:ai>=0?String(r[ai]||''):''});
+    });
+    return out;
+}
+
 addPrototypeTable('msg-config','消息配置',
-    '配置编号|事件类型|事件节点|消息类型|接收范围|绑定所属|触达说明|启用状态|操作',
+    '配置编号|事件类型|问题件类型|事件节点|消息类型|接收范围|绑定所属|触达说明|启用状态|操作',
     ['启用','停用'],[
-    ['MCFG-20260920001','问题件','问题件登记','员工消息','按单据所属','所属客服、所属操作','按事件单据动态解析','启用'],
-    ['MCFG-20260920002','问题件','问题件处理完成','员工消息','按单据所属','所属业务员','按事件单据动态解析','启用'],
-    ['MCFG-20260920003','业务节点','已到仓','员工消息','按单据所属','所属业务员、所属操作','按事件单据动态解析','启用'],
-    ['MCFG-20260920004','业务节点','已签收','客户消息','全部客户','—','全部启用客户','启用'],
-    ['MCFG-20260920005','业务节点','出仓完成','员工消息','指定员工','—','2 人（王红梅、黄小艳）','停用']
+    ['MCFG-20260920001','问题件','破损、开箱验货','问题件登记','员工消息','按单据所属','所属客服、所属操作','按事件单据动态解析','启用'],
+    ['MCFG-20260920002','问题件','全部问题件类型','问题件处理完成','员工消息','按单据所属','所属业务员','按事件单据动态解析','启用'],
+    ['MCFG-20260920003','业务节点','—','已到仓','员工消息','按单据所属','所属业务员、所属操作','按事件单据动态解析','启用'],
+    ['MCFG-20260920004','业务节点','—','已签收','客户消息','单据所属客户','单据所属客户','按事件单据动态解析','启用'],
+    ['MCFG-20260920005','业务节点','—','出仓完成','员工消息','指定员工','—','2 人（王红梅、黄小艳）','停用']
 ],[
     {label:'配置编号',type:'text'},
     {label:'事件类型',type:'select',options:['问题件','业务节点']},
@@ -42,20 +56,21 @@ addPrototypeTable('msg-config','消息配置',
 /* 配置项不给删除：误删比停用难收场，要下线就停用 */
 TC['msg-config'].noAutoAudit=true;
 
-/* 结构化配置存这里（列表行只放摘要，弹窗回显要拿原始结构），按配置编号索引 */
+/* 结构化配置存这里（列表行只放摘要，弹窗回显要拿原始结构），按配置编号索引。
+ * issues 空数组＝全部问题件类型 */
 var _MSG_CFG_DETAIL={
-    'MCFG-20260920001':{type:'emp',mode:'bind',binds:['所属客服','所属操作'],levels:[],ids:[],depts:[]},
-    'MCFG-20260920002':{type:'emp',mode:'bind',binds:['所属业务员'],levels:[],ids:[],depts:[]},
-    'MCFG-20260920003':{type:'emp',mode:'bind',binds:['所属业务员','所属操作'],levels:[],ids:[],depts:[]},
-    'MCFG-20260920004':{type:'cust',mode:'all',binds:[],levels:[],ids:[],depts:[]},
-    'MCFG-20260920005':{type:'emp',mode:'pick',ids:['王红梅','黄小艳'],binds:[],levels:[],depts:[]}
+    'MCFG-20260920001':{type:'emp',mode:'bind',binds:['所属客服','所属操作'],levels:[],ids:[],depts:[],issues:['破损','开箱验货']},
+    'MCFG-20260920002':{type:'emp',mode:'bind',binds:['所属业务员'],levels:[],ids:[],depts:[],issues:[]},
+    'MCFG-20260920003':{type:'emp',mode:'bind',binds:['所属业务员','所属操作'],levels:[],ids:[],depts:[],issues:[]},
+    'MCFG-20260920004':{type:'cust',mode:'bind',binds:[],levels:[],ids:[],depts:[],issues:[]},
+    'MCFG-20260920005':{type:'emp',mode:'pick',ids:['王红梅','黄小艳'],binds:[],levels:[],depts:[],issues:[]}
 };
 
 /* ===== 编辑弹窗状态 ===== */
 var _msgCfgCtx=null;
 function msgCfgNewCtx(type,mode){
     return {id:'',idx:-1,cfgNo:'',eventType:'问题件',node:'',type:type||'emp',
-        mode:mode||'bind',binds:[],levels:[],ids:[],depts:[]};
+        mode:mode||'bind',binds:[],levels:[],ids:[],depts:[],issues:[]};
 }
 function msgCfgNodesOf(eventType){
     return eventType==='业务节点'?MSG_CFG_BIZ_NODES:MSG_CFG_ISSUE_NODES;
@@ -78,11 +93,14 @@ function openMsgConfigModal(mode,id,rowIdx,rowData){
         var saved=_MSG_CFG_DETAIL[cfgNo];
         _msgCfgCtx=Object.assign(msgCfgNewCtx(),saved?{
             type:saved.type,mode:saved.mode,binds:(saved.binds||[]).slice(),
-            levels:(saved.levels||[]).slice(),ids:(saved.ids||[]).slice(),depts:(saved.depts||[]).slice()
+            levels:(saved.levels||[]).slice(),ids:(saved.ids||[]).slice(),depts:(saved.depts||[]).slice(),
+            issues:(saved.issues||[]).slice()
         }:{});
         _msgCfgCtx.id=id;_msgCfgCtx.idx=rowIdx;_msgCfgCtx.cfgNo=cfgNo;
         _msgCfgCtx.eventType=fclFinGet(id,row,'事件类型')||'问题件';
         _msgCfgCtx.node=fclFinGet(id,row,'事件节点')||msgCfgNodesOf(_msgCfgCtx.eventType)[0];
+        /* 客户消息只有「单据所属客户」一种，老数据里的 all/level/pick 一律归位 */
+        if(_msgCfgCtx.type==='cust')_msgCfgCtx.mode='bind';
     }
     var panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='58%';
@@ -116,7 +134,10 @@ function msgCfgBodyHtml(isView){
     h+='</div></div>';
     h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('事件节点')+'<span class="text-red-500 ml-1">*</span></label>';
     h+='<div id="msgcfg-node-wrap">'+msgCfgNodeSelectHtml(isView)+'</div>';
-    h+='</div></div></div>';
+    h+='</div></div>';
+    /* 问题件类型：只有事件类型＝问题件时才有意义，业务节点下整块不渲染 */
+    h+='<div id="msgcfg-issue-wrap" class="mt-4">'+msgCfgIssuePanel(isView)+'</div>';
+    h+='</div>';
     /* ② 消息类型与接收范围（与公告发布同一套圈人方式） */
     h+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-500 rounded"></span>'+
        '<span class="text-sm font-semibold text-text-primary">'+tr('② 消息发送对象（与公告发布的范围圈选一致）')+'</span></div>';
@@ -144,25 +165,56 @@ function msgCfgNodeSelectHtml(isView){
     });
     return h+'</select>';
 }
+/* 问题件类型多选：不勾＝全部类型。一个配置常常要覆盖几种类型
+ * （破损和开箱验货都发给客服），做成单选反而要建好几条配置。 */
+function msgCfgIssuePanel(isView){
+    var ctx=_msgCfgCtx;
+    if(ctx.eventType!=='问题件')return '';
+    var types=msgCfgIssueTypes();
+    var dis=isView?' disabled':'',chg=isView?'':' onchange="msgCfgChanged()"';
+    var h='<div class="border border-surface-200 rounded-lg overflow-hidden">';
+    h+='<div class="px-3 py-2 bg-surface-50 flex items-center justify-between gap-2">'+
+       '<span class="inline-flex items-center gap-2"><span class="w-1 h-4 bg-primary-500 rounded"></span>'+
+       '<span class="text-sm font-semibold text-text-primary">'+tr('问题件类型')+'</span></span>'+
+       '<span class="text-xs text-text-muted">'+esc(tr('不勾选＝该节点下的全部问题件类型都发'))+'</span></div>';
+    if(!types.length){
+        h+='<div class="px-3 py-6 text-center text-sm text-text-muted">'+esc(tr('问题件类型档案里还没有启用的类型'))+'</div>';
+        return h+'</div>';
+    }
+    h+='<div class="p-3 flex flex-wrap gap-x-4 gap-y-2">';
+    types.forEach(function(t){
+        h+='<label class="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-surface-200 rounded-lg'+(isView?'':' cursor-pointer hover:bg-primary-50/40')+'">'+
+           '<input type="checkbox" data-cfg-issue="'+esc(t.name)+'"'+(ctx.issues.indexOf(t.name)>=0?' checked':'')+dis+chg+
+           ' class="rounded border-surface-300 text-primary-600">'+
+           '<span class="text-sm text-text-primary">'+esc(t.name)+'</span>'+
+           (t.area?'<span class="text-[11px] text-text-muted">'+esc(t.area)+'</span>':'')+'</label>';
+    });
+    h+='</div></div>';
+    return h;
+}
 
 /* ---------- 范围面板 ---------- */
 function msgCfgSetEventType(t){
     var ctx=_msgCfgCtx;
     if(ctx.eventType===t)return;
+    msgCfgReadUI();
     ctx.eventType=t;
     /* 事件节点选项整组换：原来的节点在新类型里多半不存在，直接落到第一个 */
     var nodes=msgCfgNodesOf(t);
     ctx.node=nodes[0];
+    if(t!=='问题件')ctx.issues=[];   /* 业务节点下问题件类型没有意义，顺手清掉 */
     var wrap=document.getElementById('msgcfg-node-wrap');
     if(wrap)wrap.innerHTML=msgCfgNodeSelectHtml(false);
+    var iw=document.getElementById('msgcfg-issue-wrap');
+    if(iw)iw.innerHTML=msgCfgIssuePanel(false);
 }
 function msgCfgSetType(t){
     var ctx=_msgCfgCtx;
     if(ctx.type===t)return;
     msgCfgReadUI();
     ctx.type=t;
-    /* 切侧时给个体面的默认，别让范围面板是空的 */
-    if(!ctx.mode||ctx.mode==='none')ctx.mode=(t==='emp'?'bind':'all');
+    /* 客户消息只能发给单据所属客户；员工消息也默认按单据所属，但可以改 */
+    ctx.mode=(t==='cust')?'bind':(ctx.mode&&ctx.mode!=='none'?ctx.mode:'bind');
     document.querySelectorAll('input[name="msgcfg-type"]').forEach(function(r){
         var on=r.value===t;
         r.checked=on;
@@ -181,21 +233,28 @@ function msgCfgSetMode(mode){
     if(panel)panel.outerHTML=msgCfgScopePanel(false);
     msgCfgChanged();
 }
+/* 客户侧只有「单据所属客户」一档：这是系统事件消息，事件必然挂在一张业务单据上，
+ * 发给这张单的客户才讲得通 —— 一票货的到仓通知群发给全部客户是事故不是功能。
+ * 员工侧不一样：同样默认按单据所属，但「全体员工 / 按组织架构 / 指定员工」
+ * 仍然可选，比如系统维护类节点要通知整个操作部。 */
 function msgCfgScopePanel(isView){
     var ctx=_msgCfgCtx;
     var isCust=ctx.type==='cust';
-    var modes=isCust?[['all','全部客户'],['level','按客户等级'],['pick','指定客户']]
-                    :[['all','全体员工'],['dept','按组织架构'],['pick','指定员工'],['bind','按单据所属']];
+    var modes=isCust?[['bind','单据所属客户']]
+                    :[['bind','按单据所属'],['all','全体员工'],['dept','按组织架构'],['pick','指定员工']];
     var h='<div id="msgcfg-scope-panel" class="border border-surface-200 rounded-lg overflow-hidden">';
     h+='<div class="px-3 py-2 bg-surface-50 flex items-center gap-2">'+
        '<span class="w-1 h-4 '+(isCust?'bg-primary-500':'bg-amber-500')+' rounded"></span>'+
-       '<span class="text-sm font-semibold text-text-primary">'+tr(isCust?'客户接收范围':'员工接收范围')+'</span></div>';
+       '<span class="text-sm font-semibold text-text-primary">'+tr(isCust?'客户接收范围':'员工接收范围')+'</span>'+
+       (isCust?'<span class="text-xs text-text-muted">'+esc(tr('固定为单据所属客户，不能改选其他'))+'</span>':'')+'</div>';
     h+='<div class="p-3">';
     h+='<div class="flex flex-wrap gap-x-4 gap-y-2 mb-3">';
     modes.forEach(function(m){
-        h+='<label class="inline-flex items-center gap-1.5'+(isView?'':' cursor-pointer')+'">'+
+        /* 客户侧只有一档，锁死不可改 */
+        var locked=isView||(isCust&&modes.length===1);
+        h+='<label class="inline-flex items-center gap-1.5'+(locked?' opacity-80':' cursor-pointer')+'">'+
            '<input type="radio" name="msgcfg-mode" value="'+m[0]+'"'+(ctx.mode===m[0]?' checked':'')+
-           (isView?' disabled':' onchange="msgCfgSetMode(\''+m[0]+'\')"')+' class="text-primary-600">'+
+           (locked?' disabled':' onchange="msgCfgSetMode(\''+m[0]+'\')"')+' class="text-primary-600">'+
            '<span class="text-sm text-text-primary">'+tr(m[1])+'</span></label>';
     });
     h+='</div>';
@@ -209,6 +268,16 @@ function msgCfgHint(text){
 function msgCfgCustCond(isView){
     var ctx=_msgCfgCtx,list=msgCustomers();
     var dis=isView?' disabled':'',chg=isView?'':' onchange="msgCfgChanged()"';
+    if(ctx.mode==='bind'){
+        return '<div class="space-y-2">'+
+            '<div class="flex items-center justify-between px-3 py-2.5 border border-primary-200 bg-primary-50/50 rounded-lg">'+
+            '<span class="inline-flex items-center gap-2"><input type="radio" checked disabled class="text-primary-600">'+
+            '<span class="text-sm font-medium text-text-primary">'+tr('单据所属客户')+'</span></span>'+
+            '<span class="text-xs text-text-muted">'+tr('随单据动态解析')+'</span></div>'+
+            '<div class="px-3 py-2 text-xs text-text-muted bg-amber-50 border border-amber-100 rounded-lg">'+
+            esc(tr('事件发生时只发给这张业务单据上的客户，不会发给其他客户；单据换客户，接收人跟着换。'))+'</div>'+
+            '</div>';
+    }
     if(ctx.mode==='all')return msgCfgHint('将发送给全部启用客户，共 '+list.length+' 家（禁用客户自动排除）');
     if(ctx.mode==='level'){
         var h='<div class="space-y-2">';
@@ -292,6 +361,7 @@ function msgCfgReadUI(){
     if(document.querySelector('[data-cfg-dept]'))ctx.depts=pick('[data-cfg-dept]');
     if(document.querySelector('[data-cfg-emp]'))ctx.ids=pick('[data-cfg-emp]');
     if(document.querySelector('[data-cfg-bind]'))ctx.binds=pick('[data-cfg-bind]');
+    if(document.querySelector('[data-cfg-issue]'))ctx.issues=pick('[data-cfg-issue]');
     var node=document.getElementById('msgcfg-node');
     if(node&&node.value)ctx.node=node.value;
 }
@@ -305,6 +375,8 @@ function msgCfgHitCount(){
     var ctx=_msgCfgCtx;
     if(ctx.type==='cust'){
         var list=msgCustomers();
+        /* 单据所属客户：事件发生才知道是哪一家，跟员工侧的按单据所属同一口径 */
+        if(ctx.mode==='bind')return {n:0,label:'客户',unit:'家',dynamic:true,custBind:true};
         if(ctx.mode==='all')return {n:list.length,label:'客户',unit:'家'};
         if(ctx.mode==='level')return {n:list.filter(function(x){return ctx.levels.indexOf(x.level)>=0;}).length,label:'客户',unit:'家'};
         return {n:ctx.ids.length,label:'客户',unit:'家'};
@@ -317,10 +389,13 @@ function msgCfgHitCount(){
 function msgCfgPreviewHtml(){
     var ctx=_msgCfgCtx;
     var hit=msgCfgHitCount();
-    var ok=hit.dynamic?ctx.binds.length>0:hit.n>0;
+    var ok=hit.custBind?true:(hit.dynamic?ctx.binds.length>0:hit.n>0);
     var cls=ok?'bg-success-50 border-success-100 text-success-700':'bg-amber-50 border-amber-100 text-amber-700';
     var h='<div class="mt-4 px-3 py-2.5 rounded-lg border '+cls+' text-sm">';
-    if(hit.dynamic){
+    if(hit.custBind){
+        h+=tr('命中')+'：<span class="font-semibold">'+tr('单据所属客户')+'</span>　'+
+           '<span class="text-xs opacity-80">'+esc(tr('事件发生时按单据动态解析'))+'</span>';
+    }else if(hit.dynamic){
         h+=tr('命中')+'：'+tr('按单据所属')+' <span class="font-semibold">'+ctx.binds.map(function(b){return tr(b);}).join('、')+'</span>　'+
            '<span class="text-xs opacity-80">'+esc(tr('事件发生时按单据动态解析'))+'</span>';
         if(!ctx.binds.length)h+='<div class="mt-1 text-xs opacity-80">'+esc(tr('请先勾选要绑定的所属角色（业务员/客服/操作）'))+'</div>';
@@ -329,14 +404,19 @@ function msgCfgPreviewHtml(){
     }else{
         h+=tr('当前条件没有命中任何接收人，无法保存');
     }
+    /* 问题件类型限定也要在这里报一句，否则勾了没反馈 */
+    if(ctx.eventType==='问题件'){
+        h+='<div class="mt-1.5 text-xs opacity-80">'+tr('问题件类型')+'：'+
+           esc(ctx.issues.length?ctx.issues.join('、'):tr('全部问题件类型'))+'</div>';
+    }
     return h+'</div>';
 }
 
 /* ---------- 摘要写回 ---------- */
 function msgCfgScopeText(){
     var ctx=_msgCfgCtx;
-    var hit=msgCfgHitCount();
     if(ctx.type==='cust'){
+        if(ctx.mode==='bind')return tr('单据所属客户');
         if(ctx.mode==='all')return tr('全部客户');
         if(ctx.mode==='level')return tr('按客户等级')+'('+ctx.levels.join(', ')+')';
         return tr('指定客户')+'('+ctx.ids.length+')';
@@ -348,7 +428,14 @@ function msgCfgScopeText(){
 }
 function msgCfgBindText(){
     var ctx=_msgCfgCtx;
-    return ctx.type==='emp'&&ctx.mode==='bind'?ctx.binds.join('、'):'—';
+    if(ctx.type==='cust')return ctx.mode==='bind'?tr('单据所属客户'):'—';
+    return ctx.mode==='bind'?ctx.binds.join('、'):'—';
+}
+/* 问题件类型摘要：业务节点下没有这个维度，写「—」 */
+function msgCfgIssueText(){
+    var ctx=_msgCfgCtx;
+    if(ctx.eventType!=='问题件')return '—';
+    return ctx.issues.length?ctx.issues.join('、'):tr('全部问题件类型');
 }
 function msgCfgTouchText(){
     var ctx=_msgCfgCtx,hit=msgCfgHitCount();
@@ -361,17 +448,18 @@ function submitMsgConfig(){
     var ctx=_msgCfgCtx;
     msgCfgReadUI();
     var hit=msgCfgHitCount();
-    if(hit.dynamic&&!ctx.binds.length){showToast(tr('请先勾选要绑定的所属角色'));return;}
+    /* 单据所属客户不用勾任何东西，本身就是完整条件 */
+    if(hit.dynamic&&!hit.custBind&&!ctx.binds.length){showToast(tr('请先勾选要绑定的所属角色'));return;}
     if(!hit.dynamic&&!hit.n){showToast(tr('当前条件没有命中任何接收人'));return;}
     if(!ctx.node){showToast(tr('请选择事件节点'));return;}
     var id=ctx.id;
     var rowVals={
-        '事件类型':ctx.eventType,'事件节点':ctx.node,
+        '事件类型':ctx.eventType,'问题件类型':msgCfgIssueText(),'事件节点':ctx.node,
         '消息类型':ctx.type==='cust'?'客户消息':'员工消息',
         '接收范围':msgCfgScopeText(),'绑定所属':msgCfgBindText(),'触达说明':msgCfgTouchText()
     };
     _MSG_CFG_DETAIL[ctx.cfgNo]={type:ctx.type,mode:ctx.mode,binds:ctx.binds.slice(),
-        levels:ctx.levels.slice(),ids:ctx.ids.slice(),depts:ctx.depts.slice()};
+        levels:ctx.levels.slice(),ids:ctx.ids.slice(),depts:ctx.depts.slice(),issues:ctx.issues.slice()};
     if(ctx.idx>=0){
         var row=fclFinRows(id)[ctx.idx];
         if(!row){showToast(tr('未找到配置'));return;}

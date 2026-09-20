@@ -266,3 +266,18 @@
             #crud-modal-body.crud-compact [class*="grid-cols-12"]>.modal-remark-half{grid-column:1/-1}
             #crud-modal-body.crud-compact [class*="grid-cols-12"]>.field-row-quarter{grid-column:1/-1;max-width:25%}
         }
+/* ===== 公告正文富文本 =====
+   Tailwind preflight 把 ul/ol 的项目符号和 h1-h6 的字号都清零了，
+   富文本编辑器里排出来的列表与标题在这两处必须还原，否则存进去有格式、
+   显示出来全是平的一坨。只作用在公告正文容器内，不影响别的地方。 */
+.msg-body-view ul,#msg-rich-body ul{list-style:disc;padding-left:1.5rem;margin:.5rem 0}
+.msg-body-view ol,#msg-rich-body ol{list-style:decimal;padding-left:1.5rem;margin:.5rem 0}
+.msg-body-view li,#msg-rich-body li{margin:.15rem 0}
+.msg-body-view p,#msg-rich-body p{margin:.4rem 0}
+.msg-body-view h1,#msg-rich-body h1{font-size:1.4em;font-weight:600;margin:.6rem 0}
+.msg-body-view h2,#msg-rich-body h2{font-size:1.2em;font-weight:600;margin:.5rem 0}
+.msg-body-view h3,#msg-rich-body h3{font-size:1.1em;font-weight:600;margin:.4rem 0}
+.msg-body-view b,.msg-body-view strong,#msg-rich-body b,#msg-rich-body strong{font-weight:600}
+.msg-body-view u,#msg-rich-body u{text-decoration:underline}
+.msg-body-view i,.msg-body-view em,#msg-rich-body i,#msg-rich-body em{font-style:italic}
+#msg-rich-body:empty:before{content:attr(data-ph);color:#9CA3AF}

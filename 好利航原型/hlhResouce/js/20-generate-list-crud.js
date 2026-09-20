@@ -141,7 +141,7 @@ function generateListPage(id,page,statusFilter){
         h+='</div>';
         h+='</div>';
     }
-    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-ap-bill'||id==='fcl-agent-bill'||id==='fcl-ar-fee'||id==='fcl-ar-receipt'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust'||id==='oms-order-mgmt'||id==='oms-issue-mgmt'||id==='msg-config')){
+    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-ap-bill'||id==='fcl-agent-bill'||id==='fcl-ar-fee'||id==='fcl-ar-receipt'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust'||id==='oms-order-mgmt'||id==='oms-issue-mgmt'||id==='msg-config'||id==='msg-announce')){
         const statusCounts={};
         statusCounts['']=allData.length;
         c.s.forEach(s=>{statusCounts[s]=allData.filter(row=>{
@@ -448,6 +448,11 @@ function openCrudModal(mode,id,rowIdx){
     }
     if(id==='msg-config'&&(mode==='add'||mode==='edit'||mode==='view')){
         openMsgConfigModal(mode,id,rowIdx,rowData);
+        return;
+    }
+    /* 公告走邮件式弹窗：主题一行顶在最上面，正文是富文本，不摊成三列栅格 */
+    if(id==='msg-announce'&&(mode==='add'||mode==='edit'||mode==='view')){
+        openMsgAnnounceModal(mode,id,rowIdx,rowData);
         return;
     }
     if(id==='prod-surcharge'&&(mode==='add'||mode==='edit'||mode==='copy'||mode==='view')){

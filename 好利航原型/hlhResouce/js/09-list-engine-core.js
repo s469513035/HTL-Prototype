@@ -992,7 +992,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='msgCfgAdd')click='openMsgConfigAdd(\''+id+'\')';
     else if(action.key==='msgCfgToggle')click='msgCfgToggle(\''+id+'\')';
     else if(action.key==='msgReadDetail')click='openMsgReadDetail(\''+id+'\')';
-    else if(action.key==='msgRecall')click='openMsgRecall(\''+id+'\')';
+    else if(action.key==='msgVoid')click='openMsgVoid(\''+id+'\')';
     else if(action.key==='msgInboxDetail')click='openMsgInboxDetail(\''+id+'\')';
     else if(action.key==='msgMarkRead')click='markMsgRead(\''+id+'\')';
     else if(action.key==='msgMarkAllRead')click='markAllMsgRead(\''+id+'\')';
@@ -1756,7 +1756,7 @@ function getToolbarActions(id){
             {type:'view',label:'查看详情'},
             {key:'msgPublish',label:'发布',variant:'success'},
             {key:'msgReadDetail',label:'阅读明细'},
-            {key:'msgRecall',label:'撤回',variant:'danger'}
+            {key:'msgVoid',label:'作废',variant:'danger'}
         ];
     }
     if(id==='msg-config'){

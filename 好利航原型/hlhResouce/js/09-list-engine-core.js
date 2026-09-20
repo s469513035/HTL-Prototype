@@ -1002,6 +1002,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='apBillAudit')click='openApBillAudit(\''+id+'\')';
     else if(action.key==='apWriteOff')click='openApWriteOff(\''+id+'\')';
     else if(action.key==='confirmArFee')click='openArFeeConfirm(\''+id+'\')';
+    else if(action.key==='voidArFee')click='voidArFeeRows(\''+id+'\')';
     else if(action.key==='writeOffReceipt')click='openArReceiptWriteOff(\''+id+'\')';
     else if(action.key==='releaseBooking')click='openFclBookingRelease(\''+id+'\')';
     else if(action.key==='freightRecalc')click='openFreightRecalcConfirm(\''+id+'\')';
@@ -1623,7 +1624,11 @@ function getToolbarActions(id){
             for(var vi=base.length-1;vi>=0;vi--)if(base[vi].type==='view'||base[vi].type==='edit')base.splice(vi,1);
             base.push({key:'apBillAudit',label:'审批'},{key:'apWriteOff',label:'付款核销',variant:'primary'});
         }
-        if(id==='fcl-ar-fee')base.push({key:'confirmArFee',label:'费用确认'});
+        /* 应收按委托单维度录入；明细就在列表上，不另开查看弹窗 */
+        if(id==='fcl-ar-fee'){
+            for(var ri=base.length-1;ri>=0;ri--)if(base[ri].type==='view')base.splice(ri,1);
+            base.push({key:'confirmArFee',label:'费用确认'},{key:'voidArFee',label:'作废',variant:'danger'});
+        }
         if(id==='fcl-ar-receipt')base.push({key:'writeOffReceipt',label:'核销'});
         base.push({key:'export',label:'导出数据'});
         return base;

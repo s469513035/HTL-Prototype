@@ -198,25 +198,27 @@ TC['fcl-ap-bill'].fieldOptions={
 };
 TC['fcl-ap-bill'].modalFieldTypes={'期望付款时间':'date','到期日':'date'};
 
-/* ④ 应收费用明细 —— 按 Job 的应收逐项，收款核销时冲这里的未收金额 */
+/* ④ 应收费用明细 —— 应收是按委托单维度录进来的（一张委托单一套费用），
+ * 不是按 Job：一个 Job 拼了几家客户的委托单，应收本来就得分开算。
+ * 收款核销时冲这里的未收金额。 */
 addPrototypeTable('fcl-ar-fee','应收费用明细',
-    '应收明细号|Job No|客户名称|业务员|费用名称|费用类别|币别|应收金额|汇率|本位币金额|已收金额|未收金额|结算方式|费用确认状态|操作',
+    '应收明细号|委托单号|客户名称|业务员|费用名称|费用类别|币别|应收金额|已收金额|未收金额|结算方式|费用确认状态|操作',
     ['待确认','已确认','部分收款','已结清','已作废'],[
-    ['FAR-20260613001','FBK-20260613001','深圳市华运达国际货运','张三','海运费','海运费','USD','4500','7.15','32,175.00','0','4500','票结','待确认'],
-    ['FAR-20260613002','FBK-20260613001','深圳市华运达国际货运','张三','拖车费','拖车费','CNY','2000','1.00','2,000.00','0','2000','票结','已确认'],
-    ['FAR-20260612003','FBK-20260612002','广州远洋进出口贸易','李四','海运费','海运费','USD','5600','7.15','40,040.00','5600','0','月结','已结清'],
-    ['FAR-20260612004','FBK-20260612002','广州远洋进出口贸易','李四','报关费','报关费','CNY','400','1.00','400.00','200','200','月结','部分收款'],
-    ['FAR-20260610005','FBK-20260610004','','赵六','海运费','海运费','USD','3200','7.15','22,880.00','0','3200','票结','已作废']
+    ['FAR-20260613001','FEO-20260613001','深圳市华运达国际货运','张三','海运费','海运费','USD','4500','0','4500','票结','待确认'],
+    ['FAR-20260613002','FEO-20260613001','深圳市华运达国际货运','张三','拖车费','拖车费','CNY','2000','0','2000','票结','已确认'],
+    ['FAR-20260612003','FEO-20260612002','广州远洋进出口贸易','李四','海运费','海运费','USD','5600','5600','0','月结','已结清'],
+    ['FAR-20260612004','FEO-20260612002','广州远洋进出口贸易','李四','报关费','报关费','CNY','400','200','200','月结','部分收款'],
+    ['FAR-20260610005','FEO-20260610005','','赵六','海运费','海运费','USD','3200','0','3200','票结','已作废']
 ],[
     {label:'应收明细号',type:'text'},
-    {label:'Job No',type:'text'},
+    {label:'委托单号',type:'text'},
     {label:'客户名称',type:'select',options:FCL_CUSTOMER_OPTIONS},
     {label:'业务员',type:'select',options:FCL_SALES_OPTIONS},
     {label:'费用类别',type:'select',options:FCL_FEE_KINDS},
     {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
     {label:'费用确认状态',type:'select',options:['待确认','已确认','部分收款','已结清','已作废']}
 ]);
-TC['fcl-ar-fee'].modalExcludedFields=['本位币金额','已收金额','未收金额','费用确认状态'];
+TC['fcl-ar-fee'].modalExcludedFields=['已收金额','未收金额','费用确认状态'];
 TC['fcl-ar-fee'].fieldOptions={
     '客户名称':FCL_CUSTOMER_OPTIONS,'业务员':FCL_SALES_OPTIONS,
     '费用类别':FCL_FEE_KINDS,'币别':FCL_CURRENCY_OPTIONS,
@@ -295,6 +297,11 @@ function openArFeeConfirm(id){
  * 已作废的跳过。作废后该行不再参与预估金额带出（agentCostEstimateOf 已按状态过滤）。 */
 function voidEstCostRows(id){
     fclFinBatchStatus(id||'fcl-est-cost','状态',['草稿','已确认'],'已作废','作废');
+}
+/* 应收费用明细：作废 —— 只有还没收到钱的（待确认 / 已确认）能作废。
+ * 一旦「部分收款 / 已结清」就有真金白银冲在上面了，作废会让收款单对不上账。 */
+function voidArFeeRows(id){
+    fclFinBatchStatus(id||'fcl-ar-fee','费用确认状态',['待确认','已确认'],'已作废','作废');
 }
 /* 对账容差：差异率和差异金额同时落在容差内才算「对账一致」，
  * 否则判「有差异」等人工处理。以后要做成业务配置项，先集中放这里。 */
@@ -574,17 +581,23 @@ function submitArReceiptWriteOff(){
     msg+=hit?('，'+tr('已冲减应收明细')+' '+hit+' '+tr('条')):('，'+tr('未找到该 Job 的应收明细'));
     showToast(msg);
 }
-/* 把核销金额按顺序冲到该 Job 的应收明细未收金额上，返回冲减的条数 */
-function fclWriteOffAgainstArFee(job,amount){
-    if(!job)return 0;
+/* 把核销金额按顺序冲到应收明细的未收金额上，返回冲减的条数。
+ * 应收现在按委托单号存，而收款单上挂的是 Job：一个 Job 可能拼了几张委托单，
+ * 所以 key 传 Job 时要展开成它名下的委托单一起冲；直接传委托单号也认。 */
+function fclWriteOffAgainstArFee(key,amount){
+    if(!key)return 0;
     var fid='fcl-ar-fee',c=TC[fid];
     if(!c||!c.d)return 0;
-    var h=c.h||[],iJob=h.indexOf('Job No');
-    if(iJob<0)return 0;
+    var h=c.h||[],iEnt=h.indexOf('委托单号');
+    if(iEnt<0)return 0;
+    var keys=[String(key)];
+    if(typeof fclEntrustsOfJob==='function'){
+        fclEntrustsOfJob(key).forEach(function(e){if(keys.indexOf(e.entrust)<0)keys.push(e.entrust);});
+    }
     var left=amount,n=0;
     c.d.forEach(function(row){
         if(left<=0)return;
-        if(String(row[iJob]||'')!==job)return;
+        if(keys.indexOf(String(row[iEnt]||''))<0)return;
         var due=fclParseMoney(fclFinGet(fid,row,'未收金额'));
         if(due===null||due<=0)return;
         var take=Math.min(due,left);
@@ -1835,7 +1848,7 @@ var FCL_FUNC_MAP=[
     ['预估成本明细','fcl-est-cost','fcl','订舱时按 Job 拆出的成本基线，后面拿它跟代理成本明细比'],
     ['代理成本明细','fcl-agent-cost','fcl','服务商报来的实际金额，按 Job 一费一行，手工分摊到委托单'],
     ['付款单管理','fcl-ap-bill','fcl','按服务商汇总的应付，挑付款流水核销'],
-    ['应收费用明细','fcl-ar-fee','fcl','按 Job 的应收逐项，收款核销时冲这里的未收金额'],
+    ['应收费用明细','fcl-ar-fee','fcl','按委托单维度录入的应收逐项，收款核销时冲这里的未收金额'],
     ['应收收款管理','fcl-ar-receipt','fcl','客户打款认领与核销，自动冲减应收明细']]},
 {group:'⚙ 整柜规则（业务配置）',hint:'规则外置，业务可自行维护',items:[
     ['关键业务规则','fcl-rule','biz-cfg','订舱、财务等各类规则的启用与优先级'],

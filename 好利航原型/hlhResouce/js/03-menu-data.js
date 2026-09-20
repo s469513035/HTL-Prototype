@@ -121,6 +121,8 @@ const menuData=[
 {id:'fin-account',label:'财务科目',page:'finance',tab:'fin-account'},
 {id:'fin-bank-voucher',label:'银行凭证',page:'finance',tab:'fin-bank-voucher'},
 {id:'fin-rate',label:'汇率管理',page:'finance',tab:'fin-rate'},
+/* 发票管理放在散货/整柜两组之外：两边的「申请开票」都汇到这一张表上开 */
+{id:'fin-invoice',label:'发票管理',page:'finance',tab:'fin-invoice'},
 /* 与下面的「整柜财务」对称：这一组是散货侧的应收/收款 */
 {id:'fin-ar',label:'散货收款管理',children:[
 {id:'fin-ar-detail',label:'应收明细',page:'finance',tab:'fin-ar-detail'},

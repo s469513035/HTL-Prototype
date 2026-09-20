@@ -3197,10 +3197,16 @@ function submitArInvoiceApply(){
         showToast(tr('开专票必须填纳税人识别号'));return;}
     var picked=A.fees.filter(function(f){return f.sel;});
     if(!picked.length){showToast(tr('请至少勾选一条要开票的费用'));return;}
-    var no='INV-'+String(fclNow()).replace(/[^0-9]/g,'').slice(2,12);
+    /* 申请不再只弹个提示就没了：推到 财务结算 → 发票管理，由财务统一开票 */
+    var no=finInvoicePushApply({
+        source:'整柜应收',srcNo:A.entrust,cust:A.cust,
+        type:A.type,title:A.title,taxNo:A.taxNo,cur:A.cur,remark:A.remark,
+        fees:picked.map(function(f){return {no:f.no,acct:f.acct,cur:A.cur,amt:f.amt};})
+    });
     closeCrudModal();
     showToast(tr('开票申请已提交')+' '+no+'：'+A.title+'　'+A.type+'　'+
-        picked.length+' '+tr('条费用')+'　'+A.cur+' '+arInvSum().toFixed(2));
+        picked.length+' '+tr('条费用')+'　'+A.cur+' '+arInvSum().toFixed(2)+
+        '　'+tr('可在「财务结算 → 发票管理」开票'));
 }
 /* =========================================================
  * 十二、应收台账 锁账 / 解锁

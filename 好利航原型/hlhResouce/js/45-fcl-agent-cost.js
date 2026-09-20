@@ -2788,6 +2788,7 @@ function openArWriteOff(id){
     if(idxs.length>1){showToast(tr('核销一次只能选一张委托单（同客户同币别的凭证在弹窗里可多选）'));return;}
     var row=fclFinRows(id)[idxs[0]];
     if(!row){showToast(tr('未找到台账行'));return;}
+    if(fclArLockBlock(id,row,'核销'))return;
     var st=fclFinGet(id,row,'收款状态');
     if(st==='全部核销'){showToast(tr('这张委托单该币别的应收已全部核销'));return;}
     var ent=fclFinGet(id,row,'委托单号'),cust=fclFinGet(id,row,'客户名称'),cur=fclFinGet(id,row,'币别');
@@ -2998,9 +2999,11 @@ function arDetailBodyHtml(){
     var fees=fclArFeeRowsOf(ent,cur),wos=fclArWoOf(ent,cur);
     var b='<div class="space-y-4">';
     b+='<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-sm">';
+    var lockedNow=fclArLocked(id,row);
     [['委托单号',ent],['客户名称',g('客户名称')],['业务员',g('业务员')],['币别',cur],
      ['应收总金额',g('应收总金额')],['已核销金额',g('已核销金额')],['未核销金额',g('未核销金额')],
-     ['收款状态',g('收款状态')]].forEach(function(p){
+     ['收款状态',g('收款状态')],['创建时间',g('创建时间')],
+     ['锁账状态',g('锁账状态')||'未锁账'],['锁账人',g('锁账人')],['锁账时间',g('锁账时间')]].forEach(function(p){
         b+='<div><span class="text-xs text-text-muted block">'+tr(p[0])+'</span>'+
            '<span class="font-medium text-text-primary">'+(esc(p[1])||'—')+'</span></div>';
     });
@@ -3027,7 +3030,9 @@ function arDetailBodyHtml(){
     /* ② 核销详情 —— 反核销按费用行走 */
     b+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
        '<span class="text-sm font-semibold text-text-primary">'+tr('② 核销详情')+'</span>'+
-       '<span class="text-xs text-text-muted">'+esc(tr('反核销会把金额退回费用与凭证两边，按这一条回滚'))+'</span></div>';
+       '<span class="text-xs '+(lockedNow?'text-red-500':'text-text-muted')+'">'+
+       esc(lockedNow?tr('该委托单已锁账，不能反核销，需先在列表解锁')
+                    :tr('反核销会把金额退回费用与凭证两边，按这一条回滚'))+'</span></div>';
     b+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
        ['核销单号','收款凭证','应收流水号','费用科目','核销金额','核销人','核销时间','操作'].map(function(t){
            return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+
@@ -3042,7 +3047,9 @@ function arDetailBodyHtml(){
            '<td class="px-3 py-2 text-text-primary">'+esc(cur)+' '+(+w.amt).toFixed(2)+'</td>'+
            '<td class="px-3 py-2 text-text-secondary">'+esc(w.by)+'</td>'+
            '<td class="px-3 py-2 text-text-secondary">'+esc(w.at)+'</td>'+
-           '<td class="px-3 py-2"><a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="arUnWriteOff('+i+')">'+tr('反核销')+'</a></td></tr>';
+           '<td class="px-3 py-2">'+(lockedNow
+               ?'<span class="text-text-muted cursor-not-allowed" title="'+esc(tr('已锁账'))+'">'+tr('反核销')+'</span>'
+               :'<a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="arUnWriteOff('+i+')">'+tr('反核销')+'</a>')+'</td></tr>';
     });
     b+='</tbody></table></div></div>';
     b+='</div>';
@@ -3056,6 +3063,7 @@ function arDetailRedraw(){
 function arUnWriteOff(i){
     var id=_arDetailCtx.id,row=fclFinRows(id)[_arDetailCtx.idx];
     if(!row){showToast(tr('未找到台账行'));return;}
+    if(fclArLockBlock(id,row,'反核销'))return;
     var ent=fclFinGet(id,row,'委托单号'),cur=fclFinGet(id,row,'币别');
     var key=arWoKey(ent,cur),list=_FCL_AR_WO[key]||[];
     var w=list[i];
@@ -3094,6 +3102,7 @@ function openArAddFeeFromReceipt(id){
     if(idxs.length>1){showToast(tr('一次只能给一张委托单加费用'));return;}
     var row=fclFinRows(id)[idxs[0]];
     if(!row){showToast(tr('未找到台账行'));return;}
+    if(fclArLockBlock(id,row,'新增费用'))return;
     openArFeeAddModal('fcl-ar-fee');
     /* 把台账那行的委托单号与币别直接带进去，省得再敲一遍 */
     arFeeFillEntrust(fclFinGet(id,row,'委托单号'));
@@ -3193,3 +3202,52 @@ function submitArInvoiceApply(){
     showToast(tr('开票申请已提交')+' '+no+'：'+A.title+'　'+A.type+'　'+
         picked.length+' '+tr('条费用')+'　'+A.cur+' '+arInvSum().toFixed(2));
 }
+/* =========================================================
+ * 十二、应收台账 锁账 / 解锁
+ * 月结关账后这张委托单该币别的应收就冻住：不许再新增费用、核销、反核销。
+ * 开票不拦 —— 开票只出票据不改金额，关账后照样要开。
+ * 锁和解锁都按勾选批量处理，与其它整柜财务批量动作同一套（勾选→校验→确认→刷新）。
+ * ========================================================= */
+function fclArLocked(id,row){
+    return fclFinGet(id||'fcl-ar-receipt',row,'锁账状态')==='已锁账';
+}
+/* 核销/新增费用/反核销的前置校验：命中就提示并返回 true，让调用方直接 return */
+function fclArLockBlock(id,row,what){
+    if(!fclArLocked(id,row))return false;
+    var by=fclFinGet(id,row,'锁账人'),at=fclFinGet(id,row,'锁账时间');
+    showToast(fclFinGet(id,row,'委托单号')+' '+tr('已锁账')+
+        (by?('（'+by+' '+at+'）'):'')+'，'+tr('请先解锁再')+tr(what||'操作'));
+    return true;
+}
+function fclArSetLock(id,lock){
+    id=id||'fcl-ar-receipt';
+    var opLabel=lock?'锁账':'解锁';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选要')+tr(opLabel)+tr('的委托单'));return;}
+    var rows=fclFinRows(id),eligible=[],blocked=0;
+    idxs.forEach(function(i){
+        var row=rows[i];
+        if(!row)return;
+        if(fclArLocked(id,row)!==lock)eligible.push(i);else blocked++;
+    });
+    if(!eligible.length){showToast(tr('勾选的委托单都已经是')+'「'+tr(lock?'已锁账':'未锁账')+'」');return;}
+    var msg=tr('已勾选')+' '+idxs.length+' '+tr('条')+'，'+tr('其中')+' '+eligible.length+' '+tr('条可')+tr(opLabel);
+    if(blocked)msg+='，'+blocked+' '+tr('条已是目标状态将跳过');
+    msg+='。'+(lock?tr('锁账后这些委托单不能再新增费用、核销或反核销。')
+                  :tr('解锁后这些委托单可以重新新增费用与核销。'))+tr('是否继续？');
+    var now=(typeof receiptNowStr==='function')?receiptNowStr():'';
+    var who=(typeof getCurrentUserName==='function')?getCurrentUserName():'admin';
+    openConfirmTip(msg,function(){
+        eligible.forEach(function(i){
+            var row=rows[i];
+            fclFinSet(id,row,'锁账状态',lock?'已锁账':'未锁账');
+            /* 解锁把锁账人/时间一并清掉，留着会让人以为还锁着 */
+            fclFinSet(id,row,'锁账人',lock?who:'');
+            fclFinSet(id,row,'锁账时间',lock?now:'');
+        });
+        fclFinRefresh(id);
+        showToast(tr(opLabel)+' '+eligible.length+' '+tr('条'));
+    });
+}
+function openArLockAccount(id){fclArSetLock(id,true);}
+function openArUnlockAccount(id){fclArSetLock(id,false);}

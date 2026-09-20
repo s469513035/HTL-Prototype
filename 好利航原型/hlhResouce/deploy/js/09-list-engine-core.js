@@ -1023,6 +1023,8 @@ function renderToolbarAction(action,id){
     else if(action.key==='writeOffReceipt')click='openArWriteOff(\''+id+'\')';
     else if(action.key==='arAddFee')click='openArAddFeeFromReceipt(\''+id+'\')';
     else if(action.key==='arInvoice')click='openArInvoiceApply(\''+id+'\')';
+    else if(action.key==='arLock')click='openArLockAccount(\''+id+'\')';
+    else if(action.key==='arUnlock')click='openArUnlockAccount(\''+id+'\')';
     else if(action.key==='releaseBooking')click='openFclBookingRelease(\''+id+'\')';
     else if(action.key==='freightRecalc')click='openFreightRecalcConfirm(\''+id+'\')';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
@@ -1654,7 +1656,10 @@ function getToolbarActions(id){
             for(var ti=base.length-1;ti>=0;ti--)if(base[ti].type==='add'||base[ti].type==='edit')base.splice(ti,1);
             base.push({key:'arAddFee',label:'新增费用',variant:'primary'},
                 {key:'arInvoice',label:'申请开票'},
-                {key:'writeOffReceipt',label:'核销',variant:'primary'});
+                {key:'writeOffReceipt',label:'核销',variant:'primary'},
+                /* 月结关账用，都支持批量勾选 */
+                {key:'arLock',label:'锁账'},
+                {key:'arUnlock',label:'解锁'});
         }
         base.push({key:'export',label:'导出数据'});
         return base;

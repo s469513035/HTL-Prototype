@@ -1582,9 +1582,16 @@ function getToolbarActions(id){
      * 必须写在下面那条 id.indexOf('fcl-')===0 的前面 —— 那条会先接走所有 fcl-* 并 return，
      * 写在它后面这段永远跑不到（skill §3.A）。 */
     if(id==='fcl-profit'){
+        /* 本位币切换做成下拉，标签上带当前币种 —— 数字换了口径必须一眼看得出来 */
+        var pBase=(typeof fclBaseLabel==='function')?fclBaseLabel():'人民币';
+        var pOpts=(typeof FCL_BASE_OPTIONS!=='undefined')?FCL_BASE_OPTIONS:[['CNY','人民币']];
         return [
             {key:'search',label:'查询数据',variant:'primary'},
             {key:'profitDetail',label:'查看明细'},
+            {key:'profitBase',label:'本位币：'+pBase,fixedWidth:true,width:'132px',
+                dropdown:pOpts.map(function(o){
+                    return {label:o[1]+'（'+o[0]+'）',onclick:"fclProfitSetBase('"+o[0]+"')"};
+                })},
             {key:'export',label:'导出数据'}
         ];
     }

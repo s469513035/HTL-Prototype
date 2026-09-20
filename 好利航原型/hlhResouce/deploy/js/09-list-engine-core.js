@@ -985,9 +985,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='cancelBooking')click='openFclBookingCancel(\''+id+'\')';
     else if(action.key==='linkEntrust')click='openFclBookingLinkEntrust(\''+id+'\')';
     else if(action.key==='entrustResubmit')click='openEntrustResubmit(\''+id+'\')';
-    else if(action.key==='importAgentBill')click='openAgentBillImportModal(\''+id+'\')';
     else if(action.key==='allocAgentCost')click='openAgentCostAlloc(\''+id+'\')';
-    else if(action.key==='reconcileCost')click='openAgentCostReconcile(\''+id+'\')';
     else if(action.key==='msgPublish')click='openMsgPublish(\''+id+'\')';
     else if(action.key==='msgCfgAdd')click='openMsgConfigAdd(\''+id+'\')';
     else if(action.key==='msgCfgToggle')click='msgCfgToggle(\''+id+'\')';
@@ -1002,9 +1000,6 @@ function renderToolbarAction(action,id){
     else if(action.key==='agentBillDetail')click='openSelectedAgentBillDetail(\''+id+'\')';
     else if(action.key==='agentBillReconcile')click='openAgentBillReconcile(\''+id+'\')';
     else if(action.key==='agentBillGenAp')click='openAgentBillGenerateAp(\''+id+'\')';
-    else if(action.key==='costDiffDetail')click='openCostDiffDetail(\''+id+'\')';
-    else if(action.key==='allocToShipment')click='openShipmentAlloc(\''+id+'\')';
-    else if(action.key==='applyPayment')click='openPaymentApply(\''+id+'\')';
     else if(action.key==='apBillAudit')click='openApBillAudit(\''+id+'\')';
     else if(action.key==='apBillDetail')click='openApBillDetail(\''+id+'\')';
     else if(action.key==='payApBill')click='openApBillPay(\''+id+'\')';
@@ -1610,11 +1605,15 @@ function getToolbarActions(id){
             /* 对账 → 确认费用（待请款）→ 生成账单（待审核）；明细看行内「查看」 */
             base.push({key:'importBillHead',label:'账单导入'},
                 {key:'agentBillReconcile',label:'对账',variant:'primary'},
-                {key:'agentBillGenAp',label:'生成账单',variant:'primary'},
+                {key:'agentBillGenAp',label:'生成付款单',variant:'primary'},
                 {key:'voidAgentBill',label:'作废账单',variant:'danger'});
         }
-        if(id==='fcl-agent-cost')base.push({key:'importAgentBill',label:'代账账单导入'},{key:'allocAgentCost',label:'手工分摊'},{key:'reconcileCost',label:'对账'},
-            {key:'costDiffDetail',label:'差异分析'},{key:'allocToShipment',label:'分摊到票'},{key:'applyPayment',label:'付款申请',variant:'primary'});
+        /* 代理成本明细：对账/差异分析/付款都已前移到「代理账单」那一步，
+         * 这一页只剩看明细和手工分摊；行内「查看」看的是分摊到委托单的成本明细 */
+        if(id==='fcl-agent-cost'){
+            for(var ci=base.length-1;ci>=0;ci--)if(base[ci].type==='view')base.splice(ci,1);
+            base.push({key:'allocAgentCost',label:'手工分摊',variant:'primary'});
+        }
         /* 单票成本明细全部由二级分摊生成，页面上不给新增/编辑 */
         if(id==='fcl-shipment-cost'){
             for(var si=base.length-1;si>=0;si--)if(base[si].type==='add'||base[si].type==='edit')base.splice(si,1);

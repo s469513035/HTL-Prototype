@@ -95,7 +95,7 @@ TC['fcl-release-tpl'].fieldOptions={
 
 /* ==========================================================================
  * 二、⑤ 整柜财务 —— 重新设计为 5 张表
- *   成本侧：预估成本明细 → 代理实际成本 → 应付账单管理
+ *   成本侧：预估成本明细 → 代理账单 → 代理成本明细 → 应付账单管理
  *   收入侧：应收费用明细 → 应收收款管理
  *   五张表都挂在 Job No 上，一票整柜的钱从头到尾能串起来。
  * ========================================================================== */
@@ -103,7 +103,7 @@ TC['fcl-release-tpl'].fieldOptions={
 var FCL_FEE_KINDS=['海运费','附加费','拖车费','报关费','单证费','仓储费','其他'];
 var FCL_AGENT_OPTIONS=['MAERSK','COSCO','CMA CGM','MSC','ONE','鹏程拖车','深圳报关行','广州报关行','中外运'];
 
-/* ① 预估成本明细 —— 订舱时按 Job 拆出来的成本基线，后面拿它跟代理实际成本比 */
+/* ① 预估成本明细 —— 订舱时按 Job 拆出来的成本基线，后面拿它跟代理成本明细比 */
 addPrototypeTable('fcl-est-cost','预估成本明细',
     '费用编号|Job No|费用科目|供应商|币别|金额|来源|备注|录入人|录入时间|状态|操作',
     ['草稿','已确认','已作废'],[
@@ -133,28 +133,30 @@ TC['fcl-est-cost'].requiredOverrides={'Job No':true,'供应商':true};
 TC['fcl-est-cost'].modalCols=3;
 TC['fcl-est-cost'].modalFieldClass={'备注':'modal-remark-full'};
 
-/* ② 代理实际成本 —— 服务商/代理报来的实际金额，与预估逐项比差异
- * 「代理账单号 / 分摊方式 / 分摊权重」记录这行是从哪张代理账单、按什么口径摊下来的；
- * 「应付账单号」在发起付款申请时回写，有值即表示该行已进入付款流程不可再改。 */
-addPrototypeTable('fcl-agent-cost','代理实际成本',
-    '实际成本号|代理账单号|Job No|服务商|费用名称|费用类别|币别|预估金额|实际金额|差异金额|差异率|分摊方式|分摊权重|服务商账单号|应付账单号|对账人|对账时间|备注|对账状态|操作',
-    ['待对账','对账一致','有差异','已确认','已生成应付'],[
-    ['FAC-20260613001','AGB-20260615001','FBK-20260613001','MAERSK','海运费','海运费','USD','4120','4200','80','1.94%','按件数','320','MSK-INV-260613','','张财务','2026-06-16 10:20','船司多计塞港费 USD 80','有差异'],
-    ['FAC-20260613002','','FBK-20260613001','鹏程拖车','拖车费','拖车费','CNY','1800','1800','0','0.00%','','','PC-260613-08','','张财务','2026-06-16 10:25','','对账一致'],
-    ['FAC-20260612003','AGB-20260615002','FBK-20260612002','COSCO','海运费','海运费','USD','5180','5180','0','0.00%','按票数','1','COS-INV-260612','FAP-20260612002','张财务','2026-06-15 14:00','','已确认'],
-    ['FAC-20260612004','','FBK-20260612002','深圳报关行','报关费','报关费','CNY','350','420','70','20.00%','','','','','','','报关行加收查验费，待核实','待对账']
+/* ② 代理成本明细（原「代理实际成本」）—— 服务商/代理报来的实际金额，按 Job 一费一行。
+ * 对账与差异分析已经前移到「代理账单」那一步（发票维度对完再落成本），
+ * 这一页只做两件事：看成本明细、把 Job 成本手工分摊到委托单（散货拼箱再往下摊到订单）。
+ * 「代理账单号 / 分摊方式」记录这行是从哪张代理账单、按什么口径摊下来的；
+ * 「付款单号」在生成付款单时回写，有值即表示该行已进入付款流程不可再改。 */
+addPrototypeTable('fcl-agent-cost','代理成本明细',
+    '流水号|代理账单号|Job No|服务商|费用名称|费用类别|币别|预估金额|实际金额|差异金额|差异率|分摊方式|服务商账单号|付款单号|分摊人|分摊时间|备注|成本状态|操作',
+    ['待分摊','已分摊','已生成付款单','已作废'],[
+    ['FAC-20260613001','AGB-20260615001','FBK-20260613001','MAERSK','海运费','海运费','USD','4120','4200','80','1.94%','按件数','MSK-INV-260613','','张财务','2026-06-16 10:20','船司多计塞港费 USD 80','已分摊'],
+    ['FAC-20260613002','','FBK-20260613001','鹏程拖车','拖车费','拖车费','CNY','1800','1800','0','0.00%','','PC-260613-08','','','','','待分摊'],
+    ['FAC-20260612003','AGB-20260615002','FBK-20260612002','COSCO','海运费','海运费','USD','5180','5180','0','0.00%','按体积','COS-INV-260612','FAP-20260612002','张财务','2026-06-15 14:00','','已生成付款单'],
+    ['FAC-20260612004','','FBK-20260612002','深圳报关行','报关费','报关费','CNY','350','420','70','20.00%','','','','','','报关行加收查验费，待核实','待分摊']
 ],[
-    {label:'实际成本号',type:'text'},
+    {label:'流水号',type:'text'},
     {label:'代理账单号',type:'text'},
     {label:'Job No',type:'text'},
     {label:'服务商',type:'select',options:FCL_AGENT_OPTIONS},
     {label:'费用类别',type:'select',options:FCL_FEE_KINDS},
     {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
     {label:'服务商账单号',type:'text'},
-    {label:'应付账单号',type:'text'},
-    {label:'对账状态',type:'select',options:['待对账','对账一致','有差异','已确认','已生成应付']}
+    {label:'付款单号',type:'text'},
+    {label:'成本状态',type:'select',options:['待分摊','已分摊','已生成付款单','已作废']}
 ]);
-TC['fcl-agent-cost'].modalExcludedFields=['代理账单号','差异金额','差异率','分摊方式','分摊权重','应付账单号','对账人','对账时间','对账状态'];
+TC['fcl-agent-cost'].modalExcludedFields=['代理账单号','差异金额','差异率','分摊方式','付款单号','分摊人','分摊时间','成本状态'];
 TC['fcl-agent-cost'].fieldOptions={
     '服务商':FCL_AGENT_OPTIONS,'费用类别':FCL_FEE_KINDS,'币别':FCL_CURRENCY_OPTIONS
 };
@@ -302,10 +304,10 @@ function openAgentCostReconcile(id){
     idxs.forEach(function(i){
         var row=rows[i];
         if(!row)return;
-        var st0=fclFinGet(id,row,'对账状态');
+        var st0=fclFinGet(id,row,'成本状态');
         if(st0==='已确认')return;
         /* 已进入付款流程的行不再重算，否则金额会和已生成的应付账单对不上 */
-        if(st0==='已生成应付'||fclFinGet(id,row,'应付账单号')){locked++;return;}
+        if(st0==='已生成付款单'||fclFinGet(id,row,'付款单号')){locked++;return;}
         var est=fclParseMoney(fclFinGet(id,row,'预估金额'));
         var act=fclParseMoney(fclFinGet(id,row,'实际金额'));
         if(est===null||act===null){noData++;return;}
@@ -315,7 +317,7 @@ function openAgentCostReconcile(id){
         var within=Math.abs(rate)<=FCL_RECON_TOLERANCE.rate&&Math.abs(d)<=FCL_RECON_TOLERANCE.amount;
         fclFinSet(id,row,'差异金额',String(d));
         fclFinSet(id,row,'差异率',est?(rate.toFixed(2)+'%'):'—');
-        fclFinSet(id,row,'对账状态',within?'对账一致':'有差异');
+        fclFinSet(id,row,'成本状态','已分摊');
         fclFinSet(id,row,'对账人',who);
         fclFinSet(id,row,'对账时间',now);
         done++;
@@ -339,8 +341,8 @@ function openAgentCostReconcile(id){
  * 预估金额由系统按 Job No + 费用名称 去预估成本明细里带出来，
  * 差异等导入后点「对账」再算 —— 导入只负责把实际金额落进来。 */
 var AGENT_IMPORT_REQUIRED=['Job No','服务商','费用名称','币别','实际金额'];
-var AGENT_IMPORT_EXCLUDE=['操作','实际成本号','代理账单号','预估金额','差异金额','差异率',
-    '分摊方式','分摊权重','应付账单号','对账人','对账时间','对账状态'];
+var AGENT_IMPORT_EXCLUDE=['操作','流水号','代理账单号','预估金额','差异金额','差异率',
+    '分摊方式','付款单号','分摊人','分摊时间','成本状态'];
 var _agentImportRows=[];
 var _agentImportFile='';
 function agentImportColumns(id){
@@ -492,9 +494,9 @@ function confirmAgentBillImport(id){
         var row=full.map(function(name){
             var k=cols.indexOf(name);
             if(k>=0)return r.cells[k]||'';
-            if(name==='实际成本号')return 'FAC-IMP'+(2609000+(++seq));
+            if(name==='流水号')return 'FAC-IMP'+(2609000+(++seq));
             if(name==='预估金额')return fclEstAmountOf(job,fee);   /* 从预估成本明细带出，供后续对账 */
-            if(name==='对账状态')return '待对账';
+            if(name==='成本状态')return '待分摊';
             return '';
         });
         c.d.push(row);
@@ -505,191 +507,7 @@ function confirmAgentBillImport(id){
     showToast(tr('导入成功')+' '+rows.length+' '+tr('条')+'，'+tr('已按 Job 带出预估金额，可点「对账」算差异'));
 }
 
-/* ===== 代理实际成本 · 手工分摊 =====
- * 一张代账账单常常是几个柜合开的（比如一张 MAERSK 发票覆盖 3 个 Job），
- * 手工分摊就是把这一行的实际金额按 Job 拆成几行，拆完金额必须刚好等于原金额。
- * 确认后原行变成第一份，其余份追加为新行，各自带出自己的预估金额。 */
-var _agentAllocCtx={id:'',idx:-1,total:0};
-var _agentAllocRows=[];
-function openAgentCostAlloc(id){
-    id=id||'fcl-agent-cost';
-    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
-    if(!idxs.length){showToast(tr('请先勾选需要分摊的成本行'));return;}
-    if(idxs.length>1){showToast(tr('手工分摊一次只能选一行'));return;}
-    var row=fclFinRows(id)[idxs[0]];
-    if(!row){showToast(tr('未找到成本行'));return;}
-    var stA=fclFinGet(id,row,'对账状态');
-    if(stA==='已确认'){showToast(tr('已确认的成本行不能再分摊'));return;}
-    if(stA==='已生成应付'||fclFinGet(id,row,'应付账单号')){showToast(tr('已生成应付账单的成本行不能再分摊'));return;}
-    var total=fclParseMoney(fclFinGet(id,row,'实际金额'));
-    if(total===null||total<=0){showToast(tr('该行没有实际金额，无法分摊'));return;}
-    _agentAllocCtx={id:id,idx:idxs[0],total:total};
-    /* 默认两行：原 Job 占满，第二行留空等录入 */
-    _agentAllocRows=[{job:fclFinGet(id,row,'Job No'),amt:String(total)},{job:'',amt:''}];
-    var panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='58%';
-    document.getElementById('crud-modal-title').textContent=tr('手工分摊')+' - '+fclFinGet(id,row,'实际成本号');
-    document.getElementById('crud-modal-body').innerHTML=agentAllocBodyHtml(id,row);
-    document.getElementById('crud-modal-footer').innerHTML=
-        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
-        '<button onclick="submitAgentCostAlloc()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认分摊')+'</button>';
-    document.getElementById('crud-modal').classList.add('show');
-}
-function agentAllocBodyHtml(id,row){
-    var h='';
-    h+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
-       esc(fclFinGet(id,row,'服务商'))+'　'+esc(fclFinGet(id,row,'费用名称'))+'　'+
-       tr('待分摊')+' <span class="font-semibold text-text-primary">'+esc(fclFinGet(id,row,'币别'))+' '+
-       esc(fclFinGet(id,row,'实际金额'))+'</span>'+
-       '<div class="mt-1 text-xs text-text-muted">'+tr('拆成几个 Job，各份金额合计必须等于待分摊金额')+'</div></div>';
-    h+='<div class="flex items-center gap-2 mb-2">';
-    h+='<button type="button" onclick="addAgentAllocRow()" class="h-8 px-3 text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">'+tr('添加一行')+'</button>';
-    h+='<button type="button" onclick="splitAgentAllocEven()" class="h-8 px-3 text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">'+tr('平均分摊')+'</button>';
-    h+='<button type="button" onclick="splitAgentAllocByEst()" class="h-8 px-3 text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">'+tr('按预估成本比例分摊')+'</button>';
-    h+='</div>';
-    h+='<div data-alloc-table>'+agentAllocTableHtml()+'</div>';
-    return h;
-}
-function agentAllocTableHtml(){
-    var h='<div class="border border-surface-200 rounded-lg overflow-hidden">';
-    h+='<table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
-       '<th class="px-3 py-2 text-left font-medium text-text-secondary w-10">#</th>'+
-       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('Job No')+'<span class="text-red-500 ml-1">*</span></th>'+
-       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('分摊金额')+'<span class="text-red-500 ml-1">*</span></th>'+
-       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('占比')+'</th>'+
-       '<th class="px-3 py-2 w-16"></th></tr></thead><tbody>';
-    var total=_agentAllocCtx.total||0;
-    _agentAllocRows.forEach(function(r,i){
-        var amt=fclParseMoney(r.amt);
-        h+='<tr class="border-t border-surface-100" data-alloc-row="'+i+'">'+
-           '<td class="px-3 py-2 text-text-muted">'+(i+1)+'</td>'+
-           '<td class="px-3 py-2"><input data-alloc-job="'+i+'" type="text" value="'+esc(r.job)+'" onchange="syncAgentAllocRow('+i+')" class="w-full h-8 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50"></td>'+
-           '<td class="px-3 py-2"><input data-alloc-amt="'+i+'" type="number" value="'+esc(r.amt)+'" oninput="syncAgentAllocRow('+i+')" class="w-full h-8 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50"></td>'+
-           '<td class="px-3 py-2 text-text-secondary">'+((amt!==null&&total)?((amt/total*100).toFixed(2)+'%'):'—')+'</td>'+
-           '<td class="px-3 py-2"><button type="button" onclick="removeAgentAllocRow('+i+')" class="text-xs text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td></tr>';
-    });
-    h+='</tbody></table></div>';
-    h+=agentAllocSummaryHtml();
-    return h;
-}
-function agentAllocSummaryHtml(){
-    var total=_agentAllocCtx.total||0;
-    var sum=_agentAllocRows.reduce(function(s,r){return s+(fclParseMoney(r.amt)||0);},0);
-    var diff=+(total-sum).toFixed(2);
-    var cls=diff===0?'text-success-700':'text-red-600';
-    return '<div data-alloc-sum class="mt-2 text-sm '+cls+'">'+
-        tr('已分摊')+' <span class="font-semibold">'+sum.toFixed(2)+'</span>　'+
-        tr('待分摊')+' <span class="font-semibold">'+total.toFixed(2)+'</span>　'+
-        tr('差额')+' <span class="font-semibold">'+diff.toFixed(2)+'</span>'+
-        (diff===0?('　'+tr('金额已分摊完毕')):('　'+tr('差额不为 0 无法提交')))+'</div>';
-}
-function readAgentAllocRow(i){
-    var j=document.querySelector('[data-alloc-job="'+i+'"]');
-    var a=document.querySelector('[data-alloc-amt="'+i+'"]');
-    if(_agentAllocRows[i]){
-        if(j)_agentAllocRows[i].job=String(j.value||'');
-        if(a)_agentAllocRows[i].amt=String(a.value||'');
-    }
-}
-function syncAgentAllocRow(i){
-    readAgentAllocRow(i);
-    var box=document.querySelector('[data-alloc-sum]');
-    if(box)box.outerHTML=agentAllocSummaryHtml();
-}
-function readAllAgentAllocRows(){
-    _agentAllocRows.forEach(function(r,i){readAgentAllocRow(i);});
-}
-function redrawAgentAlloc(){
-    var box=document.querySelector('[data-alloc-table]');
-    if(box)box.innerHTML=agentAllocTableHtml();
-}
-function addAgentAllocRow(){
-    readAllAgentAllocRows();
-    _agentAllocRows.push({job:'',amt:''});
-    redrawAgentAlloc();
-}
-function removeAgentAllocRow(i){
-    readAllAgentAllocRows();
-    if(_agentAllocRows.length<=2){showToast(tr('至少保留两行，否则不叫分摊'));return;}
-    _agentAllocRows.splice(i,1);
-    redrawAgentAlloc();
-}
-/* 平均分摊：除不尽的零头补到最后一行，保证合计刚好等于总额。
- * msg 用于被「按预估比例」回退调用时说明原因 —— 否则那条提示会被这里的覆盖掉。 */
-function splitAgentAllocEven(msg){
-    readAllAgentAllocRows();
-    var n=_agentAllocRows.length,total=_agentAllocCtx.total||0;
-    if(!n)return;
-    var each=Math.floor(total/n*100)/100,acc=0;
-    _agentAllocRows.forEach(function(r,i){
-        var v=(i===n-1)?+(total-acc).toFixed(2):each;
-        acc+=v;r.amt=String(v);
-    });
-    redrawAgentAlloc();
-    showToast(msg||(tr('已平均分摊到')+' '+n+' '+tr('行')));
-}
-/* 按各 Job 的预估成本比例分摊；有 Job 取不到预估的就退回平均分摊 */
-function splitAgentAllocByEst(){
-    readAllAgentAllocRows();
-    var total=_agentAllocCtx.total||0;
-    var ests=_agentAllocRows.map(function(r){
-        return r.job?(fclParseMoney(fclEstAmountOf(r.job,''))||0):0;
-    });
-    var base=ests.reduce(function(s,v){return s+v;},0);
-    if(!base){splitAgentAllocEven(tr('所选 Job 都没有预估成本，已改用平均分摊'));return;}
-    var acc=0,n=_agentAllocRows.length;
-    _agentAllocRows.forEach(function(r,i){
-        var v=(i===n-1)?+(total-acc).toFixed(2):Math.floor(total*ests[i]/base*100)/100;
-        acc+=v;r.amt=String(v);
-    });
-    redrawAgentAlloc();
-    showToast(tr('已按预估成本比例分摊'));
-}
-function submitAgentCostAlloc(){
-    readAllAgentAllocRows();
-    var id=_agentAllocCtx.id,src=fclFinRows(id)[_agentAllocCtx.idx];
-    if(!src){showToast(tr('未找到成本行'));return;}
-    var valid=_agentAllocRows.filter(function(r){return String(r.job||'').trim()&&fclParseMoney(r.amt)!==null;});
-    if(valid.length<2){showToast(tr('至少填两行 Job 与金额才能分摊'));return;}
-    var jobs=valid.map(function(r){return r.job.trim();});
-    if(new Set(jobs).size!==jobs.length){showToast(tr('同一个 Job 出现了多次，请合并后再分摊'));return;}
-    if(valid.some(function(r){return (fclParseMoney(r.amt)||0)<=0;})){showToast(tr('分摊金额必须大于 0'));return;}
-    var sum=valid.reduce(function(s,r){return s+(fclParseMoney(r.amt)||0);},0);
-    var diff=+((_agentAllocCtx.total||0)-sum).toFixed(2);
-    if(diff!==0){showToast(tr('各份合计与待分摊金额差')+' '+diff+'，'+tr('请调平后再提交'));return;}
-    var c=TC[id]||{},h=c.h||[];
-    var seedWidth=(c.d&&c.d.length)?c.d[0].length:h.length-1;
-    var fee=fclFinGet(id,src,'费用名称');
-    var mark=tr('由')+' '+fclFinGet(id,src,'实际成本号')+' '+tr('手工分摊');
-    /* 第一份改写原行 */
-    fclFinSet(id,src,'Job No',valid[0].job.trim());
-    fclFinSet(id,src,'实际金额',String(fclParseMoney(valid[0].amt)));
-    fclFinSet(id,src,'预估金额',fclEstAmountOf(valid[0].job.trim(),fee));
-    fclFinSet(id,src,'差异金额','');fclFinSet(id,src,'差异率','');
-    fclFinSet(id,src,'对账状态','待对账');
-    fclFinSet(id,src,'备注',mark);
-    /* 其余份追加为新行；写 TC.d 而不是 _listData，否则下次渲染就没了 */
-    var seq=(c.d||[]).length;
-    valid.slice(1).forEach(function(r){
-        var job=r.job.trim();
-        var row=h.slice(0,seedWidth).map(function(name){
-            if(name==='实际成本号')return 'FAC-AL'+(2609000+(++seq));
-            if(name==='Job No')return job;
-            if(name==='实际金额')return String(fclParseMoney(r.amt));
-            if(name==='预估金额')return fclEstAmountOf(job,fee);
-            if(name==='差异金额'||name==='差异率'||name==='对账人'||name==='对账时间')return '';
-            if(name==='应付账单号')return '';   /* 新拆出来的份还没进付款流程 */
-            if(name==='对账状态')return '待对账';
-            if(name==='备注')return mark;
-            return fclFinGet(id,src,name);   /* 服务商/费用名称/费用类别/币别/账单号等照抄 */
-        });
-        c.d.push(row);
-    });
-    if(typeof _listData!=='undefined')delete _listData[id];
-    closeCrudModal();
-    fclFinRefresh(id);
-    showToast(tr('已分摊为')+' '+valid.length+' '+tr('行')+'，'+tr('各行状态回到「待对账」，可重新对账'));
-}
+/* 手工分摊已重写为「Job 成本 → 委托单 →（自由散货拼箱再往下）散货订单」，见 js/45-fcl-agent-cost.js */
 
 /* ③ 应付账单管理：付款登记 —— 累加已付、倒算待付、据此定状态 */
 var _apPayCtx={id:'',idx:-1};
@@ -2026,7 +1844,7 @@ var FCL_SOP_STEPS=[
  output:'实际费用 FBE / 导入批次 FBI / 对比单 FCMP / 申诉单 FAP；状态 账单已确认 或 申诉中',
  sla:'船公司账单录入 ≤ 2 个工作日',
  caution:'申诉务必「先付款后申诉」，避免逾期影响后续业务。MAC 申诉周期约 3 个月，系统在到期前 7/3/1 天三次提醒，超期自动置「超期未处理」。',
- tabs:[['预估成本明细','fcl-est-cost','fcl'],['代理实际成本','fcl-agent-cost','fcl']]},
+ tabs:[['预估成本明细','fcl-est-cost','fcl'],['代理成本明细','fcl-agent-cost','fcl']]},
 
 {no:'⑬',name:'付款管理',sop:'SOP-FCL-13',stage:'fin',role:'操作员（请款）、财务（审核与付款）',
  trigger:'账单确认无误',
@@ -2073,8 +1891,8 @@ var FCL_FUNC_MAP=[
 {group:'③ 订舱与放舱',hint:'订舱员的完整工作面',items:[
     ['Job/主单管理','fcl-booking','fcl','整柜全链路主档；放舱与拖车/装柜/补料/拆并单/报关/开船轨迹/寄单都收进本页的「放舱」与「操作」按钮里']]},
 {group:'⑤ 整柜财务',hint:'成本侧 预估→实际→应付账单；收入侧 应收明细→收款',items:[
-    ['预估成本明细','fcl-est-cost','fcl','订舱时按 Job 拆出的成本基线，后面拿它跟代理实际成本比'],
-    ['代理实际成本','fcl-agent-cost','fcl','服务商报来的实际金额，逐项对账算差异'],
+    ['预估成本明细','fcl-est-cost','fcl','订舱时按 Job 拆出的成本基线，后面拿它跟代理成本明细比'],
+    ['代理成本明细','fcl-agent-cost','fcl','服务商报来的实际金额，按 Job 一费一行，手工分摊到委托单'],
     ['应付账单管理','fcl-ap-bill','fcl','按服务商汇总的应付，并入付款登记'],
     ['应收费用明细','fcl-ar-fee','fcl','按 Job 的应收逐项，收款核销时冲这里的未收金额'],
     ['应收收款管理','fcl-ar-receipt','fcl','客户打款认领与核销，自动冲减应收明细']]},

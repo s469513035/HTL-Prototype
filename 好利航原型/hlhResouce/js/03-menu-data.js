@@ -130,12 +130,12 @@ const menuData=[
 /* 整柜的应付/请款/付款/应收放单/银行流水/提成，唯一入口在这里
  * （原「整柜业务 → 财务与结算」已撤掉，不再两处重复）。 */
 /* 整柜财务按成本流转顺序排：
- * 成本侧 预估 → 代理账单(导入/一级分摊) → 代理实际成本(对账) → 单票成本明细(二级分摊) → 应付账单
+ * 成本侧 预估 → 代理账单(导入/对账/生成付款单) → 代理成本明细(分摊到委托单) → 单票成本明细(二级分摊) → 应付账单
  * 收入侧 应收明细 → 收款 */
 {id:'fin-fcl',label:'整柜财务',children:[
 {id:'fcl-est-cost',label:'预估成本明细',page:'fcl',tab:'fcl-est-cost'},
 {id:'fcl-agent-bill',label:'代理账单',page:'fcl',tab:'fcl-agent-bill'},
-{id:'fcl-agent-cost',label:'代理实际成本',page:'fcl',tab:'fcl-agent-cost'},
+{id:'fcl-agent-cost',label:'代理成本明细',page:'fcl',tab:'fcl-agent-cost'},
 {id:'fcl-shipment-cost',label:'单票成本明细',page:'fcl',tab:'fcl-shipment-cost'},
 {id:'fcl-ap-bill',label:'应付账单管理',page:'fcl',tab:'fcl-ap-bill'},
 {id:'fcl-ar-fee',label:'应收费用明细',page:'fcl',tab:'fcl-ar-fee'},

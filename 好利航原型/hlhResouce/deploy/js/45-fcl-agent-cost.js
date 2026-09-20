@@ -294,12 +294,12 @@ function confirmAgentBillFee(id,rowIdx){
 function openAgentBillGenerateAp(id){
     id=id||'fcl-agent-bill';
     var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
-    if(!idxs.length){showToast(tr('请先勾选要生成账单的代理账单'));return;}
-    if(idxs.length>1){showToast(tr('生成账单一次只能选一张'));return;}
+    if(!idxs.length){showToast(tr('请先勾选要生成付款单的代理账单'));return;}
+    if(idxs.length>1){showToast(tr('生成付款单一次只能选一张'));return;}
     var row=fclFinRows(id)[idxs[0]];
     if(!row){showToast(tr('未找到账单'));return;}
     var st=fclFinGet(id,row,'账单状态');
-    if(st!=='待请款'){showToast(tr('仅「待请款」的账单可生成应付账单，当前为')+'「'+tr(st)+'」');return;}
+    if(st!=='待请款'){showToast(tr('仅「待请款」的账单可生成付款单，当前为')+'「'+tr(st)+'」');return;}
     var billNo=fclFinGet(id,row,'流水号');
     var agent=fclFinGet(id,row,'服务商');
     var cur=fclFinGet(id,row,'币别');
@@ -309,7 +309,7 @@ function openAgentBillGenerateAp(id){
     var total=list.reduce(function(s,d){return s+(fclParseMoney(d.amt)||0);},0);
     var panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='72%';
-    document.getElementById('crud-modal-title').textContent=tr('生成应付账单')+' - '+billNo;
+    document.getElementById('crud-modal-title').textContent=tr('生成付款单')+' - '+billNo;
     var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white';
     var roCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary cursor-not-allowed';
     var h='<div class="space-y-4">';
@@ -364,19 +364,19 @@ function openAgentBillGenerateAp(id){
     document.getElementById('crud-modal-body').innerHTML=h;
     document.getElementById('crud-modal-footer').innerHTML=
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
-        '<button onclick="confirmAgentBillGenerateAp(\''+id+'\','+idxs[0]+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认生成')+'</button>';
+        '<button onclick="confirmAgentBillGenerateAp(\''+id+'\','+idxs[0]+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认生成付款单')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
 }
 function confirmAgentBillGenerateAp(id,rowIdx){
     id=id||'fcl-agent-bill';
     var row=fclFinRows(id)[rowIdx];
     if(!row){showToast(tr('未找到账单'));return;}
-    if(fclFinGet(id,row,'账单状态')!=='待请款'){showToast(tr('仅「待请款」的账单可生成应付账单'));return;}
+    if(fclFinGet(id,row,'账单状态')!=='待请款'){showToast(tr('仅「待请款」的账单可生成付款单'));return;}
     var billNo=fclFinGet(id,row,'流水号');
     var agent=fclFinGet(id,row,'服务商');
     var cur=fclFinGet(id,row,'币别');
     var list=agentBillDetailsOf(billNo);
-    if(!list.length){showToast(tr('该账单没有费用明细，无法生成应付账单'));return;}
+    if(!list.length){showToast(tr('该账单没有费用明细，无法生成付款单'));return;}
     var payee=((document.getElementById('apgen-payee')||{}).value||'').trim();
     var acct=((document.getElementById('apgen-acct')||{}).value||'').trim();
     var bankName=((document.getElementById('apgen-bank')||{}).value||'').trim();
@@ -388,7 +388,7 @@ function confirmAgentBillGenerateAp(id,rowIdx){
     var apNo=fclSeqNo('FAP','fcl-ap-bill');
     var payNo=fclSeqNo('PAY','fcl-ap-bill');
     fclPushRow('fcl-ap-bill',{
-        '应付账单号':apNo,
+        '付款单号':apNo,
         '付款申请号':payNo,
         '服务商':agent,
         '账单周期':fclFinGet(id,row,'账单周期'),
@@ -412,7 +412,7 @@ function confirmAgentBillGenerateAp(id,rowIdx){
     if(typeof _listData!=='undefined')delete _listData['fcl-ap-bill'];
     closeCrudModal();
     fclFinRefresh(id);
-    showToast(tr('已生成应付账单')+' '+apNo+'（'+cur+' '+total.toFixed(2)+'），'+tr('代理账单进入「待审核」'));
+    showToast(tr('已生成付款单')+' '+apNo+'（'+cur+' '+total.toFixed(2)+'），'+tr('代理账单进入「待审核」'));
 }
 
 /* ==========================================================================
@@ -842,7 +842,7 @@ function openShipmentAlloc(id){
     if(idxs.length>1){showToast(tr('分摊到票一次只能选一行'));return;}
     var row=fclFinRows(id)[idxs[0]];
     if(!row){showToast(tr('未找到成本行'));return;}
-    var st=fclFinGet(id,row,'对账状态');
+    var st=fclFinGet(id,row,'成本状态');
     if(['对账一致','已确认','已生成应付'].indexOf(st)<0){
         showToast(tr('只有对账通过的成本行才能摊到票，当前为')+'「'+tr(st)+'」');return;
     }
@@ -858,7 +858,7 @@ function openShipmentAlloc(id){
         feeKind:fclFinGet(id,row,'费用类别'),
         agent:fclFinGet(id,row,'服务商'),
         billNo:fclFinGet(id,row,'代理账单号'),
-        costNo:fclFinGet(id,row,'实际成本号'),
+        costNo:fclFinGet(id,row,'流水号'),
         job:job,basis:'pkg',
         rows:list.map(function(x){
             return {target:x.entrust,label:x.customer,w:(x.pkg===null?'':String(x.pkg)),amt:''};
@@ -993,7 +993,7 @@ function fclActMapOf(job){
     var c=TC['fcl-agent-cost'],out={};
     if(!c||!c.d||!job)return out;
     var h=c.h||[],iJ=h.indexOf('Job No'),iF=h.indexOf('费用名称'),
-        iA=h.indexOf('实际金额'),iV=h.indexOf('服务商'),iC=h.indexOf('币别'),iS=h.indexOf('对账状态');
+        iA=h.indexOf('实际金额'),iV=h.indexOf('服务商'),iC=h.indexOf('币别'),iS=h.indexOf('成本状态');
     if(iJ<0||iF<0||iA<0)return out;
     c.d.forEach(function(r){
         if(String(r[iJ]||'')!==job)return;
@@ -1092,7 +1092,7 @@ function openPaymentApply(id){
     var rows=fclFinRows(id),ok=[],bad=0;
     idxs.forEach(function(i){
         var row=rows[i];if(!row)return;
-        var st=fclFinGet(id,row,'对账状态');
+        var st=fclFinGet(id,row,'成本状态');
         if(['对账一致','已确认'].indexOf(st)<0||fclFinGet(id,row,'应付账单号')){bad++;return;}
         ok.push(row);
     });
@@ -1253,13 +1253,13 @@ function submitApBillAudit(){
 function fclReleaseCostRowsOf(apNo){
     var c=TC['fcl-agent-cost'];
     if(!c||!c.d||!apNo)return 0;
-    var h=c.h||[],iA=h.indexOf('应付账单号'),iS=h.indexOf('对账状态');
+    var h=c.h||[],iA=h.indexOf('付款单号'),iS=h.indexOf('成本状态');
     if(iA<0)return 0;
     var n=0;
     c.d.forEach(function(r){
         if(String(r[iA]||'')!==apNo)return;
         r[iA]='';
-        if(iS>=0)r[iS]='对账一致';
+        if(iS>=0)r[iS]='已分摊';
         n++;
     });
     return n;
@@ -1273,9 +1273,9 @@ function openApBillDetail(id){
     if(!row){showToast(tr('未找到账单'));return;}
     var apNo=fclFinGet(id,row,'应付账单号');
     var c=TC['fcl-agent-cost'],h=(c&&c.h)||[];
-    var iA=h.indexOf('应付账单号');
+    var iA=h.indexOf('付款单号');
     var list=(c&&c.d&&iA>=0)?c.d.filter(function(r){return String(r[iA]||'')===apNo;}):[];
-    var cols=['实际成本号','Job No','费用名称','费用类别','币别','实际金额','分摊方式','代理账单号','服务商账单号'];
+    var cols=['流水号','Job No','费用名称','费用类别','币别','实际金额','分摊方式','代理账单号','服务商账单号'];
     var b='';
     b+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
        esc(apNo)+'　'+esc(fclFinGet(id,row,'服务商'))+'　'+
@@ -1477,4 +1477,401 @@ function confirmBillHeadImport(id){
     closeCrudModal();
     fclFinRefresh(id);
     showToast(tr('导入成功')+' '+rows.length+' '+tr('条')+'，'+tr('状态「待对账」，请继续做「对账」'));
+}
+
+/* ==========================================================================
+ * 七、代理成本明细 · 手工分摊（Job 成本 → 委托单 → 散货订单）
+ *
+ * 一行代理成本挂在 Job 上，但 Job 常常是拼柜：一个柜里有好几个客户的委托单。
+ * 分摊就是把这笔钱按柜内票清单摊到各委托单头上。
+ *
+ * 再往下还有一层：如果某张委托单做的是「自由散货拼箱」（客户把零散几票凑
+ * 一个委托单走拼箱），那摊到委托单还不够细 —— 每票散货订单要各自算成本，
+ * 否则单票毛利算不出来。所以这种委托单要再往下摊到散货订单维度。
+ *
+ * 判定口径：委托单在散货订单登记表 _FCL_LCL_ORDERS 里有子订单 ⇒ 自由散货拼箱。
+ * 结果存 _FCL_COST_ALLOC[流水号]，行内「查看」看的就是它。
+ * ========================================================================== */
+
+/* 自由散货拼箱委托单 → 旗下散货订单（含分摊基数）。
+ * 没登记在这里的委托单＝整柜委托，摊到委托单这一层就到底了。 */
+var _FCL_LCL_ORDERS={
+    'FEO-20260613007':[
+        {no:'LCL-20260613071',cust:'广州远洋进出口贸易',goods:'五金配件',pcs:40,cbm:8.0,kg:1800},
+        {no:'LCL-20260613072',cust:'广州远洋进出口贸易',goods:'手动工具',pcs:30,cbm:6.5,kg:1400},
+        {no:'LCL-20260613073',cust:'广州远洋进出口贸易',goods:'量具',pcs:20,cbm:4.0,kg:900}
+    ],
+    'FEO-20260613012':[
+        {no:'LCL-20260613121',cust:'东莞市鑫海物流',goods:'塑料周转箱',pcs:70,cbm:12.0,kg:2000},
+        {no:'LCL-20260613122',cust:'东莞市鑫海物流',goods:'塑料管件',pcs:40,cbm:6.5,kg:1100}
+    ],
+    'FEO-20260612009':[
+        {no:'LCL-20260612091',cust:'上海锦程国际贸易',goods:'陶瓷餐具',pcs:30,cbm:6.2,kg:3100},
+        {no:'LCL-20260612092',cust:'上海锦程国际贸易',goods:'陶瓷花瓶',pcs:20,cbm:5.0,kg:2500}
+    ]
+};
+function fclLclOrdersOf(entrust){return _FCL_LCL_ORDERS[entrust]||[];}
+function fclIsLclEntrust(entrust){return fclLclOrdersOf(entrust).length>0;}
+function fclEntrustBizType(entrust){return fclIsLclEntrust(entrust)?'自由散货拼箱':'整柜';}
+
+/* 分摊结果：流水号 → [{entrust,cust,biz,amt,orders:[{no,cust,amt}]}] */
+var _FCL_COST_ALLOC={
+    'FAC-20260613001':[
+        {entrust:'FEO-20260613001',cust:'深圳市华运达国际货运',biz:'整柜',amt:1575.00,orders:[]},
+        {entrust:'FEO-20260613007',cust:'广州远洋进出口贸易',biz:'自由散货拼箱',amt:1181.25,orders:[
+            {no:'LCL-20260613071',cust:'广州远洋进出口贸易',amt:525.00},
+            {no:'LCL-20260613072',cust:'广州远洋进出口贸易',amt:393.75},
+            {no:'LCL-20260613073',cust:'广州远洋进出口贸易',amt:262.50}
+        ]},
+        {entrust:'FEO-20260613012',cust:'东莞市鑫海物流',biz:'自由散货拼箱',amt:1443.75,orders:[
+            {no:'LCL-20260613121',cust:'东莞市鑫海物流',amt:918.75},
+            {no:'LCL-20260613122',cust:'东莞市鑫海物流',amt:525.00}
+        ]}
+    ],
+    'FAC-20260612003':[
+        {entrust:'FEO-20260612002',cust:'广州远洋进出口贸易',biz:'整柜',amt:3640.00,orders:[]},
+        {entrust:'FEO-20260612009',cust:'上海锦程国际贸易',biz:'自由散货拼箱',amt:1540.00,orders:[
+            {no:'LCL-20260612091',cust:'上海锦程国际贸易',amt:852.50},
+            {no:'LCL-20260612092',cust:'上海锦程国际贸易',amt:687.50}
+        ]}
+    ]
+};
+function fclCostAllocOf(no){return _FCL_COST_ALLOC[no]||[];}
+
+/* 柜内票清单里这个 Job 关联的委托单（带分摊基数） */
+function fclEntrustsOfJob(job){
+    var c=TC['fcl-job-cargo'];
+    if(!c||!c.d||!job)return [];
+    var h=c.h||[];
+    var iJ=h.indexOf('Job No'),iE=h.indexOf('委托订单号'),iC=h.indexOf('客户名称'),
+        iP=h.indexOf('件数'),iV=h.indexOf('体积(CBM)'),iW=h.indexOf('重量(KG)'),iS=h.indexOf('状态');
+    var out=[];
+    c.d.forEach(function(r){
+        if(String(r[iJ]||'')!==job)return;
+        if(iS>=0&&r[iS]==='已作废')return;
+        var e=String(r[iE]||'').trim();
+        if(!e||out.some(function(x){return x.entrust===e;}))return;
+        out.push({entrust:e,cust:String(r[iC]||''),
+            pcs:fclParseMoney(r[iP])||0,cbm:fclParseMoney(r[iV])||0,kg:fclParseMoney(r[iW])||0,
+            biz:fclEntrustBizType(e)});
+    });
+    return out;
+}
+
+/* ---------- 分摊弹窗状态 ---------- */
+var FCL_ALLOC_BASIS=[['even','平均'],['pcs','按件数'],['cbm','按体积'],['kg','按重量']];
+var _costAlloc={id:'',idx:-1,no:'',total:0,currency:'',job:'',rows:[]};
+
+function openAgentCostAlloc(id){
+    id=id||'fcl-agent-cost';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选需要分摊的成本行'));return;}
+    if(idxs.length>1){showToast(tr('手工分摊一次只能选一行'));return;}
+    var row=fclFinRows(id)[idxs[0]];
+    if(!row){showToast(tr('未找到成本行'));return;}
+    var st=fclFinGet(id,row,'成本状态');
+    if(st==='已作废'){showToast(tr('已作废的成本行不能分摊'));return;}
+    if(st==='已生成付款单'||fclFinGet(id,row,'付款单号')){showToast(tr('已生成付款单的成本行不能再分摊'));return;}
+    var total=fclParseMoney(fclFinGet(id,row,'实际金额'));
+    if(total===null||total<=0){showToast(tr('该行没有实际金额，无法分摊'));return;}
+    var job=fclFinGet(id,row,'Job No');
+    var ents=fclEntrustsOfJob(job);
+    if(!ents.length){showToast(tr('这个 Job 在柜内票清单里没有委托单，先维护柜内票再分摊'));return;}
+    var no=fclFinGet(id,row,'流水号');
+    /* 回显已有分摊；没有就按当前委托单铺一遍，金额留空等按口径算 */
+    var saved=fclCostAllocOf(no);
+    _costAlloc={id:id,idx:idxs[0],no:no,total:total,
+        currency:fclFinGet(id,row,'币别'),job:job,
+        rows:ents.map(function(e){
+            var s=saved.filter(function(x){return x.entrust===e.entrust;})[0];
+            return {entrust:e.entrust,cust:e.cust,biz:e.biz,pcs:e.pcs,cbm:e.cbm,kg:e.kg,
+                amt:s?String(s.amt):'',
+                orders:fclLclOrdersOf(e.entrust).map(function(o){
+                    var so=s?(s.orders||[]).filter(function(x){return x.no===o.no;})[0]:null;
+                    return {no:o.no,cust:o.cust,goods:o.goods,pcs:o.pcs,cbm:o.cbm,kg:o.kg,
+                        amt:so?String(so.amt):''};
+                })};
+        })};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='72%';
+    document.getElementById('crud-modal-title').textContent=tr('手工分摊')+' - '+no;
+    document.getElementById('crud-modal-body').innerHTML=costAllocBodyHtml(id,row);
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitAgentCostAlloc()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认分摊')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function costAllocBodyHtml(id,row){
+    var A=_costAlloc;
+    var lclN=A.rows.filter(function(r){return r.orders.length;}).length;
+    var h='';
+    h+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
+       esc(fclFinGet(id,row,'服务商'))+'　'+esc(fclFinGet(id,row,'费用名称'))+'　'+esc(A.job)+'　'+
+       tr('待分摊')+' <span class="font-semibold text-text-primary">'+esc(A.currency)+' '+A.total.toFixed(2)+'</span>'+
+       '<div class="mt-1 text-xs text-text-muted">'+
+       esc(A.rows.length>1
+           ? tr('这个 Job 关联 '+A.rows.length+' 张委托单，先摊到委托单')
+           : tr('这个 Job 只关联 1 张委托单，金额整笔落到它头上'))+
+       (lclN?esc('；'+tr('其中 '+lclN+' 张是自由散货拼箱，还要再摊到各散货订单')):'')+
+       '</div></div>';
+    h+='<div class="flex items-center gap-2 mb-2 flex-wrap">';
+    h+='<span class="text-xs text-text-muted">'+tr('委托单层分摊口径')+'</span>';
+    FCL_ALLOC_BASIS.forEach(function(b){
+        h+='<button type="button" onclick="costAllocApply(\''+b[0]+'\')" class="h-8 px-3 text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">'+tr(b[1])+'</button>';
+    });
+    h+='</div>';
+    h+='<div data-cost-alloc>'+costAllocTableHtml()+'</div>';
+    return h;
+}
+function costAllocTableHtml(){
+    var A=_costAlloc,total=A.total||0;
+    var h='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('委托订单号')+'</th>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('客户名称')+'</th>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('业务类型')+'</th>'+
+       '<th class="px-3 py-2 text-right font-medium text-text-secondary">'+tr('件数')+'</th>'+
+       '<th class="px-3 py-2 text-right font-medium text-text-secondary">'+tr('体积(CBM)')+'</th>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('分摊金额')+'<span class="text-red-500 ml-1">*</span></th>'+
+       '<th class="px-3 py-2 text-right font-medium text-text-secondary">'+tr('占比')+'</th>'+
+       '</tr></thead><tbody>';
+    A.rows.forEach(function(r,i){
+        var amt=fclParseMoney(r.amt);
+        var isLcl=r.orders.length>0;
+        h+='<tr class="border-t border-surface-100">'+
+           '<td class="px-3 py-2 font-medium text-text-primary">'+esc(r.entrust)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(r.cust)+'</td>'+
+           '<td class="px-3 py-2"><span class="px-1.5 py-0.5 text-xs rounded border '+
+             (isLcl?'border-amber-200 bg-amber-50 text-amber-700':'border-surface-200 bg-surface-50 text-text-secondary')+
+             '">'+esc(r.biz)+'</span></td>'+
+           '<td class="px-3 py-2 text-right text-text-secondary">'+r.pcs+'</td>'+
+           '<td class="px-3 py-2 text-right text-text-secondary">'+r.cbm+'</td>'+
+           '<td class="px-3 py-2"><input data-ca-amt="'+i+'" type="number" value="'+esc(r.amt)+'" oninput="costAllocOnAmt('+i+')" class="w-28 h-8 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50"></td>'+
+           '<td class="px-3 py-2 text-right text-text-secondary">'+((amt!==null&&total)?((amt/total*100).toFixed(2)+'%'):'—')+'</td>'+
+           '</tr>';
+        /* 自由散货拼箱：这张委托单的钱再往下摊到每票散货订单 */
+        if(isLcl){
+            h+='<tr class="border-t border-surface-100 bg-surface-50/60"><td colspan="7" class="px-3 py-2">';
+            h+='<div class="flex items-center gap-2 mb-1.5 flex-wrap">'+
+               '<span class="text-xs font-medium text-amber-700">'+tr('散货订单分摊')+'</span>'+
+               '<span class="text-xs text-text-muted">'+esc(tr('这张委托单是自由散货拼箱，成本要落到每票订单'))+'</span>';
+            FCL_ALLOC_BASIS.forEach(function(b){
+                h+='<button type="button" onclick="costAllocApplySub('+i+',\''+b[0]+'\')" class="h-6 px-2 text-[11px] text-primary-700 border border-primary-200 rounded bg-white hover:bg-primary-50 cursor-pointer">'+tr(b[1])+'</button>';
+            });
+            h+='</div>';
+            h+='<table class="w-full text-xs"><thead><tr class="text-text-muted">'+
+               '<th class="px-2 py-1 text-left font-medium">'+tr('散货订单号')+'</th>'+
+               '<th class="px-2 py-1 text-left font-medium">'+tr('品名')+'</th>'+
+               '<th class="px-2 py-1 text-right font-medium">'+tr('件数')+'</th>'+
+               '<th class="px-2 py-1 text-right font-medium">'+tr('体积(CBM)')+'</th>'+
+               '<th class="px-2 py-1 text-left font-medium">'+tr('分摊金额')+'</th></tr></thead><tbody>';
+            r.orders.forEach(function(o,j){
+                h+='<tr><td class="px-2 py-1 text-text-primary">'+esc(o.no)+'</td>'+
+                   '<td class="px-2 py-1 text-text-secondary">'+esc(o.goods||'')+'</td>'+
+                   '<td class="px-2 py-1 text-right text-text-secondary">'+o.pcs+'</td>'+
+                   '<td class="px-2 py-1 text-right text-text-secondary">'+o.cbm+'</td>'+
+                   '<td class="px-2 py-1"><input data-ca-sub="'+i+'-'+j+'" type="number" value="'+esc(o.amt)+'" oninput="costAllocOnSub('+i+','+j+')" class="w-24 h-7 px-2 text-xs border border-surface-200 rounded bg-white"></td></tr>';
+            });
+            h+='</tbody></table>';
+            h+='<div class="mt-1 text-xs '+(costAllocSubDiff(i)===0?'text-success-700':'text-red-600')+'">'+
+               tr('本委托单已摊')+' '+costAllocSubSum(i).toFixed(2)+'　'+tr('差额')+' '+costAllocSubDiff(i).toFixed(2)+'</div>';
+            h+='</td></tr>';
+        }
+    });
+    h+='</tbody></table></div>';
+    h+=costAllocSummaryHtml();
+    return h;
+}
+function costAllocSum(){
+    return _costAlloc.rows.reduce(function(s,r){return s+(fclParseMoney(r.amt)||0);},0);
+}
+function costAllocSubSum(i){
+    var r=_costAlloc.rows[i];
+    if(!r)return 0;
+    return r.orders.reduce(function(s,o){return s+(fclParseMoney(o.amt)||0);},0);
+}
+function costAllocSubDiff(i){
+    var r=_costAlloc.rows[i];
+    if(!r)return 0;
+    return +(((fclParseMoney(r.amt)||0)-costAllocSubSum(i)).toFixed(2));
+}
+function costAllocSummaryHtml(){
+    var total=_costAlloc.total||0,sum=costAllocSum();
+    var diff=+(total-sum).toFixed(2);
+    var cls=diff===0?'text-success-700':'text-red-600';
+    return '<div data-ca-sum class="mt-2 text-sm '+cls+'">'+
+        tr('委托单已摊')+' <span class="font-semibold">'+sum.toFixed(2)+'</span>　'+
+        tr('待分摊')+' <span class="font-semibold">'+total.toFixed(2)+'</span>　'+
+        tr('差额')+' <span class="font-semibold">'+diff.toFixed(2)+'</span>'+
+        (diff===0?('　'+tr('金额已分摊完毕')):('　'+tr('差额不为 0 无法提交')))+'</div>';
+}
+function costAllocReadUI(){
+    _costAlloc.rows.forEach(function(r,i){
+        var el=document.querySelector('[data-ca-amt="'+i+'"]');
+        if(el)r.amt=String(el.value||'');
+        r.orders.forEach(function(o,j){
+            var s=document.querySelector('[data-ca-sub="'+i+'-'+j+'"]');
+            if(s)o.amt=String(s.value||'');
+        });
+    });
+}
+function costAllocRedraw(){
+    var box=document.querySelector('[data-cost-alloc]');
+    if(box)box.innerHTML=costAllocTableHtml();
+}
+function costAllocOnAmt(i){costAllocReadUI();costAllocRedraw();}
+function costAllocOnSub(i,j){costAllocReadUI();costAllocRedraw();}
+/* 按口径分金额：尾差补到最后一份，保证合计刚好等于总额 */
+function fclSplitByWeights(total,weights){
+    var base=weights.reduce(function(s,w){return s+(w||0);},0);
+    var n=weights.length,acc=0,out=[];
+    for(var i=0;i<n;i++){
+        var v;
+        if(i===n-1)v=+(total-acc).toFixed(2);
+        else v=base?Math.floor(total*(weights[i]||0)/base*100)/100:Math.floor(total/n*100)/100;
+        acc=+(acc+v).toFixed(2);
+        out.push(v);
+    }
+    return out;
+}
+function costAllocWeights(list,basis){
+    return list.map(function(x){
+        if(basis==='pcs')return x.pcs||0;
+        if(basis==='cbm')return x.cbm||0;
+        if(basis==='kg')return x.kg||0;
+        return 1;
+    });
+}
+function costAllocApply(basis){
+    costAllocReadUI();
+    var A=_costAlloc;
+    var w=costAllocWeights(A.rows,basis);
+    if(basis!=='even'&&w.reduce(function(s,v){return s+v;},0)<=0){
+        showToast(tr('所选口径在柜内票清单里没有数据，已改用平均分摊'));
+        basis='even';w=costAllocWeights(A.rows,'even');
+    }
+    var vals=fclSplitByWeights(A.total||0,w);
+    A.rows.forEach(function(r,i){
+        r.amt=String(vals[i]);
+        /* 委托单金额一变，它下面的散货订单按同口径跟着重算，免得又要手点一遍 */
+        if(r.orders.length)costAllocFillSub(i,basis);
+    });
+    costAllocRedraw();
+    showToast(tr('已按')+tr(FCL_ALLOC_BASIS.filter(function(b){return b[0]===basis;})[0][1])+tr('分摊到委托单'));
+}
+function costAllocFillSub(i,basis){
+    var r=_costAlloc.rows[i];
+    if(!r||!r.orders.length)return;
+    var w=costAllocWeights(r.orders,basis);
+    if(basis!=='even'&&w.reduce(function(s,v){return s+v;},0)<=0)w=costAllocWeights(r.orders,'even');
+    var vals=fclSplitByWeights(fclParseMoney(r.amt)||0,w);
+    r.orders.forEach(function(o,j){o.amt=String(vals[j]);});
+}
+function costAllocApplySub(i,basis){
+    costAllocReadUI();
+    costAllocFillSub(i,basis);
+    costAllocRedraw();
+    showToast(tr('已按')+tr(FCL_ALLOC_BASIS.filter(function(b){return b[0]===basis;})[0][1])+tr('分摊到散货订单'));
+}
+function submitAgentCostAlloc(){
+    costAllocReadUI();
+    var A=_costAlloc,id=A.id,row=fclFinRows(id)[A.idx];
+    if(!row){showToast(tr('未找到成本行'));return;}
+    if(A.rows.some(function(r){return fclParseMoney(r.amt)===null;})){showToast(tr('每张委托单都要填分摊金额'));return;}
+    if(A.rows.some(function(r){return (fclParseMoney(r.amt)||0)<=0;})){showToast(tr('分摊金额必须大于 0'));return;}
+    var diff=+((A.total||0)-costAllocSum()).toFixed(2);
+    if(diff!==0){showToast(tr('委托单合计与待分摊金额差')+' '+diff+'，'+tr('请调平后再提交'));return;}
+    /* 自由散货拼箱的委托单，子级也必须摊平 */
+    for(var i=0;i<A.rows.length;i++){
+        var r=A.rows[i];
+        if(!r.orders.length)continue;
+        if(r.orders.some(function(o){return fclParseMoney(o.amt)===null||(fclParseMoney(o.amt)||0)<=0;})){
+            showToast(r.entrust+' '+tr('是自由散货拼箱，每票散货订单都要填分摊金额'));return;
+        }
+        if(costAllocSubDiff(i)!==0){
+            showToast(r.entrust+' '+tr('的散货订单合计与委托单金额差')+' '+costAllocSubDiff(i));return;
+        }
+    }
+    _FCL_COST_ALLOC[A.no]=A.rows.map(function(r){
+        return {entrust:r.entrust,cust:r.cust,biz:r.biz,amt:fclParseMoney(r.amt)||0,
+            orders:r.orders.map(function(o){return {no:o.no,cust:o.cust,amt:fclParseMoney(o.amt)||0};})};
+    });
+    var lclN=A.rows.filter(function(r){return r.orders.length;}).length;
+    fclFinSet(id,row,'成本状态','已分摊');
+    fclFinSet(id,row,'分摊人',fclWho());
+    fclFinSet(id,row,'分摊时间',fclNow());
+    if(typeof _listData!=='undefined')delete _listData[id];
+    closeCrudModal();
+    fclFinRefresh(id);
+    showToast(tr('已分摊到')+' '+A.rows.length+' '+tr('张委托单')+
+        (lclN?('，'+tr('其中')+' '+lclN+' '+tr('张再摊到散货订单')):'')+'　'+tr('可在行内「查看」复核'));
+}
+
+/* ---------- 行内「查看」：分摊到委托单的成本明细 ---------- */
+function openAgentCostDetail(id,rowIdx){
+    id=id||'fcl-agent-cost';
+    var idx=(rowIdx!=null&&rowIdx>=0)?rowIdx:
+        ((typeof getSelectedRowIndex==='function')?getSelectedRowIndex():-1);
+    if(idx<0){showToast(tr('请先勾选一条成本明细'));return;}
+    var row=fclFinRows(id)[idx];
+    if(!row){showToast(tr('未找到成本行'));return;}
+    var no=fclFinGet(id,row,'流水号'),cur=fclFinGet(id,row,'币别');
+    var total=fclParseMoney(fclFinGet(id,row,'实际金额'))||0;
+    var list=fclCostAllocOf(no);
+    var b='';
+    b+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
+       esc(no)+'　'+esc(fclFinGet(id,row,'服务商'))+'　'+esc(fclFinGet(id,row,'费用名称'))+
+       '　'+esc(fclFinGet(id,row,'Job No'))+
+       '<div class="mt-1 text-xs text-text-muted">'+tr('实际金额')+' '+esc(cur)+' '+total.toFixed(2)+
+       '　'+tr('分摊方式')+' '+(esc(fclFinGet(id,row,'分摊方式'))||'—')+
+       '　'+tr('成本状态')+' '+esc(tr(fclFinGet(id,row,'成本状态')))+'</div></div>';
+    if(!list.length){
+        b+='<div class="py-12 text-center text-sm text-text-muted">'+
+           esc(tr('这行还没有分摊，勾选后点「手工分摊」把成本摊到委托单。'))+'</div>';
+    }else{
+        b+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+           ['委托订单号','客户名称','业务类型','分摊金额','占比'].map(function(t){
+               return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';
+           }).join('')+'</tr></thead><tbody>';
+        list.forEach(function(r){
+            var isLcl=(r.orders||[]).length>0;
+            b+='<tr class="border-t border-surface-100">'+
+               '<td class="px-3 py-2 font-medium text-text-primary">'+esc(r.entrust)+'</td>'+
+               '<td class="px-3 py-2 text-text-secondary">'+esc(r.cust)+'</td>'+
+               '<td class="px-3 py-2"><span class="px-1.5 py-0.5 text-xs rounded border '+
+                 (isLcl?'border-amber-200 bg-amber-50 text-amber-700':'border-surface-200 bg-surface-50 text-text-secondary')+
+                 '">'+esc(r.biz||fclEntrustBizType(r.entrust))+'</span></td>'+
+               '<td class="px-3 py-2 text-text-primary">'+esc(cur)+' '+(+r.amt).toFixed(2)+'</td>'+
+               '<td class="px-3 py-2 text-text-secondary">'+(total?((r.amt/total*100).toFixed(2)+'%'):'—')+'</td></tr>';
+            /* 散货拼箱的委托单再展开一层，看到每票订单分了多少 */
+            if(isLcl){
+                b+='<tr class="border-t border-surface-100 bg-surface-50/60"><td colspan="5" class="px-3 py-2">'+
+                   '<div class="text-xs font-medium text-amber-700 mb-1">'+tr('散货订单明细')+'</div>'+
+                   '<table class="w-full text-xs"><thead><tr class="text-text-muted">'+
+                   '<th class="px-2 py-1 text-left font-medium">'+tr('散货订单号')+'</th>'+
+                   '<th class="px-2 py-1 text-left font-medium">'+tr('客户名称')+'</th>'+
+                   '<th class="px-2 py-1 text-left font-medium">'+tr('分摊金额')+'</th>'+
+                   '<th class="px-2 py-1 text-left font-medium">'+tr('占本委托单')+'</th></tr></thead><tbody>';
+                r.orders.forEach(function(o){
+                    b+='<tr><td class="px-2 py-1 text-text-primary">'+esc(o.no)+'</td>'+
+                       '<td class="px-2 py-1 text-text-secondary">'+esc(o.cust)+'</td>'+
+                       '<td class="px-2 py-1 text-text-primary">'+esc(cur)+' '+(+o.amt).toFixed(2)+'</td>'+
+                       '<td class="px-2 py-1 text-text-secondary">'+(r.amt?((o.amt/r.amt*100).toFixed(2)+'%'):'—')+'</td></tr>';
+                });
+                b+='</tbody></table></td></tr>';
+            }
+        });
+        var sum=list.reduce(function(s,r){return s+(+r.amt||0);},0);
+        b+='</tbody><tfoot><tr class="border-t-2 border-surface-200 bg-surface-50 font-medium">'+
+           '<td class="px-3 py-2" colspan="3">'+tr('合计')+'</td>'+
+           '<td class="px-3 py-2">'+esc(cur)+' '+sum.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2">'+(total?((sum/total*100).toFixed(2)+'%'):'—')+'</td></tr></tfoot>';
+        b+='</table></div>';
+    }
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='68%';
+    document.getElementById('crud-modal-title').textContent=tr('分摊成本明细')+' - '+no;
+    document.getElementById('crud-modal-body').innerHTML=b;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
 }

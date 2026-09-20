@@ -141,7 +141,7 @@ function generateListPage(id,page,statusFilter){
         h+='</div>';
         h+='</div>';
     }
-    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-ap-bill'||id==='fcl-agent-bill'||id==='fcl-ar-fee'||id==='fcl-ar-receipt'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust'||id==='oms-order-mgmt'||id==='oms-issue-mgmt'||id==='msg-config'||id==='msg-announce')){
+    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-ap-bill'||id==='fcl-agent-bill'||id==='fcl-ar-fee'||id==='fcl-ar-receipt'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust'||id==='oms-order-mgmt'||id==='oms-issue-mgmt'||id==='msg-config'||id==='msg-announce'||id==='fcl-agent-cost')){
         const statusCounts={};
         statusCounts['']=allData.length;
         c.s.forEach(s=>{statusCounts[s]=allData.filter(row=>{
@@ -210,7 +210,9 @@ function generateListPage(id,page,statusFilter){
             const msgReuseView=(id==='msg-inbox')?'openMsgInboxDetail':'';
             /* 代理账单：行内「查看」= 看这张发票按 Job No 给的费用明细，与工具栏「查看详情」同一入口 */
             const agentBillReuseView=(id==='fcl-agent-bill')?'openAgentBillDetail':'';
-            const reuseView=msgReuseView||omsReuseView||agentBillReuseView;
+            /* 代理成本明细：行内「查看」= 看这行成本分摊到各委托单（散货拼箱再到订单）的明细 */
+            const agentCostReuseView=(id==='fcl-agent-cost')?'openAgentCostDetail':'';
+            const reuseView=msgReuseView||omsReuseView||agentBillReuseView||agentCostReuseView;
             const viewClick=reuseView?(reuseView+'(\''+id+'\','+gi+')'):
                 ((id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':(id==='wh-pallet-info'?'openPalletInfoDetailModal(\''+id+'\','+gi+')':(id==='ow-pickup'?'openOverseasPickupDetail(\''+id+'\','+gi+')':(id==='ow-arrival'?'openOverseasArrivalDetail(\''+id+'\','+gi+')':(id==='ow-outbound'?'openOverseasOutboundDetail(\''+id+'\','+gi+')':(id==='cs-issue-track'?'openCsIssueViewModal(\''+id+'\','+gi+')':(id==='approval-mine'?'openApprovalDetail(\''+id+'\','+gi+')':(id==='approval-msg'?'openApprovalMsgDetail(\''+id+'\','+gi+')':((id==='ow-inventory'||id==='wh-stock-check')?'openOverseasInventoryDetail(\''+id+'\','+gi+')':(id==='ow-pallet-info'?'openOwPalletInfoDetailModal(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')')))))))))))));
             let actionHtml='';

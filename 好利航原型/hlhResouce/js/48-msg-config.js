@@ -14,7 +14,7 @@
  *     也可以改成全体员工 / 按组织架构 / 指定员工。
  *
  * 内容模版按侧各写一份：发客户和发内部的措辞本来就不一样。模版里用
- * ${订单号} 这样的占位符，事件触发时按单据取值替换 —— 订单号是主参数，
+ * ${运单号} 这样的占位符，事件触发时按单据取值替换 —— 运单号是唯一参数，
  * 新建时默认模版里就带着它。
  *
  * 依赖（都在更早加载的文件里）：
@@ -31,16 +31,10 @@ var MSG_CFG_BIZ_NODES=['订单已预报','已到仓','配舱完成','出仓完�
 var MSG_CFG_BIND_ROLES=['所属业务员','所属客服','所属操作'];
 
 /* 模版参数：${名称} 占位，事件触发时按单据取值替换。
- * 订单号排第一并且是默认模版的主参数 —— 收到消息第一件事是知道哪一票货。
+ * 目前只开放运单号一个 —— 收到消息第一件事是知道哪一票货，其余信息点进单据看。
  * 第二项是预览用的示例值，不是真实数据。 */
 var MSG_CFG_TPL_PARAMS=[
-    ['订单号','ORD-20260918001'],
-    ['运单号','HTL2609180012'],
-    ['客户名称','华运达国际货运'],
-    ['事件节点','已到仓'],
-    ['问题件类型','破损'],
-    ['发生时间','2026-09-18 14:30'],
-    ['经办人','李小飞']
+    ['运单号','HTL2609180012']
 ];
 function msgCfgTplParamNames(){return MSG_CFG_TPL_PARAMS.map(function(p){return p[0];});}
 
@@ -90,24 +84,24 @@ TC['msg-config'].noAutoAudit=true;
  * issues 空数组＝全部问题件类型；cust/emp 各自独立 on + 范围 + 模版。 */
 var _MSG_CFG_DETAIL={
     'MCFG-20260920001':{issues:['破损','开箱验货'],
-        cust:{on:true,mode:'bind',tpl:'您的订单 ${订单号} 在 ${发生时间} 登记了问题件（${问题件类型}），我们的客服 ${经办人} 会尽快与您联系。'},
+        cust:{on:true,mode:'bind',tpl:'您的运单 ${运单号} 登记了问题件，我们的客服会尽快与您联系。'},
         emp:{on:true,mode:'bind',binds:['所属客服','所属操作'],depts:[],ids:[],
-             tpl:'订单 ${订单号}（运单 ${运单号}）登记问题件：${问题件类型}，客户 ${客户名称}，请在 24 小时内跟进处理。'}},
+             tpl:'运单 ${运单号} 登记问题件，请在 24 小时内跟进处理。'}},
     'MCFG-20260920002':{issues:[],
         cust:{on:false,mode:'bind',tpl:''},
         emp:{on:true,mode:'bind',binds:['所属业务员'],depts:[],ids:[],
-             tpl:'订单 ${订单号} 的问题件已处理完成（${发生时间}），请确认后同步客户 ${客户名称}。'}},
+             tpl:'运单 ${运单号} 的问题件已处理完成，请确认后同步客户。'}},
     'MCFG-20260920003':{issues:[],
-        cust:{on:true,mode:'bind',tpl:'您好，您的订单 ${订单号} 已于 ${发生时间} 到达我司仓库，我们会尽快安排配舱。'},
+        cust:{on:true,mode:'bind',tpl:'您好，您的运单 ${运单号} 已到达我司仓库，我们会尽快安排配舱。'},
         emp:{on:true,mode:'bind',binds:['所属业务员','所属操作'],depts:[],ids:[],
-             tpl:'订单 ${订单号}（${客户名称}）已到仓，节点：${事件节点}，请安排后续配舱。'}},
+             tpl:'运单 ${运单号} 已到仓，请安排后续配舱。'}},
     'MCFG-20260920004':{issues:[],
-        cust:{on:true,mode:'bind',tpl:'您好，您的订单 ${订单号} 已于 ${发生时间} 签收完成，感谢您的支持。'},
+        cust:{on:true,mode:'bind',tpl:'您好，您的运单 ${运单号} 已签收完成，感谢您的支持。'},
         emp:{on:false,mode:'bind',binds:[],depts:[],ids:[],tpl:''}},
     'MCFG-20260920005':{issues:[],
         cust:{on:false,mode:'bind',tpl:''},
         emp:{on:true,mode:'pick',binds:[],depts:[],ids:['王红梅','黄小艳'],
-             tpl:'订单 ${订单号} 已出仓（${发生时间}），请留意后续装柜安排。'}}
+             tpl:'运单 ${运单号} 已出仓，请留意后续装柜安排。'}}
 };
 
 /* ===== 编辑弹窗状态 ===== */
@@ -118,16 +112,16 @@ function msgCfgNewCtx(){
         cust:{on:false,mode:'bind',tpl:''},
         emp:{on:true,mode:'bind',binds:['所属客服'],depts:[],ids:[],tpl:''}};
 }
-/* 新建时给一份带订单号的默认模版，别让人对着空框想措辞 */
+/* 新建时给一份带运单号的默认模版，别让人对着空框想措辞 */
 function msgCfgDefaultTpl(side,eventType){
     if(side==='cust'){
         return eventType==='问题件'
-            ?'您的订单 ${订单号} 在 ${发生时间} 登记了问题件（${问题件类型}），我们会尽快与您联系。'
-            :'您好，您的订单 ${订单号} 已于 ${发生时间} 更新至「${事件节点}」，请留意。';
+            ?'您的运单 ${运单号} 登记了问题件，我们会尽快与您联系。'
+            :'您好，您的运单 ${运单号} 状态已更新，请留意。';
     }
     return eventType==='问题件'
-        ?'订单 ${订单号}（运单 ${运单号}）登记问题件：${问题件类型}，客户 ${客户名称}，请及时跟进。'
-        :'订单 ${订单号}（${客户名称}）节点更新：${事件节点}，发生时间 ${发生时间}，请安排后续处理。';
+        ?'运单 ${运单号} 登记问题件，请及时跟进。'
+        :'运单 ${运单号} 节点已更新，请安排后续处理。';
 }
 function msgCfgNodesOf(eventType){
     return eventType==='业务节点'?MSG_CFG_BIZ_NODES:MSG_CFG_ISSUE_NODES;
@@ -281,7 +275,7 @@ function msgCfgToggleSide(side,on){
     msgCfgReadUI();
     var ctx=_msgCfgCtx;
     ctx[side].on=!!on;
-    /* 刚勾上且没写过模版的，补一份带订单号的默认模版 */
+    /* 刚勾上且没写过模版的，补一份带运单号的默认模版 */
     if(on&&!ctx[side].tpl)ctx[side].tpl=msgCfgDefaultTpl(side,ctx.eventType);
     var chip=document.querySelector('[data-msgcfg-chip="'+side+'"]');
     if(chip)chip.className='inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg cursor-pointer '+
@@ -411,7 +405,7 @@ function msgCfgTplPanel(side,isView){
        '<span class="text-red-500">*</span></div>';
     h+='<div class="p-3 space-y-2">';
     if(!isView){
-        /* 参数点一下插到光标处；订单号排第一并标出来，它是主参数 */
+        /* 参数点一下插到光标处。目前只有运单号一个参数，仍按列表渲染，加参数时不用改结构 */
         h+='<div class="flex items-center gap-1.5 flex-wrap">';
         h+='<span class="text-xs text-text-muted">'+tr('插入参数')+'</span>';
         MSG_CFG_TPL_PARAMS.forEach(function(p,i){
@@ -424,7 +418,7 @@ function msgCfgTplPanel(side,isView){
     }
     h+='<textarea id="msgcfg-tpl-'+side+'" data-cfg-tpl="'+side+'" rows="3"'+(isView?' disabled':' oninput="msgCfgTplChanged(\''+side+'\')"')+
        ' class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+
-       esc(tr('例：您的订单 ${订单号} 已到仓'))+'">'+esc(ctx[side].tpl)+'</textarea>';
+       esc(tr('例：您的运单 ${运单号} 已到仓'))+'">'+esc(ctx[side].tpl)+'</textarea>';
     h+='<div id="msgcfg-tplprev-'+side+'" class="text-xs">'+msgCfgTplPreviewHtml(side)+'</div>';
     h+='</div></div>';
     return h;
@@ -460,12 +454,12 @@ function msgCfgTplPreviewHtml(side){
         h+='<div class="mt-1 text-amber-700">'+esc(tr('这些参数不认识，发出去会原样显示'))+'：'+
            esc(pu.bad.map(function(b){return '${'+b+'}';}).join(' '))+'</div>';
     }
-    if(pu.used.indexOf('订单号')<0){
-        h+='<div class="mt-1 text-amber-700">'+esc(tr('建议带上 ${订单号}，收到的人才知道是哪一票货'))+'</div>';
+    if(pu.used.indexOf('运单号')<0){
+        h+='<div class="mt-1 text-amber-700">'+esc(tr('建议带上 ${运单号}，收到的人才知道是哪一票货'))+'</div>';
     }
     return h;
 }
-/* 插到光标处而不是末尾：模版常常要在句子中间插一个订单号 */
+/* 插到光标处而不是末尾：模版常常要在句子中间插一个运单号 */
 function msgCfgInsertParam(side,name){
     var el=document.getElementById('msgcfg-tpl-'+side);
     if(!el)return;

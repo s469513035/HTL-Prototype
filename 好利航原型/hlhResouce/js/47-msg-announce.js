@@ -26,27 +26,27 @@ var MSG_PRIORITY_OPTIONS=['普通','重要','紧急'];
  *    该页只管公告），列表里不再放类型列，新增弹窗也不出现类型字段。
  * ========================================================================== */
 addPrototypeTable('msg-announce','公告管理',
-    '公告编号|标题|业务分类|优先级|正文|附件|接收方|接收对象|触达人数|已读人数|阅读率|发布人|发布时间|状态|操作',
+    '公告编号|标题|业务分类|优先级|正文|附件|接收方|接收对象|触达人数|已读人数|阅读率|发布人|发布时间|截止时间|状态|操作',
     ['草稿','已发布','已作废'],[
     ['ANN-20260910001','2026 年国庆假期出货安排','假期安排','重要',
      '各位客户、同事：\n\n根据国家法定节假日安排，我司 2026 年国庆假期为 10 月 1 日至 10 月 7 日，共 7 天。\n\n一、收货安排\n1. 节前最后收货日：9 月 28 日 17:00（深圳/广州/上海仓同步）\n2. 节后恢复收货：10 月 8 日 09:00\n\n二、船期安排\n假期期间西非线正常开船，具体船期见附件。已订舱货物请于 9 月 28 日前送仓完毕。\n\n三、值班安排\n假期期间客服值班电话 0755-88888888，海外仓照常作业。\n\n请各位提前安排出货计划，谢谢配合。',
      '国庆船期表.xlsx;值班安排.pdf','客户+员工','客户: 按客户等级(A类)(3)；员工: 按组织架构(商务部)(3)',
-     '6','4','66.67%','张建国','2026-09-10 09:00','已发布'],
+     '6','4','66.67%','张建国','2026-09-10 09:00','2026-10-08 23:59','已发布'],
     ['ANN-20260912002','西非线 10 月起运价调整通知','价格政策','紧急',
      '尊敬的客户：\n\n受旺季舱位紧张及船司附加费上调影响，自 2026 年 10 月 1 日（以开船日为准）起，我司西非线运价调整如下：\n\n1. 深圳/广州 → 拉各斯：40HQ 上调 USD 150/柜\n2. 深圳/广州 → 特马：40HQ 上调 USD 150/柜\n3. 散货拼箱：上调 USD 8/CBM\n\n10 月 1 日前已订舱并完成送仓的货物按原价执行。\n\n如有疑问请联系您的对接业务员。',
      '10月运价表.pdf','客户','客户: 指定客户(2)',
-     '2','1','50.00%','李明辉','2026-09-12 14:30','已发布'],
+     '2','1','50.00%','李明辉','2026-09-12 14:30','2026-11-30 23:59','已发布'],
     ['ANN-20260914003','财务系统 9/20 停机升级，请提前完成月结','系统维护','重要',
      '财务部各位同事：\n\n为上线整柜代理成本模块，定于 2026 年 9 月 20 日（周日）00:00 - 04:00 进行停机升级。\n\n一、影响范围\n应收账单、收款核销、应付账单、付款登记、银行流水匹配全部不可用。\n\n二、请提前完成\n1. 9 月 19 日 18:00 前完成当月已确认账单的核销\n2. 待付款的应付账单请在 19 日前完成付款登记，避免跨期\n3. 升级期间如有紧急付款，走线下审批并于 20 日补录\n\n三、升级内容\n新增「代理账单导入 → 两级分摊 → 对账 → 付款申请」全链路，升级后请留意新菜单。',
      '','员工','员工: 按组织架构(财务部)(9)',
-     '9','3','33.33%','张建国','2026-09-14 18:00','已发布'],
+     '9','3','33.33%','张建国','2026-09-14 18:00','2026-09-20 23:59','已发布'],
     ['ANN-20260915004','本周五全仓盘点，仓库组请配合','操作规范','普通',
      '仓库组同事：\n\n本周五（9 月 19 日）进行月度全仓盘点，安排如下：\n\n1. 当日 08:00 起暂停出库作业，入库正常\n2. 盘点使用 PDA「国内库存盘点」功能，按货区分组\n3. 盘点差异当日 18:00 前提交操作主管复核\n\n请提前通知已预约当日提货的客户改期。',
      '','员工','员工: 指定员工(2)',
-     '2','0','0.00%','王海波','2026-09-15 08:30','已发布'],
+     '2','0','0.00%','王海波','2026-09-15 08:30','2026-09-19 23:59','已发布'],
     ['ANN-20260916005','11 月西非船期预告','船期航线','普通',
      '（拟稿中）11 月西非线船期预排表见附件，最终以船司确认为准。',
-     '','','','0','0','','','','草稿']
+     '','','','0','0','','','','2026-11-30 23:59','草稿']
 ],[
     {label:'公告编号',type:'text'},
     {label:'标题',type:'text'},
@@ -57,9 +57,10 @@ addPrototypeTable('msg-announce','公告管理',
 ]);
 /* 正文太长，不进列表；点「查看详情」看得到 */
 TC['msg-announce'].listHiddenHeaders=['正文'];
-/* 接收方/接收对象在发布弹窗里选，统计与发布信息由系统回写，都不给人手填 */
+/* 接收方/接收对象在发布弹窗里选，统计与发布信息由系统回写，都不给人手填。
+ * 截止时间在自己的邮件式弹窗里填，不走通用弹窗。 */
 TC['msg-announce'].modalExcludedFields=['接收方','接收对象','触达人数','已读人数','阅读率',
-    '发布人','发布时间','状态'];
+    '发布人','发布时间','截止时间','状态'];
 TC['msg-announce'].fieldOptions={
     '业务分类':MSG_CATEGORY_OPTIONS,'优先级':MSG_PRIORITY_OPTIONS
 };
@@ -731,8 +732,14 @@ function msgBodyCardHtml(an){
        '<span class="px-1.5 py-0.5 rounded border '+msgPriorityCls(g('优先级'))+'">'+esc(tr(g('优先级')))+'</span>'+
        '<span class="px-1.5 py-0.5 rounded border border-surface-200 bg-surface-50 text-text-secondary">'+esc(g('业务分类'))+'</span>'+
        '</div></div>';
-    h+='<div class="text-xs text-text-muted text-right">'+esc(g('发布人'))+'　'+esc(g('发布时间'))+'</div>';
+    h+='<div class="text-xs text-text-muted text-right">'+esc(g('发布人'))+'　'+esc(g('发布时间'))+
+       '<div class="mt-0.5">'+tr('截止时间')+'：'+esc(msgDeadlineText(g('截止时间')))+'</div></div>';
     h+='</div>';
+    /* 过了截止时间的公告仍能打开（历史留痕），但要明说已经过期，别被当成还生效的通知 */
+    if(msgIsExpired(g('截止时间'))){
+        h+='<div class="mb-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 text-xs text-amber-700">'+
+           esc(tr('这条公告已过截止时间（'))+esc(g('截止时间'))+esc(tr('），内容仅供追溯。'))+'</div>';
+    }
     h+='<div class="rounded-lg border border-surface-200 bg-surface-50 px-4 py-3 text-sm text-text-primary leading-relaxed msg-body-view">'+
        msgBodyRenderHtml(g('正文'))+'</div>';
     var att=g('附件');
@@ -840,6 +847,34 @@ function openMsgReadDetail(id){
  * 正文存 HTML。老种子是带 \n 的纯文本，msgBodyRenderHtml 按内容判断：
  * 认出标签就原样渲染，否则转义后按换行显示，两种都不会串版。
  * ========================================================================== */
+/* ---------- 截止时间 ----------
+ * 存的格式跟发布时间一致（'YYYY-MM-DD HH:mm'），datetime-local 控件要的是
+ * 'YYYY-MM-DDTHH:mm'，两边各转一次；留空＝长期有效。 */
+function msgDeadlineToInput(s){
+    s=String(s||'').trim();
+    if(!s)return '';
+    return s.replace(' ','T').slice(0,16);
+}
+function msgDeadlineFromInput(s){
+    s=String(s||'').trim();
+    if(!s)return '';
+    return s.replace('T',' ').slice(0,16);
+}
+/* 过期判定统一走这里：留空永不过期；比不出来（格式怪）也当没过期，
+ * 宁可多显示一条也不要把还有效的公告藏起来。 */
+function msgIsExpired(deadline,now){
+    var d=String(deadline||'').trim();
+    if(!d)return false;
+    var n=now||(typeof fclNow==='function'?fclNow():'');
+    n=String(n||'').slice(0,16);
+    if(!n)return false;
+    return d.slice(0,16)<n;
+}
+function msgDeadlineText(deadline){
+    var d=String(deadline||'').trim();
+    if(!d)return tr('长期有效');
+    return d+(msgIsExpired(d)?'（'+tr('已过期')+'）':'');
+}
 function msgBodyLooksHtml(s){
     return /<(p|div|br|ul|ol|li|b|strong|i|em|u|span|h[1-6]|font|table)\b[^>]*>/i.test(String(s||''));
 }
@@ -956,6 +991,12 @@ function openMsgAnnounceModal(mode,id,rowIdx,rowData){
     b+='<span class="inline-flex items-center gap-2"><label class="text-sm text-text-secondary whitespace-nowrap">'+tr('优先级')+'</label>'+
        '<select id="msg-ann-priority" class="h-9 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50">'+
        selectOptionsHtml(MSG_PRIORITY_OPTIONS,g('优先级')||'普通')+'</select></span>';
+    /* 截止时间：过了这个点公告在各端不再展示（留空＝长期有效）。
+     * 用 datetime-local，公告常常要精确到某天几点收工，只给日期不够。 */
+    b+='<span class="inline-flex items-center gap-2"><label class="text-sm text-text-secondary whitespace-nowrap">'+tr('截止时间')+'</label>'+
+       '<input id="msg-ann-deadline" type="datetime-local" value="'+esc(msgDeadlineToInput(g('截止时间')))+'" '+
+       'class="h-9 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50">'+
+       '<span class="text-xs text-text-muted">'+esc(tr('留空＝长期有效'))+'</span></span>';
     b+='</div>';
     /* 附件 */
     b+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('附件')+'</label>'+
@@ -986,6 +1027,7 @@ function submitMsgAnnounce(){
         '标题':title,
         '业务分类':String((el('msg-ann-category')||{}).value||''),
         '优先级':String((el('msg-ann-priority')||{}).value||'普通'),
+        '截止时间':msgDeadlineFromInput((el('msg-ann-deadline')||{}).value),
         '正文':body,
         '附件':(typeof crudAttachmentNames==='function')?crudAttachmentNames():''
     };
@@ -1024,7 +1066,9 @@ function openMsgAnnounceView(id,rowIdx,rowData){
     /* 信头：谁发的、发给谁、看了多少 */
     b+='<div class="rounded-lg border border-surface-200 bg-surface-50/60 px-3 py-2.5 text-xs text-text-secondary space-y-1">';
     b+='<div><span class="text-text-muted">'+tr('发布人')+'：</span>'+(esc(g('发布人'))||'—')+
-       '　<span class="text-text-muted">'+tr('发布时间')+'：</span>'+(esc(g('发布时间'))||'—')+'</div>';
+       '　<span class="text-text-muted">'+tr('发布时间')+'：</span>'+(esc(g('发布时间'))||'—')+
+       '　<span class="text-text-muted">'+tr('截止时间')+'：</span>'+
+       '<span class="'+(msgIsExpired(g('截止时间'))?'text-red-600 font-medium':'')+'">'+esc(msgDeadlineText(g('截止时间')))+'</span></div>';
     b+='<div><span class="text-text-muted">'+tr('接收方')+'：</span>'+(esc(g('接收方'))||'—')+'</div>';
     b+='<div><span class="text-text-muted">'+tr('接收对象')+'：</span>'+(esc(g('接收对象'))||'—')+'</div>';
     b+='<div><span class="text-text-muted">'+tr('触达人数')+'：</span><span class="font-semibold">'+(esc(g('触达人数'))||'0')+'</span>'+

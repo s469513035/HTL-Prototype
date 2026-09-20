@@ -1533,18 +1533,18 @@ function confirmBillHeadImport(id){
 /* ==========================================================================
  * 七、代理成本明细 · 手工分摊
  *
- * 业务口径（2026-09-20 修正）：一个 Job 要么是整柜，要么是散货拼箱，不会混。
+ * 业务口径（2026-09-20 修正）：一个 Job 要么是整柜，要么是散拼，不会混。
  *   整柜    ：一个 Job 可以带多张整柜委托单（拼柜共用一个柜），
  *             成本摊到「委托单」这一层就到底了。
- *   散货拼箱：Job 与散货拼箱委托单是一对一，委托单这一层没什么好摊的，
+ *   散拼：Job 与散拼委托单是一对一，委托单这一层没什么好摊的，
  *             要摊的是这张委托单底下的每票散货订单，否则单票毛利算不出来。
  * 所以分摊弹窗只出一层：整柜出委托单层，散货出散货订单层，不做两层嵌套。
  *
  * 结果存 _FCL_COST_ALLOC[流水号]，行内「查看」看的就是它。
  * ========================================================================== */
 
-/* 自由散货拼箱委托单 → 旗下散货订单（含分摊基数）。
- * 登记在这里的委托单＝散货拼箱业务，它所在的 Job 只会有它这一张委托单。 */
+/* 散拼委托单 → 旗下散货订单（含分摊基数）。
+ * 登记在这里的委托单＝散拼业务，它所在的 Job 只会有它这一张委托单。 */
 var _FCL_LCL_ORDERS={
     'FEO-20260609007':[
         {no:'LCL-20260609071',cust:'深圳市华运达国际货运',goods:'针织服装',pcs:60,cbm:18.0,kg:2400},
@@ -1554,7 +1554,7 @@ var _FCL_LCL_ORDERS={
 };
 function fclLclOrdersOf(entrust){return _FCL_LCL_ORDERS[entrust]||[];}
 function fclIsLclEntrust(entrust){return fclLclOrdersOf(entrust).length>0;}
-function fclEntrustBizType(entrust){return fclIsLclEntrust(entrust)?'自由散货拼箱':'整柜';}
+function fclEntrustBizType(entrust){return fclIsLclEntrust(entrust)?'散拼':'整柜';}
 
 /* 柜内票清单里这个 Job 关联的委托单（带分摊基数） */
 function fclEntrustsOfJob(job){
@@ -1575,7 +1575,7 @@ function fclEntrustsOfJob(job){
     });
     return out;
 }
-/* Job 的分摊层级：散货拼箱摊到订单，整柜摊到委托单。
+/* Job 的分摊层级：散拼摊到订单，整柜摊到委托单。
  * 按口径一个 Job 不会同时挂两种委托单，真出现了就按散货算（更细的那层） */
 function fclJobAllocMode(job){
     var ents=fclEntrustsOfJob(job);
@@ -1623,13 +1623,13 @@ function openAgentCostAlloc(id){
     if(!ents.length){showToast(tr('这个 Job 在柜内票清单里没有委托单，先维护柜内票再分摊'));return;}
     var mode=fclJobAllocMode(job);
     var entrust=mode==='lcl'?ents.filter(function(e){return fclIsLclEntrust(e.entrust);})[0].entrust:'';
-    /* 散货拼箱只有一张委托单，摊的是它底下的散货订单；整柜摊的是各张委托单 */
+    /* 散拼只有一张委托单，摊的是它底下的散货订单；整柜摊的是各张委托单 */
     var base=mode==='lcl'
         ?fclLclOrdersOf(entrust).map(function(o){
             return {key:o.no,name:o.goods,cust:o.cust,pcs:o.pcs,cbm:o.cbm,kg:o.kg,amt:''};})
         :ents.map(function(e){
             return {key:e.entrust,name:'',cust:e.cust,pcs:e.pcs,cbm:e.cbm,kg:e.kg,amt:''};});
-    if(mode==='lcl'&&!base.length){showToast(tr('这张散货拼箱委托单底下没有散货订单，先维护订单再分摊'));return;}
+    if(mode==='lcl'&&!base.length){showToast(tr('这张散拼委托单底下没有散货订单，先维护订单再分摊'));return;}
     var no=fclFinGet(id,row,'流水号');
     var saved=fclCostAllocOf(no);
     if(saved&&saved.mode===mode){
@@ -1656,11 +1656,11 @@ function costAllocBodyHtml(id,row){
        esc(fclFinGet(id,row,'服务商'))+'　'+esc(fclFinGet(id,row,'费用名称'))+'　'+esc(A.job)+'　'+
        '<span class="px-1.5 py-0.5 text-xs rounded border '+
        (isLcl?'border-amber-200 bg-amber-50 text-amber-700':'border-surface-200 bg-white text-text-secondary')+'">'+
-       tr(isLcl?'自由散货拼箱':'整柜')+'</span>　'+
+       tr(isLcl?'散拼':'整柜')+'</span>　'+
        tr('待分摊')+' <span class="font-semibold text-text-primary">'+esc(A.currency)+' '+A.total.toFixed(2)+'</span>'+
        '<div class="mt-1 text-xs text-text-muted">'+
        esc(isLcl
-           ? tr('散货拼箱的 Job 与委托单是一对一（')+A.entrust+tr('），成本直接摊到这张委托单底下的 ')+A.rows.length+tr(' 票散货订单')
+           ? tr('散拼的 Job 与委托单是一对一（')+A.entrust+tr('），成本直接摊到这张委托单底下的 ')+A.rows.length+tr(' 票散货订单')
            : tr('整柜的 Job 可以带多张委托单，这个 Job 带了 ')+A.rows.length+tr(' 张，成本摊到委托单为止'))+
        '</div></div>';
     h+='<div class="flex items-center gap-2 mb-2 flex-wrap">';
@@ -1801,7 +1801,7 @@ function openAgentCostDetail(id,rowIdx){
        esc(no)+'　'+esc(fclFinGet(id,row,'服务商'))+'　'+esc(fclFinGet(id,row,'费用名称'))+'　'+esc(job)+'　'+
        '<span class="px-1.5 py-0.5 text-xs rounded border '+
        (isLcl?'border-amber-200 bg-amber-50 text-amber-700':'border-surface-200 bg-white text-text-secondary')+'">'+
-       tr(isLcl?'自由散货拼箱':'整柜')+'</span>'+
+       tr(isLcl?'散拼':'整柜')+'</span>'+
        '<div class="mt-1 text-xs text-text-muted">'+tr('实际金额')+' '+esc(cur)+' '+total.toFixed(2)+
        '　'+tr('分摊方式')+' '+(esc(fclFinGet(id,row,'分摊方式'))||'—')+
        '　'+tr('成本状态')+' '+esc(tr(fclFinGet(id,row,'成本状态')))+
@@ -2444,7 +2444,7 @@ function submitApWriteOff(){
 var FCL_INTERNAL_BRANCHES=['广州分公司','深圳分公司','上海分公司','义乌分公司'];
 function fclIsInternalBranch(name){return FCL_INTERNAL_BRANCHES.indexOf(String(name||''))>=0;}
 
-/* 散货拼箱的应收明细：委托单号 → 各票散货订单的应收。
+/* 散拼的应收明细：委托单号 → 各票散货订单的应收。
  * 整柜那条的应收/已收/未收就是这里按费用科目汇总出来的。 */
 var _FCL_LCL_AR={
     'FEO-20260609007':[
@@ -2645,7 +2645,7 @@ function openArFeeDetail(id,rowIdx){
         if(roll){
             b+='<div>';
             b+='<div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
-               '<span class="text-sm font-semibold text-text-primary">'+tr('散货拼箱应收明细')+'</span>'+
+               '<span class="text-sm font-semibold text-text-primary">'+tr('散拼应收明细')+'</span>'+
                '<span class="text-xs text-text-muted">'+
                esc(tr('委托方是')+cust+tr('（自拼柜），上面整柜的应收/已收/未收就是这几票统计出来的'))+'</span></div>';
             b+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+

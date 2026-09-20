@@ -215,7 +215,7 @@ function generateListPage(id,page,statusFilter){
             const msgReuseView=(id==='msg-inbox')?'openMsgInboxDetail':'';
             /* 代理账单：行内「查看」= 看这张发票按 Job No 给的费用明细，与工具栏「查看详情」同一入口 */
             const agentBillReuseView=(id==='fcl-agent-bill')?'openAgentBillDetail':'';
-            /* 代理成本明细：行内「查看」= 看这行成本分摊到各委托单（散货拼箱再到订单）的明细 */
+            /* 代理成本明细：行内「查看」= 看这行成本分摊到各委托单（散拼再到订单）的明细 */
             const agentCostReuseView=(id==='fcl-agent-cost')?'openAgentCostDetail':'';
             /* 付款单管理：行内「查看」= 看这张付款单是由哪些费用行凑出来的 */
             const apBillReuseView=(id==='fcl-ap-bill')?'openApBillDetail':'';

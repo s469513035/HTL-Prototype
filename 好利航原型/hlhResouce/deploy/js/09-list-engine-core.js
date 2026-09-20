@@ -994,7 +994,6 @@ function renderToolbarAction(action,id){
     else if(action.key==='msgInboxDetail')click='openMsgInboxDetail(\''+id+'\')';
     else if(action.key==='msgMarkRead')click='markMsgRead(\''+id+'\')';
     else if(action.key==='msgMarkAllRead')click='markAllMsgRead(\''+id+'\')';
-    else if(action.key==='importBillHead')click='openBillHeadImport(\''+id+'\')';
     else if(action.key==='voidAgentBill')click='voidAgentBillRows(\''+id+'\')';
     else if(action.key==='voidEstCost')click='voidEstCostRows(\''+id+'\')';
     else if(action.key==='agentBillDetail')click='openSelectedAgentBillDetail(\''+id+'\')';
@@ -1603,15 +1602,15 @@ function getToolbarActions(id){
             /* 去掉「编辑数据」与「查看详情」：改发票走重新导入，看明细走行内「查看」 */
             for(var bi=base.length-1;bi>=0;bi--)if(base[bi].type==='edit'||base[bi].type==='view')base.splice(bi,1);
             /* 对账 → 确认费用（待请款）→ 生成账单（待审核）；明细看行内「查看」 */
-            base.push({key:'importBillHead',label:'账单导入'},
-                {key:'agentBillReconcile',label:'对账',variant:'primary'},
+            base.push({key:'agentBillReconcile',label:'对账',variant:'primary'},
                 {key:'agentBillGenAp',label:'生成付款单',variant:'primary'},
                 {key:'voidAgentBill',label:'作废账单',variant:'danger'});
         }
         /* 代理成本明细：对账/差异分析/付款都已前移到「代理账单」那一步，
          * 这一页只剩看明细和手工分摊；行内「查看」看的是分摊到委托单的成本明细 */
         if(id==='fcl-agent-cost'){
-            for(var ci=base.length-1;ci>=0;ci--)if(base[ci].type==='view')base.splice(ci,1);
+            /* 成本行由代理账单落下来，页面上不给新增/编辑；查看走行内「查看」 */
+            for(var ci=base.length-1;ci>=0;ci--)if(base[ci].type==='view'||base[ci].type==='add'||base[ci].type==='edit')base.splice(ci,1);
             base.push({key:'allocAgentCost',label:'手工分摊',variant:'primary'});
         }
         /* 单票成本明细全部由二级分摊生成，页面上不给新增/编辑 */
@@ -1792,7 +1791,7 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
+var _rowNoEditIds=['fcl-agent-cost','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
 /* 单票成本明细全部由「分摊到票」生成，手工编辑会让它和来源成本行对不上 */
 'fcl-shipment-cost',
 /* 代理账单按供应商发票导入，费用明细挂在 Job No 上；改发票要走重新导入，不给行内编辑 */

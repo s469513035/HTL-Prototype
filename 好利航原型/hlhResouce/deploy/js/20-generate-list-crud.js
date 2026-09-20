@@ -200,8 +200,8 @@ function generateListPage(id,page,statusFilter){
             var deleteAction=(id==='wb-manage'||id==='wb-client-manage')?'cancel':'delete';
             const rowBg=gi%2===1?'#F9FAFB':'#FFFFFF';
             const airScanIds=['wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan'];
-            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','fcl-agent-bill'].concat(airScanIds).includes(id);
-            const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','msg-config'].concat(airScanIds).includes(id);
+            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','fcl-agent-bill','fcl-agent-cost'].concat(airScanIds).includes(id);
+            const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','msg-config','fcl-agent-cost'].concat(airScanIds).includes(id);
             /* OMS 订单/问题件/账单的「查看」与双击走同一个入口（TMS 明细弹窗 / 账单明细）；
              * 不往下面那条已经很深的三元链上再套两层。 */
             const omsReuseView=(id==='oms-order-mgmt'||id==='oms-issue-mgmt'||id==='oms-bill')?omsDblMap[id]:'';
@@ -446,6 +446,11 @@ function openCrudModal(mode,id,rowIdx){
     if(id==='prod-price-lcl'&&(mode==='add'||mode==='edit'||mode==='copy'||mode==='view')){
         openLclQuoteModal(mode,id,rowIdx,rowData);
         markCustomModalRequired(id,mode);
+        return;
+    }
+    /* 代理账单：新增与导入合并成一个弹窗（抬头 + 明细可上传可手填 + 附件） */
+    if(id==='fcl-agent-bill'&&mode==='add'){
+        openAgentBillCreateModal(id);
         return;
     }
     if(id==='msg-config'&&(mode==='add'||mode==='edit'||mode==='view')){

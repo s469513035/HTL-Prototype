@@ -95,7 +95,7 @@ TC['fcl-release-tpl'].fieldOptions={
 
 /* ==========================================================================
  * 二、⑤ 整柜财务 —— 重新设计为 5 张表
- *   成本侧：预估成本明细 → 代理账单 → 代理成本明细 → 应付账单管理
+ *   成本侧：预估成本明细 → 代理账单 → 代理成本明细 → 付款单管理
  *   收入侧：应收费用明细 → 应收收款管理
  *   五张表都挂在 Job No 上，一票整柜的钱从头到尾能串起来。
  * ========================================================================== */
@@ -165,18 +165,22 @@ TC['fcl-agent-cost'].fieldOptions={
 /* 服务商账单号是代理给的号，不能被「编号」启发式判成系统自动生成而变只读 */
 TC['fcl-agent-cost'].modalFieldTypes={'服务商账单号':'text'};
 
-/* ③ 应付账单管理 —— 按服务商汇总的应付，并入付款执行（原「付款管理」不再单开一页）
- * 改造后不再手工新增：由「代理实际成本 → 付款申请」按 服务商+币别 分组生成，
- * 走「待审批 → 待付款 → 部分付款/已付清」三段，驳回则回到申请人手里重开。 */
-addPrototypeTable('fcl-ap-bill','应付账单管理',
-    '应付账单号|付款申请号|服务商|账单周期|涉及Job数|费用行数|币别|应付金额|已付金额|待付金额|账期|付款用途|期望付款时间|到期日|收款账号|申请人|申请时间|审批人|审批时间|付款方式|付款时间|付款水单|账单状态|操作',
+/* ③ 付款单管理（原「应付账单管理」）—— 按服务商汇总的应付，并入付款执行
+ * 不手工新增：由「代理账单 → 生成付款单」按服务商生成。
+ * 走「待审批 → 待付款 → 部分付款/已付清」三段，驳回则回到申请人手里重开；
+ * 付款环节是「付款核销」——挑这家服务商的付款流水来冲这张付款单，不是手敲金额。 */
+addPrototypeTable('fcl-ap-bill','付款单管理',
+    '付款单号|付款申请号|服务商|账单周期|涉及Job数|费用行数|币别|应付金额|已付金额|待付金额|账期|付款用途|期望付款时间|到期日|收款账号|申请人|申请时间|审批人|审批时间|付款方式|付款时间|付款水单|账单状态|操作',
     ['待审批','审批驳回','待付款','部分付款','已付清','已作废'],[
     ['FAP-20260613001','PAY-20260616001','MAERSK','2026-06','2','3','USD','8320','0','8320','月结30天','海运费及附加费','2026-07-10','2026-07-13','MAERSK CHINA / 汇丰 808-***-221','张财务','2026-06-16 10:40','','','','','','待审批'],
     ['FAP-20260612002','PAY-20260615002','COSCO','2026-06','1','1','USD','5180','5180','0','票结','海运费','2026-06-18','2026-06-20','中远海运 / 中行 4563-***-118','张财务','2026-06-15 14:10','财务主管','2026-06-15 17:00','电汇','2026-06-18 15:30','水单_COSCO_0618.pdf','已付清'],
     ['FAP-20260610003','PAY-20260610003','鹏程拖车','2026-06','3','5','CNY','5400','2000','3400','月结15天','拖车费','2026-06-28','2026-06-30','深圳鹏程运输 / 招行 6225-***-905','李操作','2026-06-10 09:20','财务主管','2026-06-10 15:30','电汇','2026-06-20 11:00','水单_鹏程_0620.pdf','部分付款'],
-    ['FAP-20260605004','PAY-20260602004','深圳报关行','2026-05','4','4','CNY','1680','1680','0','月结30天','报关费','2026-06-04','2026-06-05','深圳市中远报关 / 工行 4000-***-772','李操作','2026-06-02 08:50','财务主管','2026-06-03 11:00','电汇','2026-06-04 16:20','水单_报关行_0604.pdf','已付清']
+    ['FAP-20260605004','PAY-20260602004','深圳报关行','2026-05','4','4','CNY','1680','1680','0','月结30天','报关费','2026-06-04','2026-06-05','深圳市中远报关 / 工行 4000-***-772','李操作','2026-06-02 08:50','财务主管','2026-06-03 11:00','电汇','2026-06-04 16:20','水单_报关行_0604.pdf','已付清'],
+    /* 同服务商同币别两张「待付款」：用来演示批量核销（MAERSK 名下还有 USD 流水余额） */
+    ['FAP-20260614005','PAY-20260617005','MAERSK','2026-06','1','2','USD','4200','0','4200','月结30天','海运费','2026-07-12','2026-07-15','MAERSK CHINA / 汇丰 808-***-221','张财务','2026-06-17 09:10','财务主管','2026-06-17 15:20','','','','待付款'],
+    ['FAP-20260614006','PAY-20260617006','MAERSK','2026-06','1','1','USD','1200','0','1200','月结30天','目的港THC','2026-07-12','2026-07-15','MAERSK CHINA / 汇丰 808-***-221','张财务','2026-06-17 09:15','财务主管','2026-06-17 15:22','','','','待付款']
 ],[
-    {label:'应付账单号',type:'text'},
+    {label:'付款单号',type:'text'},
     {label:'付款申请号',type:'text'},
     {label:'服务商',type:'select',options:FCL_AGENT_OPTIONS},
     {label:'账单周期',type:'text'},
@@ -511,72 +515,7 @@ function confirmAgentBillImport(id){
 
 /* 手工分摊已重写为「Job 成本 → 委托单 →（自由散货拼箱再往下）散货订单」，见 js/45-fcl-agent-cost.js */
 
-/* ③ 应付账单管理：付款登记 —— 累加已付、倒算待付、据此定状态 */
-var _apPayCtx={id:'',idx:-1};
-function openApBillPay(id){
-    id=id||'fcl-ap-bill';
-    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
-    if(!idxs.length){showToast(tr('请先勾选需要付款的账单'));return;}
-    if(idxs.length>1){showToast(tr('付款登记一次只能选一张账单'));return;}
-    var row=fclFinRows(id)[idxs[0]];
-    if(!row){showToast(tr('未找到账单'));return;}
-    /* 付款只接审批通过之后的两种状态；待审批/驳回/已付清/已作废一律挡在门外 */
-    var st=fclFinGet(id,row,'账单状态');
-    if(['待付款','部分付款'].indexOf(st)<0){
-        showToast(tr('该账单为')+'「'+tr(st)+'」，'+tr('只有审批通过的「待付款 / 部分付款」账单才能付款'));return;
-    }
-    _apPayCtx={id:id,idx:idxs[0]};
-    var due=fclParseMoney(fclFinGet(id,row,'待付金额'));
-    var panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='46%';
-    document.getElementById('crud-modal-title').textContent=tr('付款登记')+' - '+fclFinGet(id,row,'应付账单号');
-    var b='';
-    b+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
-       esc(fclFinGet(id,row,'服务商'))+'　'+esc(fclFinGet(id,row,'账单周期'))+'　'+
-       tr('应付')+' '+esc(fclFinGet(id,row,'币别'))+' '+esc(fclFinGet(id,row,'应付金额'))+
-       '　'+tr('已付')+' '+esc(fclFinGet(id,row,'已付金额')||'0')+
-       '　<span class="font-semibold text-text-primary">'+tr('待付')+' '+esc(fclFinGet(id,row,'待付金额'))+'</span></div>';
-    [['本次付款金额','pay-amt','number',due===null?'':String(due)],
-     ['付款方式','pay-way','select',''],['付款时间','pay-time','datetime-local',''],
-     ['付款水单','pay-slip','text','']].forEach(function(f){
-        b+='<div class="mb-3" data-pay-field="'+f[1]+'"><label class="text-xs text-text-secondary mb-1 block">'+tr(f[0])+
-           (f[1]==='pay-amt'?'<span class="text-red-500 ml-1">*</span>':'')+'</label>';
-        if(f[2]==='select'){
-            b+='<select id="'+f[1]+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+
-               ['电汇','支票','承兑','现金'].map(function(o){return '<option value="'+o+'">'+tr(o)+'</option>';}).join('')+'</select>';
-        }else{
-            b+='<input id="'+f[1]+'" type="'+f[2]+'" value="'+esc(f[3])+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">';
-        }
-        b+='</div>';
-    });
-    document.getElementById('crud-modal-body').innerHTML=b;
-    document.getElementById('crud-modal-footer').innerHTML=
-        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
-        '<button onclick="submitApBillPay()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认付款')+'</button>';
-    document.getElementById('crud-modal').classList.add('show');
-}
-function submitApBillPay(){
-    var id=_apPayCtx.id,row=fclFinRows(id)[_apPayCtx.idx];
-    if(!row){showToast(tr('未找到账单'));return;}
-    var el=document.getElementById('pay-amt');
-    var amt=fclParseMoney(el?el.value:'');
-    if(amt===null||amt<=0){showToast(tr('请填写大于 0 的付款金额'));return;}
-    var total=fclParseMoney(fclFinGet(id,row,'应付金额'))||0;
-    var paid=(fclParseMoney(fclFinGet(id,row,'已付金额'))||0)+amt;
-    if(paid>total){showToast(tr('本次付款后已付金额超过应付金额，请核对'));return;}
-    var left=total-paid;
-    fclFinSet(id,row,'已付金额',String(paid));
-    fclFinSet(id,row,'待付金额',String(left));
-    var w=document.getElementById('pay-way'),t=document.getElementById('pay-time'),s=document.getElementById('pay-slip');
-    if(w&&w.value)fclFinSet(id,row,'付款方式',w.value);
-    if(t&&t.value)fclFinSet(id,row,'付款时间',t.value);
-    if(s&&s.value)fclFinSet(id,row,'付款水单',s.value);
-    /* 审批人/审批时间在审批环节就写好了，这里不要覆盖 */
-    fclFinSet(id,row,'账单状态',left===0?'已付清':'部分付款');
-    closeCrudModal();
-    fclFinRefresh(id);
-    showToast(tr('已登记付款')+' '+amt+'，'+tr('待付')+' '+left+'，'+tr('状态转为')+'「'+tr(left===0?'已付清':'部分付款')+'」');
-}
+/* 付款登记已改为「付款核销」（挑服务商付款流水冲账），见 js/45-fcl-agent-cost.js */
 /* ⑤ 应收收款管理：核销 / 反核销 */
 var _arWriteOffCtx={id:'',idx:-1};
 function openArReceiptWriteOff(id){
@@ -1855,7 +1794,7 @@ var FCL_SOP_STEPS=[
  output:'请款单 FPR → 付款单 FPY；状态 已付款 → 已核销',
  sla:'CMA 开船日 +10 天；其他船公司约 +14 天',
  caution:'期望付款时间由操作录入、提交后不可改；实际付款时间由财务录入。系统按两者差异做资金盘点。票结由操作部逐票发起，月结由财务按月汇总。',
- tabs:[['应付账单管理','fcl-ap-bill','fcl']]},
+ tabs:[['付款单管理','fcl-ap-bill','fcl']]},
 
 {no:'⑭',name:'应收与放单',sop:'SOP-FCL-14',stage:'fin',role:'财务（应收）、操作员（发起放单）',
  trigger:'客户付款到账 / 操作员发起放单申请',
@@ -1895,7 +1834,7 @@ var FCL_FUNC_MAP=[
 {group:'⑤ 整柜财务',hint:'成本侧 预估→实际→应付账单；收入侧 应收明细→收款',items:[
     ['预估成本明细','fcl-est-cost','fcl','订舱时按 Job 拆出的成本基线，后面拿它跟代理成本明细比'],
     ['代理成本明细','fcl-agent-cost','fcl','服务商报来的实际金额，按 Job 一费一行，手工分摊到委托单'],
-    ['应付账单管理','fcl-ap-bill','fcl','按服务商汇总的应付，并入付款登记'],
+    ['付款单管理','fcl-ap-bill','fcl','按服务商汇总的应付，挑付款流水核销'],
     ['应收费用明细','fcl-ar-fee','fcl','按 Job 的应收逐项，收款核销时冲这里的未收金额'],
     ['应收收款管理','fcl-ar-receipt','fcl','客户打款认领与核销，自动冲减应收明细']]},
 {group:'⚙ 整柜规则（业务配置）',hint:'规则外置，业务可自行维护',items:[

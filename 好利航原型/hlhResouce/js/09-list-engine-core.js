@@ -1000,8 +1000,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='agentBillReconcile')click='openAgentBillReconcile(\''+id+'\')';
     else if(action.key==='agentBillGenAp')click='openAgentBillGenerateAp(\''+id+'\')';
     else if(action.key==='apBillAudit')click='openApBillAudit(\''+id+'\')';
-    else if(action.key==='apBillDetail')click='openApBillDetail(\''+id+'\')';
-    else if(action.key==='payApBill')click='openApBillPay(\''+id+'\')';
+    else if(action.key==='apWriteOff')click='openApWriteOff(\''+id+'\')';
     else if(action.key==='confirmArFee')click='openArFeeConfirm(\''+id+'\')';
     else if(action.key==='writeOffReceipt')click='openArReceiptWriteOff(\''+id+'\')';
     else if(action.key==='releaseBooking')click='openFclBookingRelease(\''+id+'\')';
@@ -1620,7 +1619,9 @@ function getToolbarActions(id){
         if(id==='fcl-ap-bill'){
             /* 应付账单由付款申请生成，不再手工新增 */
             for(var ai=base.length-1;ai>=0;ai--)if(base[ai].type==='add')base.splice(ai,1);
-            base.push({key:'apBillAudit',label:'审批'},{key:'apBillDetail',label:'查看明细'},{key:'payApBill',label:'付款登记'});
+            /* 查看详情/查看明细/编辑数据都去掉：明细走行内「查看」；付款改为挑流水核销 */
+            for(var vi=base.length-1;vi>=0;vi--)if(base[vi].type==='view'||base[vi].type==='edit')base.splice(vi,1);
+            base.push({key:'apBillAudit',label:'审批'},{key:'apWriteOff',label:'付款核销',variant:'primary'});
         }
         if(id==='fcl-ar-fee')base.push({key:'confirmArFee',label:'费用确认'});
         if(id==='fcl-ar-receipt')base.push({key:'writeOffReceipt',label:'核销'});
@@ -1791,7 +1792,7 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['fcl-agent-cost','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
+var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
 /* 单票成本明细全部由「分摊到票」生成，手工编辑会让它和来源成本行对不上 */
 'fcl-shipment-cost',
 /* 代理账单按供应商发票导入，费用明细挂在 Job No 上；改发票要走重新导入，不给行内编辑 */

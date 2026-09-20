@@ -138,10 +138,11 @@ const menuData=[
 {id:'fcl-est-cost',label:'预估成本明细',page:'fcl',tab:'fcl-est-cost'},
 {id:'fcl-agent-bill',label:'代理账单',page:'fcl',tab:'fcl-agent-bill'},
 {id:'fcl-agent-cost',label:'代理成本明细',page:'fcl',tab:'fcl-agent-cost'},
-{id:'fcl-shipment-cost',label:'单票成本明细',page:'fcl',tab:'fcl-shipment-cost'},
 {id:'fcl-ap-bill',label:'付款单管理',page:'fcl',tab:'fcl-ap-bill'},
 {id:'fcl-ar-fee',label:'应收费用明细',page:'fcl',tab:'fcl-ar-fee'},
-{id:'fcl-ar-receipt',label:'应收收款管理',page:'fcl',tab:'fcl-ar-receipt'}
+{id:'fcl-ar-receipt',label:'应收收款管理',page:'fcl',tab:'fcl-ar-receipt'},
+/* 收付两侧都走完之后的结账视角：一张委托单到底赚没赚。放在最后一项 */
+{id:'fcl-profit',label:'单票利润分析表',page:'fcl',tab:'fcl-profit'}
 ]}
 ]},
 

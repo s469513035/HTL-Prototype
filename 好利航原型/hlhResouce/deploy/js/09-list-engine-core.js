@@ -1025,6 +1025,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='arInvoice')click='openArInvoiceApply(\''+id+'\')';
     else if(action.key==='arLock')click='openArLockAccount(\''+id+'\')';
     else if(action.key==='arUnlock')click='openArUnlockAccount(\''+id+'\')';
+    else if(action.key==='profitDetail')click='openSelectedFclProfitDetail(\''+id+'\')';
     else if(action.key==='invoiceIssue')click='openFinInvoiceIssue(\''+id+'\')';
     else if(action.key==='invoiceRedFlush')click='redFlushFinInvoice(\''+id+'\')';
     else if(action.key==='invoiceVoid')click='voidFinInvoice(\''+id+'\')';
@@ -1577,6 +1578,16 @@ function getToolbarActions(id){
             {key:'entrustCancel',label:'取消委托',variant:'danger'}
         ];
     }
+    /* 单票利润分析表：纯分析视图，数据由应收/应付两边算出来，页面上什么都不改。
+     * 必须写在下面那条 id.indexOf('fcl-')===0 的前面 —— 那条会先接走所有 fcl-* 并 return，
+     * 写在它后面这段永远跑不到（skill §3.A）。 */
+    if(id==='fcl-profit'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'profitDetail',label:'查看明细'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
     if(id.indexOf('fcl-')===0){
         const base=[
             {key:'search',label:'查询数据',variant:'primary'},
@@ -1842,7 +1853,7 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt','fin-invoice','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
+var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt','fin-invoice','fcl-profit','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
 /* 单票成本明细全部由「分摊到票」生成，手工编辑会让它和来源成本行对不上 */
 'fcl-shipment-cost',
 /* 代理账单按供应商发票导入，费用明细挂在 Job No 上；改发票要走重新导入，不给行内编辑 */

@@ -388,10 +388,12 @@ function confirmAgentBillGenerateAp(id,rowIdx){
     var purpose=((document.getElementById('apgen-purpose')||{}).value||'').trim();
     var total=list.reduce(function(s,d){return s+(fclParseMoney(d.amt)||0);},0);
     var apNo=fclSeqNo('FAP','fcl-ap-bill');
-    var payNo=fclSeqNo('PAY','fcl-ap-bill');
+    /* 费用行抄一份挂到付款单下，「查看」才有东西看 */
+    _FCL_AP_FEES[apNo]=list.map(function(d){
+        return {no:d.job,feeName:d.feeName,feeKind:d.feeKind,cur:d.cur,amt:d.amt,remark:d.remark||''};
+    });
     fclPushRow('fcl-ap-bill',{
         '付款单号':apNo,
-        '付款申请号':payNo,
         '服务商':agent,
         '账单周期':fclFinGet(id,row,'账单周期'),
         '涉及Job数':String(agentBillJobsOf(billNo).length),
@@ -1176,9 +1178,8 @@ function submitPaymentApply(){
         var exp=document.getElementById('pa-exp-'+gi).value;
         var acc=(document.getElementById('pa-acc-'+gi)||{}).value||'';
         var apNo=fclSeqNo('FAP','fcl-ap-bill');
-        var payNo=fclSeqNo('PAY','fcl-ap-bill');
         fclPushRow('fcl-ap-bill',{
-            '付款单号':apNo,'付款申请号':payNo,'服务商':g.agent,'账单周期':period,
+            '付款单号':apNo,'服务商':g.agent,'账单周期':period,
             '涉及Job数':String(Object.keys(g.jobs).length),'费用行数':String(g.rows.length),
             '币别':g.cur,'应付金额':g.amt.toFixed(2),'已付金额':'0','待付金额':g.amt.toFixed(2),
             '账期':term,'付款用途':use,'期望付款时间':exp,'到期日':fclDueDateFrom(term),
@@ -1266,43 +1267,90 @@ function fclReleaseCostRowsOf(apNo){
     });
     return n;
 }
-/* ===== 应付账单：查看明细 —— 这张账单是由哪些成本行凑出来的 ===== */
-function openApBillDetail(id){
+/* 付款单的费用明细：生成付款单那一刻把代理账单的费用行抄一份挂在这里。
+ * 成本侧若已回写付款单号，优先用成本行（带 Job/分摊方式，信息更全），
+ * 取不到再退回这份快照 —— 否则「查看」就是一张空表。 */
+var _FCL_AP_FEES={
+    'FAP-20260613001':[
+        {no:'FBK-20260613001',feeName:'海运费',feeKind:'海运费',cur:'USD',amt:'4200',remark:'40HQ×1'},
+        {no:'FBK-20260612002',feeName:'海运费',feeKind:'海运费',cur:'USD',amt:'4200',remark:'40HQ×1'},
+        {no:'FBK-20260613001',feeName:'THC',feeKind:'THC',cur:'USD',amt:'-80',remark:'塞港费冲回'}
+    ],
+    'FAP-20260612002':[
+        {no:'FBK-20260612002',feeName:'海运费',feeKind:'海运费',cur:'USD',amt:'5180',remark:'20GP×2'}
+    ],
+    'FAP-20260610003':[
+        {no:'FBK-20260613001',feeName:'拖车费',feeKind:'拖车费',cur:'CNY',amt:'1800',remark:'深圳盐田提柜'},
+        {no:'FBK-20260612002',feeName:'拖车费',feeKind:'拖车费',cur:'CNY',amt:'1800',remark:'广州南沙提柜'},
+        {no:'FBK-20260611003',feeName:'拖车费',feeKind:'拖车费',cur:'CNY',amt:'1800',remark:'上海洋山提柜'}
+    ],
+    'FAP-20260605004':[
+        {no:'FBK-20260613001',feeName:'报关费',feeKind:'报关费',cur:'CNY',amt:'420',remark:''},
+        {no:'FBK-20260612002',feeName:'报关费',feeKind:'报关费',cur:'CNY',amt:'420',remark:''},
+        {no:'FBK-20260611003',feeName:'报关费',feeKind:'报关费',cur:'CNY',amt:'420',remark:''},
+        {no:'FBK-20260609006',feeName:'报关费',feeKind:'报关费',cur:'CNY',amt:'420',remark:''}
+    ],
+    'FAP-20260614005':[
+        {no:'FBK-20260613001',feeName:'海运费',feeKind:'海运费',cur:'USD',amt:'4200',remark:'40HQ×1'}
+    ],
+    'FAP-20260614006':[
+        {no:'FBK-20260609006',feeName:'目的港THC',feeKind:'THC',cur:'USD',amt:'1200',remark:'2 个柜合开'}
+    ]
+};
+function apBillFeesOf(apNo){return _FCL_AP_FEES[apNo]||[];}
+
+/* ===== 付款单：查看明细 —— 这张付款单是由哪些费用行凑出来的 =====
+ * rowIdx 由行内「查看」直接传进来：点的是哪一行就看哪一行，不用再去勾选框。 */
+function openApBillDetail(id,rowIdx){
     id=id||'fcl-ap-bill';
-    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
-    if(!idxs.length){showToast(tr('请先勾选一张应付账单'));return;}
-    var row=fclFinRows(id)[idxs[0]];
-    if(!row){showToast(tr('未找到账单'));return;}
+    var idx=(rowIdx!=null&&rowIdx>=0)?rowIdx:
+        ((typeof getSelectedRowIndex==='function')?getSelectedRowIndex():-1);
+    if(idx<0){showToast(tr('请先勾选一张付款单'));return;}
+    var row=fclFinRows(id)[idx];
+    if(!row){showToast(tr('未找到付款单'));return;}
     var apNo=fclFinGet(id,row,'付款单号');
     var c=TC['fcl-agent-cost'],h=(c&&c.h)||[];
     var iA=h.indexOf('付款单号');
-    var list=(c&&c.d&&iA>=0)?c.d.filter(function(r){return String(r[iA]||'')===apNo;}):[];
-    var cols=['流水号','Job No','费用名称','费用类别','币别','实际金额','分摊方式','代理账单号','服务商账单号'];
+    var costRows=(c&&c.d&&iA>=0)?c.d.filter(function(r){return String(r[iA]||'')===apNo;}):[];
+    var fromCost=costRows.length>0;
+    /* 两种来源统一成同一组列，页面不用分两套渲染 */
+    var cols=fromCost?['流水号','Job No','费用名称','费用类别','币别','实际金额','分摊方式','代理账单号','服务商账单号']
+                     :['单号','费用名称','费用类别','币别','费用金额','备注'];
+    var list=fromCost?costRows.map(function(r){
+            var g=function(t){var k=h.indexOf(t);return k>=0?String(r[k]||''):'';};
+            return {cells:cols.map(g),amt:fclParseMoney(g('实际金额'))||0};
+        }):apBillFeesOf(apNo).map(function(d){
+            return {cells:[d.no,d.feeName,d.feeKind,d.cur,d.amt,d.remark||''],
+                    amt:fclParseMoney(d.amt)||0};
+        });
     var b='';
     b+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
        esc(apNo)+'　'+esc(fclFinGet(id,row,'服务商'))+'　'+
        esc(fclFinGet(id,row,'币别'))+' '+esc(fclFinGet(id,row,'应付金额'))+'　'+
-       tr('状态')+' '+esc(tr(fclFinGet(id,row,'账单状态')))+'</div>';
+       tr('状态')+' '+esc(tr(fclFinGet(id,row,'账单状态')))+
+       '<div class="mt-1 text-xs text-text-muted">'+
+       esc(fromCost?tr('明细来自代理成本明细（已回写付款单号的成本行）')
+                   :tr('明细来自生成付款单时抄下的代理账单费用行'))+'</div></div>';
     b+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
        cols.map(function(t){return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+
        '</tr></thead><tbody>';
     if(!list.length){
-        b+='<tr><td colspan="'+cols.length+'" class="px-3 py-12 text-center text-sm text-text-muted">'+tr('没有找到关联的成本行')+'</td></tr>';
+        b+='<tr><td colspan="'+cols.length+'" class="px-3 py-12 text-center text-sm text-text-muted">'+tr('这张付款单还没有费用明细')+'</td></tr>';
     }
     var sum=0;
     list.forEach(function(r){
-        b+='<tr class="border-t border-surface-100">'+cols.map(function(t){
-            var k=h.indexOf(t);
-            if(t==='实际金额')sum+=(fclParseMoney(k>=0?r[k]:'')||0);
-            return '<td class="px-3 py-2 text-text-primary whitespace-nowrap">'+esc(k>=0?String(r[k]||''):'')+'</td>';
+        sum+=r.amt;
+        b+='<tr class="border-t border-surface-100">'+r.cells.map(function(v){
+            return '<td class="px-3 py-2 text-text-primary whitespace-nowrap">'+esc(String(v||''))+'</td>';
         }).join('')+'</tr>';
     });
     b+='</tbody></table></div>';
     b+='<div class="mt-2 text-sm text-text-secondary">'+tr('费用行数')+' <span class="font-semibold text-text-primary">'+list.length+
-       '</span>　'+tr('合计')+' <span class="font-semibold text-text-primary">'+sum.toFixed(2)+'</span></div>';
+       '</span>　'+tr('合计')+' <span class="font-semibold text-text-primary">'+
+       esc(fclFinGet(id,row,'币别'))+' '+sum.toFixed(2)+'</span></div>';
     var panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='72%';
-    document.getElementById('crud-modal-title').textContent=tr('账单明细')+' - '+apNo;
+    document.getElementById('crud-modal-title').textContent=tr('付款单明细')+' - '+apNo;
     document.getElementById('crud-modal-body').innerHTML=b;
     document.getElementById('crud-modal-footer').innerHTML=
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
@@ -2103,32 +2151,53 @@ function submitAgentBillCreate(id){
  * 流水存 _FCL_PAY_FLOWS，按服务商归集；核销后回写流水的已核销/未核销，
  * 同时回写付款单的已付金额/待付金额/付款方式/付款时间/付款水单与状态。
  * ========================================================================== */
+/* 字段对齐「银行凭证（凭证管理）」那张表。注意「凭证借贷标识」那一列在 05 里
+ * 已经从凭证管理上摘掉了，这里也就不出 —— 说是参考凭证管理，就得按它现在的样子。
+ * 付款单核销用的就是「支出」方向、认领到该服务商名下的那些凭证。 */
+var FCL_VOUCHER_COLS=['凭证编号','凭证状态','币别','金额(原币)','已使用金额(本位币)',
+    '未使用金额(本位币)','我方账户名称','对方账号名称','交易流水号','费用时间','交割方式','财务摘要'];
 var _FCL_PAY_FLOWS={
     'MAERSK':[
-        {no:'PF-20260618001',date:'2026-06-18 15:30',way:'电汇',cur:'USD',amt:8320,used:0,
-         acct:'招商银行 深圳分行 7559-***-013',slip:'水单_MAERSK_0618.pdf'},
-        {no:'PF-20260705002',date:'2026-07-05 10:12',way:'电汇',cur:'USD',amt:4200,used:0,
-         acct:'招商银行 深圳分行 7559-***-013',slip:'水单_MAERSK_0705.pdf'},
-        {no:'PF-20260620003',date:'2026-06-20 09:40',way:'电汇',cur:'CNY',amt:30000,used:0,
-         acct:'中国银行 深圳分行 4311-***-212',slip:'水单_MAERSK_CNY_0620.pdf'}
+        {no:'P2606180001',st:'待抵扣',dc:'支出',cur:'USD',amt:8320,used:0,
+         ourName:'好利航国际物流 / 招商银行 7559-***-013',payeeName:'MAERSK CHINA',
+         payeeBank:'汇丰银行 深圳分行',txNo:'TXN26061800131',feeTime:'2026-06-18 15:30',
+         way:'电汇',memo:'水单_MAERSK_0618.pdf'},
+        {no:'P2607050002',st:'待抵扣',dc:'支出',cur:'USD',amt:4200,used:0,
+         ourName:'好利航国际物流 / 招商银行 7559-***-013',payeeName:'MAERSK CHINA',
+         payeeBank:'汇丰银行 深圳分行',txNo:'TXN26070500218',feeTime:'2026-07-05 10:12',
+         way:'电汇',memo:'水单_MAERSK_0705.pdf'},
+        {no:'P2606200003',st:'待抵扣',dc:'支出',cur:'CNY',amt:30000,used:0,
+         ourName:'好利航国际物流 / 中国银行 4311-***-212',payeeName:'马士基（中国）有限公司',
+         payeeBank:'中国银行 深圳分行',txNo:'TXN26062000094',feeTime:'2026-06-20 09:40',
+         way:'电汇',memo:'水单_MAERSK_CNY_0620.pdf'}
     ],
     'COSCO':[
-        {no:'PF-20260618004',date:'2026-06-18 15:30',way:'电汇',cur:'USD',amt:5180,used:5180,
-         acct:'招商银行 深圳分行 7559-***-013',slip:'水单_COSCO_0618.pdf'}
+        {no:'P2606180004',st:'全部抵扣',dc:'支出',cur:'USD',amt:5180,used:5180,
+         ourName:'好利航国际物流 / 招商银行 7559-***-013',payeeName:'中远海运集装箱运输',
+         payeeBank:'中国银行 上海分行',txNo:'TXN26061800455',feeTime:'2026-06-18 15:30',
+         way:'电汇',memo:'水单_COSCO_0618.pdf'}
     ],
     '鹏程拖车':[
-        {no:'PF-20260620005',date:'2026-06-20 11:00',way:'电汇',cur:'CNY',amt:2000,used:2000,
-         acct:'招商银行 深圳分行 7559-***-013',slip:'水单_鹏程_0620.pdf'},
-        {no:'PF-20260702006',date:'2026-07-02 14:20',way:'电汇',cur:'CNY',amt:6000,used:0,
-         acct:'招商银行 深圳分行 7559-***-013',slip:'水单_鹏程_0702.pdf'}
+        {no:'P2606200005',st:'全部抵扣',dc:'支出',cur:'CNY',amt:2000,used:2000,
+         ourName:'好利航国际物流 / 招商银行 7559-***-013',payeeName:'深圳鹏程运输有限公司',
+         payeeBank:'招商银行 深圳分行',txNo:'TXN26062000511',feeTime:'2026-06-20 11:00',
+         way:'电汇',memo:'水单_鹏程_0620.pdf'},
+        {no:'P2607020006',st:'待抵扣',dc:'支出',cur:'CNY',amt:6000,used:0,
+         ourName:'好利航国际物流 / 招商银行 7559-***-013',payeeName:'深圳鹏程运输有限公司',
+         payeeBank:'招商银行 深圳分行',txNo:'TXN26070200620',feeTime:'2026-07-02 14:20',
+         way:'电汇',memo:'水单_鹏程_0702.pdf'}
     ],
     '深圳报关行':[
-        {no:'PF-20260604007',date:'2026-06-04 16:20',way:'电汇',cur:'CNY',amt:1680,used:1680,
-         acct:'工商银行 深圳分行 4000-***-772',slip:'水单_报关行_0604.pdf'}
+        {no:'P2606040007',st:'全部抵扣',dc:'支出',cur:'CNY',amt:1680,used:1680,
+         ourName:'好利航国际物流 / 工商银行 4000-***-772',payeeName:'深圳市中远报关行',
+         payeeBank:'工商银行 深圳分行',txNo:'TXN26060400772',feeTime:'2026-06-04 16:20',
+         way:'电汇',memo:'水单_报关行_0604.pdf'}
     ],
     'CMA CGM':[
-        {no:'PF-20260710008',date:'2026-07-10 09:05',way:'电汇',cur:'USD',amt:3600,used:0,
-         acct:'招商银行 深圳分行 7559-***-013',slip:'水单_CMA_0710.pdf'}
+        {no:'P2607100008',st:'待抵扣',dc:'支出',cur:'USD',amt:3600,used:0,
+         ourName:'好利航国际物流 / 招商银行 7559-***-013',payeeName:'达飞轮船（中国）',
+         payeeBank:'花旗银行 上海分行',txNo:'TXN26071000830',feeTime:'2026-07-10 09:05',
+         way:'电汇',memo:'水单_CMA_0710.pdf'}
     ]
 };
 /* 这家服务商在该币别下还有余额的流水 */
@@ -2165,7 +2234,7 @@ function openApWriteOff(id){
     }
     var agent=agents[0],cur=curs[0];
     var flows=fclPayFlowsOf(agent,cur);
-    if(!flows.length){showToast(agent+' '+tr('名下没有')+' '+cur+' '+tr('的付款流水，先去银行凭证登记'));return;}
+    if(!flows.length){showToast(agent+' '+tr('名下没有')+' '+cur+' '+tr('的支出凭证，先去凭证管理登记'));return;}
     _apWo={id:id,idxs:idxs.slice(),agent:agent,cur:cur,
         bills:picked.map(function(r,k){
             return {idx:idxs[k],no:fclFinGet(id,r,'付款单号'),
@@ -2175,7 +2244,7 @@ function openApWriteOff(id){
         }),
         flows:flows.map(function(f){return {no:f.no,sel:false,left:fclFlowLeft(f),ref:f};})};
     var panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='70%';
+    if(panel)panel.style.width='80%';
     document.getElementById('crud-modal-title').textContent=tr('付款核销')+' - '+agent+'（'+cur+'）';
     document.getElementById('crud-modal-body').innerHTML=apWoBodyHtml();
     document.getElementById('crud-modal-footer').innerHTML=
@@ -2198,7 +2267,7 @@ function apWoBodyHtml(){
        esc(A.agent)+'　'+esc(A.cur)+'　'+tr('选中')+' '+A.bills.length+' '+tr('张付款单')+'　'+
        tr('待付合计')+' <span class="font-semibold text-text-primary">'+esc(A.cur)+' '+apWoDueTotal().toFixed(2)+'</span>'+
        '<div class="mt-1 text-xs text-text-muted">'+
-       esc(tr('先勾要用的付款流水，再把可核销金额分到各张付款单上；同服务商同币别才能一起核销。'))+
+       esc(tr('先勾要用的付款凭证，再把可核销金额分到各张付款单上；同服务商同币别才能一起核销。'))+
        '</div></div>';
     h+='<div data-apwo>'+apWoInnerHtml()+'</div>';
     return h;
@@ -2207,32 +2276,36 @@ function apWoInnerHtml(){
     var A=_apWo,h='';
     /* ① 付款流水 */
     h+='<div class="mb-2 flex items-center gap-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
-       '<span class="text-sm font-semibold text-text-primary">'+tr('① 选择付款流水')+'</span>'+
-       '<span class="text-xs text-text-muted">'+esc(tr('只列这家服务商该币别、还有余额的流水'))+'</span></div>';
+       '<span class="text-sm font-semibold text-text-primary">'+tr('① 选择付款凭证')+'</span>'+
+       '<span class="text-xs text-text-muted">'+esc(tr('字段同凭证管理；只列认领到这家服务商、该币别、还有未使用金额的支出凭证'))+'</span></div>';
     h+='<div class="border border-surface-200 rounded-lg overflow-auto mb-3"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
        '<th class="px-3 py-2 w-10"></th>'+
-       ['付款流水号','付款日期','付款方式','付款账户','流水金额','已核销','可核销','付款水单'].map(function(t){
+       FCL_VOUCHER_COLS.map(function(t){
            return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+
        '</tr></thead><tbody>';
     var usable=0;
     A.flows.forEach(function(f,i){
-        var left=f.left,dis=left<=0;
+        var left=f.left,dis=left<=0,v=f.ref;
         if(!dis)usable++;
         h+='<tr class="border-t border-surface-100'+(dis?' opacity-50':'')+'">'+
            '<td class="px-3 py-2"><input type="checkbox" data-apwo-f="'+i+'"'+(f.sel?' checked':'')+(dis?' disabled':'')+
            ' onchange="apWoPickFlow('+i+',this.checked)" class="rounded border-surface-300 text-primary-600"></td>'+
-           '<td class="px-3 py-2 font-medium text-text-primary">'+esc(f.ref.no)+'</td>'+
-           '<td class="px-3 py-2 text-text-secondary">'+esc(f.ref.date)+'</td>'+
-           '<td class="px-3 py-2 text-text-secondary">'+esc(f.ref.way)+'</td>'+
-           '<td class="px-3 py-2 text-text-secondary">'+esc(f.ref.acct)+'</td>'+
-           '<td class="px-3 py-2 text-text-secondary">'+esc(A.cur)+' '+(+f.ref.amt).toFixed(2)+'</td>'+
-           '<td class="px-3 py-2 text-text-secondary">'+(+f.ref.used).toFixed(2)+'</td>'+
-           '<td class="px-3 py-2 '+(dis?'text-text-muted':'text-success-700 font-medium')+'">'+left.toFixed(2)+'</td>'+
-           '<td class="px-3 py-2 text-text-secondary">'+esc(f.ref.slip||'—')+'</td></tr>';
+           '<td class="px-3 py-2 font-medium text-text-primary whitespace-nowrap">'+esc(v.no)+'</td>'+
+           '<td class="px-3 py-2 whitespace-nowrap">'+statusBadge(v.st)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(v.cur)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+(+v.amt).toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+(+v.used).toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 whitespace-nowrap '+(dis?'text-text-muted':'text-success-700 font-medium')+'">'+left.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(v.ourName||'—')+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(v.payeeName||'—')+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(v.txNo||'—')+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(v.feeTime||'—')+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(v.way||'—')+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(v.memo||'—')+'</td></tr>';
     });
     if(!usable){
-        h+='<tr><td colspan="9" class="px-3 py-6 text-center text-sm text-amber-700">'+
-           esc(tr('这家服务商该币别的流水都已核销完，没有可用余额'))+'</td></tr>';
+        h+='<tr><td colspan="'+(FCL_VOUCHER_COLS.length+1)+'" class="px-3 py-6 text-center text-sm text-amber-700">'+
+           esc(tr('这家服务商该币别的凭证都已抵扣完，没有可用余额'))+'</td></tr>';
     }
     h+='</tbody></table></div>';
     /* ② 分配到付款单 */
@@ -2261,10 +2334,10 @@ function apWoSummaryHtml(){
     var flow=apWoPickedFlowSum(),alloc=apWoAllocSum(),rest=+(flow-alloc).toFixed(2);
     var ok=alloc>0&&rest>=0;
     return '<div data-apwo-sum class="mt-2 text-sm '+(ok?'text-success-700':'text-red-600')+'">'+
-        tr('已选流水可核销')+' <span class="font-semibold">'+esc(A.cur)+' '+flow.toFixed(2)+'</span>　'+
+        tr('已选凭证可核销')+' <span class="font-semibold">'+esc(A.cur)+' '+flow.toFixed(2)+'</span>　'+
         tr('本次核销合计')+' <span class="font-semibold">'+alloc.toFixed(2)+'</span>　'+
-        tr('流水剩余')+' <span class="font-semibold">'+rest.toFixed(2)+'</span>'+
-        (alloc<=0?('　'+tr('还没分配核销金额')):(rest<0?('　'+tr('核销金额超出已选流水余额')):''))+'</div>';
+        tr('凭证剩余')+' <span class="font-semibold">'+rest.toFixed(2)+'</span>'+
+        (alloc<=0?('　'+tr('还没分配核销金额')):(rest<0?('　'+tr('核销金额超出已选凭证余额')):''))+'</div>';
 }
 function apWoRedraw(){
     var box=document.querySelector('[data-apwo]');
@@ -2293,15 +2366,15 @@ function apWoSetAmt(i,v){
 function apWoAutoFill(){
     apWoReadUI();
     var left=apWoPickedFlowSum();
-    if(left<=0){showToast(tr('请先勾选付款流水'));return;}
+    if(left<=0){showToast(tr('请先勾选付款凭证'));return;}
     _apWo.bills.forEach(function(b){
         var v=Math.min(b.due,+left.toFixed(2));
         b.amt=v>0?String(v.toFixed(2)):'';
         left=+(left-v).toFixed(2);
     });
     apWoRedraw();
-    showToast(left>0?(tr('已按待付金额填完，流水还剩')+' '+left.toFixed(2))
-                    :tr('已按待付金额填至流水用完'));
+    showToast(left>0?(tr('已按待付金额填完，凭证还剩')+' '+left.toFixed(2))
+                    :tr('已按待付金额填至凭证用完'));
 }
 function apWoClear(){
     _apWo.bills.forEach(function(b){b.amt='';});
@@ -2311,14 +2384,14 @@ function submitApWriteOff(){
     apWoReadUI();
     var A=_apWo,id=A.id;
     var flows=A.flows.filter(function(f){return f.sel;});
-    if(!flows.length){showToast(tr('请先勾选要用的付款流水'));return;}
+    if(!flows.length){showToast(tr('请先勾选要用的付款凭证'));return;}
     var hit=A.bills.filter(function(b){return (fclParseMoney(b.amt)||0)>0;});
     if(!hit.length){showToast(tr('请至少给一张付款单填核销金额'));return;}
     var over=hit.filter(function(b){return (fclParseMoney(b.amt)||0)>b.due+0.004;});
     if(over.length){showToast(over[0].no+' '+tr('的核销金额超过待付金额'));return;}
     var alloc=apWoAllocSum(),avail=apWoPickedFlowSum();
-    if(alloc>avail+0.004){showToast(tr('核销合计超出已选流水余额')+' '+(+(alloc-avail)).toFixed(2));return;}
-    /* 扣流水余额：按勾选顺序挨个扣，扣完一笔换下一笔 */
+    if(alloc>avail+0.004){showToast(tr('核销合计超出已选凭证余额')+' '+(+(alloc-avail)).toFixed(2));return;}
+    /* 扣凭证未使用金额：按勾选顺序挨个扣，扣完一笔换下一笔 */
     var rest=alloc;
     var usedNos=[],lastWay='',lastDate='',lastSlip='';
     flows.forEach(function(f){
@@ -2329,7 +2402,7 @@ function submitApWriteOff(){
         f.left=fclFlowLeft(f.ref);
         rest=+(rest-take).toFixed(2);
         usedNos.push(f.ref.no);
-        lastWay=f.ref.way;lastDate=f.ref.date;lastSlip=f.ref.slip||'';
+        lastWay=f.ref.way;lastDate=f.ref.feeTime;lastSlip=f.ref.memo||'';
     });
     /* 回写付款单：累加已付、倒算待付、据此定状态 */
     var rows=fclFinRows(id),done=0,part=0;

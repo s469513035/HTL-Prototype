@@ -99,11 +99,10 @@ function openCrmAccountApplyModal(id,rowIdx){
     baseGrid+=fld('客户代码',inp(g('客户代码'),'',true));
     baseGrid+=fld('客户全称',inp(g('客户全称'),'',true),false,'md:col-span-2');
     baseGrid+=fld('客户简称',inp(g('客户简称'),'',true));
-    /* 客户等级 / 所属客服 / 所属操作 非必填 */
+    /* 客户等级非必填。客服 / 操作不再挂客户，跟着所属业务员（销售部员工）与目的国走 */
     baseGrid+=fld('客户等级',sel(['A类','B类','C类','D类'],g('客户等级','A类')));
     baseGrid+=fld('结算周期',sel(['出货票结','出货月结','签收月结'],g('结算周期','出货月结')),true);
-    baseGrid+=fld('所属客服',sel(getEmployeeNameOptions(),g('所属客服')));
-    baseGrid+=fld('所属操作',sel(getEmployeeNameOptions(),g('所属操作')));
+    baseGrid+=fld('所属业务员',sel(getEmployeeNameOptions(),g('所属业务员')));
     baseGrid+=fld('信用额度授信','<input type="number" min="0" class="'+inCls+'" value="0">',true);
     baseGrid+=fld('开户币别',crmAcctCurrencyHtml(),true);
     baseGrid+='<div class="flex flex-col gap-1.5 md:col-span-3"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'"></textarea></div>';
@@ -207,8 +206,6 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     const bankName=getTableValueByHeader(c,rowData,'开户行','');
     const bankAccount=getTableValueByHeader(c,rowData,'银行账号','');
     const salesPerson=getTableValueByHeader(c,rowData,'所属业务员','');
-    const settlementPerson=getTableValueByHeader(c,rowData,'所属操作','');
-    const csrPerson=getTableValueByHeader(c,rowData,'所属客服','');
     const senderContact=getTableValueByHeader(c,rowData,'发件人','');
     const senderCompany=getTableValueByHeader(c,rowData,'发件人公司','');
     const senderPhone=getTableValueByHeader(c,rowData,'发件人电话','');
@@ -224,10 +221,9 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     html+=readonly?crmWarehouseDisplayHtml('海外提货偏好仓库',warehouseOptions,pickupWarehouse):checkedDropdownFieldHtml('海外提货偏好仓库',warehouseOptions,pickupWarehouse);
     html+=crmSelectFieldHtml('客户类型',['直客','同行','平台','代理'],getTableValueByHeader(c,rowData,'客户类型',''),readonly);
     html+=crmSelectFieldHtml('客户等级',['A类','B类','C类','D类'],getTableValueByHeader(c,rowData,'客户等级',''),readonly);
-    /* 第 3 行：归属人员与结算周期同一行 */
+    /* 第 3 行：客户只认「所属业务员」一个归属人。客服 / 操作由这个业务员的员工档案带出
+     * （销售部员工才有这对搭档），目的国另有一套按国家路由的客服 / 操作，两处都不在客户身上维护。 */
     html+=crmSelectFieldHtml('所属业务员',getEmployeeNameOptions(),salesPerson,readonly);
-    html+=crmSelectFieldHtml('所属操作',getEmployeeNameOptions(),settlementPerson,readonly);
-    html+=crmSelectFieldHtml('所属客服',getEmployeeNameOptions(),csrPerson,readonly);
     html+=crmSelectFieldHtml('结算周期',['出货票结','出货月结','签收月结'],getTableValueByHeader(c,rowData,'结算周期',''),readonly);
     /* 末行：联系方式与启用状态 */
     html+=crmInputFieldHtml('联系人',getTableValueByHeader(c,rowData,'联系人',''),'text',readonly);

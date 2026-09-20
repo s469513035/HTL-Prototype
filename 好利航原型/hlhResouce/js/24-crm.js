@@ -302,69 +302,81 @@ function openEmployeeModal(mode,id,rowIdx,rowData){
     const footerEl=document.getElementById('crud-modal-footer');
     const modeLabel=mode==='view'?L.view:mode==='add'?L.add:L.edit;
     titleEl.textContent=modeLabel+tr(c.t);
-    const codeIdx=(c.h||[]).indexOf('员工编号');
+    /* 表头按当前员工档案取值。这个弹窗原来读的是老表头（员工编号/姓名/岗位/手机号/邮箱/状态），
+     * 员工档案换成标准表之后列名已经是 员工编码/员工名称/岗位职位/手机/企业邮箱/在职状态，
+     * getTableValueByHeader 是严格 indexOf，读不到就全空 —— 一律改成现行列名。 */
+    const codeIdx=(c.h||[]).indexOf('员工编码');
     const rawData=TC[id].d||[];
     const lastCode=(rawData[rawData.length-1]&&rawData[rawData.length-1][codeIdx])||'EMP000';
     const lm=String(lastCode).match(/^(.*?)(\d+)$/);
     const autoCode=lm?lm[1]+String(parseInt(lm[2],10)+1).padStart(lm[2].length,'0'):'EMP001';
-    const empCode=mode==='add'?autoCode:getTableValueByHeader(c,rowData,'员工编号','');
-    const empName=getTableValueByHeader(c,rowData,'姓名','');
+    const empCode=mode==='add'?autoCode:getTableValueByHeader(c,rowData,'员工编码','');
+    const empName=getTableValueByHeader(c,rowData,'员工名称','');
     const hq=getTableValueByHeader(c,rowData,'所属总部','');
-    const region=getTableValueByHeader(c,rowData,'所属大区','');
     const branch=getTableValueByHeader(c,rowData,'所属分公司','');
     const dept=getTableValueByHeader(c,rowData,'所属部门','');
     const team=getTableValueByHeader(c,rowData,'所属工作组','');
-    const position=getTableValueByHeader(c,rowData,'岗位','');
-    const phone=getTableValueByHeader(c,rowData,'手机号','');
-    const email=getTableValueByHeader(c,rowData,'邮箱','');
-    const status=getTableValueByHeader(c,rowData,'状态','启用');
+    /* 销售部员工才有的一对搭档：客户跟单的客服与操作跟着业务员走，不再挂在客户身上 */
+    const ownerCs=getTableValueByHeader(c,rowData,'所属客服','');
+    const ownerOp=getTableValueByHeader(c,rowData,'所属操作','');
+    const position=getTableValueByHeader(c,rowData,'岗位/职位','');
+    const phone=getTableValueByHeader(c,rowData,'手机','');
+    const email=getTableValueByHeader(c,rowData,'企业邮箱','');
+    const status=getTableValueByHeader(c,rowData,'在职状态','在职');
     const remark=getTableValueByHeader(c,rowData,'备注','');
     let html='<div class="space-y-5">';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('基本信息')+'</div><div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('员工编号')+'</label>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('员工编码')+'</label>';
     if(mode==='edit'){html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 cursor-not-allowed" value="'+esc(empCode)+'" readonly>';}
     else if(mode==='add'){html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(autoCode)+'" placeholder="'+tr('自动生成')+'">';}
     else{html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(empCode)+'</div>';}
     html+='</div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('姓名')+'</label>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('员工名称')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(empName)+'</div>';}
-    else{html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(empName)+'" placeholder="'+tr('请输入姓名')+'">';}
+    else{html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(empName)+'" placeholder="'+tr('请输入员工名称')+'">';}
     html+='</div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('所属总部')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(hq)+'</div>';}
     else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['集团总部'],hq)+'</select>';}
     html+='</div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('所属大区')+'</label>';
-    if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(region)+'</div>';}
-    else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['中国区域管理中心','非洲海外区域中心'],region)+'</select>';}
-    html+='</div>';
+    /* 「所属大区」这一列已从员工档案里删掉（见 07 的 removeTableColumns），弹窗里也不再出现 */
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('所属分公司')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(branch)+'</div>';}
     else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['深圳分公司','广州分公司','上海分公司','义乌分公司'],branch)+'</select>';}
     html+='</div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('所属部门')+'</label>';
+    /* 所属部门带 data-field + onchange：改成销售部就展开下面那对搭档，改走就收起并清空 */
+    html+='<div class="flex flex-col gap-1.5" data-field-box="所属部门"><label class="text-sm font-medium text-text-secondary">'+tr('所属部门')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(dept)+'</div>';}
-    else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['销售部','操作部','海外部','财务部','客服部'],dept)+'</select>';}
+    else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" data-field="所属部门" onchange="orgEmpToggleOwnerFields()">'+selectOptionsHtml(ORG_EMP_DEPT_OPTIONS,dept)+'</select>';}
     html+='</div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('所属工作组')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(team)+'</div>';}
     else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['西非海运组','东非海运组','空运组','铁路组'],team)+'</select>';}
     html+='</div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('岗位')+'</label>';
+    /* 所属客服 / 所属操作：只有销售部员工才配这一对，非销售部时整块收起（初始显隐在下面统一设置） */
+    html+='<div class="flex flex-col gap-1.5" data-field-box="所属客服"><label class="text-sm font-medium text-text-secondary">'+tr('所属客服')+'</label>';
+    if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+(esc(ownerCs)||'—')+'</div>';}
+    else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" data-field="所属客服">'+selectOptionsHtml(orgCsOptions(),ownerCs)+'</select>';}
+    html+='</div>';
+    html+='<div class="flex flex-col gap-1.5" data-field-box="所属操作"><label class="text-sm font-medium text-text-secondary">'+tr('所属操作')+'</label>';
+    if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+(esc(ownerOp)||'—')+'</div>';}
+    else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" data-field="所属操作">'+selectOptionsHtml(orgOpOptions(),ownerOp)+'</select>';}
+    html+='</div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('岗位/职位')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(position)+'</div>';}
-    else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['总经理','销售经理','操作主管','海外经理','财务总监','客服专员','操作员'],position)+'</select>';}
+    else{html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(position)+'" placeholder="'+tr('请输入岗位/职位')+'">';}
     html+='</div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('手机号')+'</label>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('手机')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(phone)+'</div>';}
-    else{html+='<input type="tel" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(phone)+'" placeholder="'+tr('请输入手机号')+'">';}
+    else{html+='<input type="tel" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(phone)+'" placeholder="'+tr('请输入手机')+'">';}
     html+='</div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('邮箱')+'</label>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('企业邮箱')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(email)+'</div>';}
-    else{html+='<input type="email" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(email)+'" placeholder="'+tr('请输入邮箱')+'">';}
+    else{html+='<input type="email" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(email)+'" placeholder="'+tr('请输入企业邮箱')+'">';}
     html+='</div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('状态')+'</label>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('在职状态')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+statusBadge(status)+'</div>';}
-    else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['启用','禁用'],status)+'</select>';}
+    else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['在职','离职'],status)+'</select>';}
     html+='</div>';
     html+='</div></div>';
     html+='<div class="modal-remark-half"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('备注')+'</div>';
@@ -388,6 +400,8 @@ function openEmployeeModal(mode,id,rowIdx,rowData){
     html+='</div></div>';
     html+='</div>';
     bodyEl.innerHTML=html;
+    /* 初始显隐：查看态没有可读控件，按行上的部门判断；新增/编辑按当前下拉值判断 */
+    orgEmpApplyOwnerVisibility(readonly?dept:null);
     if(readonly){
         footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button>';
     }else{

@@ -30,27 +30,28 @@ var FCL_FEE_NAMES=['海运费','THC','文件费','封签费','燃油附加费','
  * 账单头只留发票级信息：「账单金额」是总额，「涉及Job数」按明细去重算。
  * ========================================================================== */
 addPrototypeTable('fcl-agent-bill','代理账单',
-    '流水号|服务商|服务商账单号|账单周期|币别|账单金额|涉及Job数|导入人|导入时间|备注|账单状态|操作',
+    '流水号|服务商|服务商账单号|账单周期|账期时间|币别|账单金额|涉及Job数|导入人|导入时间|备注|账单状态|操作',
     /* 账单状态即对账-请款-核销的流转：
      * 待对账 --[对账·确认费用]--> 待请款 --[生成账单]--> 待审核
      * --[应付审批通过]--> 待核销 --[付款核销]--> 部分核销 -> 全部核销；作废独立 */
     ['待对账','待请款','待审核','待核销','部分核销','全部核销','作废'],[
-    ['AGB-20260615001','MAERSK','MSK-INV-260613','2026-06','USD','12600','3','张财务','2026-06-15 09:30','一张发票含 3 个柜','待对账'],
-    ['AGB-20260615002','COSCO','COS-INV-260612','2026-06','USD','5180','1','张财务','2026-06-15 09:30','','待请款'],
-    ['AGB-20260615003','MAERSK','MSK-THC-260615','2026-06','USD','1200','2','张财务','2026-06-15 14:10','目的港 THC，2 个柜合开','待审核'],
-    ['AGB-20260616004','鹏程拖车','PC-260616-11','2026-06','CNY','5400','3','李操作','2026-06-16 10:05','6 月上半月拖车汇总，含 3 个柜','待核销'],
-    ['AGB-20260616005','深圳报关行','SZ-CD-260616','2026-06','CNY','1050','3','李操作','2026-06-16 10:05','3 票报关费合开','部分核销'],
-    ['AGB-20260610006','CMA CGM','CMA-INV-260610','2026-06','USD','3600','1','张财务','2026-06-10 11:20','','全部核销'],
-    ['AGB-20260608007','MSC','MSC-INV-260608','2026-06','USD','900','1','李操作','2026-06-08 16:40','重复开票，已作废','作废']
+    ['AGB-20260615001','MAERSK','MSK-INV-260613','2026-06','2026-07-15 23:59','USD','12600','3','张财务','2026-06-15 09:30','一张发票含 3 个柜','待对账'],
+    ['AGB-20260615002','COSCO','COS-INV-260612','2026-06','2026-06-30 23:59','USD','5180','1','张财务','2026-06-15 09:30','','待请款'],
+    ['AGB-20260615003','MAERSK','MSK-THC-260615','2026-06','2026-07-15 23:59','USD','1200','2','张财务','2026-06-15 14:10','目的港 THC，2 个柜合开','待审核'],
+    ['AGB-20260616004','鹏程拖车','PC-260616-11','2026-06','2026-07-01 23:59','CNY','5400','3','李操作','2026-06-16 10:05','6 月上半月拖车汇总，含 3 个柜','待核销'],
+    ['AGB-20260616005','深圳报关行','SZ-CD-260616','2026-06','2026-07-16 23:59','CNY','1050','3','李操作','2026-06-16 10:05','3 票报关费合开','部分核销'],
+    ['AGB-20260610006','CMA CGM','CMA-INV-260610','2026-06','2026-07-10 23:59','USD','3600','1','张财务','2026-06-10 11:20','','全部核销'],
+    ['AGB-20260608007','MSC','MSC-INV-260608','2026-06','2026-07-08 23:59','USD','900','1','李操作','2026-06-08 16:40','重复开票，已作废','作废']
 ],[
     {label:'流水号',type:'text'},
     {label:'服务商',type:'select',options:FCL_AGENT_OPTIONS},
     {label:'服务商账单号',type:'text'},
     {label:'账单周期',type:'text'},
+    {label:'账期时间',type:'text'},
     {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
     {label:'账单状态',type:'select',options:['待对账','待请款','待审核','待核销','部分核销','全部核销','作废']}
 ]);
-TC['fcl-agent-bill'].modalExcludedFields=['涉及Job数','导入人','导入时间','账单状态'];
+TC['fcl-agent-bill'].modalExcludedFields=['涉及Job数','导入人','导入时间','账期时间','账单状态'];
 TC['fcl-agent-bill'].fieldOptions={
     '服务商':FCL_AGENT_OPTIONS,'币别':FCL_CURRENCY_OPTIONS
 };
@@ -149,7 +150,8 @@ function openAgentBillDetail(id,rowIdx){
     /* 发票级信息 */
     h+='<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-sm">';
     [['流水号',billNo],['服务商',fclFinGet(id,row,'服务商')],['服务商账单号',fclFinGet(id,row,'服务商账单号')],
-     ['账单周期',fclFinGet(id,row,'账单周期')],['账单金额',cur+' '+fclFinGet(id,row,'账单金额')],
+     ['账单周期',fclFinGet(id,row,'账单周期')],['账期时间',fclFinGet(id,row,'账期时间')],
+     ['分摊规则',_AGENT_BILL_RULE[billNo]||''],['账单金额',cur+' '+fclFinGet(id,row,'账单金额')],
      ['涉及Job数',fclFinGet(id,row,'涉及Job数')],['导入人',fclFinGet(id,row,'导入人')],
      ['账单状态',fclFinGet(id,row,'账单状态')]].forEach(function(p){
         h+='<div><span class="text-xs text-text-muted block">'+tr(p[0])+'</span><span class="font-medium text-text-primary">'+esc(p[1]||'—')+'</span></div>';
@@ -1800,13 +1802,14 @@ function openAgentCostDetail(id,rowIdx){
  * 账单金额（= 明细合计，不给手填）/ 涉及Job数（= 明细里去重的单号数）/
  * 导入人 / 导入时间 / 备注。
  * ========================================================================== */
-var AGENT_BILL_NO_TYPES=['Job No','委托订单号','运单号'];
+/* 分摊规则记在这里（不进列表列），生成付款单与成本落地时按它摊 */
+var _AGENT_BILL_RULE={'AGB-20260615001':'按件数','AGB-20260615002':'按票数','AGB-20260615003':'按体积'};
 var AGENT_BILL_ALLOC_RULES=['按票数','按件数','按体积','按重量','按预估成本比例','不分摊'];
 var AGENT_BILL_ATTACH_TYPES=['代理账单','发票扫描件','水单','对账单','其他'];
 var _abNew=null;
 
 function agentBillNewCtx(){
-    return {billNo:'',agent:'',noType:AGENT_BILL_NO_TYPES[0],rule:'',cur:'USD',rate:'',
+    return {billNo:'',agent:'',rule:'',cur:'USD',
         period:'',due:'',remark:'',
         rows:[{sel:false,no:'',acct:'',amt:'',remark:''},
               {sel:false,no:'',acct:'',amt:'',remark:''},
@@ -1851,10 +1854,9 @@ function agentBillNewBodyHtml(id){
     var g='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
     g+=fld('服务商账单号',txt('billNo','代理发票上印的账单号'),true);
     g+=fld('服务商',sl('agent',FCL_AGENT_OPTIONS,'请选择服务商'),true);
-    g+=fld('单号类型',sl('noType',AGENT_BILL_NO_TYPES,'请选择单号类型'),true);
-    g+=fld('分摊规则',sl('rule',AGENT_BILL_ALLOC_RULES,'请选择分摊规则'),true);
+    /* 分摊规则非必填：一张发票要不要往下摊、按什么摊，常常是对完账才定 */
+    g+=fld('分摊规则',sl('rule',AGENT_BILL_ALLOC_RULES,'暂不指定'),false);
     g+=fld('币别',sl('cur',FCL_CURRENCY_OPTIONS,'请选择币别'),true);
-    g+=fld('汇率','<input data-ab="rate" type="number" step="0.0001" value="'+esc(A.rate)+'" oninput="abSet(\'rate\',this.value)" placeholder="'+esc(tr('折本位币汇率'))+'" class="'+inCls+'">',true);
     g+=fld('账单周期',txt('period','如 2026-06'),true);
     g+=fld('账期时间','<input data-ab="due" type="text" value="'+esc(A.due)+'" oninput="abSet(\'due\',this.value)" class="'+inCls+'">',true);
     g+=fld('备注','<textarea data-ab="remark" rows="3" oninput="abSet(\'remark\',this.value)" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'">'+esc(A.remark)+'</textarea>',false,'md:col-span-2');
@@ -1930,7 +1932,7 @@ function agentBillNewDetailHtml(){
     h+='<table class="w-full text-sm"><thead class="bg-surface-50 sticky top-0"><tr>'+
        '<th class="px-3 py-2 text-left font-medium text-text-secondary w-10">#</th>'+
        '<th class="px-3 py-2 w-10"><input type="checkbox" onchange="abToggleAll(this.checked)" class="rounded border-surface-300 text-primary-600"></th>'+
-       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr(A.noType||'单号')+'</th>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('单号')+'</th>'+
        '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('财务科目')+'</th>'+
        '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('费用金额')+'</th>'+
        '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('备注')+'</th>'+
@@ -2056,10 +2058,7 @@ function submitAgentBillCreate(id){
     var A=_abNew;
     if(!String(A.billNo||'').trim()){showToast(tr('请填写服务商账单号'));return;}
     if(!A.agent){showToast(tr('请选择服务商'));return;}
-    if(!A.noType){showToast(tr('请选择单号类型'));return;}
-    if(!A.rule){showToast(tr('请选择分摊规则'));return;}
     if(!A.cur){showToast(tr('请选择币别'));return;}
-    if(fclParseMoney(A.rate)===null||(fclParseMoney(A.rate)||0)<=0){showToast(tr('请填写汇率'));return;}
     if(!String(A.period||'').trim()){showToast(tr('请填写账单周期'));return;}
     if(!String(A.due||'').trim()){showToast(tr('请填写账期时间'));return;}
     var rows=abValidRows();
@@ -2076,9 +2075,11 @@ function submitAgentBillCreate(id){
         return {job:r.no.trim(),feeName:r.acct.trim(),feeKind:r.acct.trim(),
             cur:A.cur,amt:String(fclParseMoney(r.amt)),remark:String(r.remark||'')};
     });
+    if(A.rule)_AGENT_BILL_RULE[billNo]=A.rule;
     fclPushRow(id,{
         '流水号':billNo,'服务商':A.agent,'服务商账单号':String(A.billNo).trim(),
-        '账单周期':String(A.period).trim(),'币别':A.cur,'账单金额':total.toFixed(2),
+        '账单周期':String(A.period).trim(),'账期时间':String(A.due).trim(),
+        '币别':A.cur,'账单金额':total.toFixed(2),
         '涉及Job数':String(jobs.length),'导入人':fclWho(),'导入时间':fclNow(),
         '备注':String(A.remark||''),'账单状态':'待对账'
     });
@@ -2086,6 +2087,6 @@ function submitAgentBillCreate(id){
     closeCrudModal();
     fclFinRefresh(id);
     showToast(tr('已新增代理账单')+' '+billNo+'：'+rows.length+' '+tr('条明细')+'，'+
-        jobs.length+' '+tr('个')+A.noType+'，'+A.cur+' '+total.toFixed(2)+
+        jobs.length+' '+tr('个单号')+'，'+A.cur+' '+total.toFixed(2)+
         (A.files.length?('，'+A.files.length+' '+tr('个附件')):''));
 }

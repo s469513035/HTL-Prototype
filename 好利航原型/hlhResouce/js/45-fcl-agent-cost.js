@@ -2688,3 +2688,508 @@ function openArFeeDetail(id,rowIdx){
     document.getElementById('crud-modal').classList.add('show');
     if(roll)fclFinRefresh(id);
 }
+/* ==========================================================================
+ * 十一、应收收款管理 · 核销 / 反核销 / 新增费用 / 申请开票
+ *
+ * 台账一行 = 一张委托单该币别下的应收汇总。核销的做法与付款单管理对称：
+ *   付款：挑服务商的「支出凭证」冲付款单
+ *   收款：挑客户的「收入凭证」冲这张委托单下的应收费用明细
+ * 区别是收款要落到费用科目那一层 —— 开票、反核销都是按费用行走的，
+ * 只在汇总行上记个总数，后面谁也说不清哪笔钱冲的哪条费用。
+ * ========================================================================== */
+
+/* 客户收款凭证：字段同凭证管理（收入方向、认领到该客户名下） */
+var _FCL_RECV_VOUCHERS={
+    '深圳市华运达国际货运':[
+        {no:'P2606220011',st:'待抵扣',dc:'收入',cur:'USD',amt:4500,used:0,
+         ourName:'好利航国际物流 / 招商银行 6225-***-888',payeeName:'深圳市华运达国际货运代理有限公司',
+         payeeBank:'招商银行 深圳分行',txNo:'TXN26062200911',feeTime:'2026-06-22 09:30',
+         way:'电汇',memo:'回单_华运达_0622.pdf'},
+        {no:'P2606220012',st:'待抵扣',dc:'收入',cur:'CNY',amt:2000,used:0,
+         ourName:'好利航国际物流 / 招商银行 6225-***-888',payeeName:'深圳市华运达国际货运代理有限公司',
+         payeeBank:'招商银行 深圳分行',txNo:'TXN26062200912',feeTime:'2026-06-22 09:35',
+         way:'电汇',memo:'回单_华运达_0622_CNY.pdf'}
+    ],
+    '广州远洋进出口贸易':[
+        {no:'P2606180013',st:'全部抵扣',dc:'收入',cur:'USD',amt:5600,used:5600,
+         ourName:'好利航国际物流 / 招商银行 6225-***-888',payeeName:'广州远洋进出口贸易有限公司',
+         payeeBank:'中国银行 广州分行',txNo:'TXN26061800713',feeTime:'2026-06-18 16:40',
+         way:'电汇',memo:'回单_远洋_0618.pdf'},
+        {no:'P2606200014',st:'部分抵扣',dc:'收入',cur:'CNY',amt:400,used:200,
+         ourName:'好利航国际物流 / 招商银行 6225-***-888',payeeName:'广州远洋进出口贸易有限公司',
+         payeeBank:'中国银行 广州分行',txNo:'TXN26062000714',feeTime:'2026-06-20 10:15',
+         way:'电汇',memo:'回单_远洋_0620.pdf'}
+    ],
+    '广州分公司':[
+        {no:'P2606250015',st:'部分抵扣',dc:'收入',cur:'USD',amt:6000,used:3600,
+         ourName:'好利航国际物流 / 招商银行 6225-***-888',payeeName:'好利航国际物流广州分公司',
+         payeeBank:'招商银行 广州分行',txNo:'TXN26062500815',feeTime:'2026-06-25 14:05',
+         way:'内部划转',memo:'内部划转_广州分公司_0625.pdf'}
+    ]
+};
+function fclRecvVouchersOf(cust,cur){
+    return (_FCL_RECV_VOUCHERS[cust]||[]).filter(function(v){return v.cur===cur;});
+}
+/* 核销流水：委托单号|币别 → [{no,voucher,feeNo,feeAcct,amt,at,by}]，反核销按这里回滚 */
+var _FCL_AR_WO={
+    'FEO-20260612002|USD':[
+        {no:'ARW-20260618001',voucher:'P2606180013',feeNo:'FAR-20260612003',feeAcct:'海运费',
+         amt:5600,at:'2026-06-18 16:40',by:'张财务'}
+    ],
+    'FEO-20260612002|CNY':[
+        {no:'ARW-20260620002',voucher:'P2606200014',feeNo:'FAR-20260612004',feeAcct:'报关费',
+         amt:200,at:'2026-06-20 10:15',by:'张财务'}
+    ],
+    'FEO-20260609007|USD':[
+        {no:'ARW-20260625003',voucher:'P2606250015',feeNo:'FAR-20260609006',feeAcct:'海运费',
+         amt:3600,at:'2026-06-25 14:05',by:'张财务'}
+    ]
+};
+function arWoKey(entrust,cur){return entrust+'|'+cur;}
+function fclArWoOf(entrust,cur){return _FCL_AR_WO[arWoKey(entrust,cur)]||[];}
+
+/* 这张委托单该币别下的应收费用明细行（作废的不算） */
+function fclArFeeRowsOf(entrust,cur){
+    var c=TC['fcl-ar-fee'];
+    if(!c||!c.d)return [];
+    var h=c.h||[];
+    var iN=h.indexOf('流水号'),iE=h.indexOf('委托单号'),iA=h.indexOf('费用科目'),
+        iC=h.indexOf('币别'),iAmt=h.indexOf('应收金额'),iGot=h.indexOf('已收金额'),
+        iDue=h.indexOf('未收金额'),iSt=h.indexOf('费用确认状态');
+    return c.d.filter(function(r){
+        return String(r[iE]||'')===entrust&&String(r[iC]||'')===cur&&String(r[iSt]||'')!=='已作废';
+    }).map(function(r){
+        return {row:r,no:String(r[iN]||''),acct:String(r[iA]||''),cur:String(r[iC]||''),
+            amt:fclParseMoney(r[iAmt])||0,got:fclParseMoney(r[iGot])||0,
+            due:fclParseMoney(r[iDue])||0,st:String(r[iSt]||'')};
+    });
+}
+/* 台账行按费用明细回算：应收总额/已核销/未核销与状态都以明细为准 */
+function fclArReceiptSync(id,row){
+    id=id||'fcl-ar-receipt';
+    var ent=fclFinGet(id,row,'委托单号'),cur=fclFinGet(id,row,'币别');
+    var list=fclArFeeRowsOf(ent,cur);
+    var amt=0,got=0,due=0;
+    list.forEach(function(x){amt+=x.amt;got+=x.got;due+=x.due;});
+    amt=+amt.toFixed(2);got=+got.toFixed(2);due=+due.toFixed(2);
+    fclFinSet(id,row,'应收总金额',amt.toFixed(2));
+    fclFinSet(id,row,'已核销金额',got.toFixed(2));
+    fclFinSet(id,row,'未核销金额',due.toFixed(2));
+    fclFinSet(id,row,'收款状态',due<=0.004?(amt>0?'全部核销':'待核销'):(got>0?'部分核销':'待核销'));
+    return {amt:amt,got:got,due:due,n:list.length};
+}
+
+/* ---------- 核销弹窗 ---------- */
+var _arWo={id:'',idx:-1,entrust:'',cust:'',cur:'',vouchers:[],fees:[]};
+function openArWriteOff(id){
+    id=id||'fcl-ar-receipt';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选要核销的委托单'));return;}
+    if(idxs.length>1){showToast(tr('核销一次只能选一张委托单（同客户同币别的凭证在弹窗里可多选）'));return;}
+    var row=fclFinRows(id)[idxs[0]];
+    if(!row){showToast(tr('未找到台账行'));return;}
+    var st=fclFinGet(id,row,'收款状态');
+    if(st==='全部核销'){showToast(tr('这张委托单该币别的应收已全部核销'));return;}
+    var ent=fclFinGet(id,row,'委托单号'),cust=fclFinGet(id,row,'客户名称'),cur=fclFinGet(id,row,'币别');
+    var fees=fclArFeeRowsOf(ent,cur).filter(function(x){return x.due>0;});
+    if(!fees.length){showToast(tr('这张委托单该币别下没有未收的费用明细'));return;}
+    var vs=fclRecvVouchersOf(cust,cur);
+    if(!vs.length){showToast(cust+' '+tr('名下没有')+' '+cur+' '+tr('的收入凭证，先去凭证管理登记'));return;}
+    _arWo={id:id,idx:idxs[0],entrust:ent,cust:cust,cur:cur,
+        vouchers:vs.map(function(v){return {sel:false,left:fclFlowLeft(v),ref:v};}),
+        fees:fees.map(function(x){return {no:x.no,acct:x.acct,due:x.due,amt:'',ref:x};})};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='80%';
+    document.getElementById('crud-modal-title').textContent=tr('应收核销')+' - '+ent+'（'+cur+'）';
+    document.getElementById('crud-modal-body').innerHTML=arWoBodyHtml();
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitArWriteOff()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认核销')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function arWoDueTotal(){return +_arWo.fees.reduce(function(s,f){return s+f.due;},0).toFixed(2);}
+function arWoVoucherSum(){
+    return +_arWo.vouchers.filter(function(v){return v.sel;})
+        .reduce(function(s,v){return s+v.left;},0).toFixed(2);
+}
+function arWoAllocSum(){
+    return +_arWo.fees.reduce(function(s,f){return s+(fclParseMoney(f.amt)||0);},0).toFixed(2);
+}
+function arWoBodyHtml(){
+    var A=_arWo;
+    var h='';
+    h+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
+       esc(A.entrust)+'　'+esc(A.cust)+'　'+esc(A.cur)+'　'+
+       tr('未收合计')+' <span class="font-semibold text-text-primary">'+esc(A.cur)+' '+arWoDueTotal().toFixed(2)+'</span>'+
+       '<div class="mt-1 text-xs text-text-muted">'+
+       esc(tr('先勾客户的收款凭证，再把金额分到各条费用上；核销按费用科目落账，后面开票和反核销都按费用行走。'))+
+       '</div></div>';
+    h+='<div data-arwo>'+arWoInnerHtml()+'</div>';
+    return h;
+}
+function arWoInnerHtml(){
+    var A=_arWo,h='';
+    /* ① 客户收款凭证 —— 字段同凭证管理 */
+    h+='<div class="mb-2 flex items-center gap-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
+       '<span class="text-sm font-semibold text-text-primary">'+tr('① 选择收款凭证')+'</span>'+
+       '<span class="text-xs text-text-muted">'+esc(tr('字段同凭证管理；只列认领到该客户、该币别、还有未使用金额的收入凭证'))+'</span></div>';
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto mb-3"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+       '<th class="px-3 py-2 w-10"></th>'+
+       FCL_VOUCHER_COLS.map(function(t){
+           return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+
+       '</tr></thead><tbody>';
+    var usable=0;
+    A.vouchers.forEach(function(f,i){
+        var left=f.left,dis=left<=0,v=f.ref;
+        if(!dis)usable++;
+        h+='<tr class="border-t border-surface-100'+(dis?' opacity-50':'')+'">'+
+           '<td class="px-3 py-2"><input type="checkbox" data-arwo-v="'+i+'"'+(f.sel?' checked':'')+(dis?' disabled':'')+
+           ' onchange="arWoPickVoucher('+i+',this.checked)" class="rounded border-surface-300 text-primary-600"></td>'+
+           '<td class="px-3 py-2 font-medium text-text-primary whitespace-nowrap">'+esc(v.no)+'</td>'+
+           '<td class="px-3 py-2 whitespace-nowrap">'+statusBadge(v.st)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(v.cur)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+(+v.amt).toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+(+v.used).toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 whitespace-nowrap '+(dis?'text-text-muted':'text-success-700 font-medium')+'">'+left.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(v.ourName||'—')+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(v.payeeName||'—')+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(v.txNo||'—')+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(v.feeTime||'—')+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(v.way||'—')+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(v.memo||'—')+'</td></tr>';
+    });
+    if(!usable){
+        h+='<tr><td colspan="'+(FCL_VOUCHER_COLS.length+1)+'" class="px-3 py-6 text-center text-sm text-amber-700">'+
+           esc(tr('这个客户该币别的凭证都已抵扣完，没有可用余额'))+'</td></tr>';
+    }
+    h+='</tbody></table></div>';
+    /* ② 费用明细 */
+    h+='<div class="mb-2 flex items-center gap-2"><span class="w-1 h-4 bg-primary-500 rounded-full"></span>'+
+       '<span class="text-sm font-semibold text-text-primary">'+tr('② 核销到费用明细')+'</span>'+
+       '<button type="button" onclick="arWoAutoFill()" class="h-7 px-2.5 text-xs font-medium text-primary-700 border border-primary-200 rounded bg-white hover:bg-primary-50 cursor-pointer">'+tr('按未收金额自动填')+'</button>'+
+       '<button type="button" onclick="arWoClear()" class="h-7 px-2.5 text-xs text-text-secondary border border-surface-200 rounded bg-white hover:bg-surface-50 cursor-pointer">'+tr('清空')+'</button></div>';
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+       ['应收流水号','费用科目','币别','应收金额','已收金额','未收金额','本次核销'].map(function(t){
+           return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+
+       '</tr></thead><tbody>';
+    A.fees.forEach(function(f,i){
+        h+='<tr class="border-t border-surface-100">'+
+           '<td class="px-3 py-2 font-medium text-text-primary">'+esc(f.no)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(f.acct)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(A.cur)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+f.ref.amt.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 text-success-700">'+f.ref.got.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 text-amber-700">'+f.due.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2"><input data-arwo-f="'+i+'" type="number" value="'+esc(f.amt)+'" oninput="arWoSetAmt('+i+',this.value)" class="w-32 h-8 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50"></td></tr>';
+    });
+    h+='</tbody></table></div>';
+    h+=arWoSummaryHtml();
+    return h;
+}
+function arWoSummaryHtml(){
+    var A=_arWo;
+    var v=arWoVoucherSum(),alloc=arWoAllocSum(),rest=+(v-alloc).toFixed(2);
+    var ok=alloc>0&&rest>=0;
+    return '<div data-arwo-sum class="mt-2 text-sm '+(ok?'text-success-700':'text-red-600')+'">'+
+        tr('已选凭证可核销')+' <span class="font-semibold">'+esc(A.cur)+' '+v.toFixed(2)+'</span>　'+
+        tr('本次核销合计')+' <span class="font-semibold">'+alloc.toFixed(2)+'</span>　'+
+        tr('凭证剩余')+' <span class="font-semibold">'+rest.toFixed(2)+'</span>'+
+        (alloc<=0?('　'+tr('还没分配核销金额')):(rest<0?('　'+tr('核销金额超出已选凭证余额')):''))+'</div>';
+}
+function arWoRedraw(){var b=document.querySelector('[data-arwo]');if(b)b.innerHTML=arWoInnerHtml();}
+function arWoRefreshSum(){var b=document.querySelector('[data-arwo-sum]');if(b)b.outerHTML=arWoSummaryHtml();}
+function arWoReadUI(){
+    _arWo.fees.forEach(function(f,i){
+        var el=document.querySelector('[data-arwo-f="'+i+'"]');
+        if(el)f.amt=String(el.value||'');
+    });
+}
+function arWoPickVoucher(i,on){
+    arWoReadUI();
+    if(_arWo.vouchers[i])_arWo.vouchers[i].sel=!!on;
+    arWoRefreshSum();
+}
+function arWoSetAmt(i,v){
+    if(_arWo.fees[i])_arWo.fees[i].amt=String(v||'');
+    arWoRefreshSum();
+}
+function arWoAutoFill(){
+    arWoReadUI();
+    var left=arWoVoucherSum();
+    if(left<=0){showToast(tr('请先勾选收款凭证'));return;}
+    _arWo.fees.forEach(function(f){
+        var v=Math.min(f.due,+left.toFixed(2));
+        f.amt=v>0?String(v.toFixed(2)):'';
+        left=+(left-v).toFixed(2);
+    });
+    arWoRedraw();
+    showToast(left>0?(tr('已按未收金额填完，凭证还剩')+' '+left.toFixed(2)):tr('已按未收金额填至凭证用完'));
+}
+function arWoClear(){_arWo.fees.forEach(function(f){f.amt='';});arWoRedraw();}
+function submitArWriteOff(){
+    arWoReadUI();
+    var A=_arWo,id=A.id,row=fclFinRows(id)[A.idx];
+    if(!row){showToast(tr('未找到台账行'));return;}
+    var vs=A.vouchers.filter(function(v){return v.sel;});
+    if(!vs.length){showToast(tr('请先勾选要用的收款凭证'));return;}
+    var hit=A.fees.filter(function(f){return (fclParseMoney(f.amt)||0)>0;});
+    if(!hit.length){showToast(tr('请至少给一条费用填核销金额'));return;}
+    var over=hit.filter(function(f){return (fclParseMoney(f.amt)||0)>f.due+0.004;});
+    if(over.length){showToast(over[0].no+' '+tr('的核销金额超过未收金额'));return;}
+    var alloc=arWoAllocSum(),avail=arWoVoucherSum();
+    if(alloc>avail+0.004){showToast(tr('核销合计超出已选凭证余额')+' '+(+(alloc-avail)).toFixed(2));return;}
+    /* 扣凭证余额：按勾选顺序挨个扣 */
+    var rest=alloc,usedNos=[];
+    vs.forEach(function(v){
+        if(rest<=0)return;
+        var take=Math.min(v.left,rest);
+        if(take<=0)return;
+        v.ref.used=+(((+v.ref.used)||0)+take).toFixed(2);
+        v.left=fclFlowLeft(v.ref);
+        v.ref.st=v.left<=0?'全部抵扣':'部分抵扣';
+        rest=+(rest-take).toFixed(2);
+        usedNos.push(v.ref.no);
+    });
+    /* 冲费用明细 + 记核销流水（反核销按这个回滚） */
+    var key=arWoKey(A.entrust,A.cur);
+    if(!_FCL_AR_WO[key])_FCL_AR_WO[key]=[];
+    var seq=_FCL_AR_WO[key].length,now=fclNow(),who=fclWho();
+    hit.forEach(function(f){
+        var pay=fclParseMoney(f.amt)||0;
+        var got=+(f.ref.got+pay).toFixed(2),due=+(f.ref.amt-got).toFixed(2);
+        fclFinSet('fcl-ar-fee',f.ref.row,'已收金额',got.toFixed(2));
+        fclFinSet('fcl-ar-fee',f.ref.row,'未收金额',due.toFixed(2));
+        fclFinSet('fcl-ar-fee',f.ref.row,'费用确认状态',due<=0.004?'已结清':'部分收款');
+        _FCL_AR_WO[key].push({no:'ARW-'+String(2609000+(++seq)),voucher:usedNos[0]||'',
+            feeNo:f.no,feeAcct:f.acct,amt:pay,at:now,by:who});
+    });
+    var sum=fclArReceiptSync(id,row);
+    if(typeof _listData!=='undefined'){delete _listData[id];delete _listData['fcl-ar-fee'];}
+    closeCrudModal();
+    fclFinRefresh(id);
+    showToast(tr('已用')+' '+usedNos.join('、')+' '+tr('核销')+' '+A.cur+' '+alloc.toFixed(2)+
+        '　'+tr('剩余未收')+' '+sum.due.toFixed(2));
+}
+
+/* ---------- 查看：费用明细 + 核销详情（可反核销） ---------- */
+var _arDetailCtx={id:'',idx:-1};
+function openArReceiptDetail(id,rowIdx){
+    id=id||'fcl-ar-receipt';
+    var idx=(rowIdx!=null&&rowIdx>=0)?rowIdx:
+        ((typeof getSelectedRowIndex==='function')?getSelectedRowIndex():-1);
+    if(idx<0){showToast(tr('请先勾选一条台账'));return;}
+    var row=fclFinRows(id)[idx];
+    if(!row){showToast(tr('未找到台账行'));return;}
+    _arDetailCtx={id:id,idx:idx};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='70%';
+    document.getElementById('crud-modal-title').textContent=
+        tr('应收明细与核销')+' - '+fclFinGet(id,row,'委托单号')+'（'+fclFinGet(id,row,'币别')+'）';
+    document.getElementById('crud-modal-body').innerHTML=arDetailBodyHtml();
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function arDetailBodyHtml(){
+    var id=_arDetailCtx.id,row=fclFinRows(id)[_arDetailCtx.idx];
+    if(!row)return '';
+    var g=function(n){return fclFinGet(id,row,n);};
+    var ent=g('委托单号'),cur=g('币别');
+    var fees=fclArFeeRowsOf(ent,cur),wos=fclArWoOf(ent,cur);
+    var b='<div class="space-y-4">';
+    b+='<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-sm">';
+    [['委托单号',ent],['客户名称',g('客户名称')],['业务员',g('业务员')],['币别',cur],
+     ['应收总金额',g('应收总金额')],['已核销金额',g('已核销金额')],['未核销金额',g('未核销金额')],
+     ['收款状态',g('收款状态')]].forEach(function(p){
+        b+='<div><span class="text-xs text-text-muted block">'+tr(p[0])+'</span>'+
+           '<span class="font-medium text-text-primary">'+(esc(p[1])||'—')+'</span></div>';
+    });
+    b+='</div>';
+    /* ① 费用明细 */
+    b+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-primary-500 rounded-full"></span>'+
+       '<span class="text-sm font-semibold text-text-primary">'+tr('① 费用明细')+'</span></div>';
+    b+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+       ['应收流水号','费用科目','币别','应收金额','已收金额','未收金额','费用确认状态'].map(function(t){
+           return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+
+       '</tr></thead><tbody>';
+    if(!fees.length)b+='<tr><td colspan="7" class="px-3 py-8 text-center text-sm text-text-muted">'+tr('还没有费用明细，点「新增费用」添加')+'</td></tr>';
+    fees.forEach(function(f){
+        b+='<tr class="border-t border-surface-100">'+
+           '<td class="px-3 py-2 font-medium text-text-primary">'+esc(f.no)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(f.acct)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(f.cur)+'</td>'+
+           '<td class="px-3 py-2 text-text-primary">'+f.amt.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 text-success-700">'+f.got.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 text-amber-700">'+f.due.toFixed(2)+'</td>'+
+           '<td class="px-3 py-2">'+statusBadge(f.st)+'</td></tr>';
+    });
+    b+='</tbody></table></div></div>';
+    /* ② 核销详情 —— 反核销按费用行走 */
+    b+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
+       '<span class="text-sm font-semibold text-text-primary">'+tr('② 核销详情')+'</span>'+
+       '<span class="text-xs text-text-muted">'+esc(tr('反核销会把金额退回费用与凭证两边，按这一条回滚'))+'</span></div>';
+    b+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+       ['核销单号','收款凭证','应收流水号','费用科目','核销金额','核销人','核销时间','操作'].map(function(t){
+           return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+
+       '</tr></thead><tbody>';
+    if(!wos.length)b+='<tr><td colspan="8" class="px-3 py-8 text-center text-sm text-text-muted">'+tr('还没有核销记录')+'</td></tr>';
+    wos.forEach(function(w,i){
+        b+='<tr class="border-t border-surface-100">'+
+           '<td class="px-3 py-2 font-medium text-text-primary">'+esc(w.no)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(w.voucher)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(w.feeNo)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(w.feeAcct)+'</td>'+
+           '<td class="px-3 py-2 text-text-primary">'+esc(cur)+' '+(+w.amt).toFixed(2)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(w.by)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(w.at)+'</td>'+
+           '<td class="px-3 py-2"><a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="arUnWriteOff('+i+')">'+tr('反核销')+'</a></td></tr>';
+    });
+    b+='</tbody></table></div></div>';
+    b+='</div>';
+    return b;
+}
+function arDetailRedraw(){
+    var box=document.getElementById('crud-modal-body');
+    if(box)box.innerHTML=arDetailBodyHtml();
+}
+/* 反核销：费用的已收退回、凭证的已使用退回、核销流水删掉，台账行重算 */
+function arUnWriteOff(i){
+    var id=_arDetailCtx.id,row=fclFinRows(id)[_arDetailCtx.idx];
+    if(!row){showToast(tr('未找到台账行'));return;}
+    var ent=fclFinGet(id,row,'委托单号'),cur=fclFinGet(id,row,'币别');
+    var key=arWoKey(ent,cur),list=_FCL_AR_WO[key]||[];
+    var w=list[i];
+    if(!w){showToast(tr('未找到核销记录'));return;}
+    /* 费用行退回 */
+    var fee=fclArFeeRowsOf(ent,cur).filter(function(x){return x.no===w.feeNo;})[0];
+    if(fee){
+        var got=+(fee.got-(+w.amt||0)).toFixed(2);
+        if(got<0)got=0;
+        var due=+(fee.amt-got).toFixed(2);
+        fclFinSet('fcl-ar-fee',fee.row,'已收金额',got.toFixed(2));
+        fclFinSet('fcl-ar-fee',fee.row,'未收金额',due.toFixed(2));
+        fclFinSet('fcl-ar-fee',fee.row,'费用确认状态',got<=0?'已确认':(due<=0.004?'已结清':'部分收款'));
+    }
+    /* 凭证退回 */
+    var v=(_FCL_RECV_VOUCHERS[fclFinGet(id,row,'客户名称')]||[]).filter(function(x){return x.no===w.voucher;})[0];
+    if(v){
+        v.used=+(((+v.used)||0)-(+w.amt||0)).toFixed(2);
+        if(v.used<0)v.used=0;
+        v.st=v.used<=0?'待抵扣':(fclFlowLeft(v)<=0?'全部抵扣':'部分抵扣');
+    }
+    list.splice(i,1);
+    var sum=fclArReceiptSync(id,row);
+    if(typeof _listData!=='undefined'){delete _listData[id];delete _listData['fcl-ar-fee'];}
+    arDetailRedraw();
+    fclFinRefresh(id);
+    showToast(tr('已反核销')+' '+w.no+'：'+cur+' '+(+w.amt).toFixed(2)+
+        (v?('，'+tr('已退回凭证')+' '+v.no):'')+'　'+tr('未收回到')+' '+sum.due.toFixed(2));
+}
+
+/* ---------- 新增费用：从台账进，委托单号带出后锁死 ---------- */
+function openArAddFeeFromReceipt(id){
+    id=id||'fcl-ar-receipt';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选要加费用的委托单'));return;}
+    if(idxs.length>1){showToast(tr('一次只能给一张委托单加费用'));return;}
+    var row=fclFinRows(id)[idxs[0]];
+    if(!row){showToast(tr('未找到台账行'));return;}
+    openArFeeAddModal('fcl-ar-fee');
+    /* 把台账那行的委托单号与币别直接带进去，省得再敲一遍 */
+    arFeeFillEntrust(fclFinGet(id,row,'委托单号'));
+    arFeeSet('cur',fclFinGet(id,row,'币别'));
+    var box=document.getElementById('crud-modal-body');
+    if(box)box.innerHTML=arFeeAddBodyHtml();
+}
+
+/* ---------- 申请开票 ---------- */
+var FCL_INVOICE_TYPES=['增值税专用发票','增值税普通发票','形式发票(PI)','商业发票(CI)'];
+var _arInv=null;
+function openArInvoiceApply(id){
+    id=id||'fcl-ar-receipt';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选要开票的委托单'));return;}
+    if(idxs.length>1){showToast(tr('申请开票一次只能选一张委托单'));return;}
+    var row=fclFinRows(id)[idxs[0]];
+    if(!row){showToast(tr('未找到台账行'));return;}
+    var ent=fclFinGet(id,row,'委托单号'),cur=fclFinGet(id,row,'币别');
+    var fees=fclArFeeRowsOf(ent,cur);
+    if(!fees.length){showToast(tr('这张委托单该币别下没有费用明细，先新增费用'));return;}
+    _arInv={id:id,idx:idxs[0],entrust:ent,cust:fclFinGet(id,row,'客户名称'),cur:cur,
+        type:FCL_INVOICE_TYPES[0],title:fclFinGet(id,row,'客户名称'),taxNo:'',remark:'',
+        fees:fees.map(function(f){return {sel:f.due>0||f.got>0,no:f.no,acct:f.acct,amt:f.amt};})};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=tr('申请开票')+' - '+ent+'（'+cur+'）';
+    document.getElementById('crud-modal-body').innerHTML=arInvBodyHtml();
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitArInvoiceApply()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('提交开票申请')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function arInvSum(){
+    return +(_arInv.fees.filter(function(f){return f.sel;})
+        .reduce(function(s,f){return s+f.amt;},0)).toFixed(2);
+}
+function arInvBodyHtml(){
+    var A=_arInv;
+    var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white';
+    var h='<div class="space-y-4">';
+    h+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('发票类型')+'<span class="text-red-500 ml-0.5">*</span></label>'+
+       '<select onchange="arInvSet(\'type\',this.value)" class="'+inCls+'">'+selectOptionsHtml(FCL_INVOICE_TYPES,A.type)+'</select></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('开票抬头')+'<span class="text-red-500 ml-0.5">*</span></label>'+
+       '<input type="text" value="'+esc(A.title)+'" oninput="arInvSet(\'title\',this.value)" class="'+inCls+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('纳税人识别号')+'</label>'+
+       '<input type="text" value="'+esc(A.taxNo)+'" oninput="arInvSet(\'taxNo\',this.value)" placeholder="'+esc(tr('专票必填'))+'" class="'+inCls+'"></div>';
+    h+='<div class="flex flex-col gap-1.5 md:col-span-3"><label class="text-sm font-medium text-text-secondary">'+tr('开票备注')+'</label>'+
+       '<textarea rows="2" oninput="arInvSet(\'remark\',this.value)" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y">'+esc(A.remark)+'</textarea></div>';
+    h+='</div>';
+    h+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-primary-500 rounded-full"></span>'+
+       '<span class="text-sm font-semibold text-text-primary">'+tr('开票费用明细')+'</span>'+
+       '<span class="text-xs text-text-muted">'+esc(tr('勾选要开进这张发票的费用'))+'</span></div>';
+    h+='<div data-arinv class="border border-surface-200 rounded-lg overflow-auto">'+arInvTableHtml()+'</div></div>';
+    h+='</div>';
+    return h;
+}
+function arInvTableHtml(){
+    var A=_arInv;
+    var h='<table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+       '<th class="px-3 py-2 w-10"></th>'+
+       ['应收流水号','费用科目','币别','应收金额'].map(function(t){
+           return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+
+       '</tr></thead><tbody>';
+    A.fees.forEach(function(f,i){
+        h+='<tr class="border-t border-surface-100">'+
+           '<td class="px-3 py-2"><input type="checkbox" data-arinv-f="'+i+'"'+(f.sel?' checked':'')+
+           ' onchange="arInvPick('+i+',this.checked)" class="rounded border-surface-300 text-primary-600"></td>'+
+           '<td class="px-3 py-2 font-medium text-text-primary">'+esc(f.no)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(f.acct)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(A.cur)+'</td>'+
+           '<td class="px-3 py-2 text-text-primary">'+f.amt.toFixed(2)+'</td></tr>';
+    });
+    h+='</tbody><tfoot><tr class="border-t-2 border-surface-200 bg-surface-50 font-medium">'+
+       '<td class="px-3 py-2" colspan="4">'+tr('开票合计')+'</td>'+
+       '<td class="px-3 py-2">'+esc(A.cur)+' '+arInvSum().toFixed(2)+'</td></tr></tfoot></table>';
+    return h;
+}
+function arInvSet(k,v){if(_arInv)_arInv[k]=v;}
+function arInvPick(i,on){
+    if(_arInv&&_arInv.fees[i])_arInv.fees[i].sel=!!on;
+    var box=document.querySelector('[data-arinv]');
+    if(box)box.innerHTML=arInvTableHtml();
+}
+function submitArInvoiceApply(){
+    var A=_arInv;
+    if(!A){showToast(tr('请重新打开开票申请'));return;}
+    if(!A.type){showToast(tr('请选择发票类型'));return;}
+    if(!String(A.title||'').trim()){showToast(tr('请填写开票抬头'));return;}
+    if(A.type==='增值税专用发票'&&!String(A.taxNo||'').trim()){
+        showToast(tr('开专票必须填纳税人识别号'));return;}
+    var picked=A.fees.filter(function(f){return f.sel;});
+    if(!picked.length){showToast(tr('请至少勾选一条要开票的费用'));return;}
+    var no='INV-'+String(fclNow()).replace(/[^0-9]/g,'').slice(2,12);
+    closeCrudModal();
+    showToast(tr('开票申请已提交')+' '+no+'：'+A.title+'　'+A.type+'　'+
+        picked.length+' '+tr('条费用')+'　'+A.cur+' '+arInvSum().toFixed(2));
+}

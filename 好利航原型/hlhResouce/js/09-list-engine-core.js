@@ -89,11 +89,25 @@ function expandRowsToTarget(c,target){
     return result;
 }
 
+/* 行标识：默认用首列。首列不唯一的表（比如应收台账按「委托单 × 币别」拆行，
+ * 委托单号会重复）用 TC[id].rowKeyCols 指定几列拼成 key —— 否则两行会互相串改。 */
+function listRowKey(id,row){
+    if(!row||!row.length)return '';
+    const c=TC[id]||{},cols=c.rowKeyCols;
+    if(cols&&cols.length){
+        const h=c.h||[];
+        return cols.map(function(name){
+            const i=h.indexOf(name);
+            return i>=0?String(row[i]==null?'':row[i]):'';
+        }).join('|');
+    }
+    return String(row[0]);
+}
 function applyRowOverrides(id,rows){
     const map=_rowOverrides[id];
     if(!map)return rows;
     rows.forEach(function(row){
-        const key=String(row&&row.length?row[0]:'');
+        const key=listRowKey(id,row);
         const override=map[key];
         if(override){
             Object.keys(override).forEach(function(idx){
@@ -105,7 +119,7 @@ function applyRowOverrides(id,rows){
 }
 
 function setRowOverride(id,row,colIdx,value){
-    const key=String(row&&row.length?row[0]:'');
+    const key=listRowKey(id,row);
     if(!key)return;
     if(!_rowOverrides[id])_rowOverrides[id]={};
     if(!_rowOverrides[id][key])_rowOverrides[id][key]={};
@@ -113,9 +127,12 @@ function setRowOverride(id,row,colIdx,value){
     const c=TC[id];
     if(c&&c.d){
         c.d.forEach(function(baseRow){
-            if(String(baseRow&&baseRow.length?baseRow[0]:'')===key)baseRow[colIdx]=value;
+            if(listRowKey(id,baseRow)===key)baseRow[colIdx]=value;
         });
     }
+    /* 传进来的行可能是 _listData 里的副本（不在 TC.d 里），也要写到，
+     * 否则同一次交互里紧接着读回来的还是旧值 */
+    if(row&&row.length)row[colIdx]=value;
 }
 
 function expandData(id){
@@ -1003,7 +1020,9 @@ function renderToolbarAction(action,id){
     else if(action.key==='apWriteOff')click='openApWriteOff(\''+id+'\')';
     else if(action.key==='confirmArFee')click='openArFeeConfirm(\''+id+'\')';
     else if(action.key==='voidArFee')click='voidArFeeRows(\''+id+'\')';
-    else if(action.key==='writeOffReceipt')click='openArReceiptWriteOff(\''+id+'\')';
+    else if(action.key==='writeOffReceipt')click='openArWriteOff(\''+id+'\')';
+    else if(action.key==='arAddFee')click='openArAddFeeFromReceipt(\''+id+'\')';
+    else if(action.key==='arInvoice')click='openArInvoiceApply(\''+id+'\')';
     else if(action.key==='releaseBooking')click='openFclBookingRelease(\''+id+'\')';
     else if(action.key==='freightRecalc')click='openFreightRecalcConfirm(\''+id+'\')';
     else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
@@ -1629,7 +1648,14 @@ function getToolbarActions(id){
             for(var ri=base.length-1;ri>=0;ri--)if(base[ri].type==='view'||base[ri].type==='edit')base.splice(ri,1);
             base.push({key:'confirmArFee',label:'费用确认'},{key:'voidArFee',label:'作废',variant:'danger'});
         }
-        if(id==='fcl-ar-receipt')base.push({key:'writeOffReceipt',label:'核销'});
+        /* 应收收款管理：按委托单汇总的应收台账，不手工新增/编辑；
+         * 费用去「新增费用」加（落到应收费用明细），核销挑客户收款凭证 */
+        if(id==='fcl-ar-receipt'){
+            for(var ti=base.length-1;ti>=0;ti--)if(base[ti].type==='add'||base[ti].type==='edit')base.splice(ti,1);
+            base.push({key:'arAddFee',label:'新增费用',variant:'primary'},
+                {key:'arInvoice',label:'申请开票'},
+                {key:'writeOffReceipt',label:'核销',variant:'primary'});
+        }
         base.push({key:'export',label:'导出数据'});
         return base;
     }
@@ -1797,7 +1823,7 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
+var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
 /* 单票成本明细全部由「分摊到票」生成，手工编辑会让它和来源成本行对不上 */
 'fcl-shipment-cost',
 /* 代理账单按供应商发票导入，费用明细挂在 Job No 上；改发票要走重新导入，不给行内编辑 */

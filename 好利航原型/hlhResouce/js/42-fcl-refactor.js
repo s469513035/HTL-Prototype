@@ -235,28 +235,37 @@ TC['fcl-ar-fee'].fieldOptions={
 };
 
 /* ⑤ 应收收款管理 —— 客户打款进来后认领、核销到应收明细上 */
+/* ⑤ 应收收款管理 —— 改成按「委托单 × 币别」汇总的应收台账（与应收费用明细同口径）。
+ * 一行 = 这张委托单该币别下的应收总额 / 已核销 / 未核销；
+ * 收款方式、收款日期、到账账户这些都在客户收款凭证上，核销时去凭证里挑，不再抄一份。
+ * 一张委托单可能同时有 USD 和 CNY 的费用，所以按币别拆行 —— 不拆的话「应收总金额」
+ * 没法给一个有意义的币种。 */
 addPrototypeTable('fcl-ar-receipt','应收收款管理',
-    '收款单号|客户名称|收款方式|币别|收款金额|已核销金额|未核销金额|收款日期|到账银行账户|关联Job|核销人|核销时间|备注|收款状态|操作',
-    ['待认领','待核销','部分核销','全部核销'],[
-    ['FRC-20260618001','广州远洋进出口贸易','电汇','USD','5600','5600','0','2026-06-18','招商银行 6225****8888','FBK-20260612002','张财务','2026-06-18 16:40','','全部核销'],
-    ['FRC-20260620002','广州远洋进出口贸易','电汇','CNY','400','200','200','2026-06-20','招商银行 6225****8888','FBK-20260612002','张财务','2026-06-20 10:15','客户先付一半报关费','部分核销'],
-    ['FRC-20260622003','深圳市华运达国际货运','电汇','USD','4500','0','4500','2026-06-22','招商银行 6225****8888','FBK-20260613001','','','','待核销'],
-    ['FRC-20260623004','','电汇','CNY','2000','0','2000','2026-06-23','招商银行 6225****8888','','','','对方户名与客户档案对不上，待认领','待认领']
+    '委托单号|客户名称|业务员|币别|应收总金额|已核销金额|未核销金额|关联Job|备注|收款状态|操作',
+    ['待核销','部分核销','全部核销'],[
+    ['FEO-20260613001','深圳市华运达国际货运','张三','USD','4500','0','4500','FBK-20260613001','','待核销'],
+    ['FEO-20260613001','深圳市华运达国际货运','张三','CNY','2000','0','2000','FBK-20260613001','','待核销'],
+    ['FEO-20260612002','广州远洋进出口贸易','李四','USD','5600','5600','0','FBK-20260612002','','全部核销'],
+    ['FEO-20260612002','广州远洋进出口贸易','李四','CNY','400','200','200','FBK-20260612002','客户先付一半报关费','部分核销'],
+    ['FEO-20260609007','广州分公司','王五','USD','9600','3600','6000','FBK-20260609006','自拼柜，费用按散货订单拆','部分核销']
 ],[
-    {label:'收款单号',type:'text'},
+    {label:'委托单号',type:'text'},
     {label:'客户名称',type:'select',options:FCL_CUSTOMER_OPTIONS},
-    {label:'收款方式',type:'select',options:['电汇','支票','现金','信用证']},
+    {label:'业务员',type:'select',options:FCL_SALES_OPTIONS},
     {label:'币别',type:'select',options:FCL_CURRENCY_OPTIONS},
     {label:'关联Job',type:'text'},
-    {label:'收款日期',type:'date'},
-    {label:'收款状态',type:'select',options:['待认领','待核销','部分核销','全部核销']}
+    {label:'收款状态',type:'select',options:['待核销','部分核销','全部核销']}
 ]);
-TC['fcl-ar-receipt'].modalExcludedFields=['已核销金额','未核销金额','核销人','核销时间','收款状态'];
+TC['fcl-ar-receipt'].modalExcludedFields=['已核销金额','未核销金额','收款状态'];
 TC['fcl-ar-receipt'].fieldOptions={
-    '客户名称':FCL_CUSTOMER_OPTIONS,'币别':FCL_CURRENCY_OPTIONS,
-    '收款方式':['电汇','支票','现金','信用证'],
-    '到账银行账户':['招商银行 6225****8888','中国银行 4563****1234','工商银行 6222****4321']
+    '客户名称':FCL_CUSTOMER_OPTIONS,'业务员':FCL_SALES_OPTIONS,'币别':FCL_CURRENCY_OPTIONS
 };
+/* 首列「委托单号」在这张表里不唯一（同一张单 USD 和 CNY 各一行），
+ * 必须指定复合行标识，否则两行的金额会互相串改。 */
+TC['fcl-ar-receipt'].rowKeyCols=['委托单号','币别'];
+/* 台账按真实委托单来，不做 200 行填充 —— 填充会按首列递增编号，
+ * 造出一堆不存在的委托单，核销时一条费用都对不上。 */
+TC['fcl-ar-receipt'].noExpand=true;
 
 /* ===== 整柜财务的自定义操作 =====
  * 都走「勾选 -> 校验状态 -> 改状态/算金额 -> 刷新列表」这一套，
@@ -532,64 +541,7 @@ function confirmAgentBillImport(id){
 /* 手工分摊已重写为「Job 成本 → 委托单 →（自由散货拼箱再往下）散货订单」，见 js/45-fcl-agent-cost.js */
 
 /* 付款登记已改为「付款核销」（挑服务商付款流水冲账），见 js/45-fcl-agent-cost.js */
-/* ⑤ 应收收款管理：核销 / 反核销 */
-var _arWriteOffCtx={id:'',idx:-1};
-function openArReceiptWriteOff(id){
-    id=id||'fcl-ar-receipt';
-    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
-    if(!idxs.length){showToast(tr('请先勾选需要核销的收款单'));return;}
-    if(idxs.length>1){showToast(tr('核销一次只能选一张收款单'));return;}
-    var row=fclFinRows(id)[idxs[0]];
-    if(!row){showToast(tr('未找到收款单'));return;}
-    var st=fclFinGet(id,row,'收款状态');
-    if(st==='待认领'){showToast(tr('该收款单还没认领到客户，先补客户名称再核销'));return;}
-    if(st==='全部核销'){showToast(tr('该收款单已全部核销'));return;}
-    _arWriteOffCtx={id:id,idx:idxs[0]};
-    var left=fclParseMoney(fclFinGet(id,row,'未核销金额'));
-    var panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='46%';
-    document.getElementById('crud-modal-title').textContent=tr('核销')+' - '+fclFinGet(id,row,'收款单号');
-    var b='';
-    b+='<div class="mb-3 px-3 py-2 rounded-lg bg-primary-50 border border-primary-100 text-sm text-text-secondary">'+
-       esc(fclFinGet(id,row,'客户名称'))+'　'+tr('收款')+' '+esc(fclFinGet(id,row,'币别'))+' '+esc(fclFinGet(id,row,'收款金额'))+
-       '　'+tr('已核销')+' '+esc(fclFinGet(id,row,'已核销金额')||'0')+
-       '　<span class="font-semibold text-text-primary">'+tr('未核销')+' '+esc(fclFinGet(id,row,'未核销金额'))+'</span></div>';
-    b+='<div class="mb-3"><label class="text-xs text-text-secondary mb-1 block">'+tr('本次核销金额')+'<span class="text-red-500 ml-1">*</span></label>'+
-       '<input id="wo-amt" type="number" value="'+(left===null?'':left)+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
-    b+='<div class="mb-3"><label class="text-xs text-text-secondary mb-1 block">'+tr('核销到 Job')+'</label>'+
-       '<input id="wo-job" type="text" value="'+esc(fclFinGet(id,row,'关联Job'))+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
-    b+='<div class="text-xs text-text-muted">'+tr('核销后会冲减该 Job 应收费用明细里的未收金额')+'</div>';
-    document.getElementById('crud-modal-body').innerHTML=b;
-    document.getElementById('crud-modal-footer').innerHTML=
-        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
-        '<button onclick="submitArReceiptWriteOff()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认核销')+'</button>';
-    document.getElementById('crud-modal').classList.add('show');
-}
-function submitArReceiptWriteOff(){
-    var id=_arWriteOffCtx.id,row=fclFinRows(id)[_arWriteOffCtx.idx];
-    if(!row){showToast(tr('未找到收款单'));return;}
-    var el=document.getElementById('wo-amt');
-    var amt=fclParseMoney(el?el.value:'');
-    if(amt===null||amt<=0){showToast(tr('请填写大于 0 的核销金额'));return;}
-    var total=fclParseMoney(fclFinGet(id,row,'收款金额'))||0;
-    var done=(fclParseMoney(fclFinGet(id,row,'已核销金额'))||0)+amt;
-    if(done>total){showToast(tr('核销金额超过收款金额，请核对'));return;}
-    var left=total-done;
-    fclFinSet(id,row,'已核销金额',String(done));
-    fclFinSet(id,row,'未核销金额',String(left));
-    fclFinSet(id,row,'核销人',(typeof getCurrentUserName==='function')?getCurrentUserName():'admin');
-    fclFinSet(id,row,'核销时间',(typeof receiptNowStr==='function')?receiptNowStr():'');
-    fclFinSet(id,row,'收款状态',left===0?'全部核销':'部分核销');
-    var jobEl=document.getElementById('wo-job');
-    var job=jobEl?String(jobEl.value||''):'';
-    if(job)fclFinSet(id,row,'关联Job',job);
-    var hit=fclWriteOffAgainstArFee(job,amt);
-    closeCrudModal();
-    fclFinRefresh(id);
-    var msg=tr('已核销')+' '+amt+'，'+tr('未核销')+' '+left;
-    msg+=hit?('，'+tr('已冲减应收明细')+' '+hit+' '+tr('条')):('，'+tr('未找到该 Job 的应收明细'));
-    showToast(msg);
-}
+/* 应收核销已重写为「挑客户收款凭证 × 费用明细逐项核销」，见 js/45-fcl-agent-cost.js */
 /* 把核销金额按顺序冲到应收明细的未收金额上，返回冲减的条数。
  * 应收现在按委托单号存，而收款单上挂的是 Job：一个 Job 可能拼了几张委托单，
  * 所以 key 传 Job 时要展开成它名下的委托单一起冲；直接传委托单号也认。 */

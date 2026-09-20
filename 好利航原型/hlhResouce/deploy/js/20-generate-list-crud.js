@@ -200,7 +200,7 @@ function generateListPage(id,page,statusFilter){
             var deleteAction=(id==='wb-manage'||id==='wb-client-manage')?'cancel':'delete';
             const rowBg=gi%2===1?'#F9FAFB':'#FFFFFF';
             const airScanIds=['wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan'];
-            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','fcl-agent-bill','fcl-agent-cost','fcl-ap-bill','fcl-ar-fee'].concat(airScanIds).includes(id);
+            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','fcl-agent-bill','fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt'].concat(airScanIds).includes(id);
             const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','msg-config','fcl-agent-cost'].concat(airScanIds).includes(id);
             /* OMS 订单/问题件/账单的「查看」与双击走同一个入口（TMS 明细弹窗 / 账单明细）；
              * 不往下面那条已经很深的三元链上再套两层。 */
@@ -216,7 +216,9 @@ function generateListPage(id,page,statusFilter){
             const apBillReuseView=(id==='fcl-ap-bill')?'openApBillDetail':'';
             /* 应收费用明细：行内「查看」= 看这条应收；委托方是自己人的整柜还能往下看散货拆分 */
             const arFeeReuseView=(id==='fcl-ar-fee')?'openArFeeDetail':'';
-            const reuseView=msgReuseView||omsReuseView||agentBillReuseView||agentCostReuseView||apBillReuseView||arFeeReuseView;
+            /* 应收收款管理：行内「查看」= 费用明细 + 核销详情（可反核销） */
+            const arRcptReuseView=(id==='fcl-ar-receipt')?'openArReceiptDetail':'';
+            const reuseView=msgReuseView||omsReuseView||agentBillReuseView||agentCostReuseView||apBillReuseView||arFeeReuseView||arRcptReuseView;
             const viewClick=reuseView?(reuseView+'(\''+id+'\','+gi+')'):
                 ((id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':(id==='wh-pallet-info'?'openPalletInfoDetailModal(\''+id+'\','+gi+')':(id==='ow-pickup'?'openOverseasPickupDetail(\''+id+'\','+gi+')':(id==='ow-arrival'?'openOverseasArrivalDetail(\''+id+'\','+gi+')':(id==='ow-outbound'?'openOverseasOutboundDetail(\''+id+'\','+gi+')':(id==='cs-issue-track'?'openCsIssueViewModal(\''+id+'\','+gi+')':(id==='approval-mine'?'openApprovalDetail(\''+id+'\','+gi+')':(id==='approval-msg'?'openApprovalMsgDetail(\''+id+'\','+gi+')':((id==='ow-inventory'||id==='wh-stock-check')?'openOverseasInventoryDetail(\''+id+'\','+gi+')':(id==='ow-pallet-info'?'openOwPalletInfoDetailModal(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')')))))))))))));
             /* 行内「查看」也能整列去掉：有些页明细就摆在列表上，再点开一个只读弹窗是多余的 */

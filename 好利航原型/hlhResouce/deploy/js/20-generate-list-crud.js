@@ -214,11 +214,13 @@ function generateListPage(id,page,statusFilter){
             const agentCostReuseView=(id==='fcl-agent-cost')?'openAgentCostDetail':'';
             /* 付款单管理：行内「查看」= 看这张付款单是由哪些费用行凑出来的 */
             const apBillReuseView=(id==='fcl-ap-bill')?'openApBillDetail':'';
-            const reuseView=msgReuseView||omsReuseView||agentBillReuseView||agentCostReuseView||apBillReuseView;
+            /* 应收费用明细：行内「查看」= 看这条应收；委托方是自己人的整柜还能往下看散货拆分 */
+            const arFeeReuseView=(id==='fcl-ar-fee')?'openArFeeDetail':'';
+            const reuseView=msgReuseView||omsReuseView||agentBillReuseView||agentCostReuseView||apBillReuseView||arFeeReuseView;
             const viewClick=reuseView?(reuseView+'(\''+id+'\','+gi+')'):
                 ((id==='wb-manage'||id==='wb-client-manage')?'openWaybillDetail(\''+id+'\','+gi+')':(id==='fin-bill-mgmt'?'openActionModal(\'billDetail\',\''+id+'\','+gi+')':(id==='fin-fee-mgmt'?'openFeeMgmtDetail(\''+id+'\','+gi+')':(id==='wh-sort-bag'?'openSortBagDetailModal(\''+id+'\','+gi+')':(id==='wh-pallet-info'?'openPalletInfoDetailModal(\''+id+'\','+gi+')':(id==='ow-pickup'?'openOverseasPickupDetail(\''+id+'\','+gi+')':(id==='ow-arrival'?'openOverseasArrivalDetail(\''+id+'\','+gi+')':(id==='ow-outbound'?'openOverseasOutboundDetail(\''+id+'\','+gi+')':(id==='cs-issue-track'?'openCsIssueViewModal(\''+id+'\','+gi+')':(id==='approval-mine'?'openApprovalDetail(\''+id+'\','+gi+')':(id==='approval-msg'?'openApprovalMsgDetail(\''+id+'\','+gi+')':((id==='ow-inventory'||id==='wh-stock-check')?'openOverseasInventoryDetail(\''+id+'\','+gi+')':(id==='ow-pallet-info'?'openOwPalletInfoDetailModal(\''+id+'\','+gi+')':'openCrudModal(\'view\',\''+id+'\','+gi+')')))))))))))));
             /* 行内「查看」也能整列去掉：有些页明细就摆在列表上，再点开一个只读弹窗是多余的 */
-            const hideView=['fcl-ar-fee'].includes(id);
+            const hideView=[].includes(id);
             let actionHtml='';
             if(id==='cfg-label-template'){
                 actionHtml='<a class="text-orange-500 hover:text-orange-600 cursor-pointer mr-3" onclick="openLabelTemplateModal(\'edit\',\''+id+'\','+gi+')">'+tr('修改')+'</a>'+
@@ -453,6 +455,11 @@ function openCrudModal(mode,id,rowIdx){
         return;
     }
     /* 代理账单：新增与导入合并成一个弹窗（抬头 + 明细可上传可手填 + 附件） */
+    /* 应收费用明细：新增走三列自定义弹窗（委托单号带出客户/业务员/结算周期） */
+    if(id==='fcl-ar-fee'&&mode==='add'){
+        openArFeeAddModal(id);
+        return;
+    }
     if(id==='fcl-agent-bill'&&mode==='add'){
         openAgentBillCreateModal(id);
         return;

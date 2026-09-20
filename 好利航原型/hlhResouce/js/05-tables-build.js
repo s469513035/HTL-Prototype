@@ -527,7 +527,9 @@ const FCL_CONTAINER_OPTIONS=['20GP','40GP','40HQ','45HQ'];
 const FCL_POL_OPTIONS=['深圳盐田','广州南沙','上海洋山','宁波舟山','青岛港'];
 const FCL_POD_OPTIONS=['拉各斯','达喀尔','阿比让','特马','杜阿拉','洛美','科托努'];
 const FCL_CURRENCY_OPTIONS=['USD','CNY','EUR','XOF','NGN'];
-const FCL_CUSTOMER_OPTIONS=['深圳市华运达国际货运','广州远洋进出口贸易','东莞市鑫海物流','上海锦程国际贸易'];
+/* 「广州分公司」是内部分公司，它自己拼的柜也以委托方身份下单，应收挂在它头上，
+ * 底下再按散货订单摊到各实际发货人 —— 所以它必须出现在客户口径里 */
+const FCL_CUSTOMER_OPTIONS=['深圳市华运达国际货运','广州远洋进出口贸易','东莞市鑫海物流','上海锦程国际贸易','佛山恒通货运代理','广州分公司'];
 const FCL_BRANCH_OPTIONS=['深圳分公司','广州分公司','上海分公司','义乌分公司'];
 const FCL_PRICE_QUERY=[
     {label:'柜型',type:'select',options:FCL_CONTAINER_OPTIONS},

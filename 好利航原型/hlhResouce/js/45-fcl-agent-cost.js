@@ -437,7 +437,7 @@ addPrototypeTable('fcl-job-cargo','柜内票清单',
     ['JCG-20260612005','FBK-20260612002','FEO-20260612009','上海锦程国际贸易','陶瓷制品','50','11.2','5600','2026-06-20 11:15','','','','已出运'],
     /* 整柜独占，一个 Job 只有一票 —— 二级分摊时应原样落地不拆 */
     ['JCG-20260611006','FBK-20260611003','FEO-20260611003','东莞市鑫海物流','电子元件','260','54.0','8900','2026-06-23 09:40','','','客户整柜独占','已装柜'],
-    ['JCG-20260609007','FBK-20260609006','FEO-20260609007','深圳市华运达国际货运','纺织品','180','52.0','7400','2026-06-14 13:50','','','','已出运']
+    ['JCG-20260609007','FBK-20260609006','FEO-20260609007','广州分公司','纺织品','180','52.0','7400','2026-06-14 13:50','','','','已出运']
 ],[
     {label:'装箱明细号',type:'text'},
     {label:'Job No',type:'text'},
@@ -2427,4 +2427,264 @@ function submitApWriteOff(){
     showToast(tr('已用')+' '+usedNos.join('、')+' '+tr('核销')+' '+A.cur+' '+alloc.toFixed(2)+
         '　'+(done?(tr('已付清')+' '+done+' '+tr('张')):'')+(done&&part?'，':'')+
         (part?(tr('部分付款')+' '+part+' '+tr('张')):''));
+}
+
+/* ==========================================================================
+ * 十、应收费用明细 · 新增弹窗与查看
+ *
+ * 应收按委托单维度录：录的人只填「哪张委托单 + 什么科目 + 多少钱」，
+ * 客户名称 / 业务员 / 结算周期都是委托单和客户档案上已有的，带出来就锁住 ——
+ * 手改这三个等于让同一张委托单出现两种归属，对账时谁都说不清。
+ *
+ * 委托方是自己人（分公司自拼的柜）时，这条整柜应收的金额不是自己填的，
+ * 而是底下几票散货应收统计上来的，「查看」能看到拆分。
+ * ========================================================================== */
+
+/* 内部分公司：以委托方身份下单，底下还有一层散货应收 */
+var FCL_INTERNAL_BRANCHES=['广州分公司','深圳分公司','上海分公司','义乌分公司'];
+function fclIsInternalBranch(name){return FCL_INTERNAL_BRANCHES.indexOf(String(name||''))>=0;}
+
+/* 散货拼箱的应收明细：委托单号 → 各票散货订单的应收。
+ * 整柜那条的应收/已收/未收就是这里按费用科目汇总出来的。 */
+var _FCL_LCL_AR={
+    'FEO-20260609007':[
+        {order:'LCL-20260609071',shipper:'深圳市华运达国际货运',acct:'海运费',cur:'USD',amt:3600,got:3600,due:0},
+        {order:'LCL-20260609072',shipper:'佛山恒通货运代理',acct:'海运费',cur:'USD',amt:3800,got:0,due:3800},
+        {order:'LCL-20260609073',shipper:'上海锦程国际贸易',acct:'海运费',cur:'USD',amt:2200,got:0,due:2200}
+    ]
+};
+function fclLclArOf(entrust,acct){
+    var list=_FCL_LCL_AR[entrust]||[];
+    return acct?list.filter(function(x){return x.acct===acct;}):list;
+}
+/* 从散货统计：返回 {amt,got,due,n}，没有下级就回 null */
+function fclLclArRollup(entrust,acct){
+    var list=fclLclArOf(entrust,acct);
+    if(!list.length)return null;
+    var r={amt:0,got:0,due:0,n:list.length};
+    list.forEach(function(x){r.amt+=(+x.amt||0);r.got+=(+x.got||0);r.due+=(+x.due||0);});
+    r.amt=+r.amt.toFixed(2);r.got=+r.got.toFixed(2);r.due=+r.due.toFixed(2);
+    return r;
+}
+
+/* 委托单 → 客户名称 / 业务员 / 结算周期（结算周期取客户档案，取不到给个默认） */
+function fclArLookupEntrust(entrustNo){
+    entrustNo=String(entrustNo||'').trim();
+    if(!entrustNo)return null;
+    var si=TC['fcl-sales-instruction'];
+    if(!si||!si.d)return null;
+    var h=si.h||[],iE=h.indexOf('委托订单号'),iC=h.indexOf('客户名称'),iS=h.indexOf('业务员');
+    var row=si.d.filter(function(r){return String(r[iE]||'').trim()===entrustNo;})[0];
+    if(!row)return null;
+    return {cust:String(row[iC]||''),sales:String(row[iS]||''),
+            term:fclCustSettleTerm(String(row[iC]||''))};
+}
+/* 客户档案里的结算周期：客户简称与全称都比一遍，内部分公司走默认 */
+function fclCustSettleTerm(cust){
+    cust=String(cust||'').trim();
+    if(!cust)return '';
+    var c=TC['crm-cust'];
+    if(c&&c.d){
+        var h=c.h||[],iS=h.indexOf('客户简称'),iF=h.indexOf('客户全称'),iT=h.indexOf('结算周期');
+        for(var i=0;i<c.d.length;i++){
+            var sn=String(c.d[i][iS]||''),fn=String(c.d[i][iF]||'');
+            if(sn===cust||fn===cust||(sn&&cust.indexOf(sn)>=0)||(fn&&fn.indexOf(cust)>=0)){
+                if(iT>=0&&c.d[i][iT])return String(c.d[i][iT]);
+            }
+        }
+    }
+    return '出货月结';
+}
+
+/* ---------- 新增弹窗（三列） ---------- */
+var _arFeeNew=null;
+function openArFeeAddModal(id){
+    id=id||'fcl-ar-fee';
+    var data=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(TC[id].d||[]);
+    var all=TC[id].d||[];
+    var last=(all[all.length-1]&&all[all.length-1][0])||'FAR-20260609006';
+    var lm=String(last).match(/^(.*?)(\d+)$/);
+    _arFeeNew={id:id,
+        no:lm?lm[1]+String(parseInt(lm[2],10)+1).padStart(lm[2].length,'0'):'FAR-20260609007',
+        entrust:'',cust:'',sales:'',term:'',acct:'',cur:'USD',amt:''};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='58%';
+    document.getElementById('crud-modal-title').textContent=tr('新增应收费用明细');
+    document.getElementById('crud-modal-body').innerHTML=arFeeAddBodyHtml();
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitArFeeAdd()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认新增')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function arFeeAddBodyHtml(){
+    var A=_arFeeNew;
+    var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white';
+    var roCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary cursor-not-allowed';
+    function fld(label,inner,req){
+        return '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+
+            (req?'<span class="text-red-500 mr-0.5">*</span>':'')+tr(label)+'</label>'+inner+'</div>';
+    }
+    function ro(val,ph){
+        return '<input data-arfee-ro type="text" value="'+esc(val||'')+'" placeholder="'+esc(tr(ph||''))+'" class="'+roCls+'" readonly disabled>';
+    }
+    function sl(k,opts){
+        var h='<select onchange="arFeeSet(\''+k+'\',this.value)" class="'+inCls+'">';
+        h+='<option value="">'+tr('请选择')+'</option>';
+        opts.forEach(function(o){h+='<option value="'+esc(o)+'"'+(A[k]===o?' selected':'')+'>'+esc(tr(o))+'</option>';});
+        return h+'</select>';
+    }
+    var h='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
+    h+=fld('流水号','<input type="text" value="'+esc(A.no)+'" class="'+roCls+'" readonly disabled>');
+    /* 委托单号：回车或失焦就带出下面三项 */
+    h+=fld('委托单号','<input id="arfee-entrust" type="text" value="'+esc(A.entrust)+'" '+
+        'onchange="arFeeFillEntrust(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();arFeeFillEntrust(this.value);}" '+
+        'placeholder="'+esc(tr('输入委托单号带出客户'))+'" class="'+inCls+'">',true);
+    h+='<div class="flex flex-col gap-1.5" data-arfee-cust>'+
+       '<label class="text-sm font-medium text-text-secondary">'+tr('客户名称')+'</label>'+ro(A.cust,'按委托单带出')+'</div>';
+    h+='<div class="flex flex-col gap-1.5" data-arfee-sales>'+
+       '<label class="text-sm font-medium text-text-secondary">'+tr('业务员')+'</label>'+ro(A.sales,'按委托单带出')+'</div>';
+    h+='<div class="flex flex-col gap-1.5" data-arfee-term>'+
+       '<label class="text-sm font-medium text-text-secondary">'+tr('结算周期')+'</label>'+ro(A.term,'按客户档案带出')+'</div>';
+    h+=fld('费用科目',sl('acct',FCL_FEE_ACCOUNTS),true);
+    h+=fld('币别',sl('cur',FCL_CURRENCY_OPTIONS),true);
+    h+=fld('应收金额','<input type="number" step="0.01" value="'+esc(A.amt)+'" oninput="arFeeSet(\'amt\',this.value)" class="'+inCls+'">',true);
+    h+='</div>';
+    h+='<div class="mt-3 text-xs text-text-muted">'+
+       esc(tr('客户名称 / 业务员 / 结算周期按委托单与客户档案带出，不能改 —— 同一张委托单的归属只能有一个。'))+
+       '<br>'+esc(tr('新增后状态为「待确认」，已收 0、未收＝应收。'))+'</div>';
+    return h;
+}
+function arFeeSet(k,v){ if(_arFeeNew)_arFeeNew[k]=v; }
+/* 带出：三项一起刷新，取不到就清空并提示，不留上一张单的残值 */
+function arFeeFillEntrust(v){
+    var A=_arFeeNew;
+    if(!A)return;
+    A.entrust=String(v||'').trim();
+    var hit=A.entrust?fclArLookupEntrust(A.entrust):null;
+    A.cust=hit?hit.cust:'';
+    A.sales=hit?hit.sales:'';
+    A.term=hit?hit.term:'';
+    arFeeRedrawBrought();
+    if(A.entrust&&!hit)showToast(tr('委托订单管理里没有这张单')+'：'+A.entrust);
+    else if(hit)showToast(tr('已带出')+'：'+hit.cust+'　'+hit.sales+'　'+hit.term);
+}
+function arFeeRedrawBrought(){
+    var A=_arFeeNew;
+    var roCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary cursor-not-allowed';
+    [['data-arfee-cust','客户名称',A.cust,'按委托单带出'],
+     ['data-arfee-sales','业务员',A.sales,'按委托单带出'],
+     ['data-arfee-term','结算周期',A.term,'按客户档案带出']].forEach(function(p){
+        var box=document.querySelector('['+p[0]+']');
+        if(!box)return;
+        box.innerHTML='<label class="text-sm font-medium text-text-secondary">'+tr(p[1])+'</label>'+
+            '<input data-arfee-ro type="text" value="'+esc(p[2]||'')+'" placeholder="'+esc(tr(p[3]))+'" class="'+roCls+'" readonly disabled>';
+    });
+}
+function submitArFeeAdd(){
+    var A=_arFeeNew;
+    if(!A){showToast(tr('请重新打开新增窗口'));return;}
+    if(!A.entrust){showToast(tr('请填写委托单号'));return;}
+    if(!A.cust){showToast(tr('这张委托单带不出客户，请确认委托单号'));return;}
+    if(!A.acct){showToast(tr('请选择费用科目'));return;}
+    if(!A.cur){showToast(tr('请选择币别'));return;}
+    var amt=fclParseMoney(A.amt);
+    if(amt===null||amt<=0){showToast(tr('应收金额必须大于 0'));return;}
+    fclPushRow(A.id,{
+        '流水号':A.no,'委托单号':A.entrust,'客户名称':A.cust,'业务员':A.sales,
+        '费用科目':A.acct,'币别':A.cur,
+        '应收金额':amt.toFixed(2),'已收金额':'0','未收金额':amt.toFixed(2),
+        '结算周期':A.term,'费用确认状态':'待确认'
+    });
+    if(typeof _listData!=='undefined')delete _listData[A.id];
+    closeCrudModal();
+    fclFinRefresh(A.id);
+    showToast(tr('已新增应收')+' '+A.no+'：'+A.cust+'　'+A.acct+'　'+A.cur+' '+amt.toFixed(2));
+}
+
+/* ---------- 查看 ---------- */
+function openArFeeDetail(id,rowIdx){
+    id=id||'fcl-ar-fee';
+    var idx=(rowIdx!=null&&rowIdx>=0)?rowIdx:
+        ((typeof getSelectedRowIndex==='function')?getSelectedRowIndex():-1);
+    if(idx<0){showToast(tr('请先勾选一条应收明细'));return;}
+    var row=fclFinRows(id)[idx];
+    if(!row){showToast(tr('未找到应收明细'));return;}
+    var g=function(n){return fclFinGet(id,row,n);};
+    var no=g('流水号'),entrust=g('委托单号'),cust=g('客户名称'),acct=g('费用科目'),cur=g('币别');
+    var isBranch=fclIsInternalBranch(cust);
+    var roll=isBranch?fclLclArRollup(entrust,acct):null;
+    /* 整柜那条的三个金额以散货汇总为准：打开即对齐，免得两边对不上还要人工查 */
+    if(roll){
+        fclFinSet(id,row,'应收金额',roll.amt.toFixed(2));
+        fclFinSet(id,row,'已收金额',roll.got.toFixed(2));
+        fclFinSet(id,row,'未收金额',roll.due.toFixed(2));
+        fclFinSet(id,row,'费用确认状态',roll.due<=0?'已结清':(roll.got>0?'部分收款':g('费用确认状态')));
+        if(typeof _listData!=='undefined')delete _listData[id];
+    }
+    var b='<div class="space-y-4">';
+    /* 抬头 */
+    b+='<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-sm">';
+    [['流水号',no],['委托单号',entrust],['客户名称',cust],['业务员',g('业务员')],
+     ['费用科目',acct],['币别',cur],['结算周期',g('结算周期')],['费用确认状态',g('费用确认状态')]
+    ].forEach(function(p){
+        b+='<div><span class="text-xs text-text-muted block">'+tr(p[0])+'</span>'+
+           '<span class="font-medium text-text-primary">'+(esc(p[1])||'—')+'</span></div>';
+    });
+    b+='</div>';
+    /* 金额 */
+    b+='<div class="grid grid-cols-3 gap-3">';
+    [['应收金额',g('应收金额'),'text-text-primary'],['已收金额',g('已收金额'),'text-success-700'],
+     ['未收金额',g('未收金额'),'text-amber-700']].forEach(function(p){
+        b+='<div class="rounded-lg border border-surface-200 px-3 py-2.5">'+
+           '<div class="text-xs text-text-muted">'+tr(p[0])+'</div>'+
+           '<div class="text-base font-semibold '+p[2]+'">'+esc(cur)+' '+esc(p[1]||'0')+'</div></div>';
+    });
+    b+='</div>';
+    /* 散货拆分 */
+    if(isBranch){
+        if(roll){
+            b+='<div>';
+            b+='<div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
+               '<span class="text-sm font-semibold text-text-primary">'+tr('散货拼箱应收明细')+'</span>'+
+               '<span class="text-xs text-text-muted">'+
+               esc(tr('委托方是')+cust+tr('（自拼柜），上面整柜的应收/已收/未收就是这几票统计出来的'))+'</span></div>';
+            b+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+               ['散货订单号','实际发货人','费用科目','币别','应收金额','已收金额','未收金额'].map(function(t){
+                   return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';
+               }).join('')+'</tr></thead><tbody>';
+            fclLclArOf(entrust,acct).forEach(function(x){
+                b+='<tr class="border-t border-surface-100">'+
+                   '<td class="px-3 py-2 font-medium text-text-primary">'+esc(x.order)+'</td>'+
+                   '<td class="px-3 py-2 text-text-secondary">'+esc(x.shipper)+'</td>'+
+                   '<td class="px-3 py-2 text-text-secondary">'+esc(x.acct)+'</td>'+
+                   '<td class="px-3 py-2 text-text-secondary">'+esc(x.cur)+'</td>'+
+                   '<td class="px-3 py-2 text-text-primary">'+(+x.amt).toFixed(2)+'</td>'+
+                   '<td class="px-3 py-2 text-success-700">'+(+x.got).toFixed(2)+'</td>'+
+                   '<td class="px-3 py-2 text-amber-700">'+(+x.due).toFixed(2)+'</td></tr>';
+            });
+            b+='</tbody><tfoot><tr class="border-t-2 border-surface-200 bg-surface-50 font-medium">'+
+               '<td class="px-3 py-2" colspan="4">'+tr('合计')+'（'+roll.n+' '+tr('票')+'）</td>'+
+               '<td class="px-3 py-2">'+roll.amt.toFixed(2)+'</td>'+
+               '<td class="px-3 py-2 text-success-700">'+roll.got.toFixed(2)+'</td>'+
+               '<td class="px-3 py-2 text-amber-700">'+roll.due.toFixed(2)+'</td></tr></tfoot></table></div>';
+            b+='<div class="mt-2 text-xs text-success-700">'+
+               esc(tr('已按散货明细回算，整柜与散货合计一致。'))+'</div>';
+            b+='</div>';
+        }else{
+            b+='<div class="px-3 py-8 text-center text-sm text-text-muted border border-dashed border-surface-200 rounded-lg">'+
+               esc(tr('委托方是')+cust+tr('，但这张委托单底下还没登记散货应收明细'))+'</div>';
+        }
+    }else{
+        b+='<div class="px-3 py-8 text-center text-sm text-text-muted border border-dashed border-surface-200 rounded-lg">'+
+           esc(tr('这条是直客委托的应收，没有下级散货拆分'))+'</div>';
+    }
+    b+='</div>';
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='64%';
+    document.getElementById('crud-modal-title').textContent=tr('应收费用明细')+' - '+no;
+    document.getElementById('crud-modal-body').innerHTML=b;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+    if(roll)fclFinRefresh(id);
 }

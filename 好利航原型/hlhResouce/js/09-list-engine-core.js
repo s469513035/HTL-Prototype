@@ -1626,7 +1626,7 @@ function getToolbarActions(id){
         }
         /* 应收按委托单维度录入；明细就在列表上，不另开查看弹窗 */
         if(id==='fcl-ar-fee'){
-            for(var ri=base.length-1;ri>=0;ri--)if(base[ri].type==='view')base.splice(ri,1);
+            for(var ri=base.length-1;ri>=0;ri--)if(base[ri].type==='view'||base[ri].type==='edit')base.splice(ri,1);
             base.push({key:'confirmArFee',label:'费用确认'},{key:'voidArFee',label:'作废',variant:'danger'});
         }
         if(id==='fcl-ar-receipt')base.push({key:'writeOffReceipt',label:'核销'});
@@ -1797,7 +1797,7 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
+var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
 /* 单票成本明细全部由「分摊到票」生成，手工编辑会让它和来源成本行对不上 */
 'fcl-shipment-cost',
 /* 代理账单按供应商发票导入，费用明细挂在 Job No 上；改发票要走重新导入，不给行内编辑 */

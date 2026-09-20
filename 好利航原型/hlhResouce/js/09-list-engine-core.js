@@ -989,6 +989,8 @@ function renderToolbarAction(action,id){
     else if(action.key==='allocAgentCost')click='openAgentCostAlloc(\''+id+'\')';
     else if(action.key==='reconcileCost')click='openAgentCostReconcile(\''+id+'\')';
     else if(action.key==='msgPublish')click='openMsgPublish(\''+id+'\')';
+    else if(action.key==='msgCfgAdd')click='openMsgConfigAdd(\''+id+'\')';
+    else if(action.key==='msgCfgToggle')click='msgCfgToggle(\''+id+'\')';
     else if(action.key==='msgReadDetail')click='openMsgReadDetail(\''+id+'\')';
     else if(action.key==='msgRecall')click='openMsgRecall(\''+id+'\')';
     else if(action.key==='msgInboxDetail')click='openMsgInboxDetail(\''+id+'\')';
@@ -1755,6 +1757,15 @@ function getToolbarActions(id){
             {key:'msgPublish',label:'发布',variant:'success'},
             {key:'msgReadDetail',label:'阅读明细'},
             {key:'msgRecall',label:'撤回',variant:'danger'}
+        ];
+    }
+    if(id==='msg-config'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'msgCfgAdd',label:'新增配置',variant:'primary'},
+            {type:'edit',label:'编辑数据'},
+            {key:'msgCfgToggle',label:'启用/停用'},
+            {key:'export',label:'导出数据'}
         ];
     }
     if(id==='msg-inbox'){

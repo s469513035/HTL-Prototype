@@ -110,7 +110,9 @@ const menuData=[
 {id:'approval-msg',label:'我的消息',page:'approval',tab:'approval-msg'},
 /* 公告与消息：人主动发起、一对多、不挂业务单据，与上面系统触发的「我的消息」并行 */
 {id:'msg-inbox',label:'我的公告',page:'approval',tab:'msg-inbox'},
-{id:'msg-announce',label:'公告管理',page:'approval',tab:'msg-announce'}
+{id:'msg-announce',label:'公告管理',page:'approval',tab:'msg-announce'},
+/* 消息配置：问题件/业务节点这类系统事件发给谁 —— 与公告（人主动发起）并行 */
+{id:'msg-config',label:'消息配置',page:'approval',tab:'msg-config'}
 ]},
 
 {id:'finance',label:'财务结算',langKey:'finance',icon:'<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',children:[

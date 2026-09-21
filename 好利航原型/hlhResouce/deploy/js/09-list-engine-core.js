@@ -173,7 +173,14 @@ function expandData(id){
                     }
                 }
             });
-            if(si>=0&&c.s&&c.s.length>0)row[si]=c.s[Math.floor(Math.random()*c.s.length)];
+            /* 填充行的状态由行号派生，不能用 Math.random()：
+             * expandData 每次渲染都重跑，随机的话状态页签的计数每点一次就变一次 ——
+             * 点「待抵扣(27)」进去出来 44 行。哈希单号既稳定又不会排出规律条纹。 */
+            if(si>=0&&c.s&&c.s.length>0){
+                let hs=0;const seedKey=String(row[0]);
+                for(let k=0;k<seedKey.length;k++)hs=(hs*31+seedKey.charCodeAt(k))>>>0;
+                row[si]=c.s[hs%c.s.length];
+            }
             result.push(row);
         }
     }

@@ -258,6 +258,27 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
             crmLeadingStarFieldHtml('银行账号','text',bankAccount,readonly,false)+
         '</div>'+
     '</div>';
+    /* 开票信息：申请开票时从这里带出（发票管理 fin-invoice 的开票抬头/纳税人识别号同源）。
+     * 抬头默认带客户全称 —— 客户全称就是营业执照上的名称，专票抬头必须与之一致。 */
+    const invType=getTableValueByHeader(c,rowData,'发票类型','增值税专用发票');
+    const invTitle=getTableValueByHeader(c,rowData,'开票抬头',mode==='add'?'':fullName);
+    const invTaxNo=getTableValueByHeader(c,rowData,'纳税人识别号','');
+    const invAddr=getTableValueByHeader(c,rowData,'开票地址','');
+    const invPhone=getTableValueByHeader(c,rowData,'开票电话','');
+    const invBank=getTableValueByHeader(c,rowData,'开户银行',bankName);
+    const invAcct=getTableValueByHeader(c,rowData,'银行账号',bankAccount);
+    html+='<div><div class="flex items-center gap-2 mb-3"><span class="text-sm font-semibold text-text-primary">'+tr('开票信息')+'</span>'+
+        '<span class="text-xs text-text-muted">'+esc(tr('申请开票时自动带出；专票的抬头与税号需与营业执照一致'))+'</span></div>'+
+        '<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">'+
+            crmLeadingStarFieldHtml('发票类型','select',invType,readonly,false,{options:['增值税专用发票','增值税普通发票','形式发票(PI)','商业发票(CI)'],placeholder:'请选择'})+
+            crmLeadingStarFieldHtml('开票抬头','text',invTitle,readonly,false)+
+            crmLeadingStarFieldHtml('纳税人识别号','text',invTaxNo,readonly,false)+
+            crmLeadingStarFieldHtml('开票地址','text',invAddr,readonly,false)+
+            crmLeadingStarFieldHtml('开票电话','text',invPhone,readonly,false)+
+            crmLeadingStarFieldHtml('开户银行','text',invBank,readonly,false)+
+            crmLeadingStarFieldHtml('银行账号','text',invAcct,readonly,false)+
+        '</div>'+
+    '</div>';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附件信息')+'</div>'+
         '<div class="grid grid-cols-2 md:grid-cols-4 gap-4">'+
             crmAttachmentSlot('license','营业执照','大小不能超过5M，支持 jpg、png 格式','image/jpeg,image/png',readonly)+

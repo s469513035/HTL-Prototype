@@ -36,21 +36,13 @@ function wsMessages(unreadOnly){
         var unread=wsCell(id,r,'阅读状态')==='未读';
         if(unreadOnly&&!unread)return;
         out.push({
-            kind:'msg',idx:i,tag:wsCell(id,r,'消息分类')||'消息',unread:unread,
+            kind:'msg',idx:i,tag:wsCell(id,r,'消息类型')||'消息',unread:unread,
             title:wsCell(id,r,'消息内容'),
-            sub:wsCell(id,r,'消息类型')+(wsCell(id,r,'运单号')?' · '+wsCell(id,r,'运单号'):''),
+            sub:wsCell(id,r,'消息类型')+(wsCell(id,r,'业务单号')?' · '+wsCell(id,r,'业务单号'):''),
             time:wsCell(id,r,'创建时间')
         });
     });
     return out;
-}
-/* 待办消息里还没处理完的 */
-function wsPendingTodoMsgCount(){
-    var id='approval-msg',n=0;
-    wsRows(id).forEach(function(r){
-        if(wsCell(id,r,'消息分类')==='待办'&&!wsCell(id,r,'待办处理时间'))n++;
-    });
-    return n;
 }
 /* '2026-08-22 10:41:02' → '08-22 10:41'，铃铛里空间小 */
 function wsShortTime(t){
@@ -66,9 +58,11 @@ function generateWorkspaceHome(id){
     var unread=msgs.filter(function(m){return m.unread;});
     var kpis=[
         {label:'待我审批',value:approvals.length,unit:'条',tab:'approval-mine',color:'from-primary-600 to-primary-500'},
-        {label:'待办事项',value:wsPendingTodoMsgCount(),unit:'条',tab:'approval-msg',color:'from-amber-500 to-amber-400'},
         {label:'未读消息',value:unread.length,unit:'条',tab:'approval-msg',color:'from-green-600 to-green-500'},
-        {label:'消息总数',value:msgs.length,unit:'条',tab:'approval-msg',color:'from-blue-600 to-blue-500'}
+        {label:'消息总数',value:msgs.length,unit:'条',tab:'approval-msg',color:'from-blue-600 to-blue-500'},
+        /* 待办概念已从「我的消息」移除（待办走「我的审批」），第四格换成问题件类未读 —— 那才是要立刻看的 */
+        {label:'问题件未读',value:unread.filter(function(m){return (typeof MSG_TYPE_ISSUE!=='undefined')&&MSG_TYPE_ISSUE.indexOf(m.tag)>=0;}).length,
+         unit:'条',tab:'approval-msg',color:'from-amber-500 to-amber-400'}
     ];
     var h='<div class="h-full overflow-auto bg-surface-50 p-6">';
     h+='<div class="mb-6"><h1 class="text-2xl font-bold text-text-primary">'+tr('公共工作台')+'</h1>'+
@@ -114,7 +108,8 @@ function wsHomeEmptyHtml(text){
     return '<div class="py-10 text-center text-sm text-text-muted">'+tr(text)+'</div>';
 }
 function wsHomeRowHtml(it){
-    var tagCls=it.kind==='approval'?'bg-primary-50 text-primary-600':(it.tag==='待办'?'bg-amber-50 text-amber-600':'bg-surface-100 text-text-secondary');
+    var tagCls=it.kind==='approval'?'bg-primary-50 text-primary-600':
+        ((typeof MSG_TYPE_ISSUE!=='undefined')&&MSG_TYPE_ISSUE.indexOf(it.tag)>=0?'bg-red-50 text-red-600':'bg-surface-100 text-text-secondary');
     var h='<div onclick="openNotifItem(\''+it.kind+'\','+it.idx+')" class="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-surface-50 hover:bg-primary-50/50 cursor-pointer">';
     h+='<span class="inline-block px-2 py-0.5 rounded text-xs flex-shrink-0 mt-0.5 '+tagCls+'">'+esc(tr(it.tag))+'</span>';
     h+='<div class="flex-1 min-w-0">';
@@ -157,7 +152,8 @@ function renderNotifDropdown(){
     }else{
         h+='<div class="max-h-80 overflow-y-auto divide-y divide-surface-100">';
         items.slice(0,6).forEach(function(it){
-            var tagCls=it.kind==='approval'?'bg-primary-50 text-primary-600':(it.tag==='待办'?'bg-amber-50 text-amber-600':'bg-surface-100 text-text-secondary');
+            var tagCls=it.kind==='approval'?'bg-primary-50 text-primary-600':
+        ((typeof MSG_TYPE_ISSUE!=='undefined')&&MSG_TYPE_ISSUE.indexOf(it.tag)>=0?'bg-red-50 text-red-600':'bg-surface-100 text-text-secondary');
             h+='<div onclick="openNotifItem(\''+it.kind+'\','+it.idx+')" class="flex items-start gap-2.5 px-4 py-3 hover:bg-primary-50/40 cursor-pointer">';
             h+='<span class="inline-block px-1.5 py-0.5 rounded text-[11px] flex-shrink-0 mt-0.5 '+tagCls+'">'+esc(tr(it.tag))+'</span>';
             h+='<div class="flex-1 min-w-0"><div class="text-sm text-text-primary notif-clamp2">'+esc(it.title||'—')+'</div>';

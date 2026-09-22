@@ -990,6 +990,8 @@ function renderToolbarAction(action,id){
     else if(action.key==='invManualCount')click='openOverseasInventoryManualCount(\''+id+'\')';
     else if(action.key==='approvalAudit')click='openSelectedApprovalAudit(\''+id+'\')';
     else if(action.key==='msgDetail')click='openSelectedApprovalMsg(\''+id+'\')';
+    else if(action.key==='approvalMsgMarkRead')click='markApprovalMsgsRead(\''+id+'\')';
+    else if(action.key==='approvalMsgMarkAllRead')click='markAllApprovalMsgsRead(\''+id+'\')';
     else if(action.key==='opInstructionAttach')click='openSelectedOpInstructionAttach(\''+id+'\')';
     else if(action.key==='crmApplyAccount')click='openSelectedCrmAccountApply(\''+id+'\')';
     else if(id==='ow-outbound'&&action.type==='add')click='openOverseasOutboundCreate()';
@@ -1816,9 +1818,12 @@ function getToolbarActions(id){
         ];
     }
     if(id==='approval-msg'){
+        /* 与「我的公告」同一套：查详情 / 标已读 / 一键全部已读 */
         return [
-            {key:'search',label:'查询',variant:'primary'},
-            {key:'msgDetail',label:'查看详情',variant:'primary'}
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'msgDetail',label:'查看详情',variant:'primary'},
+            {key:'approvalMsgMarkRead',label:'标记已读'},
+            {key:'approvalMsgMarkAllRead',label:'全部已读'}
         ];
     }
     /* ===== 公告与消息（47-msg-announce.js）=====

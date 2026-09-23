@@ -202,9 +202,6 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     const hasContract=getTableValueByHeader(c,rowData,'是否签订合同','');
     const legalName=getTableValueByHeader(c,rowData,'法人姓名','');
     const licenseRegDate=getTableValueByHeader(c,rowData,'营业执照注册时间','');
-    const bankAccountName=getTableValueByHeader(c,rowData,'开户名','');
-    const bankName=getTableValueByHeader(c,rowData,'开户行','');
-    const bankAccount=getTableValueByHeader(c,rowData,'银行账号','');
     const salesPerson=getTableValueByHeader(c,rowData,'所属业务员','');
     const senderContact=getTableValueByHeader(c,rowData,'发件人','');
     const senderCompany=getTableValueByHeader(c,rowData,'发件人公司','');
@@ -247,26 +244,24 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     html+='</div></div>';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('企业资质信息')+'</div>'+
         '<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">'+
-            /* 企业资质信息全部非必填 */
+            /* 企业资质信息全部非必填。银行账户三件套（开户名/开户行/银行账号）已撤 ——
+             * 客户管理不维护收付款账户，那是「客户账户(财务结算)」的事。 */
             crmLeadingStarFieldHtml('是否签订合同','select',hasContract,readonly,false,{options:['是','否'],placeholder:'请选择'})+
             crmLeadingStarFieldHtml('法人姓名','text',legalName,readonly,false)+
             crmLeadingStarFieldHtml('法人身份证','text',legalIdCard,readonly,false)+
             crmLeadingStarFieldHtml('注册资本','text',regCapital,readonly,false)+
             crmLeadingStarFieldHtml('营业执照注册时间','date',licenseRegDate,readonly,false,{placeholder:'请选择营业执照注册时间'})+
-            crmLeadingStarFieldHtml('开户名','text',bankAccountName,readonly,false)+
-            crmLeadingStarFieldHtml('开户行','text',bankName,readonly,false)+
-            crmLeadingStarFieldHtml('银行账号','text',bankAccount,readonly,false)+
         '</div>'+
     '</div>';
     /* 开票信息：申请开票时从这里带出（发票管理 fin-invoice 的开票抬头/纳税人识别号同源）。
-     * 抬头默认带客户全称 —— 客户全称就是营业执照上的名称，专票抬头必须与之一致。 */
+     * 抬头默认带客户全称 —— 客户全称就是营业执照上的名称，专票抬头必须与之一致。
+     * 开票税点按发票类型带常见档（专票/普票 6%，小规模 3%，形式/商业发票 0%）。 */
     const invType=getTableValueByHeader(c,rowData,'发票类型','增值税专用发票');
     const invTitle=getTableValueByHeader(c,rowData,'开票抬头',mode==='add'?'':fullName);
     const invTaxNo=getTableValueByHeader(c,rowData,'纳税人识别号','');
     const invAddr=getTableValueByHeader(c,rowData,'开票地址','');
     const invPhone=getTableValueByHeader(c,rowData,'开票电话','');
-    const invBank=getTableValueByHeader(c,rowData,'开户银行',bankName);
-    const invAcct=getTableValueByHeader(c,rowData,'银行账号',bankAccount);
+    const invRate=getTableValueByHeader(c,rowData,'开票税点',(invType==='增值税专用发票'||invType==='增值税普通发票')?'6%':'0%');
     html+='<div><div class="flex items-center gap-2 mb-3"><span class="text-sm font-semibold text-text-primary">'+tr('开票信息')+'</span>'+
         '<span class="text-xs text-text-muted">'+esc(tr('申请开票时自动带出；专票的抬头与税号需与营业执照一致'))+'</span></div>'+
         '<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">'+
@@ -275,8 +270,7 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
             crmLeadingStarFieldHtml('纳税人识别号','text',invTaxNo,readonly,false)+
             crmLeadingStarFieldHtml('开票地址','text',invAddr,readonly,false)+
             crmLeadingStarFieldHtml('开票电话','text',invPhone,readonly,false)+
-            crmLeadingStarFieldHtml('开户银行','text',invBank,readonly,false)+
-            crmLeadingStarFieldHtml('银行账号','text',invAcct,readonly,false)+
+            crmLeadingStarFieldHtml('开票税点','select',invRate,readonly,false,{options:['13%','9%','6%','3%','0%'],placeholder:'请选择'})+
         '</div>'+
     '</div>';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附件信息')+'</div>'+

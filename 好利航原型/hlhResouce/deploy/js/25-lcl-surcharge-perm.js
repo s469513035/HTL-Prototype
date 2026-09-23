@@ -255,13 +255,16 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     '</div>';
     /* 开票信息：申请开票时从这里带出（发票管理 fin-invoice 的开票抬头/纳税人识别号同源）。
      * 抬头默认带客户全称 —— 客户全称就是营业执照上的名称，专票抬头必须与之一致。
-     * 开票税点按发票类型带常见档（专票/普票 6%，小规模 3%，形式/商业发票 0%）。 */
+     * 开票税点按发票类型带常见档（专票/普票 6%，小规模 3%，形式/商业发票 0%）。
+     * 银行账户放这里而不放资质 —— 专票票面要打开户行及账号，它是开票资料的一部分。 */
     const invType=getTableValueByHeader(c,rowData,'发票类型','增值税专用发票');
     const invTitle=getTableValueByHeader(c,rowData,'开票抬头',mode==='add'?'':fullName);
     const invTaxNo=getTableValueByHeader(c,rowData,'纳税人识别号','');
     const invAddr=getTableValueByHeader(c,rowData,'开票地址','');
     const invPhone=getTableValueByHeader(c,rowData,'开票电话','');
     const invRate=getTableValueByHeader(c,rowData,'开票税点',(invType==='增值税专用发票'||invType==='增值税普通发票')?'6%':'0%');
+    const invBank=getTableValueByHeader(c,rowData,'开户银行','');
+    const invAcct=getTableValueByHeader(c,rowData,'银行账号','');
     html+='<div><div class="flex items-center gap-2 mb-3"><span class="text-sm font-semibold text-text-primary">'+tr('开票信息')+'</span>'+
         '<span class="text-xs text-text-muted">'+esc(tr('申请开票时自动带出；专票的抬头与税号需与营业执照一致'))+'</span></div>'+
         '<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">'+
@@ -271,6 +274,8 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
             crmLeadingStarFieldHtml('开票地址','text',invAddr,readonly,false)+
             crmLeadingStarFieldHtml('开票电话','text',invPhone,readonly,false)+
             crmLeadingStarFieldHtml('开票税点','select',invRate,readonly,false,{options:['13%','9%','6%','3%','0%'],placeholder:'请选择'})+
+            crmLeadingStarFieldHtml('开户银行','text',invBank,readonly,false)+
+            crmLeadingStarFieldHtml('银行账号','text',invAcct,readonly,false)+
         '</div>'+
     '</div>';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('附件信息')+'</div>'+

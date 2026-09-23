@@ -37,7 +37,7 @@ function wsMessages(unreadOnly){
         if(unreadOnly&&!unread)return;
         out.push({
             kind:'msg',idx:i,tag:wsCell(id,r,'消息类型')||'消息',unread:unread,
-            title:wsCell(id,r,'消息内容'),
+            title:wsCell(id,r,'标题')||wsCell(id,r,'消息内容'),
             sub:wsCell(id,r,'消息类型')+(wsCell(id,r,'业务单号')?' · '+wsCell(id,r,'业务单号'):''),
             time:wsCell(id,r,'创建时间')
         });

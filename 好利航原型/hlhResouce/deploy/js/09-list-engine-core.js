@@ -980,6 +980,8 @@ function renderToolbarAction(action,id){
     }
     let click='';
     if(action.key==='omsAddOrder')click='navigateToTab(\'\',\'oms-order-entry\')';
+    else if(action.key==='omsCreateTicket')click='omsCreateTicketFromOrder()';
+    else if(action.key==='omsTicketCreate')click='openOmsTicketCreate()';
     else if(action.key==='omsBillDetail')click='omsOpenSelectedBillDetail(\''+id+'\')';
     else if(action.key==='omsBillDownload')click='omsDownloadBills(\''+id+'\')';
     else if(id==='fin-fee-mgmt'&&action.type==='add')click='openFeeMgmtFeeModal(\'add\',\''+id+'\',-1)';
@@ -1399,7 +1401,17 @@ function getToolbarActions(id){
             {key:'viewWaybillDetail',label:'查看详情',variant:'primary'},
             {key:'businessConfirm',label:'订单确认'},
             {key:'labelPrint',label:'标签打印'},
+            /* 对某张订单有诉求（催件/改地址/费用争议）直接从订单发起工单，运单号带过去 */
+            {key:'omsCreateTicket',label:'发起工单'},
             {key:'cancelWaybill',label:'取消订单',variant:'danger'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
+    /* OMS 服务工单：客户只能新建/追问，处理动作在 TMS 工单管理那边 */
+    if(id==='oms-ticket'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'omsTicketCreate',label:'发起工单',variant:'primary'},
             {key:'export',label:'导出数据'}
         ];
     }
@@ -1881,7 +1893,7 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt','fin-invoice','fcl-profit','cs-ticket','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
+var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt','fin-invoice','fcl-profit','cs-ticket','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill','oms-ticket',
 /* 单票成本明细全部由「分摊到票」生成，手工编辑会让它和来源成本行对不上 */
 'fcl-shipment-cost',
 /* 代理账单按供应商发票导入，费用明细挂在 Job No 上；改发票要走重新导入，不给行内编辑 */

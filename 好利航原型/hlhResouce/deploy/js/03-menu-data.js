@@ -220,6 +220,7 @@ const menuData=[
 ]},
 {id:'oms-cs-group',label:'客服',langKey:'oms_cs',children:[
 {id:'oms-issue-mgmt',label:'问题件管理',langKey:'oms_issue',page:'oms-cw',tab:'oms-issue-mgmt'},
+{id:'oms-ticket',label:'服务工单',langKey:'oms_ticket',page:'oms-cw',tab:'oms-ticket'},
 {id:'oms-track-query',label:'轨迹查询',langKey:'oms_track',page:'oms-cw',tab:'oms-track-query'}
 ]},
 /* 账单管理不配当一级菜单 —— 和 订单管理/客服 同级但内容太少，收进「结算」分组 */

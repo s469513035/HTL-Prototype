@@ -146,7 +146,7 @@ function generateListPage(id,page,statusFilter){
         h+='</div>';
         h+='</div>';
     }
-    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-ap-bill'||id==='fcl-agent-bill'||id==='fcl-ar-fee'||id==='fcl-ar-receipt'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust'||id==='oms-order-mgmt'||id==='oms-issue-mgmt'||id==='msg-config'||id==='msg-announce'||id==='fcl-agent-cost'||id==='fin-invoice'||id==='fcl-profit'||id==='fin-bank-voucher'||id==='cs-ticket')){
+    if(c.s&&c.s.length>0&&(id==='wb-manage'||id==='wb-client-list'||id==='wb-client-manage'||id==='fcl-booking-order'||id==='fcl-booking'||id==='fcl-sales-instruction'||id==='fcl-ap-bill'||id==='fcl-agent-bill'||id==='fcl-ar-fee'||id==='fcl-ar-receipt'||id==='cs-issue-track'||id==='wh-final-alloc'||id==='approval-msg'||id==='crm-cust'||id==='oms-order-mgmt'||id==='oms-issue-mgmt'||id==='oms-ticket'||id==='msg-config'||id==='msg-announce'||id==='fcl-agent-cost'||id==='fin-invoice'||id==='fcl-profit'||id==='fin-bank-voucher'||id==='cs-ticket')){
         const statusCounts={};
         statusCounts['']=allData.length;
         c.s.forEach(s=>{statusCounts[s]=allData.filter(row=>{
@@ -176,7 +176,7 @@ function generateListPage(id,page,statusFilter){
     }
     h+='</tr></thead><tbody>';
     /* OMS 订单/问题件的明细已改为复用 TMS 那两个弹窗，双击与行内「查看」走同一个入口 */
-    const omsDblMap={'oms-order-mgmt':'openWaybillDetail','oms-issue-mgmt':'openCsIssueViewModal','oms-bill':'openOmsBillDetail'};
+    const omsDblMap={'oms-order-mgmt':'openWaybillDetail','oms-issue-mgmt':'openCsIssueViewModal','oms-bill':'openOmsBillDetail','oms-ticket':'openOmsTicketDetail'};
     pageData.forEach((row,idx)=>{
         const gi=start+idx;
         h+='<tr'+(omsDblMap[id]?' ondblclick="'+omsDblMap[id]+'(\''+id+'\','+gi+')" style="cursor:pointer" title="'+esc(tr('双击查看明细'))+'"':'')+' class="'+(gi%2===1?'bg-surface-50/50':'')+' hover:bg-primary-50/30 border-b border-surface-100">';
@@ -205,11 +205,11 @@ function generateListPage(id,page,statusFilter){
             var deleteAction=(id==='wb-manage'||id==='wb-client-manage')?'cancel':'delete';
             const rowBg=gi%2===1?'#F9FAFB':'#FFFFFF';
             const airScanIds=['wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan'];
-            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','fcl-agent-bill','fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt','fin-invoice','fcl-profit','cs-ticket'].concat(airScanIds).includes(id);
-            const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','msg-config','fcl-agent-cost','fin-invoice','fcl-profit','cs-ticket'].concat(airScanIds).includes(id);
+            const hideEdit=['wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','oms-ticket','fcl-agent-bill','fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt','fin-invoice','fcl-profit','cs-ticket'].concat(airScanIds).includes(id);
+            const hideDelete=['wh-transfer-out','wh-transfer-in','wh-transfer-fee','fcl-provider-api','wh-pack-rule','wh-cargo-search','wh-out-scan','wh-preload','wh-issue','fin-fee-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','ow-pallet-info','wh-final-alloc','oms-order-mgmt','oms-issue-mgmt','oms-ticket','msg-config','fcl-agent-cost','fin-invoice','fcl-profit','cs-ticket'].concat(airScanIds).includes(id);
             /* OMS 订单/问题件/账单的「查看」与双击走同一个入口（TMS 明细弹窗 / 账单明细）；
              * 不往下面那条已经很深的三元链上再套两层。 */
-            const omsReuseView=(id==='oms-order-mgmt'||id==='oms-issue-mgmt'||id==='oms-bill')?omsDblMap[id]:'';
+            const omsReuseView=(id==='oms-order-mgmt'||id==='oms-issue-mgmt'||id==='oms-bill'||id==='oms-ticket')?omsDblMap[id]:'';
             /* 我的公告：行内「查看」= 打开正文并自动标记已读，与工具栏「查看详情」同一个入口。
              * 同样走 map，不往下面那条三元链再套一层。 */
             const msgReuseView=(id==='msg-inbox')?'openMsgInboxDetail':'';
@@ -253,6 +253,14 @@ function generateListPage(id,page,statusFilter){
                         actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openCsTicketReply(\''+id+'\','+gi+')">'+tr('回复')+'</a>';
                         actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openCsTicketProcess(\''+id+'\','+gi+')">'+tr('处理')+'</a>';
                     }
+                }
+                /* OMS 服务工单：客户视角只有「追问」。已解决/已关闭是终态 */
+                if(id==='oms-ticket'){
+                    var otStIdx=dataHeaders(c).indexOf('工单状态');
+                    var otDone=otStIdx>=0&&(row[otStIdx]==='已解决'||row[otStIdx]==='已关闭');
+                    actionHtml+=otDone
+                        ?'<span class="text-text-muted cursor-not-allowed" title="'+tr('工单已完结')+'">'+tr('追问')+'</span>'
+                        :'<a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="openOmsTicketReply(\''+id+'\','+gi+')">'+tr('追问')+'</a>';
                 }
                 if(id==='ow-pickup'){
                     var owStIdx=dataHeaders(c).indexOf('状态');

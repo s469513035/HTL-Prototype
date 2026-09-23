@@ -172,7 +172,8 @@ function warehousePdaOperationConfigs(){
                     {label:'预报件数',value:'8',readonly:true,cols:2},
                     {label:'到货件数',value:'0',readonly:true,cols:2},
                     {label:'剩余最大到货件数',value:'8',readonly:true,cols:2},
-                    {label:'货物类型',type:'select',options:['普货','敏感货'],cols:6}
+                    {label:'货物类型',type:'select',options:['普货','敏感货'],cols:3},
+                    {label:'包装类型',type:'select',options:(typeof PACKAGE_TYPE_OPTIONS!=='undefined'?PACKAGE_TYPE_OPTIONS:['纸箱','木箱','托盘']),cols:3}
                 ]},
                 {title:'附加服务',type:'service'},
                 {title:'尺寸明细',type:'sizeTable',rows:[{qty:'1',l:'48',w:'36',h:'30',weight:'12.5'}]},
@@ -704,7 +705,9 @@ function generatePdaWaybillQueryScreen(){
     h+='<div class="flex items-start justify-between gap-2 mb-3"><div class="min-w-0"><div class="text-sm font-semibold text-primary-700 break-all">WB-20260613001</div><div class="text-[11px] text-primary-700 mt-0.5">SF10086523</div></div><span class="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] text-primary-700 border border-primary-200">'+tr('已入仓')+'</span></div>';
     h+='<div class="text-xs font-semibold text-primary-700 mb-2 pt-2 border-t border-primary-100">'+tr('运单主信息')+'</div>';
     h+='<div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">';
-    [['客户代码','CUS-001'],['客户名称','深圳市华运达国际货运'],['所属网点','深圳盐田仓'],['所属业务员','王明辉'],['所属客服','赵雅琴'],['所属操作','张财务'],['运输方式','海运'],['收货仓库','深圳盐田仓'],['目的仓库','拉各斯海外仓'],['件数','8'],['重量','12.5KG'],['体积','0.36CBM'],['货物类型','普货']].forEach(function(item){
+    /* 件数/重量/体积按 预报/收货 双值展示 —— 仓库核对到货就靠这两个数对不对其来；
+     * 客服/操作不在这里看（那是 office 侧的分工），换成 产品/包装类型/报关类型。 */
+    [['客户代码','CUS-001'],['客户名称','深圳市华运达国际货运'],['所属网点','深圳盐田仓'],['所属业务员','王明辉'],['运输方式','海运'],['产品','西非海运专线'],['收货仓库','深圳盐田仓'],['目的仓库','拉各斯海外仓'],['件数(预报/收货)','8 / 8'],['重量(预报/收货)','12.5 / 12.5 KG'],['体积(预报/收货)','0.36 / 0.36 CBM'],['货物类型','普货'],['包装类型','纸箱'],['报关类型','买单报关']].forEach(function(item){
         h+='<div class="flex items-baseline justify-between gap-2 min-w-0"><span class="text-primary-700/70 shrink-0">'+tr(item[0])+'</span><span class="font-medium text-text-primary text-right break-all">'+esc(tr(item[1]))+'</span></div>';
     });
     h+='</div>';

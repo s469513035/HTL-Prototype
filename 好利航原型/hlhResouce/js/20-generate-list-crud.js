@@ -242,16 +242,18 @@ function generateListPage(id,page,statusFilter){
                 if(!hideView)actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="'+viewClick+'">'+L.view+'</a>';
                 if(id==='ow-outbound')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openOverseasQuickOutbound(\''+id+'\','+gi+')">'+tr('快捷出库')+'</a>';
                 if(id==='fcl-booking')actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openFclBookingViewEntrust(\''+id+'\','+gi+')">'+tr('查看委托')+'</a>';
-                /* 工单管理：回复 / 处理。已解决/已关闭是终态，只能看不能再动 */
+                /* 工单管理：回复 / 处理 / 转问题件。已解决/已关闭是终态，只能看不能再动 */
                 if(id==='cs-ticket'){
                     var tkStIdx=dataHeaders(c).indexOf('工单状态');
                     var tkDone=tkStIdx>=0&&(row[tkStIdx]==='已解决'||row[tkStIdx]==='已关闭');
                     if(tkDone){
                         actionHtml+='<span class="text-text-muted mr-3 cursor-not-allowed" title="'+tr('终态工单不能再操作')+'">'+tr('回复')+'</span>';
-                        actionHtml+='<span class="text-text-muted cursor-not-allowed" title="'+tr('终态工单不能再操作')+'">'+tr('处理')+'</span>';
+                        actionHtml+='<span class="text-text-muted mr-3 cursor-not-allowed" title="'+tr('终态工单不能再操作')+'">'+tr('处理')+'</span>';
+                        actionHtml+='<span class="text-text-muted cursor-not-allowed" title="'+tr('终态工单不能再操作')+'">'+tr('转问题件')+'</span>';
                     }else{
                         actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openCsTicketReply(\''+id+'\','+gi+')">'+tr('回复')+'</a>';
                         actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer mr-3" onclick="openCsTicketProcess(\''+id+'\','+gi+')">'+tr('处理')+'</a>';
+                        actionHtml+='<a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="openCsTicketToIssue(\''+id+'\','+gi+')">'+tr('转问题件')+'</a>';
                     }
                 }
                 /* OMS 服务工单：客户视角只有「追问」。已解决/已关闭是终态 */

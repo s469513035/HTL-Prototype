@@ -326,6 +326,81 @@ function submitCsTicketProcess(){
     showToast(tr('工单已')+tr(act)+'：'+no);
 }
 
+/* ---------- 转问题件 ----------
+ * 工单聊出来的诉求落到货物异常（破损/超重/扣件…）时，一键转成问题件跟踪的记录：
+ * 弹窗选问题件类型 + 录说明，提交后 cs-issue-track 落一行，工单时间线留一条
+ * 「已转问题件」的记录并自动关闭工单（诉求已有承接出口，工单不用再挂着）。 */
+var _csTkToIssueCtx={no:''};
+function openCsTicketToIssue(id,rowIdx){
+    var c=TC['cs-ticket']||{};
+    var view=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+    var row=rowIdx>=0?view[rowIdx]:null;
+    if(!row){showToast(tr('未找到工单'));return;}
+    var no=csTicketCell(row,'工单编号');
+    var st=csTicketCell(row,'工单状态');
+    if(st==='已解决'||st==='已关闭'){showToast(tr('终态工单不能再操作'));return;}
+    _csTkToIssueCtx={no:no};
+    /* 问题件类型取问题件跟踪同款字典（05-tables-build.js 的 CS_ISSUE_TYPES 在 IIFE 里，
+     * 这里列一份同源的；类型字典变了要两处同步） */
+    var issueTypes=['运单拦截','问题件-超大','问题件-超长','问题件-超围长','问题件-超重','退件/少件扣件','查验扣件','签收地址错','未提取','客户要求暂扣'];
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='56%';
+    document.getElementById('crud-modal-title').textContent=tr('转问题件')+' - '+no;
+    var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white';
+    var h='<div class="space-y-5">';
+    h+='<section><div class="flex items-center gap-2 mb-3"><span class="w-1 h-4 bg-primary-500 rounded"></span>'+
+       '<span class="text-base font-semibold text-text-primary">'+tr('工单信息')+'</span></div>'+csTicketInfoBar(row)+'</section>';
+    h+='<section><div class="flex items-center gap-2 mb-3"><span class="w-1 h-4 bg-amber-400 rounded"></span>'+
+       '<span class="text-base font-semibold text-text-primary">'+tr('问题件信息')+'</span></div>';
+    h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500 mr-0.5">*</span>'+tr('问题件类型')+'</label>'+
+       '<select id="cs-tk-itype" class="'+inCls+'"><option value="">'+tr('请选择问题件类型')+'</option>'+
+       issueTypes.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select></div>';
+    h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500 mr-0.5">*</span>'+tr('问题件说明')+'</label>'+
+       '<textarea id="cs-tk-inote" rows="4" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+tr('请输入问题件说明（转过去就是问题件的首条处理记录）')+'"></textarea></div>';
+    h+='</div></section>';
+    h+='<div class="px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 text-xs text-amber-700">'+
+       esc(tr('提交后在「问题件跟踪」生成一条未处理的问题件，本工单自动关闭。'))+'</div>';
+    h+='</div>';
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitCsTicketToIssue()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认转问题件')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function submitCsTicketToIssue(){
+    var no=_csTkToIssueCtx.no;
+    var v=function(id){var e=document.getElementById(id);return e?String(e.value||'').trim():'';};
+    var type=v('cs-tk-itype'),note=v('cs-tk-inote');
+    if(!no){showToast(tr('未找到工单'));return;}
+    if(!type){showToast(tr('请选择问题件类型'));return;}
+    if(!note){showToast(tr('请输入问题件说明'));return;}
+    var row=csTicketRowByNo(no);
+    if(!row){showToast(tr('未找到工单'));return;}
+    var now=(typeof receiptNowStr==='function')?receiptNowStr():'';
+    var who=(typeof getCurrentUserName==='function')?getCurrentUserName():'客服';
+    /* 问题件跟踪落一行。列序（05-tables-build.js）：
+     * 序号|问题类型名称|最新响应时间|问题状态|最新响应内容|运单状态|运单号|客户单号|客户代码|客户名称|销售产品|问题备注|操作
+     * 客户单号/代码/销售产品没有来源就留空，不臆造；序号按表内行数递增。 */
+    var it=TC['cs-issue-track'];
+    if(it&&it.d){
+        var seq=it.d.length+1;
+        var cust=csTicketCell(row,'客户名称');
+        it.d.push([String(seq),type,now,'未处理',note,csTicketCell(row,'运单状态'),
+            csTicketCell(row,'运单号'),'','',cust,'','工单 '+no+' 转入']);
+        if(typeof _listData!=='undefined')delete _listData['cs-issue-track'];
+    }
+    /* 工单侧：转出记录进时间线 + 自动关闭 */
+    var list=_CS_TICKET_MSGS[no]=csTicketMsgsOf(no);
+    list.push({who:who,role:'cs',time:now,content:'【转问题件】'+type+'：'+note,att:''});
+    fclFinSet('cs-ticket',row,'工单状态','已关闭');
+    fclFinSet('cs-ticket',row,'留言数',String(list.length));
+    if(typeof _listData!=='undefined')delete _listData['cs-ticket'];
+    closeCrudModal();
+    fclFinRefresh('cs-ticket');
+    showToast(tr('已转问题件')+'（'+type+'），'+tr('工单已关闭')+'：'+no);
+}
+
 /* ---------- 详情：工单信息 + 留言时间线（参考图 4） ---------- */
 function openCsTicketDetail(id,rowIdx){
     var c=TC['cs-ticket']||{};

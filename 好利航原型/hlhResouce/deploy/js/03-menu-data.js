@@ -101,6 +101,8 @@ const menuData=[
 {id:'cs-issue-type',label:'问题件类型',page:'cs',tab:'cs-issue-type'},
 {id:'cs-track-query',label:'轨迹查询',page:'cs',tab:'cs-track-query'},
 {id:'cs-track-maint',label:'轨迹维护',page:'cs',tab:'cs-track-maint'},
+/* 工单：客户对运单的诉求（改地址/催件/费用争议…），与货物异常的问题件并行 */
+{id:'cs-ticket',label:'工单管理',page:'cs',tab:'cs-ticket'},
 /* 原挂在 业务配置 → 基础资料 下，与轨迹查询/轨迹维护分家；移到客服模块归拢 */
 {id:'biz-track-cfg',label:'轨迹配置',page:'cs',tab:'biz-track-cfg'}
 ]},

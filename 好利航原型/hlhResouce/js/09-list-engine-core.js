@@ -991,6 +991,7 @@ function renderToolbarAction(action,id){
     else if(action.key==='approvalAudit')click='openSelectedApprovalAudit(\''+id+'\')';
     else if(action.key==='msgDetail')click='openSelectedApprovalMsg(\''+id+'\')';
     else if(action.key==='approvalMsgMarkRead')click='markApprovalMsgsRead(\''+id+'\')';
+    else if(action.key==='csTicketAdd')click='openCsTicketAdd()';
     else if(action.key==='approvalMsgMarkAllRead')click='markAllApprovalMsgsRead(\''+id+'\')';
     else if(action.key==='opInstructionAttach')click='openSelectedOpInstructionAttach(\''+id+'\')';
     else if(action.key==='crmApplyAccount')click='openSelectedCrmAccountApply(\''+id+'\')';
@@ -1817,6 +1818,14 @@ function getToolbarActions(id){
             {key:'export',label:'导出数据'}
         ];
     }
+    /* 工单管理：新建 / 回复 / 处理走行内按钮（每张单的动作不同步），工具栏只放批量无关的 */
+    if(id==='cs-ticket'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'csTicketAdd',label:'新建工单',variant:'primary'},
+            {key:'export',label:'导出数据'}
+        ];
+    }
     if(id==='approval-msg'){
         /* 与「我的公告」同一套：查详情 / 标已读 / 一键全部已读 */
         return [
@@ -1872,7 +1881,7 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt','fin-invoice','fcl-profit','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
+var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt','fin-invoice','fcl-profit','cs-ticket','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill',
 /* 单票成本明细全部由「分摊到票」生成，手工编辑会让它和来源成本行对不上 */
 'fcl-shipment-cost',
 /* 代理账单按供应商发票导入，费用明细挂在 Job No 上；改发票要走重新导入，不给行内编辑 */

@@ -1465,6 +1465,8 @@ var _pdaPalletBindRows=[
 var _pdaPalletBindLoaded=false;
 var _pdaPalletBindFromAlloc='';
 var _pdaPalletBindDirectLoad='否';
+/* 从找货扫描进来时记着找货侧的下标：确认上托后要回去，并把上托结果带回配舱单 */
+var _pdaPalletBindFindIdx=null;
 
 /* ===== 找货扫描 / 装柜扫描 共用的「托盘 or 袋」判定 =====
  * 空运配舱单在国内是装袋交给航司的，仓库找货、装柜都是整袋点，中间没有托盘这一层，
@@ -1681,6 +1683,17 @@ function generatePdaFindScanOperate(){
     h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-xs text-text-secondary mb-2">'+tr('扫描模式')+'</div><div class="flex items-center justify-between gap-2">'+
         (isAir?modeBtn('bag','按袋扫描')
               :(modeBtn('pallet','按托盘')+modeBtn('waybill','按整票')+modeBtn('piece','按件/箱')))+'</div></div>';
+    /* 配舱上托记录：从仓库上托带回来的 运单号 + 托盘。列在这里，找货/复核能对上
+     * 「这票货上了哪个托」，已扫插页里上过托的托盘也直接计入。 */
+    if((item.palletBinds||[]).length){
+        h+='<div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3">';
+        h+='<div class="text-xs font-semibold text-emerald-700 mb-2">'+tr('配舱上托')+'（'+item.palletBinds.length+'）</div>';
+        h+='<div class="space-y-1">';
+        item.palletBinds.forEach(function(pb){
+            h+='<div class="flex items-baseline gap-2 text-[11px]"><span class="text-emerald-700/80 shrink-0">'+esc(pb.wb||'—')+'</span><span class="font-medium text-text-primary break-all">'+esc(pb.pallet)+'</span><span class="text-text-muted shrink-0">'+esc(pb.zone||'')+'</span></div>';
+        });
+        h+='</div></div>';
+    }
     h+=pdaScanInput('pda-find-scan-pallet',scanPh,'applyPdaFindScanPallet',scanInit);
     h+='<div class="grid grid-cols-2 gap-2">'+tabBtn('pending','待扫描',pending.length)+tabBtn('scanned','已扫描',scanned.length)+'</div>';
     if(svcFilterable){
@@ -1790,7 +1803,8 @@ function onePdaFindScanFinish(){
 function goPdaFindScanPalletBind(){
     const item=_pdaFindScanList[_pdaFindScanCurrent];
     _pdaPalletBindFromAlloc=item?item.no:'';
-    _pdaPalletBindDirectLoad='否';
+    _pdaPalletBindFindIdx=item?_pdaFindScanCurrent:null;
+    _pdaPalletBindDirectLoad='是';
     openWarehousePdaTask('pda-pallet-bind');
 }
 
@@ -2100,6 +2114,7 @@ function onePdaLoadScanFinish(){
 function goPdaLoadScanPalletBind(){
     const item=_pdaLoadScanList[_pdaLoadScanCurrent];
     _pdaPalletBindFromAlloc=item?item.no:'';
+    _pdaPalletBindFindIdx=null;   /* 清掉找货上下文：这条入口是装柜链路，不回找货 */
     _pdaPalletBindDirectLoad='否';
     openWarehousePdaTask('pda-pallet-bind');
 }
@@ -2307,7 +2322,11 @@ function generatePdaPalletBindScreen(){
     if(_pdaPalletBindFromAlloc){
         h+='<div class="rounded-xl border border-primary-100 bg-primary-50 px-3 py-2 text-xs text-primary-700 flex items-center gap-2"><span class="font-semibold">'+tr('配舱号')+'：</span><span class="break-all">'+esc(_pdaPalletBindFromAlloc)+'</span></div>';
     }
-    h+='<div class="flex items-center gap-2 text-xs"><span class="text-text-secondary w-24 flex-shrink-0">'+tr('是否直接装柜')+'</span><select onchange="setPdaPalletBindDirectLoad(this.value)" class="flex-1 h-10 px-3 rounded-xl border border-surface-200 bg-white text-text-primary"><option value="否"'+(_pdaPalletBindDirectLoad==='否'?' selected':'')+'>'+tr('否')+'</option><option value="是"'+(_pdaPalletBindDirectLoad==='是'?' selected':'')+'>'+tr('是')+'</option></select></div>';
+    /* 语义随入口变：找货扫描进来的问「直接配舱找货」（默认是，上托完回找货）；
+     * 装柜扫描或独立进来的仍问「直接装柜」（默认否）。 */
+    var fromFind=_pdaPalletBindFindIdx!==null&&_pdaFindScanList[_pdaPalletBindFindIdx];
+    var directLabel=fromFind?'是否直接配舱找货':'是否直接装柜';
+    h+='<div class="flex items-center gap-2 text-xs"><span class="text-text-secondary w-24 flex-shrink-0">'+tr(directLabel)+'</span><select onchange="setPdaPalletBindDirectLoad(this.value)" class="flex-1 h-10 px-3 rounded-xl border border-surface-200 bg-white text-text-primary"><option value="是"'+(_pdaPalletBindDirectLoad==='是'?' selected':'')+'>'+tr('是')+'</option><option value="否"'+(_pdaPalletBindDirectLoad==='否'?' selected':'')+'>'+tr('否')+'</option></select></div>';
     h+=pdaScanInput('pda-pallet-waybill','请扫描运单子单号','applyPdaPalletBindWaybill','H82512230001');
     h+='<div id="pda-pallet-waybill-info" class="'+(_pdaPalletBindLoaded?'':'hidden')+' rounded-xl border border-surface-200 bg-white p-3 text-xs space-y-1">';
     h+='<div class="flex items-center gap-2"><span class="font-semibold text-primary-700">H82512230001</span><span class="text-text-secondary">(A1，A2)</span></div>';
@@ -2370,9 +2389,31 @@ function confirmPdaPalletBind(){
         showToast(tr('托盘号存在「库位库区」为空，请维护后操作！'));
         return;
     }
+    /* 上托结果带回：从找货扫描进来时，把扫的运单号和这批托盘记到那张配舱单上，
+     * 托盘同时计入找货的「已扫描」—— 托都上好了自然就是找到的货。 */
+    const wbEl=document.getElementById('pda-pallet-waybill');
+    const wbNo=(wbEl&&wbEl.value)?String(wbEl.value).trim():'';
+    const bound=_pdaPalletBindRows.slice();
+    if(_pdaPalletBindFindIdx!==null&&_pdaFindScanList[_pdaPalletBindFindIdx]&&bound.length){
+        const alloc=_pdaFindScanList[_pdaPalletBindFindIdx];
+        const palletNos=bound.map(function(r){return r.pallet;});
+        /* 配舱单记一笔「配舱上托」：谁（运单号）、上了哪些托盘，列表/详情都看得到 */
+        alloc.palletBinds=(alloc.palletBinds||[]).concat(
+            bound.map(function(r){return {wb:wbNo,pallet:r.pallet,zone:r.zone};}));
+        palletNos.forEach(function(p){
+            if(!_pdaFindScanScannedSet[p]){
+                _pdaFindScanScannedSet[p]=true;
+                const src=(alloc.pallets||[]).filter(function(x){return x.pallet===p;})[0];
+                _pdaFindScanCount[p]=src?src.pcs:0;
+            }
+        });
+        _pdaFindScanActiveTab='scanned';
+    }
+    const goBack=_pdaPalletBindDirectLoad==='是'&&_pdaPalletBindFindIdx!==null;
     _pdaPalletBindRows=[];
     _pdaPalletBindLoaded=false;
     _pdaPalletBindFromAlloc='';
+    _pdaPalletBindFindIdx=null;
     _pdaPalletBindDirectLoad='否';
     const wbInput=document.getElementById('pda-pallet-waybill');
     if(wbInput){wbInput.value='';wbInput.dispatchEvent(new Event('input',{bubbles:true}));}
@@ -2380,8 +2421,16 @@ function confirmPdaPalletBind(){
     if(info)info.classList.add('hidden');
     const tbl=document.getElementById('pda-pallet-table');
     if(tbl)tbl.innerHTML=renderPdaPalletBindTable();
-    if(wbInput)wbInput.focus();
-    showToast(tr('上托提交成功'));
+    if(goBack){
+        /* 直接配舱找货：回到找货扫描的同一张配舱单（operate 屏，已扫插页） */
+        _warehousePdaTaskId='pda-find-scan';
+        _pdaFindScanView='operate';
+        refreshWarehousePdaPrototype();
+        showToast(tr('上托提交成功，已返回找货扫描'));
+    }else{
+        if(wbInput)wbInput.focus();
+        showToast(tr('上托提交成功'));
+    }
 }
 
 var _pdaPalletAdjustOp='swap';

@@ -254,6 +254,127 @@ function confirmArBillReceive(){
     showToast(tr('收款登记成功')+'：'+b.bn+' '+amt+' '+_arBillV('arrecv-cur')+'（'+tr('剩余待收')+' '+rest+'，'+tr('收款状态')+'：'+b.paySt+'，'+tr('收款单')+' '+rcvNo+'）');
 }
 
+/* ===== 撤销收款 =====
+ * 与撤销核销同一套逻辑的反向操作：选一条账单 → 弹出它的收款记录 → 挑一条撤销。
+ * 已核销的收款记录不能直接撤（钱已冲凭证，要撤先走撤销核销），撤掉的是「未核销」那条：
+ *   - 账单已收金额按该笔金额回退、收款状态回算；
+ *   - 该收款记录从登记簿里移除；
+ *   - 若账单已进入放行（提货预约/放货单已生成），不拦 —— 原型阶段只回退收款维度。 */
+function openArBillRevokeModal(){
+    var bns=arBillCheckedBns();
+    if(!bns.length){ showToast(tr('请先勾选要撤销收款的账单')); return; }
+    if(bns.length>1){ showToast(tr('撤销收款只能对单条账单操作')+'，'+tr('已自动选中第一条')+'：'+bns[0]); }
+    var b=_arBillFind(bns[0]);
+    if(!b){ showToast(tr('未找到账单')); return; }
+    if(b.st==='作废'){ showToast(tr('已作废的账单不能撤销收款')); return; }
+    var receipts=(_arReceipts[b.bn]||[]);
+    if(!receipts.length){ showToast(tr('该账单还没有收款记录，无可撤销')); return; }
+    var revocable=receipts.filter(function(r){return !r.used;});
+    if(!revocable.length){ showToast(tr('收款记录已全部核销')+'，'+tr('请先在「快捷核销」侧撤销核销后再撤销收款')); return; }
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=tr('撤销收款')+' - '+b.bn;
+    var h='<div class="space-y-4">';
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-700">'+
+        tr('撤销后该笔收款从账单回退（已收金额减去该笔、收款状态回算），收款记录删除且不可恢复；已核销的收款请先撤销核销。')+'</div>';
+    h+='<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-sm">';
+    h+='<div><span class="text-xs text-text-muted block">'+tr('应收账单号')+'</span><span class="font-medium text-text-primary">'+esc(b.bn)+'</span></div>';
+    h+='<div><span class="text-xs text-text-muted block">'+tr('账单金额')+'</span><span class="font-semibold text-blue-700">'+esc(b.amt)+' '+esc(b.cur)+'</span></div>';
+    h+='<div><span class="text-xs text-text-muted block">'+tr('已收金额')+'</span><span class="text-emerald-600">'+esc(b.recv||'0.00')+'</span></div>';
+    h+='<div><span class="text-xs text-text-muted block">'+tr('收款状态')+'</span><span class="font-semibold">'+esc(b.paySt)+'</span></div>';
+    h+='</div>';
+    /* 收款记录单选：只有未核销的可选 */
+    h+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span><span class="text-sm font-semibold text-text-primary">'+tr('选择收款记录（仅未核销的可撤销）')+'</span></div>';
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto" style="max-height:220px"><table class="w-full text-sm"><thead class="sticky top-0"><tr class="bg-[#EFF6FF] text-text-secondary">';
+    h+='<th class="px-3 py-2 w-10"></th>';
+    ['收款单号','收款金额','币别','交割方式','收款时间','收款人','状态'].forEach(function(c){h+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    h+='</tr></thead><tbody>';
+    receipts.forEach(function(r,i){
+        var disabled=r.used?' disabled':'';
+        h+='<tr class="border-t border-surface-100'+(r.used?' bg-surface-50/60':'')+'">';
+        h+='<td class="px-3 py-2"><input type="radio" name="arrev-rcv" value="'+i+'"'+disabled+' class="accent-primary-600"></td>';
+        h+='<td class="px-3 py-2 font-medium text-primary-700">'+esc(r.rcvNo)+'</td>';
+        h+='<td class="px-3 py-2 text-blue-700 font-semibold">'+esc(r.amt)+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary">'+esc(r.cur)+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary">'+esc(r.style)+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary">'+esc(r.at)+'</td>';
+        h+='<td class="px-3 py-2 text-text-secondary">'+esc(r.by)+'</td>';
+        h+='<td class="px-3 py-2 '+(r.used?'text-text-muted':'text-amber-600 font-medium')+'">'+(r.used?(tr('已核销')+'（'+esc(r.voucher)+'）'):tr('未核销'))+'</td>';
+        h+='</tr>';
+    });
+    h+='</tbody></table></div></div>';
+    h+='</div>';
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="confirmArBillRevoke()" class="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('确认撤销')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function confirmArBillRevoke(){
+    var bn=String((document.getElementById('crud-modal-title').textContent||'').split(' - ').pop()||'');
+    var b=_arBillFind(bn);
+    if(!b){ showToast(tr('未找到账单')); return; }
+    var radios=document.getElementsByName('arrev-rcv');
+    var pick=-1;
+    for(var i=0;i<radios.length;i++){ if(radios[i].checked&&!radios[i].disabled){pick=parseInt(radios[i].value,10);break;} }
+    if(pick<0){ showToast(tr('请选择一条收款记录')); return; }
+    var r=(_arReceipts[b.bn]||[])[pick];
+    if(!r||r.used){ showToast(tr('已核销的收款记录不能撤销')+'，'+tr('请先撤销核销')); return; }
+    var amt=parseFloat(r.amt)||0;
+    openConfirmTip(tr('确认撤销收款')+' '+r.rcvNo+'（'+amt.toFixed(2)+' '+r.cur+'）？'+
+        tr('已收金额将回退、收款状态回算，该收款记录删除且不可恢复。'),function(){
+        b.recv=Math.max(0,(parseFloat(b.recv)||0)-amt).toFixed(2);
+        arBillRefreshPayState(b);
+        _arReceipts[b.bn].splice(pick,1);
+        if(!_arReceipts[b.bn].length)delete _arReceipts[b.bn];
+        closeCrudModal();
+        renderArBillTable();
+        showToast(tr('已撤销收款')+' '+r.rcvNo+'，'+tr('已收金额回退至')+' '+b.recv+' '+b.cur+'，'+tr('收款状态')+'：'+b.paySt);
+    });
+}
+
+/* ===== 需求说明 =====
+ * 把快捷收款/撤销收款/快捷核销/快捷放行四个按钮的业务规则原文挂到页面上，
+ * 演示评审时不用翻文档 —— 按钮含义、准入条件、落库动作一屏说清。 */
+function openArBillReqDocModal(){
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='58%';
+    document.getElementById('crud-modal-title').textContent=tr('需求说明')+' - '+tr('应收账单管理');
+    var sec=function(title,body){
+        return '<section class="rounded-xl border border-surface-200 bg-white p-4">'+
+            '<div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-primary-500 rounded"></span>'+
+            '<span class="text-sm font-semibold text-text-primary">'+tr(title)+'</span></div>'+
+            '<div class="text-sm text-text-secondary leading-relaxed space-y-1.5">'+body+'</div></section>';
+    };
+    var li=function(arr){return '<ul class="list-disc pl-5 space-y-1">'+arr.map(function(s){return '<li>'+tr(s)+'</li>';}).join('')+'</ul>';};
+    var h='<div class="space-y-4">';
+    h+=sec('快捷收款',li([
+        '针对非已收款状态的数据可以点击登记收款，记录收款记录，绑定费用明细；',
+        '支持部分收款（收款金额默认待收余额，可改小，不能超过待收）；',
+        '不能选择收款币别，默认取所选账单数据的币种（账单按币别立账，收款换币别对不上账）；',
+        '确认后：账单已收金额累加、收款状态推进，并落一条收款单供后续核销挑选。'
+    ]));
+    h+=sec('撤销收款',li([
+        '选择一条账单，对其收款记录进行选择并撤销（与撤销核销同一套反向逻辑）；',
+        '仅未核销的收款记录可撤销；已核销的请先在核销侧撤销；',
+        '撤销后：已收金额按该笔回退、收款状态回算，收款记录删除且不可恢复。'
+    ]));
+    h+=sec('快捷核销',li([
+        '选择一条已登记收款、未核销的账单，弹出未核销的收款明细进行凭证信息补全；',
+        '凭证字段与银行凭证口径一致（交割方式/币别/汇率/费用时间/我方账户/对方信息）；',
+        '补全完成后生成凭证记录和对应的核销记录：收款单标记已核销并回填凭证号，账单核销金额与状态刷新。'
+    ]));
+    h+=sec('快捷放行',li([
+        '针对已收款和已核销的数据，弹窗录入提货预约信息，生成提货预约记录并生成放货记录；',
+        '如果是部分收款和部分核销：提示该账单未收款核销完成，放货将产生回款风险，是否继续放货；',
+        '确认继续后弹窗补全提货预约信息，并必填放行原因。'
+    ]));
+    h+='</div>';
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
 /* ===== 快捷核销 =====
  * 流程语义（客户业务）：
  *   正常流 —— 银行到账 → 银行凭证登记/导入（fin-bank-voucher）→ 收款管理认领抵扣核销；
@@ -774,8 +895,11 @@ function generateArBillPage(id){
     h+='<button onclick="arBillDetailSelected()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('详情')+'</button>';
     h+='<button onclick="openArBillSendModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('发送账单')+'</button>';
     h+='<button onclick="openArBillReceiveModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('快捷收款')+'</button>';
+    h+='<button onclick="openArBillRevokeModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('撤销收款')+'</button>';
     h+='<button onclick="openArBillWriteOffModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('快捷核销')+'</button>';
     h+='<button onclick="openArBillReleaseModal()" class="h-9 px-4 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 cursor-pointer">'+tr('快捷放行')+'</button>';
+    /* 需求说明：四个快捷按钮的业务规则原文，演示评审时点开即看 */
+    h+='<button onclick="openArBillReqDocModal()" class="h-9 px-4 text-sm font-medium text-primary-700 border border-primary-200 bg-white rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('需求说明')+'</button>';
     /* 「下载账单」按钮已隐藏（arBillDownloadSelected 保留备用） */
     h+='<button onclick="arBillDeleteSelected()" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('删除')+'</button>';
     h+='</div></div>';

@@ -129,7 +129,10 @@ const menuData=[
 {id:'fin-ar',label:'散货收款管理',children:[
 {id:'fin-ar-detail',label:'应收明细',page:'finance',tab:'fin-ar-detail'},
 {id:'fin-ar-bill',label:'应收账单管理',page:'finance',tab:'fin-ar-bill'},
-{id:'fin-ar-receipt',label:'收款管理',page:'finance',tab:'fin-ar-receipt'}
+{id:'fin-ar-receipt',label:'收款管理',page:'finance',tab:'fin-ar-receipt'},
+/* 散货应付链路：成本明细（运单维度）→ 生成付款单 → 审核/核销/反核销，与整柜侧对称 */
+{id:'lcl-cost-detail',label:'成本明细',page:'finance',tab:'lcl-cost-detail'},
+{id:'lcl-pay-bill',label:'付款单管理',page:'finance',tab:'lcl-pay-bill'}
 ]},
 /* 整柜的应付/请款/付款/应收放单/银行流水/提成，唯一入口在这里
  * （原「整柜业务 → 财务与结算」已撤掉，不再两处重复）。 */

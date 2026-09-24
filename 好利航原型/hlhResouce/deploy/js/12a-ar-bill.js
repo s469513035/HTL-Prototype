@@ -197,7 +197,7 @@ function openArBillReceiveModal(){
     if(b.st==='作废'){ showToast(tr('已作废的账单不能收款')); return; }
     if(b.paySt==='已收款'){ showToast(tr('该账单已全额收款，无需再登记')); return; }
     var panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='58%';
+    if(panel)panel.style.width='66%';
     document.getElementById('crud-modal-title').textContent=tr('快捷收款')+' - '+b.bn;
     var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white';
     var h='<div class="space-y-4">';
@@ -214,17 +214,87 @@ function openArBillReceiveModal(){
     h+='</div>';
     h+='<div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">';
     h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('客户')+'<span class="text-red-500 ml-1">*</span></label><input id="arrecv-cust" value="'+esc(b.cust)+'" class="'+inCls+'"></div>';
-    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('收款金额')+'<span class="text-red-500 ml-1">*</span></label><input id="arrecv-amt" type="number" min="0" step="0.01" value="'+esc(outstanding)+'" class="'+inCls+'"></div>';
+    h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('收款金额')+'<span class="text-red-500 ml-1">*</span></label><input id="arrecv-amt" type="number" min="0" step="0.01" value="'+esc(outstanding)+'" class="'+inCls+'" oninput="arRecvFeeAutoFill()"></div>';
     /* 收款币别锁定为账单币别、只读展示 —— 账单按币别立账，收款换币别就对不上账了 */
     h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('币别')+'</label><input id="arrecv-cur" readonly value="'+esc(b.cur)+'" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary cursor-not-allowed"></div>';
     h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('交割方式')+'</label><select id="arrecv-style" class="'+inCls+'">'+AR_SETTLE_STYLES.map(function(o){return '<option>'+esc(o)+'</option>';}).join('')+'</select></div>';
     h+='<div class="flex flex-col gap-1.5 md:col-span-2"><label class="text-sm font-medium text-text-secondary">'+tr('收款备注')+'</label><textarea id="arrecv-remark" rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+tr('请输入收款备注')+'"></textarea></div>';
-    h+='</div></div>';
+    h+='</div>';
+    /* 费用明细绑定：收到费用明细维度 —— 勾选这笔收款冲抵哪些费用行。
+     * 默认全选（整单收款），部分收款时自动按顺序勾到金额用完；勾选合计实时联动。 */
+    h+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
+        '<span class="text-sm font-semibold text-text-primary">'+tr('绑定费用明细')+'</span>'+
+        '<span class="text-xs text-text-muted">'+esc(tr('勾选本次收款冲抵的费用行；合计跟随勾选联动'))+'</span>'+
+        '<button type="button" onclick="arRecvFeeAutoFill()" class="h-7 px-2.5 text-xs font-medium text-primary-700 border border-primary-200 rounded bg-white hover:bg-primary-50 cursor-pointer">'+tr('按收款金额自动勾')+'</button></div>';
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto" style="max-height:180px"><table class="w-full text-sm"><thead class="sticky top-0"><tr class="bg-[#EFF6FF] text-text-secondary">';
+    h+='<th class="px-3 py-2 w-10"></th>';
+    ['运单号','费用名称','币别','费用金额'].forEach(function(c){h+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    h+='</tr></thead><tbody>';
+    (b.fees||[]).forEach(function(f,i){
+        h+='<tr class="border-t border-surface-100">'+
+            '<td class="px-3 py-2"><input type="checkbox" class="arrecv-fee-check" value="'+i+'" checked onchange="arRecvFeeSumSync()"></td>'+
+            '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(f.wb)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(f.fee)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(f.cur)+'</td>'+
+            '<td class="px-3 py-2 text-text-primary">'+esc(f.amt)+'</td></tr>';
+    });
+    if(!(b.fees||[]).length){
+        h+='<tr><td colspan="5" class="px-3 py-6 text-center text-sm text-text-muted">'+tr('该账单没有费用明细')+'</td></tr>';
+    }
+    h+='</tbody></table></div>';
+    h+='<div id="arrecv-fee-sum" class="mt-1.5 text-xs text-text-secondary"></div>';
+    h+='</div>';
+    /* 收款附件：现场到付的水单/收据/转账截图 —— 快捷核销补凭证时可直接引用 */
+    h+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
+        '<span class="text-sm font-semibold text-text-primary">'+tr('收款附件')+'</span>'+
+        '<span class="text-xs text-text-muted">'+esc(tr('支持 水单/收据/转账截图，jpg/png/pdf，最多 5 个'))+'</span></div>';
+    h+=(typeof crmAttachmentFieldHtml==='function'?crmAttachmentFieldHtml('收款附件',''):'');
+    h+='</div>';
+    h+='</div>';
     document.getElementById('crud-modal-body').innerHTML=h;
     document.getElementById('crud-modal-footer').innerHTML=
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
         '<button onclick="confirmArBillReceive()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认收款')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
+    arRecvFeeAutoFill();
+}
+/* 勾选合计联动：已勾费用行的金额和 vs 收款金额，差多少一眼看出 */
+function arRecvFeeSumSync(){
+    var bn=String((document.getElementById('crud-modal-title').textContent||'').split(' - ').pop()||'');
+    var b=_arBillFind(bn);
+    if(!b)return;
+    var picked=[],sum=0;
+    document.querySelectorAll('.arrecv-fee-check:checked').forEach(function(c){
+        var f=(b.fees||[])[parseInt(c.value,10)];
+        if(f){picked.push(f);sum+=parseFloat(f.amt)||0;}
+    });
+    var amt=parseFloat(_arBillV('arrecv-amt'))||0;
+    var el=document.getElementById('arrecv-fee-sum');
+    if(el){
+        var diff=+(sum-amt).toFixed(2);
+        el.innerHTML=tr('已勾')+' <span class="font-semibold text-text-primary">'+picked.length+'</span> '+tr('条')+
+            '，'+tr('勾选合计')+' <span class="font-semibold text-text-primary">'+sum.toFixed(2)+'</span>'+
+            '，'+tr('收款金额')+' <span class="font-semibold text-primary-700">'+amt.toFixed(2)+'</span>'+
+            (Math.abs(diff)<0.005?'　<span class="text-emerald-600 font-medium">'+tr('✓ 已匹配')+'</span>'
+                :'　<span class="text-amber-600 font-medium">'+(diff>0?tr('勾选超出收款')+' '+diff.toFixed(2):tr('勾选还差')+' '+(-diff).toFixed(2))+'</span>');
+    }
+}
+/* 按收款金额自动勾：从第一行起按顺序勾到金额用完（多退少不补——不够的行留勾让人自己定） */
+function arRecvFeeAutoFill(){
+    var bn=String((document.getElementById('crud-modal-title').textContent||'').split(' - ').pop()||'');
+    var b=_arBillFind(bn);
+    if(!b)return;
+    var amt=parseFloat(_arBillV('arrecv-amt'))||0;
+    var left=amt;
+    document.querySelectorAll('.arrecv-fee-check').forEach(function(c){
+        var f=(b.fees||[])[parseInt(c.value,10)];
+        if(!f){c.checked=false;return;}
+        var v=parseFloat(f.amt)||0;
+        if(left>=v-0.004){c.checked=true;left=+(left-v).toFixed(2);}
+        else if(left>0.004){c.checked=true;left=0;}   /* 最后一行部分冲抵也勾上 */
+        else c.checked=false;
+    });
+    arRecvFeeSumSync();
 }
 function confirmArBillReceive(){
     var bn=String((document.getElementById('crud-modal-title').textContent||'').split(' - ').pop()||'');
@@ -236,22 +306,31 @@ function confirmArBillReceive(){
     if(!amt||amt<=0){ showToast(tr('请填写收款金额')); return; }
     var outstanding=Math.max(0,(parseFloat(b.amt)||0)-(parseFloat(b.recv)||0));
     if(amt>outstanding+1e-9){ showToast(tr('收款金额不能超过待收金额')); return; }
+    /* 绑定费用明细：至少勾一行 —— 收款要落到费用维度，没绑定就说不清冲的哪笔 */
+    var feeIdx=[];
+    document.querySelectorAll('.arrecv-fee-check:checked').forEach(function(c){feeIdx.push(parseInt(c.value,10));});
+    if((b.fees||[]).length&&!feeIdx.length){ showToast(tr('请勾选本次收款冲抵的费用明细')); return; }
     /* 只动收款维度：已收金额累加、收款状态推进；核销(used/unused/st)不动 */
     b.recv=((parseFloat(b.recv)||0)+amt).toFixed(2);
     arBillRefreshPayState(b);
     var remark=_arBillV('arrecv-remark');
     if(remark)b.rk=remark;
-    /* 落收款单：快捷核销要从收款单里挑一条来核，不落就没得挑 */
+    /* 落收款单：快捷核销要从收款单里挑一条来核，费用绑定与附件跟着收款单走 */
     if(!_arReceipts[b.bn])_arReceipts[b.bn]=[];
     var seq=_arReceipts[b.bn].length+1;
     var rcvNo='SK-'+b.bn.slice(2)+'-'+String(seq).padStart(2,'0');
+    var fees=feeIdx.map(function(i){return b.fees[i];}).filter(Boolean);
+    var atts=(typeof crudAttachmentNames==='function')?crudAttachmentNames():'';
     _arReceipts[b.bn].push({rcvNo:rcvNo,amt:amt.toFixed(2),cur:_arBillV('arrecv-cur')||b.cur,
         style:_arBillV('arrecv-style')||'银行转账',at:arBillNowText(),by:arBillCurrentSender(),
-        voucher:'',used:false,remark:remark});
+        voucher:'',used:false,remark:remark,fees:fees,atts:atts});
     var rest=Math.max(0,parseFloat(b.amt)-parseFloat(b.recv)).toFixed(2);
     closeCrudModal();
     renderArBillTable();
-    showToast(tr('收款登记成功')+'：'+b.bn+' '+amt+' '+_arBillV('arrecv-cur')+'（'+tr('剩余待收')+' '+rest+'，'+tr('收款状态')+'：'+b.paySt+'，'+tr('收款单')+' '+rcvNo+'）');
+    showToast(tr('收款登记成功')+'：'+b.bn+' '+amt+' '+_arBillV('arrecv-cur')+
+        '（'+tr('绑定费用')+' '+fees.length+' '+tr('条')+
+        (atts?('，'+tr('附件')+' '+atts.split(/[;,，]/).filter(Boolean).length+' '+tr('个')):'')+
+        '，'+tr('剩余待收')+' '+rest+'，'+tr('收款单')+' '+rcvNo+'）');
 }
 
 /* ===== 撤销收款 =====
@@ -415,14 +494,16 @@ function openArBillWriteOffModal(){
     h+='<div><span class="text-xs text-text-muted block">'+tr('已核销金额')+'</span><span class="text-orange-600">'+esc(b.used)+'</span></div>';
     h+='<div><span class="text-xs text-text-muted block">'+tr('待核销金额')+'</span><span class="font-semibold text-green-600">'+esc(b.unused)+'</span></div>';
     h+='</div>';
-    /* ① 收款信息：radio 挑一条未核销的收款单 */
+    /* ① 收款信息：radio 挑一条未核销的收款单，附该笔收款绑定的费用明细（快捷收款时勾的） */
     h+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span><span class="text-sm font-semibold text-text-primary">'+tr('① 选择收款信息（现场到付登记的收款单）')+'</span></div>';
-    h+='<div class="border border-surface-200 rounded-lg overflow-auto" style="max-height:200px"><table class="w-full text-sm"><thead class="sticky top-0"><tr class="bg-[#EFF6FF] text-text-secondary">';
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto" style="max-height:240px"><table class="w-full text-sm"><thead class="sticky top-0"><tr class="bg-[#EFF6FF] text-text-secondary">';
     h+='<th class="px-3 py-2 w-10"></th>';
-    ['收款单号','收款金额','币别','交割方式','收款时间','收款人','状态'].forEach(function(c){h+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    ['收款单号','收款金额','币别','交割方式','收款时间','收款人','绑定费用明细','附件','状态'].forEach(function(c){h+='<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';
     receipts.forEach(function(r,i){
         var disabled=r.used?' disabled':'';
+        /* 该笔收款绑定的费用行（快捷收款勾的），一列小字串出 */
+        var feeTxt=(r.fees||[]).map(function(f){return esc(f.wb)+' '+esc(f.fee)+' '+esc(f.amt);}).join('；');
         h+='<tr class="border-t border-surface-100'+(r.used?' opacity-50':'')+'">';
         h+='<td class="px-3 py-2 text-center"><input type="radio" name="arwo-rcv" value="'+i+'"'+(r.used?'':' checked')+disabled+' onchange="arWoSyncAmt()"></td>';
         h+='<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(r.rcvNo)+(r.used?' <span class="text-xs text-text-muted">('+tr('已核销')+')</span>':'')+'</td>';
@@ -431,11 +512,15 @@ function openArBillWriteOffModal(){
         h+='<td class="px-3 py-2 text-text-secondary">'+esc(r.style)+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary">'+esc(r.at)+'</td>';
         h+='<td class="px-3 py-2 text-text-secondary">'+esc(r.by)+'</td>';
+        h+='<td class="px-3 py-2 text-xs text-text-secondary" style="max-width:240px">'+(feeTxt||'<span class="text-text-muted">—</span>')+'</td>';
+        h+='<td class="px-3 py-2 text-xs">'+(r.atts
+            ?'<span class="text-primary-700">'+esc(String(r.atts).split(/[;,，]/).filter(Boolean).length)+' '+tr('个')+'</span>'
+            :'<span class="text-text-muted">—</span>')+'</td>';
         h+='<td class="px-3 py-2">'+(r.used?tr('已核销'):tr('未核销'))+'</td>';
         h+='</tr>';
     });
     h+='</tbody></table></div>';
-    h+='<div class="mt-1.5 text-[11px] text-text-muted">'+tr('仅可选择一条未核销的收款信息，核销金额以所选收款单金额为准。')+'</div>';
+    h+='<div class="mt-1.5 text-[11px] text-text-muted">'+tr('仅可选择一条未核销的收款信息，核销金额以所选收款单金额为准；绑定费用明细为快捷收款时勾选冲抵的费用行。')+'</div>';
     h+='</div>';
     /* ② 凭证信息：字段与银行凭证新增弹窗同构（金额/币别/汇率/本位币联动、对方账户三件套） */
     h+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded-full"></span><span class="text-sm font-semibold text-text-primary">'+tr('② 凭证信息（补全后自动产生凭证记录与核销明细）')+'</span></div>';

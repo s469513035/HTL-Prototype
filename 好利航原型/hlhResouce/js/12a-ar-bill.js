@@ -572,14 +572,28 @@ function openArBillReleaseModal(){
     var bns=arBillCheckedBns();
     if(!bns.length){ showToast(tr('请先勾选要放行的账单')); return; }
     var targets=bns.map(_arBillFind).filter(Boolean);
-    /* 硬条件：同客户；收款状态=已收款 或 核销状态=全部核销（满足其一即可）。
-     * 不满足的直接报清楚，不静默跳过 —— 放货是硬闸 */
+    /* 硬条件：同客户。收款/核销门槛分级放行：
+     *   已收款 或 全部核销 —— 钱货两清，直接放；
+     *   部分收款 或 部分核销 —— 有回款风险，先弹风险确认再放，且必须填放行原因；
+     *   完全没收也没核 —— 直接拦（这种放出去就是白送）。 */
     var custs=[];
     targets.forEach(function(b){ if(custs.indexOf(b.cust)<0)custs.push(b.cust); });
     if(custs.length>1){ showToast(tr('放行仅支持同一客户的账单')+'（'+tr('所选包含')+' '+custs.length+' '+tr('个客户')+'：'+custs.join('、')+'）'); return; }
-    var notEligible=targets.filter(function(b){ return b.paySt!=='已收款'&&b.st!=='全部核销'; });
-    if(notEligible.length){ showToast(tr('仅「已收款」或「已核销」的账单可放行')+'，'+tr('所选中有')+' '+notEligible.length+' '+tr('笔未收款且未核销')); return; }
+    var notEligible=targets.filter(function(b){ return b.paySt!=='已收款'&&b.paySt!=='部分收款'&&b.st!=='全部核销'&&b.st!=='部分核销'; });
+    if(notEligible.length){ showToast(tr('仅「已收款 / 已核销 / 部分收款 / 部分核销」的账单可放行')+'，'+tr('所选中有')+' '+notEligible.length+' '+tr('笔未收款且未核销')); return; }
+    var risky=targets.filter(function(b){ return b.paySt==='部分收款'||b.st==='部分核销'; });
     var cust=custs[0];
+    /* 部分收款/部分核销：先过风险确认这一关，不继续就不开弹窗 */
+    if(risky.length){
+        openConfirmTip(tr('所选账单未收款核销完成，放货将产生回款风险，是否继续放货？')+
+            (risky.length<targets.length?('（'+risky.length+'/'+targets.length+' '+tr('笔为部分收款/部分核销')+'）'):''),function(){
+            openArBillReleaseModalInner(targets,true,cust);
+        });
+        return;
+    }
+    openArBillReleaseModalInner(targets,false,cust);
+}
+function openArBillReleaseModalInner(targets,risky,cust){
     var orders=_arReleaseOrders(targets);
     /* 子单选择状态：默认全选（整单放行），点「子单选择」可改成部分放行 */
     var subs={};
@@ -589,6 +603,11 @@ function openArBillReleaseModal(){
     if(panel)panel.style.width='72%';
     document.getElementById('crud-modal-title').textContent=tr('快捷放行')+' - '+cust;
     var h='<div class="space-y-5">';
+    /* 风险横幅：部分收款/部分核销进来的，放行原因必填 */
+    if(risky){
+        h+='<div class="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">'+
+            tr('该账单未收款核销完成，放货将产生回款风险；请在下方填写放行原因（必填），放行原因将随放货单留痕。')+'</div>';
+    }
     /* ① 放行条件（客户锁死；目的仓库由提货预约侧维护，这里不再重复选择） */
     h+='<section><div class="flex items-center gap-2 mb-3"><span class="w-1 h-4 bg-amber-400 rounded-full"></span><span class="text-sm font-semibold text-text-primary">'+tr('① 放行条件（客户不可修改）')+'</span></div>';
     h+='<div class="grid grid-cols-1 md:grid-cols-3 gap-4">';
@@ -621,6 +640,12 @@ function openArBillReleaseModal(){
     h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('证件号')+'</label><input id="arrel-id" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+tr('身份证/证件号')+'"></div>';
     h+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('车牌号')+'</label><input id="arrel-plate" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+tr('上门提货车牌')+'"></div>';
     h+='<div id="arrel-addr-wrap" class="hidden flex-col gap-1.5 md:col-span-4"><label class="text-sm font-medium text-text-secondary">'+tr('派送地址')+'<span class="text-red-500 ml-1">*</span></label><input id="arrel-addr" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-white" placeholder="'+tr('派送方式填写收货地址')+'"></div>';
+    /* 放行原因：只有走风险通道（部分收款/部分核销）才出现且必填 —— 为什么明知有回款风险还放，
+     * 这个理由要跟着放货单留痕，事后追责有据可查。 */
+    if(risky){
+        h+='<div class="flex flex-col gap-1.5 md:col-span-4"><label class="text-sm font-medium text-text-secondary">'+tr('放行原因')+'<span class="text-red-500 ml-1">*</span></label>'+
+            '<textarea id="arrel-reason" rows="3" class="w-full px-3 py-2 text-sm border border-red-200 rounded-lg bg-red-50/40 resize-y" placeholder="'+tr('请填写放行原因（未收款核销完成即放货，必填留痕）')+'"></textarea></div>';
+    }
     h+='</div>';
     h+='<div class="mt-3 text-xs text-text-muted">'+tr('确认放行后：生成提货预约单（待放货）并自动放行，产生放货单（待出库），可在海外仓作业中跟踪。')+'</div>';
     h+='</section>';
@@ -766,6 +791,13 @@ function confirmArBillRelease(){
         if(!fee){ showToast(tr('派送方式请录入派送费')); return; }
         if(!addr){ showToast(tr('派送方式请填写派送地址')); return; }
     }
+    /* 风险放行必须有原因：没有原因的风险放行等于没人对它负责 */
+    var reasonEl=document.getElementById('arrel-reason');
+    if(reasonEl&&!String(reasonEl.value||'').trim()){
+        showToast(tr('该账单未收款核销完成，请填写放行原因后再放货'));
+        reasonEl.focus();
+        return;
+    }
     var slot=_arBillV('arrel-slot');
     /* 件数/重量/体积按选中子单汇总 —— 部分放行时就只算放行的那部分 */
     var pcs=0,wt=0,vol=0;
@@ -782,16 +814,18 @@ function confirmArBillRelease(){
         TC['ow-pickup'].d.unshift([apptNo,picked[0].order.bl||ctx.bns[0],ctx.bns[0],ctx.cust,wh,pickup,(pickup==='派送'?fee:'—'),String(pcs),wt.toFixed(1),'0.00',(pickup==='派送'?'未付款':'已付款'),slot?('2026-09-17 '+slot):'—','待放货']);
         if(typeof _listData!=='undefined'&&_listData['ow-pickup'])_listData['ow-pickup']=null;
     }
-    /* 放货单（待出库）——列序对齐 ow-outbound 表头 */
+    /* 放货单（待出库）——列序对齐 ow-outbound 表头；风险放行的原因写进备注位留痕 */
+    var relReason=reasonEl?String(reasonEl.value||'').trim():'';
     if(TC['ow-outbound']){
-        TC['ow-outbound'].d.unshift([doNo,apptNo,picked[0].order.bl||ctx.bns[0],ctx.bns[0],ctx.cust,wh,pickup,String(pcs),'0','0/'+pcs,'待出库','—','—',wh]);
+        TC['ow-outbound'].d.unshift([doNo,apptNo,picked[0].order.bl||ctx.bns[0],ctx.bns[0],ctx.cust,wh,pickup,String(pcs),'0','0/'+pcs,'待出库','—',relReason||'—',wh]);
         if(typeof _listData!=='undefined'&&_listData['ow-outbound'])_listData['ow-outbound']=null;
     }
     var partial=picked.filter(function(p){return p.subs.length<p.order.subs.length;}).length;
     closeCrudModal();
     renderArBillTable();
     showToast(tr('放行成功')+'：'+tr('提货预约单')+' '+apptNo+'，'+tr('已自动放行并产生放货单')+' '+doNo+
-        (partial?('（'+partial+' '+tr('个订单部分放行')+'）'):''));
+        (partial?('（'+partial+' '+tr('个订单部分放行')+'）'):'')+
+        (relReason?('；'+tr('放行原因已留痕')+'：'+relReason):''));
 }
 
 /* 删除账单：仅「待核销」（未核销）账单可删除；删除后账单从列表移除，

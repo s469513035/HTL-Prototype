@@ -113,15 +113,19 @@ function renderTrackMaintainRows(){
                     (open?'▸ '+tr('收起'):'▾ '+tr('展开')+'（'+tracks.length+'）')+'</a>'
                 :'<span class="text-xs text-text-muted">—</span>')+
             '</td></tr>';
-        /* 展开行：全部轨迹逐条（时间正序），同列结构直接对齐 */
+        /* 展开行：全部轨迹逐条（时间正序），每条带勾选 —— 删除按勾中的具体轨迹条目 */
         if(open&&tracks.length){
             h+='<tr class="bg-surface-50/60"><td colspan="'+(cols.length+2)+'" class="px-3 py-2">';
             h+='<table class="w-full text-xs"><thead><tr class="text-text-muted">'+
+                '<th class="px-3 py-1.5 w-8"></th>'+
                 ['轨迹代码','轨迹内容','轨迹发生地','轨迹时间','创建人'].map(function(c){
                     return '<th class="px-3 py-1.5 text-left font-medium whitespace-nowrap">'+tr(c)+'</th>';}).join('')+
                 '</tr></thead><tbody>';
             tracks.slice().reverse().forEach(function(t){
-                h+='<tr class="border-t border-surface-100/70">'+
+                /* 勾选值 = 该轨迹在维度轨迹库里的原始下标（稳定身份，删除按它定位） */
+                var ti=(_trackMaintainTracks[_trackMaintainTab]||[]).indexOf(t);
+                h+='<tr class="border-t border-surface-100/70 hover:bg-primary-50/30">'+
+                    '<td class="px-3 py-1.5"><input type="checkbox" class="track-item-check" data-key="'+esc(key)+'" value="'+ti+'"></td>'+
                     '<td class="px-3 py-1.5 text-text-secondary whitespace-nowrap">'+esc(t.code)+'</td>'+
                     '<td class="px-3 py-1.5 text-text-primary">'+esc(t.cn)+' '+esc(t.en)+'</td>'+
                     '<td class="px-3 py-1.5 text-text-secondary whitespace-nowrap">'+esc(t.loc)+'</td>'+
@@ -145,7 +149,8 @@ function trackMaintainQuery(type){
 }
 
 function trackMaintainToggleAll(cb){
-    document.querySelectorAll('.track-maintain-check').forEach(function(c){c.checked=cb.checked;});
+    /* 表头全选：单据主行 + 展开行的具体轨迹一起勾 */
+    document.querySelectorAll('.track-maintain-check,.track-item-check').forEach(function(c){c.checked=cb.checked;});
 }
 
 function openTrackAddModal(scope){
@@ -179,31 +184,61 @@ function openTrackAddModal(scope){
     document.getElementById('crud-modal').classList.add('show');
 }
 
-/* 轨迹删除：弹窗按维度展示轨迹列表（表格带勾选），可多选删除。
- * 删的是轨迹记录本身（_trackMaintainTracks[dim] 里的条目），不是维度行 ——
- * 维度行（运单/子单/提单）还在，删的只是它名下的轨迹节点。 */
-/* 轨迹删除：不弹选择窗 —— 勾列表行后直接删该单据名下全部轨迹，弹确认提示。
- * 删的是维度记录（_trackMaintainTracks[dim] 里该 key 的条目），维度行本身保留。 */
+/* 轨迹删除（不弹选择窗）：展开行里勾了具体轨迹就只删勾中的那几条；
+ * 没勾具体轨迹、只勾了单据主行 -> 删该单据名下全部轨迹。确认提示写明口径。 */
 function openTrackDeleteModal(){
     var dim=_trackMaintainTab;
     var grouped=trackMaintainGroupedRows();
     var pickedIdx=[];
     document.querySelectorAll('.track-maintain-check:checked').forEach(function(c){pickedIdx.push(parseInt(c.value,10));});
-    if(!pickedIdx.length){showToast(tr('请先在列表勾选要删除轨迹的单据'));return;}
-    /* 汇总每个勾中单据名下的轨迹条数 */
-    var dimKeys=pickedIdx.map(function(i){var g=grouped[i];return g?(_trackMaintainTab==='child'?g.child:g.key):null;}).filter(Boolean);
-    var total=0,nos=[];
-    dimKeys.forEach(function(key){
-        var n=trackMaintainTracksOfKey(key).length;
-        if(n>0){total+=n;nos.push(key+'('+n+')');}
+    /* 展开行勾中的具体轨迹（原始下标），只在对应单据也勾了主行时生效 */
+    var itemIdx=[];
+    document.querySelectorAll('.track-item-check:checked').forEach(function(c){
+        var key=c.getAttribute('data-key');
+        /* 主行没勾的单据，其展开行勾选不参与（勾选主行 = 作用域开关） */
+        var inScope=pickedIdx.some(function(i){
+            var g=grouped[i];
+            if(!g)return false;
+            return (_trackMaintainTab==='child'?g.child:g.key)===key;
+        });
+        if(inScope)itemIdx.push(parseInt(c.value,10));
     });
-    if(!total){showToast(tr('勾选的单据名下还没有轨迹，无可删除'));return;}
-    openConfirmTip(tr('将删除勾选单据名下的全部轨迹：')+nos.join('、')+'，'+tr('共')+' '+total+' '+tr('条，删除后不可恢复。'),function(){
-        _trackMaintainTracks[dim]=(_trackMaintainTracks[dim]||[]).filter(function(t){return dimKeys.indexOf(t.key)<0;});
+    if(!pickedIdx.length&&!itemIdx.length){showToast(tr('请先在列表勾选单据，或展开后勾选要删除的轨迹'));return;}
+    var dimKeys=pickedIdx.map(function(i){var g=grouped[i];return g?(_trackMaintainTab==='child'?g.child:g.key):null;}).filter(Boolean);
+    var tracks=_trackMaintainTracks[dim]||[];
+    var doomed=[],detail=[];
+    if(itemIdx.length){
+        /* 精确删除：勾中的具体轨迹条目。标记用 key+time+code —— 对象做字典键会
+         * 全部隐式转成 "[object Object]" 撞在一起，绝不能用对象本身当键。 */
+        itemIdx.forEach(function(ti){
+            var t=tracks[ti];
+            if(t)doomed.push({t:t,mark:t.key+'|'+t.time+'|'+t.code});
+        });
+        detail=doomed.map(function(d){return d.t.cn+'（'+d.t.time.slice(5,16)+'）';});
+    }else{
+        /* 整单删除：勾中单据名下全部 */
+        var total=0,nos=[];
+        dimKeys.forEach(function(key){
+            var n=trackMaintainTracksOfKey(key).length;
+            if(n>0){total+=n;nos.push(key+'('+n+')');}
+        });
+        if(!total){showToast(tr('勾选的单据名下还没有轨迹，无可删除'));return;}
+        tracks.forEach(function(t){if(dimKeys.indexOf(t.key)>=0)doomed.push({t:t,mark:t.key+'|'+t.time+'|'+t.code});});
+        detail=nos;
+    }
+    if(!doomed.length){showToast(tr('没有可删除的轨迹'));return;}
+    var msg=(itemIdx.length
+        ?(tr('将删除勾选的')+' '+doomed.length+' '+tr('条轨迹：')+detail.join('、'))
+        :(tr('将删除勾选单据名下的全部轨迹：')+detail.join('、')+'，'+tr('共')+' '+doomed.length+' '+tr('条')))+
+        '，'+tr('删除后不可恢复。');
+    openConfirmTip(msg,function(){
+        var set={};
+        doomed.forEach(function(d){set[d.mark]=1;});
+        _trackMaintainTracks[dim]=tracks.filter(function(t){return !set[t.key+'|'+t.time+'|'+t.code];});
         _trackMaintainOpenSet={};
         var tb=document.getElementById('track-maintain-tbody');
         if(tb)tb.innerHTML=renderTrackMaintainRows();
-        showToast(tr('已删除')+' '+total+' '+tr('条轨迹'));
+        showToast(tr('已删除')+' '+doomed.length+' '+tr('条轨迹'));
     });
 }
 

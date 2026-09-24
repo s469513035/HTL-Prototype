@@ -12,7 +12,9 @@ function generateTrackMaintainPage(id){
     h+='<button type="button" onclick="trackMaintainClear()" class="w-full h-9 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('清空')+'</button>';
     h+='<div class="mt-1.5 text-[11px] text-text-muted">'+tr('按哪个按钮查询，右侧列表与轨迹添加就是哪个维度')+'</div>';
     h+='</div>';
-    h+='<div class="flex-1 p-3 overflow-hidden"><textarea id="track-maintain-query" class="w-full h-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-none" placeholder="'+esc(tr('请输入单号，一行一个'))+'">H2607170005</textarea></div>';
+    /* 输入框撑满剩余高度：外层 flex 布局 + textarea flex-1（h-full 百分比在 padding 容器里
+     * 会被裁掉一截，看起来反而变小 —— 改用 flex 拉伸最稳） */
+    h+='<div class="flex-1 min-h-0 p-3 flex"><textarea id="track-maintain-query" class="flex-1 w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-none" style="height:100%;min-height:200px" placeholder="'+esc(tr('请输入单号，一行一个'))+'">H2607170005</textarea></div>';
     h+='</div>';
     h+='<div class="flex-1 flex flex-col overflow-hidden">';
     h+='<div class="flex items-center gap-2 px-4 py-3 border-b border-surface-200 bg-white">';
@@ -37,11 +39,11 @@ function trackMaintainDim(){return _trackMaintainTab;}
 function trackMaintainDimLabel(){
     return _trackMaintainTab==='waybill'?'运单':(_trackMaintainTab==='child'?'子单':'提单');
 }
-/* 列随维度变：运单维度没有子单列；子单维度最细；提单维度看提单/订单层 */
+/* 列随维度变：运单维度没有子单列；子单维度最细（无订单层列）；提单维度按配舱/票数看 */
 function trackMaintainColumns(){
-    if(_trackMaintainTab==='waybill')return ['运单号','订单单号','运单状态','件数','实际重量','实际体积'];
-    if(_trackMaintainTab==='bl')return ['提单号','订单单号','客户名称','提单状态','件数','实际重量','实际体积'];
-    return ['子单号','运单号','订单单号','子单状态','实际长度','实际宽度','实际高度','实际重量','实际体积'];
+    if(_trackMaintainTab==='waybill')return ['运单号','客户单号','运单状态','件数','实际重量','实际体积'];
+    if(_trackMaintainTab==='bl')return ['提单号','配舱单号','提单状态','票数','件数','实际重量','实际体积'];
+    return ['子单号','运单号','子单状态','实际长度','实际宽度','实际高度','实际重量','实际体积'];
 }
 /* 维度行：同一份子单种子按维度归堆 —— 运单/提单维度把子单合并计数，不重复列 */
 function trackMaintainGroupedRows(){
@@ -58,17 +60,17 @@ function trackMaintainGroupedRows(){
             return {key:g.key,order:g.order,status:g.status,pcs:g.pcs,wgt:g.wgt.toFixed(1),vol:g.vol.toFixed(3)};
         });
     }
-    /* 提单维度：种子没存提单号，用订单单号当提单层键（原型口径：一提单一批订单） */
+    /* 提单维度：一张提单挂一张配舱单，票数 = 底下去重后的运单数 */
     var map2={},order2=[];
     _trackMaintainRows.forEach(function(r){
         var bl=r.order;
-        if(!map2[bl]){map2[bl]={key:bl,order:r.order,cust:'深圳市华运达国际货运',status:r.status,pcs:0,wgt:0,vol:0};order2.push(bl);}
+        if(!map2[bl]){map2[bl]={key:bl,alloc:r.alloc||'',status:r.status,pcs:0,wbs:{},wgt:0,vol:0};order2.push(bl);}
         var g2=map2[bl];
-        g2.pcs+=1;g2.wgt+=parseFloat(r.wgt)||0;g2.vol+=parseFloat(r.vol)||0;
+        g2.pcs+=1;g2.wbs[r.waybill]=1;g2.wgt+=parseFloat(r.wgt)||0;g2.vol+=parseFloat(r.vol)||0;
     });
     return order2.map(function(k){
         var g2=map2[k];
-        return {key:g2.key,order:g2.order,cust:g2.cust,status:g2.status,pcs:g2.pcs,wgt:g2.wgt.toFixed(1),vol:g2.vol.toFixed(3)};
+        return {key:g2.key,alloc:g2.alloc,status:g2.status,pcs:g2.pcs,tickets:Object.keys(g2.wbs).length,wgt:g2.wgt.toFixed(1),vol:g2.vol.toFixed(3)};
     });
 }
 
@@ -81,9 +83,9 @@ function renderTrackMaintainRows(){
         if(_trackMaintainTab==='waybill'){
             cells=[esc(r.key),esc(r.order),esc(r.status),String(r.pcs),esc(r.wgt),esc(r.vol)];
         }else if(_trackMaintainTab==='bl'){
-            cells=[esc(r.key),esc(r.order),esc(r.cust),esc(r.status),String(r.pcs),esc(r.wgt),esc(r.vol)];
+            cells=[esc(r.key),esc(r.alloc),esc(r.status),String(r.tickets),String(r.pcs),esc(r.wgt),esc(r.vol)];
         }else{
-            cells=[esc(r.child),esc(r.waybill),esc(r.order),esc(r.status),esc(r.len),esc(r.wid),esc(r.hgt),esc(r.wgt),esc(r.vol)];
+            cells=[esc(r.child),esc(r.waybill),esc(r.status),esc(r.len),esc(r.wid),esc(r.hgt),esc(r.wgt),esc(r.vol)];
         }
         var h='<tr class="border-t border-surface-100 hover:bg-primary-50/30">'+
             '<td class="px-3 py-3 text-text-muted">'+(i+1)+'</td>'+
@@ -129,7 +131,7 @@ function trackMaintainTracksByDim(){
         var key=(dim==='child')?g.child:g.key;
         var title;
         if(dim==='waybill')title=tr('运单')+' '+g.key+(g.order?'（'+tr('订单')+' '+g.order+'）':'');
-        else if(dim==='bl')title=tr('提单')+' '+g.key+'（'+esc(g.cust||'')+'）';
+        else if(dim==='bl')title=tr('提单')+' '+g.key+(g.alloc?('（'+tr('配舱')+' '+g.alloc+'）'):'');
         else title=g.child;
         titles[key]=title;
     });
@@ -164,7 +166,7 @@ function openTrackAddModal(scope){
     const bodyEl=document.getElementById('crud-modal-body');
     const footerEl=document.getElementById('crud-modal-footer');
     const panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='90%';
+    if(panel)panel.style.width='68%';
     titleEl.textContent=tr('轨迹添加')+'-'+scopeLabel;
     let left='<div class="space-y-5">';
     keys.forEach(function(k){
@@ -210,7 +212,7 @@ function openTrackDeleteModal(){
     const bodyEl=document.getElementById('crud-modal-body');
     const footerEl=document.getElementById('crud-modal-footer');
     const panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='72%';
+    if(panel)panel.style.width='52%';
     titleEl.textContent=tr('轨迹删除')+'-'+trackMaintainDimLabel();
     var h='<div class="space-y-4">';
     h+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+

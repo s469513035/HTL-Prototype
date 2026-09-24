@@ -413,8 +413,8 @@ function generateExpressInboundPage(id){
 
 /* ===== 轨迹维护 cs-track-maint 重写（双栏 + 轨迹添加弹窗） ===== */
 var _trackMaintainSeed=[
-    {child:'H26071700050001',waybill:'H2607170005',order:'TB-202607175',status:'已到仓',len:'50',wid:'50',hgt:'50',wgt:'20',vol:'0.125'},
-    {child:'H26071700050002',waybill:'H2607170005',order:'TB-202607175',status:'已到仓',len:'50',wid:'50',hgt:'50',wgt:'20',vol:'0.125'}
+    {child:'H26071700050001',waybill:'H2607170005',order:'TB-202607175',alloc:'ZPC-20260717-A3',status:'已到仓',len:'50',wid:'50',hgt:'50',wgt:'20',vol:'0.125'},
+    {child:'H26071700050002',waybill:'H2607170005',order:'TB-202607175',alloc:'ZPC-20260717-A3',status:'已到仓',len:'50',wid:'50',hgt:'50',wgt:'20',vol:'0.125'}
 ];
 var _trackMaintainRows=_trackMaintainSeed.slice();
 var _trackMaintainTab='waybill';

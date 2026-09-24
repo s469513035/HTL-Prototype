@@ -189,6 +189,11 @@ function warehousePdaOperationConfigs(){
                 {title:'货区托盘',fields:[
                     {label:'到货货区',type:'select',options:zones},
                     {label:'托盘号',value:''}
+                ]},
+                {title:'问题备注',fields:[
+                    {label:'是否问题件',type:'select',options:['否','是'],onchange:'toggleWhInOneIssueFields(this.value)'},
+                    {label:'问题说明',type:'textarea',id:'wh-in-one-issue-note',boxId:'wh-in-one-issue-note-box',hidden:true,required:true,placeholder:'请输入问题说明'},
+                    {label:'收货备注',type:'textarea',placeholder:'请输入收货备注'}
                 ]}
             ],
             photos:true,photoLimit:5,primary:'保存入仓',sameRowActions:true
@@ -380,6 +385,16 @@ function pdaServicePanel(open){
     return h;
 }
 
+/* 手动入仓 · 问题备注联动：选「是」问题件才显示并必填「问题说明」，否则隐藏 */
+function toggleWhInOneIssueFields(val){
+    const box=document.getElementById('wh-in-one-issue-note-box');
+    if(!box)return;
+    const show=val==='是';
+    box.classList.toggle('hidden',!show);
+    const ta=document.getElementById('wh-in-one-issue-note');
+    if(ta&&!show){ta.value='';}
+}
+
 function pdaField(f){
     const label=tr(f.label);
     const required=f.required?'<span class="text-red-500 ml-1">*</span>':'';
@@ -395,11 +410,11 @@ function pdaField(f){
     const base='w-full h-10 px-3 text-xs rounded-lg border border-surface-200 bg-white focus:border-primary-400';
     let control='';
     if(f.type==='select'){
-        control='<select class="'+base+roCls+'"'+(f.readonly?' disabled':'')+'><option value="">'+tr('请选择')+'</option>';
+        control='<select class="'+base+roCls+'"'+(f.readonly?' disabled':'')+(f.onchange?' onchange="'+esc(f.onchange)+'"':'')+'><option value="">'+tr('请选择')+'</option>';
         (f.options||[]).forEach(function(o){control+='<option value="'+esc(o)+'"'+(value===o?' selected':'')+'>'+esc(tr(o))+'</option>';});
         control+='</select>';
     }else if(f.type==='textarea'){
-        control='<textarea rows="3" class="w-full px-3 py-2 text-xs rounded-lg border border-surface-200 bg-white'+roCls+' resize-none"'+readonly+' placeholder="'+esc(placeholder)+'">'+esc(value)+'</textarea>';
+        control='<textarea'+(f.id?' id="'+esc(f.id)+'"':'')+' rows="3" class="w-full px-3 py-2 text-xs rounded-lg border border-surface-200 bg-white'+roCls+' resize-none"'+readonly+' placeholder="'+esc(placeholder)+'">'+esc(value)+'</textarea>';
     }else if(f.type==='checkbox'){
         control='<label class="h-10 px-3 rounded-lg border border-surface-200 bg-white flex items-center gap-2 text-xs text-text-secondary"><input type="checkbox" class="rounded border-surface-300 text-primary-600"'+(f.checked?' checked':'')+'><span>'+tr(f.label)+'</span></label>';
         return '<div class="min-w-0'+spanCls+'">'+control+'</div>';
@@ -408,7 +423,7 @@ function pdaField(f){
     }else{
         control='<input type="'+(f.type||'text')+'" class="'+base+roCls+'"'+readonly+' placeholder="'+esc(placeholder)+'" value="'+esc(value)+'">';
     }
-    return '<div class="min-w-0 flex flex-col gap-1.5'+spanCls+'"><label class="text-[11px] font-medium text-text-secondary break-all">'+esc(label)+required+'</label>'+control+'</div>';
+    return '<div'+(f.boxId?' id="'+esc(f.boxId)+'"':'')+' class="min-w-0 flex flex-col gap-1.5'+(f.hidden?' hidden':'')+spanCls+'"><label class="text-[11px] font-medium text-text-secondary break-all">'+esc(label)+required+'</label>'+control+'</div>';
 }
 
 function pdaPhotoUploader(limit){

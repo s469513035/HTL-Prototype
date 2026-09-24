@@ -1,29 +1,21 @@
 function generateTrackMaintainPage(id){
     _trackMaintainRows=_trackMaintainSeed.slice();
-    let h='<div class="h-full flex overflow-hidden bg-surface-50">';
-    /* 左栏：按钮区（查询运单/子单/提单 + 清空）在文本框上面 —— 点哪个查询就是哪个维度 */
-    h+='<div class="w-80 flex-shrink-0 flex flex-col border-r border-surface-200 bg-white">';
-    h+='<div class="p-3 border-b border-surface-200">';
-    h+='<div class="grid grid-cols-3 gap-2 mb-2">';
-    h+='<button type="button" onclick="trackMaintainQuery(\'waybill\')" class="h-9 text-xs font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询运单')+'</button>';
-    h+='<button type="button" onclick="trackMaintainQuery(\'child\')" class="h-9 text-xs font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询子单')+'</button>';
-    h+='<button type="button" onclick="trackMaintainQuery(\'bl\')" class="h-9 text-xs font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询提单')+'</button>';
-    h+='</div>';
-    h+='<button type="button" onclick="trackMaintainClear()" class="w-full h-9 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('清空')+'</button>';
-    h+='<div class="mt-1.5 text-[11px] text-text-muted">'+tr('按哪个按钮查询，右侧列表与轨迹添加就是哪个维度')+'</div>';
-    h+='</div>';
-    /* 输入框撑满剩余高度：外层 flex 布局 + textarea flex-1（h-full 百分比在 padding 容器里
-     * 会被裁掉一截，看起来反而变小 —— 改用 flex 拉伸最稳） */
-    h+='<div class="flex-1 min-h-0 p-3 flex"><textarea id="track-maintain-query" class="flex-1 w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-none" style="height:100%;min-height:200px" placeholder="'+esc(tr('请输入单号，一行一个'))+'">H2607170005</textarea></div>';
-    h+='</div>';
-    h+='<div class="flex-1 flex flex-col overflow-hidden">';
-    h+='<div class="flex items-center gap-2 px-4 py-3 border-b border-surface-200 bg-white">';
-    /* 按钮放最左边：标题和维度徽标挪到按钮右边 */
+    let h='<div class="h-full flex flex-col overflow-hidden bg-surface-50">';
+    /* 顶部一条工具栏：标题/维度徽标 + 单号 + 维度下拉 + 查询在左，维护动作在右。
+     * 原左栏（三个维度查询按钮 + 多行单号框 + 清空）全部收进这条工具栏。 */
+    h+='<div class="flex items-center gap-2 px-4 py-3 border-b border-surface-200 bg-white flex-wrap">';
+    h+='<span class="text-sm font-semibold text-text-primary">'+tr('轨迹维护')+'</span>';
+    h+='<span class="px-2 py-0.5 rounded text-xs font-medium '+(trackMaintainDim()==='waybill'?'bg-primary-50 text-primary-700':(trackMaintainDim()==='child'?'bg-amber-50 text-amber-700':'bg-blue-50 text-blue-700'))+'">'+tr(trackMaintainDimLabel())+tr('维度')+'</span>';
+    h+='<div class="w-64"><input id="track-maintain-query" type="text" value="H2607170005" placeholder="'+esc(tr('请输入单号'))+'" class="w-full h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"></div>';
+    h+='<select id="track-maintain-dim" onchange="trackMaintainQuery(this.value)" class="h-9 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50 cursor-pointer">'+
+        '<option value="waybill"'+(_trackMaintainTab==='waybill'?' selected':'')+'>'+tr('运单')+'</option>'+
+        '<option value="child"'+(_trackMaintainTab==='child'?' selected':'')+'>'+tr('子单')+'</option>'+
+        '<option value="bl"'+(_trackMaintainTab==='bl'?' selected':'')+'>'+tr('提单')+'</option></select>';
+    h+='<button type="button" onclick="trackMaintainQuery(document.getElementById(\'track-maintain-dim\').value)" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';
+    h+='<div class="flex-1"></div>';
     h+='<button type="button" onclick="openTrackAddModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">+ '+tr('轨迹添加')+'</button>';
     h+='<button type="button" onclick="openTrackDeleteModal()" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('轨迹删除')+'</button>';
     h+='<button type="button" onclick="openTrackNodeDeleteModal()" class="h-9 px-4 text-sm font-medium text-red-600 border border-red-200 bg-white rounded-lg hover:bg-red-50 cursor-pointer">'+tr('按节点删除')+'</button>';
-    h+='<span class="text-sm font-semibold text-text-primary ml-2">'+tr('轨迹维护')+'</span>';
-    h+='<span class="px-2 py-0.5 rounded text-xs font-medium '+(trackMaintainDim()==='waybill'?'bg-primary-50 text-primary-700':(trackMaintainDim()==='child'?'bg-amber-50 text-amber-700':'bg-blue-50 text-blue-700'))+'">'+tr(trackMaintainDimLabel())+tr('维度')+'</span>';
     h+='</div>';
     h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto">';
     h+='<table class="w-full text-sm" style="border-collapse:separate;border-spacing:0;min-width:900px"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
@@ -31,21 +23,20 @@ function generateTrackMaintainPage(id){
     h+='<th class="px-3 py-3 text-left font-semibold" style="width:40px"><input type="checkbox" onchange="trackMaintainToggleAll(this)"></th>';
     trackMaintainColumns().forEach(function(c){h+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody id="track-maintain-tbody">'+renderTrackMaintainRows()+'</tbody></table>';
-    h+='</div></div></div></div>';
+    h+='</div></div>';
     return h;
 }
 
-/* 当前列表维度：左侧最后一次查询的按钮决定（waybill/child/bl），不再有独立页签 */
+/* 当前列表维度：工具栏上的维度下拉决定（waybill/child/bl） */
 function trackMaintainDim(){return _trackMaintainTab;}
 function trackMaintainDimLabel(){
     return _trackMaintainTab==='waybill'?'运单':(_trackMaintainTab==='child'?'子单':'提单');
 }
-/* 列随维度变：运单维度没有子单列；子单维度最细（无订单层列）；提单维度按配舱/票数看。
- * 各维度末尾统一带「最新轨迹」列 —— 点开看该单全部轨迹。 */
+/* 列结构三个维度统一：单据号（随维度变）+ 轨迹五字段（代码/内容/发生地/时间/创建人）+ 操作。
+ * 客户单号/件数/重量/体积这些业务字段一律不进这张表 —— 这里看的是轨迹本身。 */
 function trackMaintainColumns(){
-    if(_trackMaintainTab==='waybill')return ['运单号','客户单号','运单状态','件数','实际重量','实际体积','最新轨迹'];
-    if(_trackMaintainTab==='bl')return ['提单号','配舱单号','提单状态','票数','件数','实际重量','实际体积','最新轨迹'];
-    return ['子单号','运单号','子单状态','实际长度','实际宽度','实际高度','实际重量','实际体积','最新轨迹'];
+    var first=(_trackMaintainTab==='waybill')?'运单号':(_trackMaintainTab==='bl'?'提单号':'子单号');
+    return [first,'轨迹代码','轨迹内容','轨迹发生地','轨迹时间','创建人','操作'];
 }
 /* 维度行：同一份子单种子按维度归堆 —— 运单/提单维度把子单合并计数，不重复列 */
 function trackMaintainGroupedRows(){
@@ -91,98 +82,72 @@ function toggleTrackMaintainExpand(i){
     if(tb)tb.innerHTML=renderTrackMaintainRows();
 }
 
+/* 主行 = 该单据 + 最新一条轨迹（轨迹代码/内容/发生地/时间/创建人五列）；
+ * 展开行 = 该单据全部轨迹，逐条同列结构。勾选按单据粒度（删的是名下全部轨迹）。 */
 function renderTrackMaintainRows(){
     var rows=trackMaintainGroupedRows();
     var cols=trackMaintainColumns();
     if(!rows.length)return '<tr><td colspan="'+(cols.length+2)+'" class="px-3 py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
-    return rows.map(function(r,i){
-        var cells;
+    var h='';
+    rows.forEach(function(r,i){
         var key=(_trackMaintainTab==='child')?r.child:r.key;
         var tracks=trackMaintainTracksOfKey(key);
         var latest=tracks.length?tracks[0]:null;
-        var expandHtml;
-        if(_trackMaintainTab==='waybill'){
-            cells=[esc(r.key),esc(r.order),esc(r.status),String(r.pcs),esc(r.wgt),esc(r.vol)];
-        }else if(_trackMaintainTab==='bl'){
-            cells=[esc(r.key),esc(r.alloc),esc(r.status),String(r.tickets),String(r.pcs),esc(r.wgt),esc(r.vol)];
-        }else{
-            cells=[esc(r.child),esc(r.waybill),esc(r.status),esc(r.len),esc(r.wid),esc(r.hgt),esc(r.wgt),esc(r.vol)];
-        }
-        var h='<tr class="border-t border-surface-100 hover:bg-primary-50/30">'+
+        var open=!!_trackMaintainOpenSet[i];
+        h+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">'+
             '<td class="px-3 py-3 text-text-muted">'+(i+1)+'</td>'+
-            '<td class="px-3 py-3"><input type="checkbox" class="track-maintain-check" value="'+i+'"></td>';
-        cells.forEach(function(c,ci){
-            h+='<td class="px-3 py-3 '+(ci===0?'font-medium text-primary-700 whitespace-nowrap':'text-text-secondary')+'">'+c+'</td>';
-        });
-        /* 最新轨迹列：最新一条（时间+内容），点 ▾/▸ 展开该单全部轨迹 */
-        h+='<td class="px-3 py-3 whitespace-nowrap">'+
-            (latest
-                ?'<span class="text-xs text-text-muted mr-1.5">'+esc(latest.time.slice(5,16))+'</span><span class="text-text-secondary">'+esc(latest.cn)+'</span>'
-                :'<span class="text-text-muted">—</span>')+
-            (tracks.length
-                ?'<a class="ml-2 text-xs text-primary-600 hover:text-primary-700 cursor-pointer" onclick="toggleTrackMaintainExpand('+i+')">'+(_trackMaintainOpenSet[i]?'▸'+tr('收起'):'▾'+tr('全部轨迹')+'('+tracks.length+')')+'</a>'
-                :'')+
-            '</td>';
-        h+='</tr>';
-        /* 展开行：该单全部轨迹（时间正序完整时间线） */
-        if(_trackMaintainOpenSet[i]&&tracks.length){
-            h+='<tr class="bg-surface-50/60"><td colspan="'+(cols.length+2)+'" class="px-4 py-3">';
-            h+='<div class="text-xs font-semibold text-text-primary mb-2">'+tr('全部轨迹')+'（'+tracks.length+'）</div>';
-            h+='<div class="space-y-2.5 pl-2">';
-            tracks.slice().reverse().forEach(function(t,ti){h+=trackMaintainNodeHtml(t,ti);});
-            h+='</div></td></tr>';
+            '<td class="px-3 py-3"><input type="checkbox" class="track-maintain-check" value="'+i+'"></td>'+
+            '<td class="px-3 py-3 font-medium text-primary-700 whitespace-nowrap">'+esc(key)+'</td>';
+        if(latest){
+            h+='<td class="px-3 py-3 text-text-secondary whitespace-nowrap">'+esc(latest.code)+'</td>'+
+                '<td class="px-3 py-3 text-text-secondary">'+esc(latest.cn)+' '+esc(latest.en)+'</td>'+
+                '<td class="px-3 py-3 text-text-secondary whitespace-nowrap">'+esc(latest.loc)+'</td>'+
+                '<td class="px-3 py-3 text-text-secondary whitespace-nowrap">'+esc(latest.time)+'</td>'+
+                '<td class="px-3 py-3 text-text-secondary whitespace-nowrap">'+esc(latest.by)+'</td>';
+        }else{
+            h+='<td class="px-3 py-3 text-text-muted" colspan="'+(cols.length-1)+'">'+tr('暂无轨迹')+'</td>';
         }
-        return h;
-    }).join('');
+        h+='<td class="px-3 py-3 whitespace-nowrap">'+
+            (tracks.length
+                ?'<a class="text-xs text-primary-600 hover:text-primary-700 cursor-pointer" onclick="toggleTrackMaintainExpand('+i+')">'+
+                    (open?'▸ '+tr('收起'):'▾ '+tr('展开')+'（'+tracks.length+'）')+'</a>'
+                :'<span class="text-xs text-text-muted">—</span>')+
+            '</td></tr>';
+        /* 展开行：全部轨迹逐条（时间正序），同列结构直接对齐 */
+        if(open&&tracks.length){
+            h+='<tr class="bg-surface-50/60"><td colspan="'+(cols.length+2)+'" class="px-3 py-2">';
+            h+='<table class="w-full text-xs"><thead><tr class="text-text-muted">'+
+                ['轨迹代码','轨迹内容','轨迹发生地','轨迹时间','创建人'].map(function(c){
+                    return '<th class="px-3 py-1.5 text-left font-medium whitespace-nowrap">'+tr(c)+'</th>';}).join('')+
+                '</tr></thead><tbody>';
+            tracks.slice().reverse().forEach(function(t){
+                h+='<tr class="border-t border-surface-100/70">'+
+                    '<td class="px-3 py-1.5 text-text-secondary whitespace-nowrap">'+esc(t.code)+'</td>'+
+                    '<td class="px-3 py-1.5 text-text-primary">'+esc(t.cn)+' '+esc(t.en)+'</td>'+
+                    '<td class="px-3 py-1.5 text-text-secondary whitespace-nowrap">'+esc(t.loc)+'</td>'+
+                    '<td class="px-3 py-1.5 text-text-secondary whitespace-nowrap">'+esc(t.time)+'</td>'+
+                    '<td class="px-3 py-1.5 text-text-secondary whitespace-nowrap">'+esc(t.by)+'</td></tr>';
+            });
+            h+='</tbody></table></td></tr>';
+        }
+    });
+    return h;
 }
 
 function trackMaintainQuery(type){
-    /* 查询按钮即维度开关：按运单查右侧就是运单维度，子单/提单同理 */
+    /* 维度下拉切换 / 查询按钮 共用：切维度即查询 */
     _trackMaintainTab=type||'waybill';
     _trackMaintainRows=_trackMaintainSeed.slice();
     _trackMaintainOpenSet={};   /* 展开状态随查询重置 */
     /* 整页重画：列头随维度变，局部刷 tbody 换不了表头 */
     var host=document.getElementById('main-content');
     if(host)host.innerHTML=generateTrackMaintainPage('cs-track-maint');
-    showToast(tr('查询完成')+'（'+tr(trackMaintainDimLabel())+tr('维度')+'）');
-}
-
-function trackMaintainClear(){
-    const ta=document.getElementById('track-maintain-query');
-    if(ta)ta.value='';
 }
 
 function trackMaintainToggleAll(cb){
     document.querySelectorAll('.track-maintain-check').forEach(function(c){c.checked=cb.checked;});
 }
 
-/* 维度对应的单号取值器：运单维度看运单号、子单看子单号、提单看订单(提单)号 */
-function trackMaintainKeyOf(dim,row){
-    if(dim==='waybill')return row.waybill;
-    if(dim==='child')return row.child;
-    return row.order;
-}
-/* 按维度组织已有轨迹：{key:{title,tracks[]}} —— 弹窗左侧按这个分组画时间线 */
-function trackMaintainTracksByDim(){
-    var dim=_trackMaintainTab;
-    var grouped=trackMaintainGroupedRows();
-    var titles={};
-    grouped.forEach(function(g){
-        var key=(dim==='child')?g.child:g.key;
-        var title;
-        if(dim==='waybill')title=tr('运单')+' '+g.key+(g.order?'（'+tr('订单')+' '+g.order+'）':'');
-        else if(dim==='bl')title=tr('提单')+' '+g.key+(g.alloc?('（'+tr('配舱')+' '+g.alloc+'）'):'');
-        else title=g.child;
-        titles[key]=title;
-    });
-    var out={};
-    (titles&&Object.keys(titles).length?Object.keys(titles):[]).forEach(function(k){out[k]={title:titles[k],tracks:[]};});
-    ((_trackMaintainTracks&&_trackMaintainTracks[dim])||[]).forEach(function(t){
-        if(!out[t.key])out[t.key]={title:(dim==='waybill'?tr('运单'):(dim==='bl'?tr('提单'):tr('子单')))+' '+t.key,tracks:[]};
-        out[t.key].tracks.push(t);
-    });
-    return out;
-}
 /* 轨迹时间线节点（维度通用）：序号圆点 + 时间/创建人/发生地 + 中英文内容 */
 function trackMaintainNodeHtml(t,idx){
     var h='<div class="flex gap-3 pl-1">';

@@ -1011,12 +1011,8 @@ function generatePdaMultiInboundScreen(config){
 }
 
 function switchPdaReplenishMode(mode){
-    document.querySelectorAll('[data-pda-rd-mode]').forEach(function(btn){
-        const on=btn.dataset.pdaRdMode===mode;
-        btn.className='h-8 rounded-lg text-xs font-medium '+(on?'bg-primary-600 text-white':'bg-white border border-surface-200 text-text-secondary');
-    });
-    const hint=document.getElementById('pda-rd-mode-hint');
-    if(hint)hint.textContent=tr(mode==='waybill'?'按运单操作，可点击运单进入详情。':'按子单操作，逐件确认补货落货。');
+    _pdaReplenishMode=mode||'waybill';
+    refreshWarehousePdaPrototype();
 }
 
 function showPdaReplenishDetail(){
@@ -1035,9 +1031,15 @@ function hidePdaReplenishDetail(){
 
 /* ===== 补货落货管理 wh-replenish-drop state ===== */
 var _pdaReplenishOp='补货';
+var _pdaReplenishMode='waybill';
 var _pdaReplenishItems=[
     {wb:'WB-20260613001',op:'落货',srcAlloc:'YPCD-001',destAlloc:'YPCD-002'},
     {wb:'WB-20260613008',op:'补货',srcAlloc:'YPCD-003',destAlloc:'YPCD-005'}
+];
+/* 按托操作用的整托清单：一托一条，带库位和件数 */
+var _pdaReplenishPalletItems=[
+    {pallet:'TP20260404001',op:'落货',srcAlloc:'YPCD-001',destAlloc:'YPCD-002',pcs:3,zone:'A1'},
+    {pallet:'TP20260404005',op:'补货',srcAlloc:'YPCD-003',destAlloc:'YPCD-005',pcs:4,zone:'B1'}
 ];
 
 function setPdaReplenishOp(op){
@@ -1051,29 +1053,46 @@ function removePdaReplenishItem(idx){
     refreshWarehousePdaPrototype();
 }
 
+/* 按托操作的删除：与运单列表分开维护，互不干扰 */
+function removePdaReplenishPalletItem(idx){
+    if(!_pdaReplenishPalletItems)return;
+    _pdaReplenishPalletItems.splice(idx,1);
+    refreshWarehousePdaPrototype();
+}
+
 function generatePdaReplenishDropScreen(){
     const op=_pdaReplenishOp||'补货';
+    const mode=_pdaReplenishMode||'waybill';
+    const isPallet=mode==='pallet';
+    const items=isPallet?_pdaReplenishPalletItems:_pdaReplenishItems;
+    const removeFn=isPallet?'removePdaReplenishPalletItem':'removePdaReplenishItem';
     const opRadio=function(val){
         const on=op===val;
         return '<label class="flex items-center gap-1.5 text-xs cursor-pointer"><input type="radio" name="pda-rd-op" value="'+val+'"'+(on?' checked':'')+' onchange="setPdaReplenishOp(\''+val+'\')" class="accent-primary-600">'+tr(val)+'</label>';
     };
+    const modeBtn=function(key,label){
+        const on=mode===key;
+        return '<button type="button" data-pda-rd-mode="'+key+'" onclick="switchPdaReplenishMode(\''+key+'\')" class="h-8 rounded-lg text-xs font-medium '+(on?'bg-primary-600 text-white':'bg-white border border-surface-200 text-text-secondary')+'">'+tr(label)+'</button>';
+    };
     let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50">';
     h+='<div class="mb-3">'+pdaScanInput('pda-rd-alloc','请扫描配舱单号','showToast','YPCD-001')+'</div>';
-    h+='<div class="grid grid-cols-2 gap-2 mb-2"><button type="button" data-pda-rd-mode="waybill" onclick="switchPdaReplenishMode(\'waybill\')" class="h-8 rounded-lg text-xs font-medium bg-primary-600 text-white">'+tr('按运单操作')+'</button><button type="button" data-pda-rd-mode="sub" onclick="switchPdaReplenishMode(\'sub\')" class="h-8 rounded-lg text-xs font-medium bg-white border border-surface-200 text-text-secondary">'+tr('按子单操作')+'</button></div>';
-    h+='<div id="pda-rd-mode-hint" class="mb-3 text-[11px] text-text-muted">'+tr('按运单操作，可点击运单进入详情。')+'</div>';
+    h+='<div class="grid grid-cols-3 gap-2 mb-2">'+modeBtn('waybill','按运单操作')+modeBtn('sub','按子单操作')+modeBtn('pallet','按托操作')+'</div>';
+    h+='<div id="pda-rd-mode-hint" class="mb-3 text-[11px] text-text-muted">'+tr(mode==='waybill'?'按运单操作，可点击运单进入详情。':(isPallet?'按托操作，整托确认补货落货。':'按子单操作，逐件确认补货落货。'))+'</div>';
     h+='<div class="rounded-xl border border-surface-200 bg-white p-3 mb-3"><div class="text-xs text-text-secondary mb-2">'+tr('操作类型')+'<span class="text-rose-500"> *</span></div><div class="flex items-center gap-6">'+opRadio('补货')+opRadio('落货')+'</div></div>';
-    h+=pdaScanInput('pda-rd-key','请输入运单号或子单号','showToast','WB-20260613001');
-    h+='<div class="mt-3 mb-2 text-xs font-semibold text-text-secondary">'+tr('已扫描列表')+'（'+_pdaReplenishItems.length+' '+tr('条')+'）</div>';
+    h+=pdaScanInput('pda-rd-key',isPallet?'请扫描托盘号':'请输入运单号或子单号','showToast',isPallet?'TP20260404001':'WB-20260613001');
+    h+='<div class="mt-3 mb-2 text-xs font-semibold text-text-secondary">'+tr('已扫描列表')+'（'+items.length+' '+tr('条')+'）</div>';
     h+='<div id="pda-rd-list" class="space-y-2">';
-    if(_pdaReplenishItems.length===0){
+    if(items.length===0){
         h+='<div class="rounded-xl border border-dashed border-surface-200 bg-white py-6 text-center text-xs text-text-muted">'+tr('暂无已扫描数据')+'</div>';
     }else{
-        _pdaReplenishItems.forEach(function(row,i){
-            h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="flex justify-between items-start gap-2"><div onclick="showPdaReplenishDetail()" class="min-w-0 flex-1 cursor-pointer"><div class="flex items-center gap-2"><span class="text-xs font-semibold text-primary-700 break-all">'+esc(row.wb)+'</span><span class="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] text-primary-700">'+esc(row.op)+'</span></div><div class="mt-2 text-[11px] text-text-muted">'+tr('原配舱')+'：'+esc(row.srcAlloc)+' · '+tr('目标配舱')+'：'+esc(row.destAlloc)+'</div></div><button type="button" onclick="removePdaReplenishItem('+i+')" class="text-xs text-red-500 flex-shrink-0">'+tr('删除')+'</button></div></div>';
+        items.forEach(function(row,i){
+            h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="flex justify-between items-start gap-2"><div onclick="showPdaReplenishDetail()" class="min-w-0 flex-1 cursor-pointer"><div class="flex items-center gap-2"><span class="text-xs font-semibold text-primary-700 break-all">'+esc(isPallet?row.pallet:row.wb)+'</span><span class="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] text-primary-700">'+esc(row.op)+'</span></div><div class="mt-2 text-[11px] text-text-muted">'+tr('原配舱')+'：'+esc(row.srcAlloc)+' · '+tr('目标配舱')+'：'+esc(row.destAlloc)+(isPallet?(' · '+tr('库位')+'：'+esc(row.zone)+' · '+tr('件数')+'：'+(row.pcs||0)):'')+'</div></div><button type="button" onclick="'+removeFn+'('+i+')" class="text-xs text-red-500 flex-shrink-0">'+tr('删除')+'</button></div></div>';
         });
     }
     h+='</div>';
-    h+='<div id="pda-rd-detail" class="hidden space-y-3 mt-3"><button type="button" onclick="hidePdaReplenishDetail()" class="w-8 h-8 rounded-full bg-primary-600 text-white text-lg">←</button><section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('运单详情')+'</div><div class="grid grid-cols-2 gap-2">'+pdaMiniField('运单号','WB-20260613001')+pdaMiniField('子单号','SUB-20260613001-01')+pdaMiniField('类型','落货')+pdaMiniField('件数','2')+pdaMiniField('原配舱单号','YPCD-001')+pdaMiniField('目标配舱单号','YPCD-002')+'</div></section></div>';
+    h+='<div id="pda-rd-detail" class="hidden space-y-3 mt-3"><button type="button" onclick="hidePdaReplenishDetail()" class="w-8 h-8 rounded-full bg-primary-600 text-white text-lg">←</button><section class="rounded-xl border border-surface-200 bg-white p-3"><div class="text-sm font-semibold text-text-primary mb-3">'+tr(isPallet?'托盘详情':'运单详情')+'</div><div class="grid grid-cols-2 gap-2">'+(isPallet
+        ?(pdaMiniField('托盘号','TP20260404001')+pdaMiniField('类型','落货')+pdaMiniField('件数','3')+pdaMiniField('库位','A1')+pdaMiniField('原配舱单号','YPCD-001')+pdaMiniField('目标配舱单号','YPCD-002'))
+        :(pdaMiniField('运单号','WB-20260613001')+pdaMiniField('子单号','SUB-20260613001-01')+pdaMiniField('类型','落货')+pdaMiniField('件数','2')+pdaMiniField('原配舱单号','YPCD-001')+pdaMiniField('目标配舱单号','YPCD-002')))+'</div></section></div>';
     h+='</div>';
     h+=pdaBottomActions({primary:'确认处理'});
     return h;

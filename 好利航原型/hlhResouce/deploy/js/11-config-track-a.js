@@ -148,17 +148,6 @@ function trackMaintainToggleAll(cb){
     document.querySelectorAll('.track-maintain-check').forEach(function(c){c.checked=cb.checked;});
 }
 
-/* 轨迹时间线节点（维度通用）：序号圆点 + 时间/创建人/发生地 + 中英文内容 */
-function trackMaintainNodeHtml(t,idx){
-    var h='<div class="flex gap-3 pl-1">';
-    h+='<span class="mt-0.5 w-5 h-5 rounded-full border-2 border-amber-400 text-amber-500 text-[11px] font-medium flex items-center justify-center flex-shrink-0">'+(idx+1)+'</span>';
-    h+='<div class="text-xs text-text-secondary leading-relaxed">'+
-        '<div>'+esc(t.time)+' 【'+tr('创建人')+'：'+esc(t.by)+' '+tr('发生地')+'：'+esc(t.loc)+'】</div>'+
-        '<div class="text-text-primary mt-1">'+esc(t.cn)+' '+esc(t.en)+'</div></div>';
-    h+='</div>';
-    return h;
-}
-
 function openTrackAddModal(scope){
     /* 维度跟着左侧查询按钮走（_trackMaintainTab）。弹窗只放新增表单 ——
      * 已有轨迹在右侧列表展开就能看，不必在弹窗里再放一份时间线。 */

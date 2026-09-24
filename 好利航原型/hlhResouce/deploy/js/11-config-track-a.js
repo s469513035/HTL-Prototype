@@ -162,6 +162,27 @@ function trackMaintainToggleAll(cb){
     document.querySelectorAll('.track-maintain-check,.track-item-check').forEach(function(c){c.checked=cb.checked;});
 }
 
+/* 收集「删除作用域」的单据 key：主行勾选为准；勾了展开行条目但没勾主行的单据，
+ * 其主行也一并视为选中（用户勾的是轨迹条目，作用域理应包含它所属的单据）。
+ * 轨迹删除与按节点删除共用 —— 之前按节点删除只认主行勾选，
+ * 用户只勾展开条目时会被「请先在列表勾选单据」拦住，这就是不行的原因。 */
+function trackMaintainScopeKeys(){
+    var grouped=trackMaintainGroupedRows();
+    var pickedIdx=[];
+    document.querySelectorAll('.track-maintain-check:checked').forEach(function(c){pickedIdx.push(parseInt(c.value,10));});
+    var keys=[];
+    pickedIdx.forEach(function(i){
+        var g=grouped[i];
+        if(g)keys.push(_trackMaintainTab==='child'?g.child:g.key);
+    });
+    /* 展开行勾了条目的单据并入作用域 */
+    document.querySelectorAll('.track-item-check:checked').forEach(function(c){
+        var key=c.getAttribute('data-key');
+        if(key&&keys.indexOf(key)<0)keys.push(key);
+    });
+    return keys.filter(Boolean);
+}
+
 function openTrackAddModal(scope){
     /* 维度跟着左侧查询按钮走（_trackMaintainTab）。弹窗只放新增表单 ——
      * 已有轨迹在右侧列表展开就能看，不必在弹窗里再放一份时间线。 */
@@ -204,16 +225,13 @@ function openTrackDeleteModal(){
     var itemIdx=[];
     document.querySelectorAll('.track-item-check:checked').forEach(function(c){
         var key=c.getAttribute('data-key');
-        /* 主行没勾的单据，其展开行勾选不参与（勾选主行 = 作用域开关） */
-        var inScope=pickedIdx.some(function(i){
-            var g=grouped[i];
-            if(!g)return false;
-            return (_trackMaintainTab==='child'?g.child:g.key)===key;
-        });
+        /* 勾了条目即视为选了该单据（与 trackMaintainScopeKeys 同口径）：
+         * 只勾展开条目也放行，不必再回主行打勾。 */
+        var inScope=trackMaintainScopeKeys().indexOf(key)>=0;
         if(inScope)itemIdx.push(parseInt(c.value,10));
     });
     if(!pickedIdx.length&&!itemIdx.length){showToast(tr('请先在列表勾选单据，或展开后勾选要删除的轨迹'));return;}
-    var dimKeys=pickedIdx.map(function(i){var g=grouped[i];return g?(_trackMaintainTab==='child'?g.child:g.key):null;}).filter(Boolean);
+    var dimKeys=trackMaintainScopeKeys();
     var tracks=_trackMaintainTracks[dim]||[];
     var doomed=[],detail=[];
     if(itemIdx.length){
@@ -255,11 +273,9 @@ function openTrackDeleteModal(){
  * 批量补录错节点时用：错的都是同一个节点，一次删干净再重加。 */
 function openTrackNodeDeleteModal(){
     var dim=_trackMaintainTab;
-    var grouped=trackMaintainGroupedRows();
-    var pickedIdx=[];
-    document.querySelectorAll('.track-maintain-check:checked').forEach(function(c){pickedIdx.push(parseInt(c.value,10));});
-    if(!pickedIdx.length){showToast(tr('请先在列表勾选要删除轨迹的单据'));return;}
-    var dimKeys=pickedIdx.map(function(i){var g=grouped[i];return g?(_trackMaintainTab==='child'?g.child:g.key):null;}).filter(Boolean);
+    /* 作用域：主行勾选 + 展开行勾了条目的单据（只勾展开条目也算选了这个单据） */
+    var dimKeys=trackMaintainScopeKeys();
+    if(!dimKeys.length){showToast(tr('请先在列表勾选单据，或展开后勾选轨迹'));return;}
     /* 勾中单据名下出现过的节点（编号+名称去重） */
     var nodes={},order=[];
     dimKeys.forEach(function(key){

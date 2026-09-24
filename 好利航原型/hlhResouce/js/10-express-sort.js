@@ -418,4 +418,21 @@ var _trackMaintainSeed=[
 ];
 var _trackMaintainRows=_trackMaintainSeed.slice();
 var _trackMaintainTab='waybill';
+/* 已有轨迹按维度各存一份（key = 该维度的单号）：
+ * 运单/提单维度有自己的轨迹时间线，不是把子单轨迹摊开 —— 一张运单一条「已到仓」，
+ * 不等于每个子单都各自有一条。加/删弹窗按维度展示对应这份。 */
+var _trackMaintainTracks={
+    waybill:[
+        {key:'H2607170005',time:'2026-07-31 13:50:13',code:'TRK-DEPART',cn:'出发登记',en:'Departure registration',loc:'中国(China,CN)',by:'HYD-开发者'},
+        {key:'H2607170005',time:'2026-08-03 09:12:40',code:'TRK-ARRIVE',cn:'到达目的港',en:'Arrived at destination port',loc:'尼日利亚(Nigeria,NG)',by:'HYD-开发者'}
+    ],
+    child:[
+        {key:'H26071700050001',time:'2026-07-31 13:50:13',code:'TRK-DEPART',cn:'出发登记',en:'Departure registration',loc:'中国(China,CN)',by:'HYD-开发者'},
+        {key:'H26071700050002',time:'2026-07-31 13:50:13',code:'TRK-DEPART',cn:'出发登记',en:'Departure registration',loc:'中国(China,CN)',by:'HYD-开发者'}
+    ],
+    bl:[
+        {key:'TB-202607175',time:'2026-07-31 13:50:13',code:'TRK-DEPART',cn:'出发登记',en:'Departure registration',loc:'中国(China,CN)',by:'HYD-开发者'},
+        {key:'TB-202607175',time:'2026-08-05 16:20:08',code:'TRK-CUSTOMS',cn:'提单清关完成',en:'BL customs cleared',loc:'尼日利亚(Nigeria,NG)',by:'HYD-开发者'}
+    ]
+};
 

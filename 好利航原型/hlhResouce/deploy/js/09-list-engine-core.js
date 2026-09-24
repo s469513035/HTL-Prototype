@@ -1348,7 +1348,11 @@ function getToolbarActions(id){
             {key:'search',label:'查询数据',variant:'primary'},
             {key:'addWaybill',label:'新增数据',variant:'primary'},
             {key:'viewWaybillDetail',label:'查看详情',variant:'primary'},
-            {key:'businessConfirm',label:'业务确认',variant:'primary'},
+            /* 业务确认拆两种：入仓确认（原业务确认，核件重体）+ 配舱确认（核配舱信息） */
+            {key:'businessConfirm',label:'业务确认',variant:'primary',dropdown:[
+                {label:'入仓确认',onclick:"openWaybillBusinessConfirmModal('wb-manage')"},
+                {label:'配舱确认',onclick:"openWaybillAllocConfirmModal('wb-manage')"}
+            ]},
             {key:'declareOps',label:'报关操作',dropdown:[
                 {label:'合并报关',onclick:"tbDropdownAction('mergeDeclare','wb-manage')"},
                 {label:'拆分报关',onclick:"tbDropdownAction('splitDeclare','wb-manage')"},

@@ -43,6 +43,73 @@ function openWaybillBusinessConfirmModal(id){
     document.getElementById('crud-modal').classList.add('show');
 }
 
+/* 配舱确认：业务确认的第二种 —— 对「已配舱」的运单核对配舱信息（配舱单号/托盘/目的仓等），
+ * 确认后运单状态推进到「配舱确认」。入仓确认核的是件重体，这里核的是舱位安排。 */
+function openWaybillAllocConfirmModal(id){
+    const indices=getSelectedRowIndices();
+    if(!indices.length){showToast(tr('请先勾选运单'));return;}
+    const rows=getRowsByIndices(id,indices);
+    const headers=(TC[id]&&TC[id].h)||[];
+    const idxWb=headers.indexOf('运单号');
+    const idxSt=headers.indexOf('运单状态');
+    /* 只有「已配舱」的运单能做配舱确认 —— 还没配舱的没有舱可确认 */
+    const eligible=rows.filter(function(row){return String(row[idxSt]||'')==='已配舱';});
+    const blocked=rows.length-eligible.length;
+    if(!eligible.length){showToast(tr('只有「已配舱」的运单可以做配舱确认'));return;}
+    let tbody='';
+    eligible.forEach(function(row){
+        const wb=String(row[idxWb]||'');
+        /* 配舱信息按运单号稳定推导（原型口径），同单同值 */
+        var n=0,s=wb;for(var i=0;i<s.length;i++)n+=s.charCodeAt(i)*(i+1);
+        var alloc='ZPC-'+wb.slice(-6)+'-'+String.fromCharCode(65+n%6)+String(n%9+1);
+        var pallets=n%3+1;
+        tbody+='<tr class="border-t border-surface-100">'+
+            '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(wb)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(alloc)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+String(pallets)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(String(row[headers.indexOf('目的仓库')]||''))+'</td>'+
+        '</tr>';
+    });
+    let h='<div class="text-xs text-muted mb-3 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+
+        tr('请核对以下运单的配舱信息（配舱单号 / 托盘数 / 目的仓库），确认后运单状态推进为「配舱确认」，可安排出库。')+'</div>';
+    if(blocked>0)h+='<div class="text-xs text-amber-600 mb-3">'+tr('另有')+' '+blocked+' '+tr('条非「已配舱」状态将跳过')+'</div>';
+    h+='<div class="rounded-lg border border-surface-200 overflow-hidden bg-white"><table class="w-full text-sm"><thead class="bg-surface-50 text-text-secondary"><tr>';
+    ['运单号','配舱单号','托盘数','目的仓库'].forEach(function(hd){
+        h+='<th class="px-3 py-2 text-left whitespace-nowrap text-xs font-semibold">'+tr(hd)+'</th>';
+    });
+    h+='</tr></thead><tbody>'+tbody+'</tbody></table></div>';
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='56%';
+    document.getElementById('crud-modal-title').textContent=tr('配舱确认')+' - '+tr((TC[id]&&TC[id].t)||'运单管理');
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="confirmWaybillAlloc(\''+id+'\','+eligible.length+')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认配舱')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function confirmWaybillAlloc(id,n){
+    /* 勾选中「已配舱」的推进到「配舱确认」。getRowsByIndices 拿到的是渲染副本，
+     * 直接改不落种子 —— 走 setRowOverride（同步写 TC.d 与副本），刷新才看得见。 */
+    const indices=getSelectedRowIndices();
+    const rows=getRowsByIndices(id,indices);
+    const headers=(TC[id]&&TC[id].h)||[];
+    const idxSt=headers.indexOf('运单状态');
+    let done=0;
+    rows.forEach(function(row){
+        if(String(row[idxSt]||'')==='已配舱'){
+            if(typeof setRowOverride==='function')setRowOverride(id,row,idxSt,'配舱确认');
+            else row[idxSt]='配舱确认';
+            done++;
+        }
+    });
+    closeCrudModal();
+    if(typeof _listData!=='undefined')delete _listData[id];
+    if(typeof fclFinRefresh==='function')fclFinRefresh(id);
+    else if(typeof generateListPage==='function'){
+        const mc=document.getElementById('main-content');
+        if(mc)mc.innerHTML=generateListPage(id,1,'');
+    }
+    showToast(tr('配舱确认成功')+' '+done+' '+tr('条，'+tr('可安排出库')));
+}
+
 /* ============= 客服 · 问题件跟踪 Modal ============= */
 
 /* 时间轴组件 */

@@ -68,10 +68,19 @@ function refreshWarehousePdaPrototype(){
 function openWarehousePdaTask(taskId){
     _warehousePdaTaskId=taskId||'';
     _warehousePdaView='workbench';
+    /* 工作台直接进分拣扫描 = 独立链路，不带找货上下文（goPdaFindScanSort 会在打开后再设回） */
+    if(taskId==='pda-sort-scan')_pdaSortScanFindIdx=null;
     refreshWarehousePdaPrototype();
 }
 
 function closeWarehousePdaTask(){
+    if(_warehousePdaTaskId==='pda-sort-scan'&&_pdaSortScanFindIdx!==null){
+        /* 从找货（空运）进来的分拣：返回 = 回找货屏，找货上下文留在这张配舱单上 */
+        _warehousePdaTaskId='pda-find-scan';
+        _pdaFindScanView='operate';
+        refreshWarehousePdaPrototype();
+        return;
+    }
     if(_warehousePdaTaskId==='pda-find-scan'&&_pdaFindScanView==='operate'){
         _pdaFindScanView='list';
         _pdaFindScanCurrent=null;
@@ -1568,14 +1577,15 @@ var _pdaFindScanList=[
             {sub:'SUB-A5002',wb:'WB-20260403005',pallet:'TP20260404009',zone:'C2'}
         ]
     },
-    /* 空运配舱单：只有袋、没有托盘，进操作屏后扫描模式只剩「按袋扫描」 */
-    {no:'ZPC0305-空运正班-K1',label:'ZPC202604040004',pcs:9,eta:'2026-03-05 09:00:00',remark:'空运走袋，敏感货单独放',transport:'空运',
-        bags:[
-            {bag:'BAG-20260404001',pcs:4,cargoType:'普货'},
-            {bag:'BAG-20260404002',pcs:3,cargoType:'带电'},
-            {bag:'BAG-20260404003',pcs:2,cargoType:'混装'}
+    /* 空运配舱单：找货流程是 先分拣扫描（扫运单装袋）→ 完成装袋自动绑定「已找货」。
+     * 所以这里只给运单清单，不给预置袋 —— bags 由分拣装袋完成后回填，袋里带运单明细 */
+    {no:'ZPC0305-空运正班-K1',label:'ZPC202604040004',pcs:9,eta:'2026-03-05 09:00:00',remark:'空运先分拣装袋再找货，敏感货单独放',transport:'空运',
+        waybills:[
+            {wb:'WB-20260405001',pcs:4,cargoType:'普货'},
+            {wb:'WB-20260405002',pcs:3,cargoType:'带电'},
+            {wb:'WB-20260405003',pcs:2,cargoType:'混装'}
         ],
-        defaultScanned:[]
+        bags:[]
     }
 ];
 
@@ -1593,7 +1603,7 @@ function generatePdaFindScanList(){
         h+='<button type="button" onclick="pickPdaFindScanCard('+i+')" class="block w-full text-left rounded-xl border border-surface-200 bg-white p-3 shadow-sm">';
         h+='<div class="grid grid-cols-2 gap-y-2 text-xs">';
         h+='<div><div class="text-text-secondary">'+tr('配舱单号')+'</div><div class="font-medium text-text-primary mt-0.5 flex items-start gap-1.5"><span class="break-all min-w-0">'+esc(item.no)+'</span>'+pdaScanTransportBadge(item)+'</div></div>';
-        h+='<div><div class="text-text-secondary">'+tr('配舱件数')+'</div><div class="font-medium text-text-primary mt-0.5">'+item.pcs+(pdaScanIsAir(item)?('（'+(item.bags||[]).length+tr('袋')+'）'):'')+'</div></div>';
+        h+='<div><div class="text-text-secondary">'+tr('配舱件数')+'</div><div class="font-medium text-text-primary mt-0.5">'+item.pcs+(pdaScanIsAir(item)?('（'+(item.waybills||[]).length+tr('票')+'）'):'')+'</div></div>';
         h+='<div><div class="text-text-secondary">'+tr('标签号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(item.label)+'</div></div>';
         h+='<div><div class="text-text-secondary">'+tr('预计装柜时间')+'</div><div class="font-medium text-text-primary mt-0.5">'+esc(item.eta)+'</div></div>';
         h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('排柜备注')+'</div><div class="text-rose-500 mt-0.5">'+esc(item.remark)+'</div></div>';
@@ -1654,6 +1664,8 @@ function setPdaFindScanSvcFilter(s){
 function generatePdaFindScanOperate(){
     const item=_pdaFindScanList[_pdaFindScanCurrent];
     const isAir=pdaScanIsAir(item);
+    /* 空运走独立操作屏：先分拣装袋 → 自动绑定已找货，不在这屏直接扫袋 */
+    if(isAir)return generatePdaFindScanAirOperate(item);
     const mode=pdaScanModeOf(item,_pdaFindScanMode);
     const isScanned=function(rec){return !!_pdaFindScanScannedSet[pdaScanUnitKey(rec)];};
     const units=pdaScanUnits(item,mode);
@@ -1739,6 +1751,106 @@ function generatePdaFindScanOperate(){
     h+='</div></div>';
     setTimeout(function(){var el=document.getElementById('pda-find-scan-pallet');if(el)el.focus();},50);
     return h;
+}
+
+/* ===== 找货扫描 · 空运分支：先分拣装袋，再自动绑定「已找货」 =====
+ * 空运找货不在本屏扫袋：点「分拣扫描」跳分拣装袋（只收本配舱单运单），
+ * 完成装袋后袋号+袋内运单明细自动写回 item.bags，「已找货」插页展示。 */
+function pdaFindScanAirBoundMap(item){
+    const map={};
+    (item.bags||[]).forEach(function(b){(b.items||[]).forEach(function(o){map[o.wb]=b.bag;});});
+    return map;
+}
+
+function generatePdaFindScanAirOperate(item){
+    const boundMap=pdaFindScanAirBoundMap(item);
+    const pending=(item.waybills||[]).filter(function(w){return !boundMap[w.wb];});
+    const bags=item.bags||[];
+    const scannedTab=(_pdaFindScanActiveTab==='scanned');
+    const tabBtn=function(key,label,n){
+        const on=_pdaFindScanActiveTab===key;
+        return '<button type="button" onclick="switchPdaFindScanTab(\''+key+'\')" class="h-10 rounded-lg text-sm font-medium '+(on?'bg-primary-600 text-white':'bg-white text-text-secondary border border-surface-200')+'">'+tr(label)+'（'+n+'）</button>';
+    };
+    let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    h+='<div class="flex items-center gap-2 text-xs"><span class="text-text-secondary w-16 flex-shrink-0">'+tr('配舱号')+'</span><input type="text" readonly value="'+esc(item.no)+'" class="flex-1 min-w-0 h-10 px-3 rounded-xl border border-surface-200 bg-white text-text-primary"></div>';
+    h+='<div class="rounded-lg bg-sky-50 border border-sky-200 px-3 py-2 text-xs text-sky-700">'+tr('空运流程：先分拣扫描（扫运单装袋），完成装袋后自动绑定到「已找货」，展示袋号与运单明细')+'</div>';
+    h+='<div class="grid grid-cols-2 gap-2">'+tabBtn('pending','待找货',pending.length)+tabBtn('scanned','已找货',bags.length)+'</div>';
+    if(!scannedTab){
+        if(pending.length===0){
+            h+='<div class="rounded-xl border border-surface-200 bg-white py-8 text-center text-xs text-text-muted">'+tr('该配舱单运单已全部分拣装袋')+'</div>';
+        }else{
+            pending.forEach(function(w){
+                h+='<div class="rounded-xl border border-surface-200 bg-white p-3"><div class="grid grid-cols-2 gap-y-1 text-xs">';
+                h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('运单号')+'</div><div class="font-medium text-text-primary mt-0.5 break-all">'+esc(w.wb)+'</div></div>';
+                h+='<div><div class="text-text-secondary">'+tr('件数')+'</div><div class="font-medium text-primary-700 mt-0.5">'+(w.pcs||0)+'</div></div>';
+                h+='<div><div class="text-text-secondary">'+tr('货物类型')+'</div><div class="font-medium text-text-primary mt-0.5">'+tr(w.cargoType||'')+'</div></div>';
+                h+='</div></div>';
+            });
+        }
+    }else{
+        if(bags.length===0){
+            h+='<div class="rounded-xl border border-surface-200 bg-white py-8 text-center text-xs text-text-muted">'+tr('暂无已找货，请先分拣扫描')+'</div>';
+        }else{
+            bags.forEach(function(b){
+                h+='<div class="rounded-xl border border-surface-200 bg-white p-3 space-y-2">';
+                h+='<div class="grid grid-cols-2 gap-y-1 text-xs">';
+                h+='<div class="col-span-2"><div class="text-text-secondary">'+tr('袋号')+'</div><div class="font-medium text-primary-700 mt-0.5 break-all">'+esc(b.bag)+'</div></div>';
+                h+='<div><div class="text-text-secondary">'+tr('件数')+'</div><div class="font-medium text-primary-700 mt-0.5">'+(b.pcs||0)+'</div></div>';
+                h+='<div><div class="text-text-secondary">'+tr('货物类型')+'</div><div class="font-medium text-text-primary mt-0.5">'+tr(b.cargoType||'')+'</div></div>';
+                h+='</div>';
+                /* 运单明细：这袋里装了哪些运单、各多少件 —— 找货核对就看这个 */
+                h+='<div class="pt-2 border-t border-surface-100"><div class="text-text-secondary mb-1">'+tr('运单明细')+'（'+(b.items||[]).length+'）</div>';
+                (b.items||[]).forEach(function(o){
+                    h+='<div class="flex items-baseline justify-between gap-2 text-[11px] py-0.5"><span class="font-medium text-text-primary break-all">'+esc(o.wb)+'</span><span class="text-text-muted shrink-0">'+tr('件数')+'：'+(o.pcs||0)+'</span></div>';
+                });
+                h+='</div></div>';
+            });
+        }
+    }
+    h+='<div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">'+tr('注意：请您查阅"逻辑需求描述-找货扫描"，了解详细逻辑。')+'</div>';
+    h+='</div>';
+    h+='<div class="sticky bottom-0 bg-white border-t border-surface-200 p-3"><div class="grid grid-cols-2 gap-2">';
+    h+='<button type="button" onclick="goPdaFindScanSort()" class="h-10 rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('分拣扫描（扫运单装袋）')+'</button>';
+    h+='<button type="button" onclick="onePdaFindScanAirFinish()" class="h-10 rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr('一键完成')+'</button>';
+    h+='</div></div>';
+    return h;
+}
+
+function goPdaFindScanSort(){
+    const item=_pdaFindScanList[_pdaFindScanCurrent];
+    if(!item)return;
+    const boundMap=pdaFindScanAirBoundMap(item);
+    if((item.waybills||[]).every(function(w){return boundMap[w.wb];})){
+        showToast(tr('该配舱单运单已全部分拣装袋'));
+        return;
+    }
+    openWarehousePdaTask('pda-sort-scan');
+    /* 在 openWarehousePdaTask 清完上下文后再挂找货标记，横幅/收单校验靠它；
+     * 顺手清掉上一轮独立分拣的残留袋子，防止把别单的运单错绑进这张配舱单 */
+    _pdaSortScanFindIdx=_pdaFindScanCurrent;
+    _pdaSortScanRule=null;
+    _pdaSortScanBagNo='';
+    _pdaSortScanItems=[];
+    refreshWarehousePdaPrototype();
+    showToast(tr('已进入分拣扫描，请先新增袋子再扫运单'));
+}
+
+function onePdaFindScanAirFinish(){
+    const item=_pdaFindScanList[_pdaFindScanCurrent];
+    if(!item)return;
+    const boundMap=pdaFindScanAirBoundMap(item);
+    const pending=(item.waybills||[]).filter(function(w){return !boundMap[w.wb];});
+    if(pending.length===0){
+        showToast(tr('该配舱单运单已全部绑定'));
+        refreshWarehousePdaPrototype();
+        return;
+    }
+    /* 一键完成 = 剩余运单自动归入一个袋，直接绑定已找货 */
+    const bagNo=nextPdaSortScanBagNo();
+    item.bags=(item.bags||[]).concat([{bag:bagNo,pcs:pending.reduce(function(a,w){return a+(w.pcs||0);},0),cargoType:'混装',items:pending.map(function(w){return {wb:w.wb,pcs:w.pcs};})}]);
+    _pdaFindScanActiveTab='scanned';
+    showToast(tr('一键完成提交成功，剩余运单已自动装袋绑定'));
+    refreshWarehousePdaPrototype();
 }
 
 function applyPdaFindScanPallet(){
@@ -2147,6 +2259,8 @@ var _pdaSortScanRule=null;
 var _pdaSortScanBagNo='';
 var _pdaSortScanItems=[];
 var _pdaSortScanBagCounter=100;
+/* 从找货扫描（空运）进来时记着找货侧下标：只收本配舱单运单，完成装袋把袋绑定回「已找货」 */
+var _pdaSortScanFindIdx=null;
 
 function nextPdaSortScanBagNo(){
     _pdaSortScanBagCounter+=1;
@@ -2163,6 +2277,11 @@ function generatePdaSortScanScreen(){
     const pct=max>0?Math.min(100,Math.round(totalWeight/max*100)):0;
     const isOver=max>0&&totalWeight>=max;
     let h='<div class="p-3 flex-1 min-h-0 overflow-y-auto bg-surface-50 space-y-3">';
+    /* 找货（空运）进来的分拣：顶部横幅标明配舱号，扫的运单必须是本单的 */
+    if(_pdaSortScanFindIdx!==null&&_pdaFindScanList[_pdaSortScanFindIdx]){
+        const alloc=_pdaFindScanList[_pdaSortScanFindIdx];
+        h+='<div class="rounded-xl border border-primary-100 bg-primary-50 px-3 py-2 text-xs text-primary-700 flex items-center gap-2"><span class="font-semibold">'+tr('配舱号')+'：</span><span class="break-all">'+esc(alloc.no)+'</span><span class="shrink-0 px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">'+tr('空运找货')+'</span></div>';
+    }
     h+=pdaScanInput('pda-sort-scan-key','请扫描运单号','applyPdaSortScanWaybill','');
     h+='<button type="button" onclick="openPdaSortScanBagModal()" class="h-10 w-full rounded-lg bg-primary-600 text-white text-sm font-medium">'+tr(rule?'新增袋子（重设规则）':'新增袋子')+'</button>';
     if(rule){
@@ -2266,10 +2385,30 @@ function applyPdaSortScanWaybill(){
         input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();
         return;
     }
-    const seed=_pdaSortScanItems.length;
-    const qty=(seed%3)+1;
-    const weight=parseFloat((8+(seed*1.7)%10).toFixed(2))*qty;
-    const vol=parseFloat((0.03+(seed*0.011)%0.05).toFixed(3))*qty;
+    let qty=0;
+    if(_pdaSortScanFindIdx!==null&&_pdaFindScanList[_pdaSortScanFindIdx]){
+        /* 找货（空运）链路：只收本配舱单的运单，且每单只能进一个袋 */
+        const alloc=_pdaFindScanList[_pdaSortScanFindIdx];
+        const src=(alloc.waybills||[]).filter(function(w){return w.wb===val;})[0];
+        if(!src){
+            showToast(tr('该运单号不在本配舱单内'));
+            input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();
+            return;
+        }
+        const boundMap=pdaFindScanAirBoundMap(alloc);
+        if(boundMap[val]){
+            showToast(tr('该运单已绑定袋')+'：'+boundMap[val]);
+            input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();
+            return;
+        }
+        qty=src.pcs||0;
+    }else{
+        const seed=_pdaSortScanItems.length;
+        qty=(seed%3)+1;
+    }
+    const seed2=_pdaSortScanItems.length;
+    const weight=parseFloat((8+(seed2*1.7)%10).toFixed(2))*qty;
+    const vol=parseFloat((0.03+(seed2*0.011)%0.05).toFixed(3))*qty;
     _pdaSortScanItems.push({wb:val,qty:qty,weight:weight,vol:vol});
     showToast(tr('已添加到当前袋'));
     refreshWarehousePdaPrototype();
@@ -2285,10 +2424,34 @@ function finishPdaSortScan(continueNext){
     if(!_pdaSortScanRule){showToast(tr('请先新增袋子设置规则'));return;}
     if(!_pdaSortScanItems.length){showToast(tr('扫描列表为空，无法完成装袋'));return;}
     const bagNo=_pdaSortScanBagNo;
-    if(continueNext){
+    /* 找货（空运）链路：袋子直接绑回「已找货」—— 记袋号、件数、货物类型和袋内运单明细 */
+    const fromFind=_pdaSortScanFindIdx!==null&&_pdaFindScanList[_pdaSortScanFindIdx];
+    if(fromFind)bindPdaSortScanBagToFind(bagNo);
+    if(continueNext&&fromFind){
+        _pdaSortScanBagNo=nextPdaSortScanBagNo();
+        _pdaSortScanItems=[];
+        showToast(tr('已完成装袋并绑定已找货')+'：'+bagNo+'，'+tr('继续装袋')+'：'+_pdaSortScanBagNo);
+    }else if(continueNext){
         _pdaSortScanBagNo=nextPdaSortScanBagNo();
         _pdaSortScanItems=[];
         showToast(tr('已完成装袋')+'：'+bagNo+'，'+tr('继续装袋')+'：'+_pdaSortScanBagNo);
+    }else if(fromFind){
+        _pdaSortScanRule=null;
+        _pdaSortScanBagNo='';
+        _pdaSortScanItems=[];
+        /* 全部运单绑完 → 整单找货完成，回找货屏看「已找货」 */
+        const alloc=_pdaFindScanList[_pdaSortScanFindIdx];
+        const goBack=!!(alloc&&pdaFindScanAirBoundMapIsFull(alloc));
+        _pdaSortScanFindIdx=null;
+        if(goBack){
+            _warehousePdaTaskId='pda-find-scan';
+            _pdaFindScanView='operate';
+            _pdaFindScanActiveTab='scanned';
+            refreshWarehousePdaPrototype();
+            showToast(tr('装袋完成，配舱单已更新为「可出仓」'));
+            return;
+        }
+        showToast(tr('已完成装袋并绑定已找货')+'：'+bagNo);
     }else{
         _pdaSortScanRule=null;
         _pdaSortScanBagNo='';
@@ -2296,6 +2459,27 @@ function finishPdaSortScan(continueNext){
         showToast(tr('已完成装袋')+'：'+bagNo);
     }
     refreshWarehousePdaPrototype();
+}
+
+/* 把当前袋绑回配舱单的「已找货」（item.bags），运单明细随袋走 */
+function bindPdaSortScanBagToFind(bagNo){
+    const alloc=_pdaFindScanList[_pdaSortScanFindIdx];
+    if(!alloc)return;
+    const items=_pdaSortScanItems.slice().map(function(o){return {wb:o.wb,pcs:o.qty};});
+    const pcs=items.reduce(function(a,o){return a+(o.pcs||0);},0);
+    alloc.bags=(alloc.bags||[]).concat([{
+        bag:bagNo,
+        pcs:pcs,
+        cargoType:(_pdaSortScanRule&&_pdaSortScanRule.cargoType)||'普货',
+        items:items
+    }]);
+    _pdaFindScanActiveTab='scanned';
+}
+
+/* 本配舱单的运单是否已全部绑定到袋 */
+function pdaFindScanAirBoundMapIsFull(alloc){
+    const map=pdaFindScanAirBoundMap(alloc);
+    return (alloc.waybills||[]).every(function(w){return !!map[w.wb];});
 }
 
 function setPdaPalletBindDirectLoad(v){_pdaPalletBindDirectLoad=v||'否';}

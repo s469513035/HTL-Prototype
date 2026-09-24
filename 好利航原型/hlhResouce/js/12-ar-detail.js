@@ -1,12 +1,12 @@
 var _arDetailSeed=[
-{wb:'H2607090013',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'6938.42',cur:'人民币',rate:'1',rmb:'6938.42',used:'0',unused:'6938.42',st:'待核销',ftime:'2026-07-09 15:12:03',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-09 15:12:10',cb:'HYD-开发者'},
-{wb:'H2607140001',cust:'天地直客',sales:'天地销售',fee:'客户理赔费',amt:'-10000',cur:'美元',rate:'7',rmb:'-70000',used:'0',unused:'-70000',st:'待核销',ftime:'2026-07-14 10:20:11',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'应收异动申请',ct:'2026-07-14 10:21:00',cb:'HYD-开发者'},
-{wb:'H2607130006',cust:'蓝城电商公司',sales:'天地销售',fee:'应收EMF申报费',amt:'6000',cur:'人民币',rate:'1',rmb:'6000',used:'0',unused:'6000',st:'待核销',ftime:'2026-07-13 09:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-13 09:01:00',cb:'HYD-开发者'},
-{wb:'H2607140001',cust:'天地直客',sales:'天地销售',fee:'客户理赔费',amt:'-100',cur:'人民币',rate:'1',rmb:'-100',used:'0',unused:'-100',st:'待核销',ftime:'2026-07-14 10:22:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-14 10:22:30',cb:'HYD-开发者'},
-{wb:'H2607110011',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'48',cur:'人民币',rate:'1',rmb:'48',used:'0',unused:'48',st:'待核销',ftime:'2026-07-11 14:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-11 14:01:00',cb:'HYD-开发者'},
-{wb:'H2607100001',cust:'梦幻直客客户',sales:'天地销售',fee:'应收附加费',amt:'22',cur:'美元',rate:'7',rmb:'154',used:'0',unused:'154',st:'待核销',ftime:'2026-07-10 11:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-10 11:01:00',cb:'梦幻管理员'},
-{wb:'H2607100001',cust:'梦幻直客客户',sales:'天地销售',fee:'运费',amt:'2460',cur:'人民币',rate:'1',rmb:'2460',used:'0',unused:'2460',st:'待核销',ftime:'2026-07-10 11:02:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-10 11:03:00',cb:'梦幻管理员'},
-{wb:'H2607090009',cust:'天地直客',sales:'天地销售',fee:'应收附加费',amt:'15000',cur:'人民币',rate:'1',rmb:'15000',used:'0',unused:'15000',st:'待核销',ftime:'2026-07-09 16:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-09 16:01:00',cb:'HYD-开发者'},
+{wb:'H2607090013',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'6938.42',cur:'人民币',rate:'1',rmb:'6938.42',used:'0',unused:'6938.42',st:'待审核',ftime:'2026-07-09 15:12:03',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-09 15:12:10',cb:'HYD-开发者'},
+{wb:'H2607140001',cust:'天地直客',sales:'天地销售',fee:'客户理赔费',amt:'-10000',cur:'美元',rate:'7',rmb:'-70000',used:'0',unused:'-70000',st:'待审核',ftime:'2026-07-14 10:20:11',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'应收异动申请',ct:'2026-07-14 10:21:00',cb:'HYD-开发者'},
+{wb:'H2607130006',cust:'蓝城电商公司',sales:'天地销售',fee:'应收EMF申报费',amt:'6000',cur:'人民币',rate:'1',rmb:'6000',used:'0',unused:'6000',st:'待审核',ftime:'2026-07-13 09:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-13 09:01:00',cb:'HYD-开发者'},
+{wb:'H2607140001',cust:'天地直客',sales:'天地销售',fee:'客户理赔费',amt:'-100',cur:'人民币',rate:'1',rmb:'-100',used:'0',unused:'-100',st:'待审核',ftime:'2026-07-14 10:22:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-14 10:22:30',cb:'HYD-开发者'},
+{wb:'H2607110011',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'48',cur:'人民币',rate:'1',rmb:'48',used:'0',unused:'48',st:'待审核',ftime:'2026-07-11 14:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-11 14:01:00',cb:'HYD-开发者'},
+{wb:'H2607100001',cust:'梦幻直客客户',sales:'天地销售',fee:'应收附加费',amt:'22',cur:'美元',rate:'7',rmb:'154',used:'0',unused:'154',st:'待审核',ftime:'2026-07-10 11:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-10 11:01:00',cb:'梦幻管理员'},
+{wb:'H2607100001',cust:'梦幻直客客户',sales:'天地销售',fee:'运费',amt:'2460',cur:'人民币',rate:'1',rmb:'2460',used:'0',unused:'2460',st:'待审核',ftime:'2026-07-10 11:02:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-10 11:03:00',cb:'梦幻管理员'},
+{wb:'H2607090009',cust:'天地直客',sales:'天地销售',fee:'应收附加费',amt:'15000',cur:'人民币',rate:'1',rmb:'15000',used:'0',unused:'15000',st:'待审核',ftime:'2026-07-09 16:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-09 16:01:00',cb:'HYD-开发者'},
 {wb:'H2606270001',cust:'蓝色有限',sales:'梦幻小业务',fee:'应收附加费',amt:'1200',cur:'人民币',rate:'1',rmb:'1200',used:'1200',unused:'0',st:'全部核销',ftime:'2026-06-14 11:51:55',cyc:'签收月结',days:'2',bf:'是',bn:'RB2606140002',due:'2026-06-30 23:59:59',batch:'PC2606140001',rk:'123',src:'人工录入',ct:'2026-06-14 11:52:18',cb:'梦幻小业务'},
 {wb:'H82605240003',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'880',cur:'人民币',rate:'1',rmb:'880',used:'120',unused:'760',st:'部分核销',ftime:'2026-05-24 01:15:16',cyc:'出货月结',days:'1',bf:'是',bn:'RB2605240003',due:'2026-05-31 23:59:59',batch:'PC2605240001',rk:'E2E Auto Generated Fee',src:'系统生成',ct:'2026-05-24 01:15:17',cb:'UAT0003'},
 {wb:'H82605240004',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'880',cur:'人民币',rate:'1',rmb:'880',used:'880',unused:'0',st:'全部核销',ftime:'2026-05-24 01:12:36',cyc:'出货月结',days:'1',bf:'是',bn:'RB2605240002',due:'2026-05-31 23:59:59',batch:'PC2605240001',rk:'E2E Auto Generated Fee',src:'系统生成',ct:'2026-05-24 01:12:37',cb:'UAT0003'},
@@ -14,10 +14,10 @@ var _arDetailSeed=[
 {wb:'H2607060001',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'100',cur:'人民币',rate:'1',rmb:'100',used:'0',unused:'100',st:'待核销',ftime:'2026-07-06 16:29:57',cyc:'出货票结',days:'3',bf:'是',bn:'RB2607060001',due:'2026-07-31 23:59:59',batch:'PC2607060001',rk:'11',src:'人工录入',ct:'2026-07-06 16:30:17',cb:'HYD-开发者'},
 {wb:'H2606140001',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'运费',amt:'2000',cur:'人民币',rate:'2',rmb:'4000',used:'0',unused:'4000',st:'作废',ftime:'2026-06-14 11:51:55',cyc:'签收月结',days:'2',bf:'是',bn:'RB2606140001',due:'2026-06-30 23:59:59',batch:'PC2606140001',rk:'测试z',src:'人工录入',ct:'2026-06-14 11:52:18',cb:'梦幻小业务'},
 {wb:'H2605120001',cust:'蓝城电商公司',sales:'天地销售',fee:'客户理赔费',amt:'-100',cur:'人民币',rate:'1',rmb:'-100',used:'0',unused:'-100',st:'作废',ftime:'2026-05-07 16:53:08',cyc:'出货月结',days:'1',bf:'否',bn:'',rk:'测试3',src:'人工录入',ct:'2026-05-07 16:53:25',cb:'HYD-开发者'},
-{wb:'H2604170009',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'派送费',amt:'111116666',cur:'人民币',rate:'1',rmb:'111116666',used:'0',unused:'111116666',st:'待核销',ftime:'2026-04-17 17:26:28',cyc:'出货月结',days:'1',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-04-17 17:26:35',cb:'HYD-开发者'},
+{wb:'H2604170009',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'派送费',amt:'111116666',cur:'人民币',rate:'1',rmb:'111116666',used:'0',unused:'111116666',st:'待审核',ftime:'2026-04-17 17:26:28',cyc:'出货月结',days:'1',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-04-17 17:26:35',cb:'HYD-开发者'},
 /* 刚录入、还没经过「费用确认」的三笔 —— 费用确认按钮正是处理它们的 */
 {wb:'H2607130006',cust:'蓝城电商公司',sales:'天地销售',fee:'报关费',amt:'800',cur:'人民币',rate:'1',rmb:'800',used:'0',unused:'800',st:'待确认',ftime:'2026-07-13 09:30:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'买单报关',src:'人工录入',ct:'2026-07-13 09:31:00',cb:'HYD-开发者'},
-{wb:'H2607100001',cust:'梦幻直客客户',sales:'天地销售',fee:'仓储费',amt:'320',cur:'人民币',rate:'1',rmb:'320',used:'0',unused:'320',st:'待确认',ftime:'2026-07-10 12:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'超期仓储 4 天',src:'人工录入',ct:'2026-07-10 12:01:00',cb:'梦幻管理员'},
+{wb:'H2607100001',cust:'梦幻直客客户',sales:'天地销售',fee:'仓储费',amt:'320',cur:'人民币',rate:'1',rmb:'320',used:'0',unused:'320',st:'待出账',ftime:'2026-07-10 12:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'超期仓储 4 天',src:'人工录入',ct:'2026-07-10 12:01:00',cb:'梦幻管理员'},
 {wb:'H2607090013',cust:'天地直客',sales:'天地销售',fee:'派送费',amt:'150',cur:'美元',rate:'7',rmb:'1050',used:'0',unused:'1050',st:'待确认',ftime:'2026-07-09 18:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-09 18:02:00',cb:'HYD-开发者'}
 ];
 var _arCustomers=[
@@ -126,7 +126,8 @@ function arLeftListHtml(){
 }
 
 function arStatusTabsHtml(){
-    var defs=[['','全部'],['待确认','待确认'],['待核销','待核销'],['部分核销','部分核销'],['全部核销','全部核销'],['作废','作废']];
+    /* 流转：待确认 -费用确认-> 待审核 -操作审核-> 待出账 -生成账单-> 待核销 -> 部分/全部核销 */
+    var defs=[['','全部'],['待确认','待确认'],['待审核','待审核'],['待出账','待出账'],['待核销','待核销'],['部分核销','部分核销'],['全部核销','全部核销'],['作废','作废']];
     /* 与全站列表页一致：status-tab 下划线式页签 + tab-count 计数气泡。
      * 计数按汇总行（运单×币别）算，跟列表展示的粒度保持一致 */
     var all=arGroupRows();
@@ -164,12 +165,15 @@ function arGroupRows(){
         return g;
     });
 }
-/* 汇总行的核销标识由底下的费用行推出来：有一条没确认就整单算「待确认」（还不能去核销），
- * 全部核销才算「全部核销」，核销过但没完就是「部分核销」，一条都没作废剩下的全算「作废」。 */
+/* 汇总行的核销标识由底下的费用行推出来：按流转最早的卡点归档 ——
+ * 有待确认算待确认、有待审核算待审核、有待出账算待出账（都在队列前面，先解决前头的）；
+ * 全部核销才算「全部核销」，核销过但没完就是「部分核销」，其余是待核销。 */
 function arRollupStatus(rows){
     var live=rows.filter(function(r){return r.st!=='作废';});
     if(!live.length)return '作废';
     if(live.some(function(r){return r.st==='待确认';}))return '待确认';
+    if(live.some(function(r){return r.st==='待审核';}))return '待审核';
+    if(live.some(function(r){return r.st==='待出账';}))return '待出账';
     if(live.every(function(r){return r.st==='全部核销';}))return '全部核销';
     if(live.some(function(r){return r.st==='全部核销'||r.st==='部分核销';}))return '部分核销';
     return '待核销';
@@ -483,7 +487,7 @@ function openArConfirmModal(){
     if(panel)panel.style.width='72%';
     document.getElementById('crud-modal-title').textContent=tr('费用确认');
     var html='<div class="space-y-4">';
-    html+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+tr('确认后，勾选的费用明细进入「待核销」，可以去收款核销；未勾选的留在「待确认」。')+'</div>';
+    html+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+tr('确认后，勾选的费用明细进入「待审核」，待操作审核通过后才能出账；未勾选的留在「待确认」。')+'</div>';
     html+='<div class="text-xs text-text-secondary">'+tr('本次涉及')+' <span class="font-semibold text-text-primary">'+groups.length+'</span> '+tr('个运单币别组')+'，'+
         tr('待确认')+' <span class="font-semibold text-amber-600">'+pend.length+'</span> '+tr('条')+'</div>';
     html+=arFeeLinesTableHtml(sel,'check',function(r){return r.st==='待确认';},tr('已确认/已作废'));
@@ -496,18 +500,51 @@ function openArConfirmModal(){
 function arConfirmFees(){
     var picked=[];
     document.querySelectorAll('.ar-fee-pick:checked').forEach(function(x){picked.push(parseInt(x.value,10));});
-    var rows=picked.map(function(i){return _arDetailRows[i];}).filter(function(r){return r&&r.st==='待确认';});
+    var rows=picked.map(function(i){return _arDetailRows[i];}).filter(function(r){return r&&r&&r.st==='待确认';});
     if(!rows.length){showToast(tr('请先勾选要确认的费用明细'));return;}
-    rows.forEach(function(r){ r.st='待核销'; });
+    rows.forEach(function(r){ r.st='待审核'; });
     closeCrudModal();
     refreshArDetailView();
-    showToast(tr('费用确认成功')+' '+rows.length+' '+tr('条')+'，'+tr('已进入待核销'));
+    showToast(tr('费用确认成功')+' '+rows.length+' '+tr('条')+'，'+tr('已进入待审核'));
+}
+
+/* 操作审核：与费用确认同构 —— 弹窗摊开费用明细逐条勾，只有「待审核」的可勾，
+ * 通过后进「待出账」（可以生成账单了）。审核是出账前的最后一道人核。 */
+function openArAuditModal(){
+    var groups=arGetSelectedGroups();
+    if(!groups.length){showToast(tr('请先勾选要审核的运单'));return;}
+    var sel=arGetSelectedRows();
+    var pend=sel.filter(function(r){return r.st==='待审核';});
+    if(!pend.length){showToast(tr('所选运单下没有「待审核」的费用明细'));return;}
+    const panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='72%';
+    document.getElementById('crud-modal-title').textContent=tr('操作审核');
+    var html='<div class="space-y-4">';
+    html+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+tr('审核通过后，勾选的费用明细进入「待出账」，可以生成账单；未勾选的留在「待审核」。')+'</div>';
+    html+='<div class="text-xs text-text-secondary">'+tr('本次涉及')+' <span class="font-semibold text-text-primary">'+groups.length+'</span> '+tr('个运单币别组')+'，'+
+        tr('待审核')+' <span class="font-semibold text-amber-600">'+pend.length+'</span> '+tr('条')+'</div>';
+    html+=arFeeLinesTableHtml(sel,'check',function(r){return r.st==='待审核';},tr('非待审核'));
+    html+='</div>';
+    document.getElementById('crud-modal-body').innerHTML=html;
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="arAuditFees()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 cursor-pointer">'+tr('审核通过')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function arAuditFees(){
+    var picked=[];
+    document.querySelectorAll('.ar-fee-pick:checked').forEach(function(x){picked.push(parseInt(x.value,10));});
+    var rows=picked.map(function(i){return _arDetailRows[i];}).filter(function(r){return r&&r.st==='待审核';});
+    if(!rows.length){showToast(tr('请先勾选要审核的费用明细'));return;}
+    rows.forEach(function(r){ r.st='待出账'; });
+    closeCrudModal();
+    refreshArDetailView();
+    showToast(tr('操作审核通过')+' '+rows.length+' '+tr('条')+'，'+tr('已进入待出账'));
 }
 
 function openArGenBillModal(){
-    /* 勾的是汇总行，摊平成费用明细后再按客户+币别归堆；作废行不进账单 */
-    var sel=arGetSelectedRows().filter(function(r){return r.st!=='作废';});
-    if(!sel.length){showToast(tr('请先勾选要生成账单的应收明细'));return;}
+    /* 只有「待出账」（确认过、审核过）的费用才能生成账单 —— 与费用确认/操作审核同一口径，
+     * 队列里还卡在前面的行不进账单，免得账单里混进没过审的费用。 */
+    var sel=arGetSelectedRows().filter(function(r){return r.st==='待出账';});
+    if(!sel.length){showToast(tr('只有「待出账」的应收明细可以生成账单'));return;}
     var groups=arGroupSelected(sel);
     var d=new Date();
     var pad=function(n){return String(n).padStart(2,'0');};
@@ -527,8 +564,29 @@ function openArGenBillModal(){
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用汇总')+'</div>'+arGroupListHtml(groups)+'</div>';
     html+='</div>';
     document.getElementById('crud-modal-body').innerHTML=html;
-    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="closeCrudModal();showToast(\''+tr('账单生成成功')+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认生成')+'</button>';
+    /* 确认生成要落状态：制账单标识置「是」、记批次与到期、转「待核销」——
+     * 出账完成，接下来走收款核销。 */
+    _arGenBillSel=sel;
+    _arGenBillBatch=defaultBatch;
+    _arGenBillDue=dueStr+' 23:59:59';
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="arGenBillSubmit()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('确认生成')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
+}
+var _arGenBillSel=null,_arGenBillBatch='',_arGenBillDue='';
+function arGenBillSubmit(){
+    var rows=_arGenBillSel||[];
+    if(!rows.length){closeCrudModal();return;}
+    rows.forEach(function(r,i){
+        r.st='待核销';
+        r.bf='是';
+        r.batch=_arGenBillBatch;
+        r.due=_arGenBillDue;
+        r.bn='RB'+String(new Date().getFullYear())+String(rows[0].wb||'').replace(/\D/g,'').slice(-6)+'00'+(i+1);
+    });
+    _arGenBillSel=null;
+    closeCrudModal();
+    refreshArDetailView();
+    showToast(tr('账单生成成功')+'，'+rows.length+' '+tr('条已进入待核销'));
 }
 
 /* 调整分两步：列表行是「运单×币别」的汇总，改的却是某一笔具体费用，
@@ -657,6 +715,7 @@ function generateArDetailPage(id){
     h+=arToolbarBtn('导入','openArDetailImportModal()');
     h+=arToolbarBtn('调整','openArAdjustModal()');
     h+=arToolbarBtn('费用确认','openArConfirmModal()','success');
+    h+=arToolbarBtn('操作审核','openArAuditModal()','success');
     h+=arToolbarBtn('生成账单','arDetailAction(\'genBill\')');
     h+=arToolbarBtn('作废','arDetailAction(\'void\')','danger');
     h+='</div></div>';

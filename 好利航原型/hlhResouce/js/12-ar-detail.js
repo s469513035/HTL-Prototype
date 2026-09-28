@@ -192,8 +192,15 @@ var AR_LIST_COLUMNS=[
     {label:'运单号',key:'wb'},
     {label:'客户名称',key:'cust'},
     {label:'业务员名称',key:'sales'},
+    {label:'品名',key:'goods'},
+    {label:'货物类型',key:'cargo'},
+    {label:'包装方式',key:'pack'},
+    {label:'体积(CBM)',key:'vol',num:true},
+    {label:'重量(KG)',key:'wt',num:true},
+    {label:'报关类型',key:'customs'},
     {label:'费用名称',key:'fee'},
     {label:'金额(原币)',key:'amt',num:true},
+    {label:'单价',key:'price',num:true},
     {label:'币别',key:'cur'},
     {label:'已核销金额',key:'used',num:true},
     {label:'未核销金额',key:'unused',num:true},
@@ -209,8 +216,12 @@ function renderArDetailRows(){
     return rows.map(function(r,i){
         var h='<tr class="'+(i%2===1?'bg-surface-50/50':'')+' hover:bg-primary-50/30 border-b border-surface-100">';
         h+='<td class="px-4 py-3 text-sm whitespace-nowrap"><input type="checkbox" class="ar-detail-check" value="'+i+'"></td>';
+        var cg=arCargoWithCustoms(r.wb)||{};
         AR_LIST_COLUMNS.forEach(function(col){
-            var v=r[col.key]==null?'':String(r[col.key]);
+            var v;
+            if(col.key==='price')v=arFmt(arNum(r.amt)/arPcsOf(r.wb));
+            else if(col.key==='goods'||col.key==='cargo'||col.key==='pack'||col.key==='vol'||col.key==='wt'||col.key==='customs')v=cg[col.key]==null?'':String(cg[col.key]);
+            else v=r[col.key]==null?'':String(r[col.key]);
             var cls='px-4 py-3 text-sm whitespace-nowrap '+(col.num?'text-right ':'');
             if(col.key==='wb')h+='<td class="'+cls+'font-medium text-primary-700">'+esc(v)+'</td>';
             else if(col.key==='st')h+='<td class="'+cls+'">'+arStatusBadge(v)+'</td>';
@@ -395,7 +406,7 @@ function openArConfirmModal(){
     html+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+tr('确认后，勾选的费用明细进入「待审核」，待操作审核通过后才能出账；未勾选的留在「待确认」。')+'</div>';
     html+='<div class="text-xs text-text-secondary">'+tr('本次涉及')+' <span class="font-semibold text-text-primary">'+groups.length+'</span> '+tr('条费用')+'，'+
         tr('待确认')+' <span class="font-semibold text-amber-600">'+pend.length+'</span> '+tr('条')+'</div>';
-    html+=arFeeLinesTableHtml(sel,'check',function(r){return r.st==='待确认';},tr('已确认/已作废'));
+    html+=arMasterDetailHtml(sel,function(r){return r.st==='待确认';});
     html+='</div>';
     document.getElementById('crud-modal-body').innerHTML=html;
     document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="arConfirmFees()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 cursor-pointer">'+tr('确认费用')+'</button>';
@@ -428,7 +439,7 @@ function openArAuditModal(){
     html+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+tr('审核通过后，勾选的费用明细进入「待出账」，可以生成账单；未勾选的留在「待审核」。')+'</div>';
     html+='<div class="text-xs text-text-secondary">'+tr('本次涉及')+' <span class="font-semibold text-text-primary">'+groups.length+'</span> '+tr('条费用')+'，'+
         tr('待审核')+' <span class="font-semibold text-amber-600">'+pend.length+'</span> '+tr('条')+'</div>';
-    html+=arFeeLinesTableHtml(sel,'check',function(r){return r.st==='待审核';},tr('非待审核'));
+    html+=arMasterDetailHtml(sel,function(r){return r.st==='待审核';});
     html+='</div>';
     document.getElementById('crud-modal-body').innerHTML=html;
     document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="arAuditFees()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 cursor-pointer">'+tr('审核通过')+'</button>';
@@ -936,4 +947,78 @@ function arSpecialPriceSubmit(){
     if(typeof _listData!=='undefined')delete _listData['approval-mine'];
     closeCrudModal();
     showToast(tr('特价申请已提交审批')+'：'+no);
+}
+
+
+/* ===== 货物属性带报关类型：种子表只维护到 bl/goods/cargo/pack/vol/wt，
+ * 报关类型没单独维护 —— 按运单号稳定推导（原型口径，正式版从运单报关信息读）。 ===== */
+function arCargoWithCustoms(wb){
+    var c=arCargoOf(wb)||{};
+    if(c.customs==null){
+        var s=String(wb||''),n=0;
+        for(var i=0;i<s.length;i++)n+=s.charCodeAt(i)*(i+1);
+        c.customs=['一般贸易','快件报关','电商报关'][n%3];
+    }
+    return c;
+}
+
+/* ===== 费用确认 / 操作审核 共用的主子表 =====
+ * 主表按 客户+币别+运单号 分组统计应收总费用；子表列该组下具体费用科目；
+ * 最下方按币别汇总总费用（不同币别不可相加）。
+ * 勾选粒度仍是费用行：.ar-fee-pick 的 value = _arDetailRows 下标，
+ * arConfirmFees / arAuditFees 的提交逻辑因此零改动；主行复选框做组联动。 */
+function arMasterDetailHtml(sel,enableFn){
+    var map={},order=[];
+    sel.forEach(function(r){
+        var k=(r.cust||'')+'||'+(r.cur||'')+'||'+(r.wb||'');
+        if(!map[k]){map[k]={cust:r.cust,cur:r.cur,wb:r.wb,rows:[]};order.push(k);}
+        map[k].rows.push(r);
+    });
+    var groups=order.map(function(k){
+        var g=map[k];
+        g.total=g.rows.reduce(function(a,r){return a+arNum(r.amt);},0);
+        return g;
+    });
+    /* 底部各币别汇总 */
+    var byCur={},curOrder=[];
+    groups.forEach(function(g){
+        if(!byCur[g.cur]){byCur[g.cur]=0;curOrder.push(g.cur);}
+        byCur[g.cur]+=g.total;
+    });
+    var h='<div class="border border-surface-200 rounded-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-xs min-w-[720px]">';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['','客户名称','运单号','币别','费用笔数','应收总费用'].map(function(t){return '<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
+    groups.forEach(function(g,gi){
+        var pickable=g.rows.filter(enableFn).length;
+        h+='<tr class="bg-primary-50/50 border-t border-surface-200">'+
+            '<td class="px-3 py-2"><input type="checkbox" class="ar-grp-pick" onchange="arMasterGroupToggle(this,'+gi+')"'+(pickable?'':' disabled')+'></td>'+
+            '<td class="px-3 py-2 font-medium text-text-primary whitespace-nowrap">'+esc(g.cust)+'</td>'+
+            '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(g.wb)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(g.cur)+'</td>'+
+            '<td class="px-3 py-2 whitespace-nowrap">'+g.rows.length+'</td>'+
+            '<td class="px-3 py-2 font-semibold text-orange-600 whitespace-nowrap">'+arFmt(g.total)+'</td></tr>';
+        /* 子表：具体费用科目 */
+        h+='<tr class="border-t border-surface-100"><td class="px-3 py-1"></td><td colspan="5" class="px-3 py-1.5">';
+        h+='<table class="w-full text-xs"><thead><tr class="text-text-secondary">'+['','费用名称','金额(原币)','未核销金额','核销标识','费用时间'].map(function(t){return '<th class="px-2 py-1 text-left font-medium whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
+        g.rows.forEach(function(r){
+            var idx=_arDetailRows.indexOf(r);
+            var can=enableFn(r);
+            h+='<tr class="'+(can?'':'opacity-50')+'">'+
+                '<td class="px-2 py-1.5 w-6"><input type="checkbox" class="ar-fee-pick" data-ar-grp="'+gi+'" value="'+idx+'"'+(can?' checked':' disabled')+'></td>'+
+                '<td class="px-2 py-1.5 whitespace-nowrap">'+esc(r.fee)+'</td>'+
+                '<td class="px-2 py-1.5 whitespace-nowrap">'+esc(r.amt)+'</td>'+
+                '<td class="px-2 py-1.5 whitespace-nowrap">'+esc(r.unused)+'</td>'+
+                '<td class="px-2 py-1.5 whitespace-nowrap">'+arStatusBadge(r.st)+'</td>'+
+                '<td class="px-2 py-1.5 whitespace-nowrap">'+esc(r.ftime)+'</td></tr>';
+        });
+        h+='</tbody></table></td></tr>';
+    });
+    h+='</tbody></table></div></div>';
+    h+='<div class="mt-2 flex flex-wrap items-center gap-2">'+curOrder.map(function(c){
+        return '<span class="text-xs px-2.5 py-1.5 rounded-lg bg-primary-50 text-primary-700 font-medium">'+esc(c)+'：'+arFmt(byCur[c])+'</span>';
+    }).join('')+'<span class="text-[11px] text-amber-600">'+tr('不同币别不做合并')+'</span></div>';
+    return h;
+}
+/* 主行复选框联动组内可选费用行（已勾上的保持同步） */
+function arMasterGroupToggle(cb,gi){
+    document.querySelectorAll('.ar-fee-pick[data-ar-grp="'+gi+'"]:not(:disabled)').forEach(function(x){x.checked=cb.checked;});
 }

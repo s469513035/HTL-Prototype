@@ -1,28 +1,29 @@
 /* ==========================================================================
- * 55 · 产品配置 › 仓储报价维护 prod-price-store + 国内库存盘点在库时长/仓储费
+ * 55 · 产品配置 › 仓储报价维护 prod-price-store + 双库存页(国内盘点/海外仓)在库时长/仓储费
  *
- * 仓储费按「仓库 × 体积 × 报价周期 × 在库时长阶梯」计费：
- *   一张报价单 = 某仓库某体积段的阶梯价（越囤越贵，逼着清库）
- *   库存盘点上的仓储费 = 该行体积 × 匹配报价单的当前时长档单价 × 报价周期内天数
+ * 仓储费按「仓库 × 体积 × 在库时长阶梯」计费：
+ *   一张报价单 = 某仓库的在库时长阶梯价（越囤越贵，逼着清库）
+ *   库存表上的仓储费 = 该行体积 × 匹配报价单的当前时长档单价 × 计费天数
  *
+ * 阶梯即全部计费要素：首档(0-N天,0价)=免费期，往上一档一个单价（币别/CBM/天）。
  * 在库时长 = 该行最早一箱的入仓时间起算到今天 —— 同一运单多箱可能分批到仓，
  * 表上只有一行，按最早入库算（囤积从第一箱入库开始）。
  * ========================================================================== */
 
 /* ---------- 仓储报价维护 prod-price-store（产品配置下） ---------- */
-/* 报价阶梯：按在库时长分段收不同的体积单价（报价周期内）。
+/* 报价阶梯：按在库时长分段收不同的体积单价。
  * 例：深圳盐田仓 0-7天免费 / 8-30天 0.8 元/CBM/天 / 31-90天 1.5 / >90 天 2.5 */
 var _SP_STORE_WAREHOUSES=['深圳盐田仓','广州南沙仓','上海浦东仓','义乌仓','拉各斯海外仓','阿比让海外仓','达喀尔海外仓'];
 addPrototypeTable('prod-price-store','仓储报价维护',
-    '报价编号|仓库|报价周期|体积段(CBM)|首档免费天数|阶梯数|币别|生效时间|失效时间|备注|状态|操作',
+    '报价编号|仓库|阶梯数|币别|生效时间|失效时间|备注|状态|操作',
     ['启用','停用'],[
-    ['SP-STORE-001','深圳盐田仓','按天','不限','7','4','人民币','2026-01-01','2027-12-31','整柜快出快入','启用'],
-    ['SP-STORE-002','广州南沙仓','按天','不限','5','4','人民币','2026-01-01','2027-12-31','','启用'],
-    ['SP-STORE-003','上海浦东仓','按天','不限','7','4','人民币','2026-03-01','2026-12-31','上海仓试点','启用'],
-    ['SP-STORE-004','义乌仓','按天','不限','10','3','人民币','2025-06-01','2026-06-30','老报价已停','停用'],
-    ['SP-STORE-005','拉各斯海外仓','按天','不限','7','4','美元','2026-01-01','2027-12-31','非洲主仓','启用'],
-    ['SP-STORE-006','阿比让海外仓','按月','不限','30','3','美元','2026-01-01','2027-12-31','按月计费口径演示','启用'],
-    ['SP-STORE-007','达喀尔海外仓','按天','不限','5','4','美元','2026-01-01','2027-12-31','','启用']
+    ['SP-STORE-001','深圳盐田仓','4','人民币','2026-01-01','2027-12-31','整柜快出快入','启用'],
+    ['SP-STORE-002','广州南沙仓','4','人民币','2026-01-01','2027-12-31','','启用'],
+    ['SP-STORE-003','上海浦东仓','4','人民币','2026-03-01','2026-12-31','上海仓试点','启用'],
+    ['SP-STORE-004','义乌仓','3','人民币','2025-06-01','2026-06-30','老报价已停','停用'],
+    ['SP-STORE-005','拉各斯海外仓','4','美元','2026-01-01','2027-12-31','非洲主仓','启用'],
+    ['SP-STORE-006','阿比让海外仓','3','美元','2026-01-01','2027-12-31','30天免租期演示','启用'],
+    ['SP-STORE-007','达喀尔海外仓','4','美元','2026-01-01','2027-12-31','','启用']
 ],[
     {label:'报价编号',type:'text'},
     {label:'仓库',type:'select',options:_SP_STORE_WAREHOUSES},
@@ -31,8 +32,7 @@ addPrototypeTable('prod-price-store','仓储报价维护',
 ]);
 TC['prod-price-store'].noExpand=true;
 TC['prod-price-store'].noAutoAudit=true;
-/* 阶梯档位存字典：报价编号 -> [{daysFrom,daysTo(空=封顶),price}]
- * 单价口径随报价周期：按天=币别/CBM/天；按月=币别/CBM/月 */
+/* 阶梯档位存字典：报价编号 -> [{daysFrom,daysTo(空=封顶),price}]（币别/CBM/天） */
 var _SP_STORE_TIERS={
     'SP-STORE-001':[{f:0,t:7,p:0},{f:8,t:30,p:0.8},{f:31,t:90,p:1.5},{f:91,t:null,p:2.5}],
     'SP-STORE-002':[{f:0,t:5,p:0},{f:6,t:30,p:0.9},{f:31,t:90,p:1.6},{f:91,t:null,p:2.8}],
@@ -44,7 +44,7 @@ var _SP_STORE_TIERS={
 };
 function spStoreTiersOf(no){return _SP_STORE_TIERS[no]||[];}
 
-/* ---------- 新增/编辑/查看报价弹窗：仓库/周期/体积段 + 阶梯表 ---------- */
+/* ---------- 新增/编辑/查看报价弹窗：仓库/币别/生效窗 + 阶梯表 ---------- */
 var _spStoreCtx={mode:'add',idx:-1,no:''};
 function openSpStoreModal(mode,id,rowIdx,rowData){
     id=id||'prod-price-store';
@@ -72,19 +72,16 @@ function openSpStoreModal(mode,id,rowIdx,rowData){
         '<span class="text-base font-semibold text-text-primary">'+tr('报价基本信息')+'</span></div>';
     h+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">';
     h+='<div class="flex flex-col gap-1.5">'+lbl('仓库',true)+'<select id="spst-wh" class="'+inCls+'"'+roAttr+'>'+whs.map(function(w){return '<option'+(w===g('仓库')?' selected':'')+'>'+esc(w)+'</option>';}).join('')+'</select></div>';
-    h+='<div class="flex flex-col gap-1.5">'+lbl('报价周期',true)+'<select id="spst-cycle" class="'+inCls+'"'+roAttr+'>'+['按天','按月'].map(function(w){return '<option'+(w===g('报价周期')?' selected':'')+'>'+esc(w)+'</option>';}).join('')+'</select></div>';
     h+='<div class="flex flex-col gap-1.5">'+lbl('币别',true)+'<select id="spst-cur" class="'+inCls+'"'+roAttr+'>'+['人民币','美元','欧元'].map(function(w){return '<option'+(w===g('币别')?' selected':'')+'>'+esc(w)+'</option>';}).join('')+'</select></div>';
-    h+='<div class="flex flex-col gap-1.5">'+lbl('体积段(CBM)')+'<input id="spst-vol" class="'+inCls+'" value="'+esc(g('体积段(CBM)')||'不限')+'" placeholder="'+tr('如 0-5 / 5-20 / 不限')+'"'+roAttr+'></div>';
-    h+='<div class="flex flex-col gap-1.5">'+lbl('首档免费天数',true)+'<input id="spst-free" type="number" min="0" class="'+inCls+'" value="'+esc(g('首档免费天数')||'0')+'"'+roAttr+'></div>';
     h+='<div class="flex flex-col gap-1.5">'+lbl('生效时间',true)+'<input id="spst-from" type="date" class="'+inCls+'" value="'+esc(g('生效时间'))+'"'+roAttr+'></div>';
     h+='<div class="flex flex-col gap-1.5">'+lbl('失效时间')+'<input id="spst-to" type="date" class="'+inCls+'" value="'+esc(g('失效时间'))+'"'+roAttr+'></div>';
-    h+='<div class="flex flex-col gap-1.5 md:col-span-3">'+lbl('备注')+'<textarea id="spst-rk" rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y"'+roAttr+'>'+esc(g('备注')||'')+'</textarea></div>';
+    h+='<div class="flex flex-col gap-1.5 md:col-span-2">'+lbl('备注')+'<textarea id="spst-rk" rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y"'+roAttr+'>'+esc(g('备注')||'')+'</textarea></div>';
     h+='</div></section>';
-    /* 阶梯表：在库时长分段定价，首档免费天数从基础信息带下来 */
+    /* 阶梯表：在库时长分段定价；首档即免费期（0价区间），免费天数=首档封顶 */
     h+='<section><div class="flex items-center justify-between mb-3">'+
         '<div class="flex items-center gap-2"><span class="w-1 h-4 bg-amber-400 rounded"></span>'+
         '<span class="text-base font-semibold text-text-primary">'+tr('在库时长阶梯价')+'</span>'+
-        '<span class="text-xs text-text-muted">'+esc(tr('越囤越贵：首档免费，往上一档一个价（单价口径随报价周期）'))+'</span></div>'+
+        '<span class="text-xs text-text-muted">'+esc(tr('越囤越贵：首档即免费期，往上一档一个价（币别/CBM/天）'))+'</span></div>'+
         (ro?'':'<button type="button" onclick="spStoreTierAdd()" class="h-8 px-3 text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">+ '+tr('增加一档')+'</button>')+'</div>';
     h+='<div id="spst-tiers"></div></section>';
     h+='</div>';
@@ -138,9 +135,9 @@ function spStoreTierDel(i){
 }
 function submitSpStore(){
     var v=function(id){var e=document.getElementById(id);return e?String(e.value||'').trim():'';};
-    var wh=v('spst-wh'),cycle=v('spst-cycle'),cur=v('spst-cur'),vol=v('spst-vol'),
-        free=v('spst-free'),from=v('spst-from'),to=v('spst-to'),rk=v('spst-rk');
-    if(!wh||!cycle||!cur||!from){showToast(tr('请完整填写必填项'));return;}
+    var wh=v('spst-wh'),cur=v('spst-cur'),
+        from=v('spst-from'),to=v('spst-to'),rk=v('spst-rk');
+    if(!wh||!cur||!from){showToast(tr('请完整填写必填项'));return;}
     if(!_spStoreTiers.length){showToast(tr('请至少维护一档阶梯价'));return;}
     var bad=_spStoreTiers.some(function(t){return t.p<0||(t.t!=null&&t.f>t.t);});
     if(bad){showToast(tr('阶梯起始不能大于封顶'));return;}
@@ -149,16 +146,14 @@ function submitSpStore(){
     _SP_STORE_TIERS[no]=_spStoreTiers.map(function(t){return {f:t.f,t:t.t,p:t.p};});
     if(_spStoreCtx.mode==='add'){
         fclPushRow('prod-price-store',{
-            '报价编号':no,'仓库':wh,'报价周期':cycle,'体积段(CBM)':vol||'不限',
-            '首档免费天数':free||'0','阶梯数':String(_spStoreTiers.length),'币别':cur,
+            '报价编号':no,'仓库':wh,'阶梯数':String(_spStoreTiers.length),'币别':cur,
             '生效时间':from,'失效时间':to,'备注':rk,'状态':'启用'
         });
     }else{
         var rows=fclFinRows('prod-price-store');
         var row=rows[_spStoreCtx.idx];
         if(row){
-            [['仓库',wh],['报价周期',cycle],['币别',cur],['体积段(CBM)',vol||'不限'],
-             ['首档免费天数',free||'0'],['阶梯数',String(_spStoreTiers.length)],
+            [['仓库',wh],['币别',cur],['阶梯数',String(_spStoreTiers.length)],
              ['生效时间',from],['失效时间',to],['备注',rk]].forEach(function(p){
                 fclFinSet('prod-price-store',row,p[0],p[1]);
             });
@@ -208,7 +203,7 @@ function spStoreCurFlag(quoteNo){
     var cur=hit?String(hit[iCur]||''):'';
     return cur==='美元'?'$':(cur==='欧元'?'€':'¥');
 }
-/* 按天数取阶梯价（单价口径随报价周期：按天=…/天，按月=…/月） */
+/* 按天数取阶梯价（币别/CBM/天） */
 function spStorePriceOf(quoteNo,days){
     var tiers=spStoreTiersOf(quoteNo);
     var hit=tiers.filter(function(t){
@@ -216,21 +211,16 @@ function spStorePriceOf(quoteNo,days){
     })[0];
     return hit?hit.p:0;
 }
-/* 仓储费 = 体积 × 阶梯单价 × 计费时长（首档免费期内不收费）
- * 报价周期=按天：计费时长=在库天数-首档免费天数（天）
- * 报价周期=按月：计费时长=ceil(计费天数/30)（整月向上取整） */
+/* 仓储费 = 体积 × 阶梯单价 × 计费天数
+ * 首档即免费期：计费天数 = 在库天数 - 首档封顶天数（首档为 0-N 天 0 价区间） */
 function spStoreFee(warehouse,vol,days){
     var q=spStoreQuoteOf(warehouse);
-    if(!q)return {fee:0,price:0,quote:'',billDays:0,cycle:'按天',units:0,curFlag:'¥'};
-    var c=TC['prod-price-store'],h=c.h,iNo=h.indexOf('报价编号'),iCyc=h.indexOf('报价周期');
-    var qRow=(c.d||[]).filter(function(r){return String(r[iNo]||'')===q;})[0];
-    var cycle=qRow?String(qRow[iCyc]||'按天'):'按天';
+    if(!q)return {fee:0,price:0,quote:'',billDays:0,curFlag:'¥'};
     var price=spStorePriceOf(q,days);
     var free=spStoreTiersOf(q)[0];
     var billDays=Math.max(0,days-(free?free.t:0));
-    var units=cycle==='按月'?Math.ceil(billDays/30):billDays;
-    var fee=+((parseFloat(vol)||0)*price*units).toFixed(2);
-    return {fee:fee,price:price,quote:q,billDays:billDays,cycle:cycle,units:units,curFlag:spStoreCurFlag(q)};
+    var fee=+((parseFloat(vol)||0)*price*billDays).toFixed(2);
+    return {fee:fee,price:price,quote:q,billDays:billDays,curFlag:spStoreCurFlag(q)};
 }
 /* 列表加载时给库存表补两列：在库时长 + 仓储费（国内库存盘点 + 海外仓库存） */
 function spStoreEnrichStockRows(id){

@@ -165,6 +165,7 @@ const menuData=[
 {id:'prod-manage',label:'产品管理',langKey:'prod_manage',page:'product',tab:'prod-manage'},
 {id:'prod-price-lcl',label:'销售报价(散货)',langKey:'prod_price_lcl',page:'product',tab:'prod-price-lcl'},
 {id:'prod-surcharge',label:'附加杂费配置',langKey:'prod_surcharge',page:'product',tab:'prod-surcharge'},
+{id:'prod-price-store',label:'仓储报价维护',page:'product',tab:'prod-price-store'},
 {id:'cfg-label-template',label:'标签模板',page:'product',tab:'cfg-label-template'}
 ]},
 /* 原「业务设置」12 项混了三类东西（地理字典 / 平台配置 / 流程规则），常用项被淹没，拆成 3 组。

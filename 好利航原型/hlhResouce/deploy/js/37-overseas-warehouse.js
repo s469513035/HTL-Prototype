@@ -211,11 +211,14 @@ function openOverseasInventoryDetail(id,rowIdx){
     }
     var h='<div class="space-y-5">';
     var whName=owInvWhName(headers);
-    h+='<section>'+owSectionTitle('运单主信息')+owInfoGrid([
+    var infoPairs=[
         ['运单号',wb],['客户',owCell(row,headers,'客户')],[whName,owCell(row,headers,whName)],['品名',owCell(row,headers,'品名')],
         ['货物类型',owCell(row,headers,'货物类型')],['货区货位',loc],['到库件数',String(arrived)],['已出件数',String(shipped)],
         ['在库件数',owCell(row,headers,'在库件数')],['盘点件数',owCell(row,headers,'盘点件数')],['入库时间',owCell(row,headers,'入库时间')],['库存状态',owCell(row,headers,'库存状态')]
-    ])+'</section>';
+    ];
+    /* 55 号模块补充的在库时长/仓储费列（存在才显示） */
+    if(headers.indexOf('在库时长')>=0)infoPairs.push(['在库时长',owCell(row,headers,'在库时长')],['仓储费',owCell(row,headers,'仓储费')]);
+    h+='<section>'+owSectionTitle('运单主信息')+owInfoGrid(infoPairs)+'</section>';
     h+='<div class="flex gap-2 border-b border-surface-200">'+
         '<button type="button" id="ow-inv-tabbtn-arrival" onclick="owSwitchInvTab(\'arrival\')" class="px-3 py-2 text-sm font-semibold text-primary-600 border-b-2 border-primary-600">'+tr('到库明细')+'（'+arrived+'）</button>'+
         '<button type="button" id="ow-inv-tabbtn-outbound" onclick="owSwitchInvTab(\'outbound\')" class="px-3 py-2 text-sm font-medium text-text-secondary border-b-2 border-transparent">'+tr('出库明细')+'（'+shipped+'）</button>'+

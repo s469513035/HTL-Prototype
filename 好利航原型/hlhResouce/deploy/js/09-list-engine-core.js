@@ -1000,7 +1000,6 @@ function renderToolbarAction(action,id){
     else if(action.key==='lclCostGenPay')click='lclGenPayBill(\''+id+'\')';
     else if(action.key==='lclCostVoid')click='lclCostBatchStatus(\''+id+'\',\'作废\',[\'待确认\',\'已确认\'],\'已作废\')';
     else if(action.key==='lclPayAuditPass')click='lclPayAuditPass(\''+id+'\')';
-    else if(action.key==='lclPayAuditReject')click='lclPayAuditReject(\''+id+'\')';
     else if(action.key==='lclPayWriteOff')click='openLclPayWriteOff(\''+id+'\')';
     else if(action.key==='lclPayUnWriteOff')click='openLclPayUnWriteOff(\''+id+'\')';
     else if(action.key==='approvalMsgMarkAllRead')click='markAllApprovalMsgsRead(\''+id+'\')';
@@ -1739,7 +1738,6 @@ function getToolbarActions(id){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
             {key:'lclPayAuditPass',label:'审核通过'},
-            {key:'lclPayAuditReject',label:'驳回',variant:'danger'},
             {key:'lclPayWriteOff',label:'付款核销',variant:'primary'},
             {key:'lclPayUnWriteOff',label:'反核销',variant:'danger'},
             {key:'export',label:'导出数据'}

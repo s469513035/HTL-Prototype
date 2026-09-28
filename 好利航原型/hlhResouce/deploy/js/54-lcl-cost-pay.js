@@ -46,14 +46,14 @@ TC['lcl-cost-detail'].statusMatch=function(row,tab,headers){
 /* ---- 付款单管理：由成本明细生成；审核 → 核销 → 反核销 ---- */
 addPrototypeTable('lcl-pay-bill','付款单管理',
     '付款单号|服务商|费用行数|币别|应付金额|已付金额|待付金额|申请人|申请时间|审核人|审核时间|付款方式|付款时间|付款水单|付款状态|操作',
-    ['待审核','已审核','已驳回','待付款','部分付款','已付清','已作废'],[
+    ['待审核','已审核','待付款','部分付款','已付清','已作废'],[
     /* 种子：LCD-20260903004/5 生成的那张已审核待付款 */
     ['LCP-20260910001','COSCO','2','CNY','13,450','0','13,450','王仓管','2026-09-10 14:20','财务主管','2026-09-10 16:00','','','','待付款']
 ],[
     {label:'付款单号',type:'text'},
     {label:'服务商',type:'select',options:LCL_COST_PROVIDERS},
     {label:'币别',type:'select',options:['CNY','USD','EUR']},
-    {label:'付款状态',type:'select',options:['待审核','已审核','已驳回','待付款','部分付款','已付清','已作废']}
+    {label:'付款状态',type:'select',options:['待审核','已审核','待付款','部分付款','已付清','已作废']}
 ]);
 TC['lcl-pay-bill'].noExpand=true;
 TC['lcl-pay-bill'].noAutoAudit=true;
@@ -320,8 +320,8 @@ function lclGenPayBill(id){
     showToast(tr('已生成付款单')+' '+bills.length+' '+tr('张')+'：'+bills.join('、'));
 }
 
-/* ---------- 付款单审核：待审核 → 已审核 / 已驳回（批量，二次确认） ---------- */
-function lclPayAudit(id,pass){
+/* ---------- 付款单审核：待审核 → 已审核（批量，二次确认） ---------- */
+function lclPayAudit(id){
     id=id||'lcl-pay-bill';
     var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
     if(!idxs.length){showToast(tr('请先勾选要审核的付款单'));return;}
@@ -333,7 +333,7 @@ function lclPayAudit(id,pass){
         if(lclPayCell(row,'付款状态')==='待审核')eligible.push(row);else blocked++;
     });
     if(!eligible.length){showToast(tr('只有「待审核」的付款单可以审核'));return;}
-    var to=pass?'已审核':'已驳回';
+    var to='已审核';
     var msg=tr('本次审核')+' '+eligible.length+' '+tr('张')+'（'+tr(to)+'）'+
         (blocked?('，'+blocked+' '+tr('张非待审核跳过')):'')+'，'+tr('是否继续？');
     openConfirmTip(msg,function(){
@@ -348,8 +348,7 @@ function lclPayAudit(id,pass){
         showToast(tr(to)+' '+eligible.length+' '+tr('张'));
     });
 }
-function lclPayAuditPass(id){lclPayAudit(id,true);}
-function lclPayAuditReject(id){lclPayAudit(id,false);}
+function lclPayAuditPass(id){lclPayAudit(id);}
 
 /* ---------- 付款核销：挑服务商的支出凭证流水（同整柜口径，可批量） ---------- */
 var _lclPayWo={id:'',prov:'',cur:'',bills:[],flows:[]};

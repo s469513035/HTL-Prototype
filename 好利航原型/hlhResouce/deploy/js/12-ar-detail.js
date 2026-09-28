@@ -1,5 +1,5 @@
 var _arDetailSeed=[
-{wb:'H2607090013',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'6938.42',cur:'人民币',rate:'1',rmb:'6938.42',used:'0',unused:'6938.42',st:'待审核',ftime:'2026-07-09 15:12:03',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-09 15:12:10',cb:'HYD-开发者'},
+{wb:'H2607090013',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'6938.42',cur:'人民币',rate:'1',rmb:'6938.42',used:'0',unused:'6938.42',st:'待确认',ftime:'2026-07-09 15:12:03',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-09 15:12:10',cb:'HYD-开发者'},
 {wb:'H2607140001',cust:'天地直客',sales:'天地销售',fee:'客户理赔费',amt:'-10000',cur:'美元',rate:'7',rmb:'-70000',used:'0',unused:'-70000',st:'待审核',ftime:'2026-07-14 10:20:11',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'应收异动申请',ct:'2026-07-14 10:21:00',cb:'HYD-开发者'},
 {wb:'H2607130006',cust:'蓝城电商公司',sales:'天地销售',fee:'应收EMF申报费',amt:'6000',cur:'人民币',rate:'1',rmb:'6000',used:'0',unused:'6000',st:'待审核',ftime:'2026-07-13 09:00:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-13 09:01:00',cb:'HYD-开发者'},
 {wb:'H2607140001',cust:'天地直客',sales:'天地销售',fee:'客户理赔费',amt:'-100',cur:'人民币',rate:'1',rmb:'-100',used:'0',unused:'-100',st:'待审核',ftime:'2026-07-14 10:22:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-07-14 10:22:30',cb:'HYD-开发者'},
@@ -199,8 +199,8 @@ var AR_LIST_COLUMNS=[
     {label:'重量(KG)',key:'wt',num:true},
     {label:'报关类型',key:'customs'},
     {label:'费用名称',key:'fee'},
-    {label:'金额(原币)',key:'amt',num:true},
     {label:'单价',key:'price',num:true},
+    {label:'金额(原币)',key:'amt',num:true},
     {label:'币别',key:'cur'},
     {label:'已核销金额',key:'used',num:true},
     {label:'未核销金额',key:'unused',num:true},
@@ -883,30 +883,34 @@ function arSpecialPriceCurChange(){
 function openArSpecialPriceModal(){
     var sel=arGetSelectedRows();
     if(!sel.length){showToast(tr('请先勾选要申请特价的费用明细'));return;}
-    var eligible=sel.filter(function(r){return r.fee==='运费'&&r.st!=='作废';});
-    if(!eligible.length){showToast(tr('仅「运费」费用可申请特价'));return;}
+    var eligible=sel.filter(function(r){return r.fee==='运费'&&r.st==='待确认';});
+    if(!eligible.length){showToast(tr('仅「待确认」状态的运费可申请特价'));return;}
     _arSpCtx={rows:eligible,blocked:sel.length-eligible.length};
     var panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='78%';
     document.getElementById('crud-modal-title').textContent=tr('申请特价')+' - '+tr('应收明细');
     var h='<div class="space-y-5">';
     if(_arSpCtx.blocked>0){
-        h+='<div class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">'+tr('已自动跳过')+' '+_arSpCtx.blocked+' '+tr('条非运费/已作废费用')+'</div>';
+        h+='<div class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">'+tr('已自动跳过')+' '+_arSpCtx.blocked+' '+tr('条非运费/非待确认费用')+'</div>';
     }
     h+='<section><div class="flex items-center gap-2 mb-3"><span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-base font-semibold text-text-primary">'+tr('原始订单运费（单价/总价）')+'</span></div>';
     h+='<div class="border border-surface-200 rounded-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-xs min-w-[820px]">';
     h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['','运单号','客户名称','币别','运费单价(折算)','运费总价','优惠后单价','优惠后总价','币种报价'].map(function(t){return '<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody id="ar-sp-tbody">';
     h+=arSpecialPriceRowsHtml();
     h+='</tbody></table></div></div></section>';
+    /* 调整类型二选一：运费优惠 / 调整币种 互斥 */
+    h+='<div class="flex items-center gap-4 text-sm bg-white border border-surface-200 rounded-lg px-3 py-2.5"><span class="text-text-secondary font-medium">'+tr('调整类型')+'</span>'+
+        '<label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="ar-sp-kind" value="sp" checked onchange="arSpecialPriceKind()">'+tr('运费优惠')+'</label>'+
+        '<label class="inline-flex items-center gap-1.5 cursor-pointer"><input type="radio" name="ar-sp-kind" value="cur" onchange="arSpecialPriceKind()">'+tr('调整币种')+'</label></div>';
     h+='<section><div class="flex items-center gap-2 mb-3"><span class="w-1 h-4 bg-amber-400 rounded"></span><span class="text-base font-semibold text-text-primary">'+tr('运费优惠')+'</span></div>';
-    h+='<div class="flex flex-wrap items-center gap-x-6 gap-y-3 bg-white border border-surface-200 rounded-lg p-3">';
+    h+='<div id="ar-sp-sec-disc" class="flex flex-wrap items-center gap-x-6 gap-y-3 bg-white border border-surface-200 rounded-lg p-3">';
     h+='<div class="flex items-center gap-2 text-sm"><span class="text-text-secondary">'+tr('优惠模式')+'</span><label class="inline-flex items-center gap-1 cursor-pointer"><input type="radio" name="ar-sp-mode" value="unit" checked onchange="arSpecialPricePreview()">'+tr('单价模式')+'</label><label class="inline-flex items-center gap-1 cursor-pointer"><input type="radio" name="ar-sp-mode" value="total" onchange="arSpecialPricePreview()">'+tr('总价模式')+'</label></div>';
     h+='<div class="flex items-center gap-2 text-sm"><span class="text-text-secondary">'+tr('调整方式')+'</span><label class="inline-flex items-center gap-1 cursor-pointer"><input type="radio" name="ar-sp-way" value="val" checked onchange="arSpecialPricePreview()">'+tr('数值')+'</label><label class="inline-flex items-center gap-1 cursor-pointer"><input type="radio" name="ar-sp-way" value="pct" onchange="arSpecialPricePreview()">'+tr('百分比')+'</label></div>';
     h+='<div class="flex items-center gap-2 text-sm"><span class="text-text-secondary">'+tr('调整值')+'</span><input id="ar-sp-val" type="number" min="0" step="0.01" class="h-8 w-32 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" oninput="arSpecialPricePreview()"></div>';
     h+='<div class="text-xs text-text-muted">'+tr('优惠为减项：单价 100、数值 5 → 95；百分比 5 → 95')+'</div>';
     h+='</div></section>';
     h+='<section><div class="flex items-center gap-2 mb-3"><span class="w-1 h-4 bg-amber-400 rounded"></span><span class="text-base font-semibold text-text-primary">'+tr('调整币种')+'</span><span class="text-xs text-text-muted">'+tr('币种来自「销售报价(散货)」报价维护')+'</span></div>';
-    h+='<div class="flex items-center gap-3 bg-white border border-surface-200 rounded-lg p-3">';
+    h+='<div id="ar-sp-sec-cur" class="flex items-center gap-3 bg-white border border-surface-200 rounded-lg p-3 opacity-40 pointer-events-none">';
     h+='<select id="ar-sp-cur" class="h-9 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50" onchange="arSpecialPriceCurChange()"><option value="">'+tr('不调整币种')+'</option>'+(typeof LCL_QUOTE_CURRENCIES!=='undefined'?LCL_QUOTE_CURRENCIES:['人民币','美金','西法']).map(function(c){return '<option>'+esc(c)+'</option>';}).join('')+'</select>';
     h+='<span id="ar-sp-cur-tip" class="text-xs text-text-muted"></span></div></section>';
     h+='<section><div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('申请备注')+'</label><textarea id="ar-sp-rk" rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('选填，说明特价原因'))+'"></textarea></div></section>';
@@ -915,22 +919,39 @@ function openArSpecialPriceModal(){
     document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
         '<button onclick="arSpecialPriceSubmit()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('提交审批')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
+    arSpecialPriceKind();
+}
+/* 调整类型互斥：运费优惠 / 调整币种 只能单选，未选区块置灰 */
+function arSpecialPriceKind(){
+    var kind=((document.querySelector('input[name="ar-sp-kind"]:checked')||{}).value)||'sp';
+    var disc=document.getElementById('ar-sp-sec-disc');
+    var cur=document.getElementById('ar-sp-sec-cur');
+    if(disc)disc.className=disc.className.replace(/\s*(opacity-40|pointer-events-none)/g,'')+(kind==='sp'?'':' opacity-40 pointer-events-none');
+    if(cur)cur.className=cur.className.replace(/\s*(opacity-40|pointer-events-none)/g,'')+(kind==='cur'?'':' opacity-40 pointer-events-none');
 }
 function arSpecialPriceSubmit(){
     var picked=[];
     document.querySelectorAll('.ar-sp-pick:checked').forEach(function(x){picked.push(parseInt(x.value,10));});
     if(!picked.length){showToast(tr('请至少勾选一条运费'));return;}
+    var kind=((document.querySelector('input[name="ar-sp-kind"]:checked')||{}).value)||'sp';
     var d=arSpDiscount();
     var cur=((document.getElementById('ar-sp-cur')||{}).value)||'';
     var rk=(document.getElementById('ar-sp-rk')||{}).value||'';
     var rows=picked.map(function(i){return _arSpCtx.rows[i];}).filter(Boolean);
+    if(kind==='sp'&&!(d.val>0)){showToast(tr('请填写大于 0 的调整值'));return;}
+    if(kind==='cur'&&!cur){showToast(tr('请选择调整币种'));return;}
     var dt=new Date(),pad=function(n){return String(n).padStart(2,'0');};
     var ds=String(dt.getFullYear()).slice(2)+pad(dt.getMonth()+1)+pad(dt.getDate());
     var seq=String((TC['approval-mine'].d||[]).length+1).padStart(4,'0');
     var no='AP'+ds+seq;
     var custs=rows.map(function(r){return r.cust;}).filter(function(v,i,a){return a.indexOf(v)===i;});
-    var quoteAmt='';
-    if(cur){
+    var quoteAmt='—',modeTxt='—',wayTxt='—',valTxt='—',curTxt='—';
+    if(kind==='sp'){
+        modeTxt=d.mode==='unit'?tr('单价模式'):tr('总价模式');
+        wayTxt=d.way==='pct'?tr('百分比'):tr('数值');
+        valTxt=String(d.val);
+    }else{
+        curTxt=cur;
         var ps=rows.map(function(r){return arQuotePriceInCur(cur,r.wb);}).filter(function(p){return p!=null;});
         quoteAmt=ps.length?ps.map(function(p){return String(p)+' '+cur;}).join(' / '):tr('没有当前币种的报价');
     }
@@ -940,9 +961,10 @@ function arSpecialPriceSubmit(){
         '当前审批节点':'1 / 1','提示消息':'你有一条新的「运费特价申请」待审批！','审批状态':'待审批'
     });
     _approvalDetails[no]={title:'运费特价申请信息',fields:[
-        ['客户',custs.join('、')],['运单数',String(rows.length)],['费用科目','运费'],
-        ['优惠模式',d.mode==='unit'?tr('单价模式'):tr('总价模式')],['调整方式',d.way==='pct'?tr('百分比'):tr('数值')],['调整值',String(d.val)],
-        ['调整币种',cur||'—'],['币种报价金额',quoteAmt||'—'],['备注',rk]
+        ['客户',custs.join('、')],['运单数',String(rows.length)],['费用科目','运费（未确认）'],
+        ['调整类型',kind==='sp'?tr('运费优惠'):tr('调整币种')],
+        ['优惠模式',modeTxt],['调整方式',wayTxt],['调整值',valTxt],
+        ['调整币种',curTxt],['币种报价金额',quoteAmt],['备注',rk]
     ],nodes:[{name:'审批节点',status:'待审批',people:'财务主管',approver:'',time:'',remark:''}]};
     if(typeof _listData!=='undefined')delete _listData['approval-mine'];
     closeCrudModal();
@@ -977,6 +999,7 @@ function arMasterDetailHtml(sel,enableFn){
     var groups=order.map(function(k){
         var g=map[k];
         g.total=g.rows.reduce(function(a,r){return a+arNum(r.amt);},0);
+        g.cg=arCargoWithCustoms(g.wb)||{};
         return g;
     });
     /* 底部各币别汇总 */
@@ -985,19 +1008,24 @@ function arMasterDetailHtml(sel,enableFn){
         if(!byCur[g.cur]){byCur[g.cur]=0;curOrder.push(g.cur);}
         byCur[g.cur]+=g.total;
     });
-    var h='<div class="border border-surface-200 rounded-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-xs min-w-[720px]">';
-    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['','客户名称','运单号','币别','费用笔数','应收总费用'].map(function(t){return '<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
+    var h='<div class="border border-surface-200 rounded-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-xs min-w-[1080px]">';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['','客户名称','运单号','品名','货物类型','包装方式','体积(CBM)','重量(KG)','币别','费用笔数','应收总费用'].map(function(t){return '<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
     groups.forEach(function(g,gi){
         var pickable=g.rows.filter(enableFn).length;
         h+='<tr class="bg-primary-50/50 border-t border-surface-200">'+
             '<td class="px-3 py-2"><input type="checkbox" class="ar-grp-pick" onchange="arMasterGroupToggle(this,'+gi+')"'+(pickable?'':' disabled')+'></td>'+
             '<td class="px-3 py-2 font-medium text-text-primary whitespace-nowrap">'+esc(g.cust)+'</td>'+
-            '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(g.wb)+'</td>'+
+            '<td class="px-3 py-2 whitespace-nowrap"><button type="button" id="ar-md-caret-'+gi+'" onclick="arMasterToggle('+gi+')" class="text-text-muted hover:text-primary-600 cursor-pointer mr-1">▸</button><span class="font-medium text-primary-700">'+esc(g.wb)+'</span></td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(g.cg.goods||'')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(g.cg.cargo||'')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(g.cg.pack||'')+'</td>'+
+            '<td class="px-3 py-2 text-right text-text-secondary whitespace-nowrap">'+esc(g.cg.vol||'')+'</td>'+
+            '<td class="px-3 py-2 text-right text-text-secondary whitespace-nowrap">'+esc(g.cg.wt||'')+'</td>'+
             '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(g.cur)+'</td>'+
             '<td class="px-3 py-2 whitespace-nowrap">'+g.rows.length+'</td>'+
             '<td class="px-3 py-2 font-semibold text-orange-600 whitespace-nowrap">'+arFmt(g.total)+'</td></tr>';
-        /* 子表：具体费用科目 */
-        h+='<tr class="border-t border-surface-100"><td class="px-3 py-1"></td><td colspan="5" class="px-3 py-1.5">';
+        /* 子表：具体费用科目（默认收缩，点主行 ▸ 展开） */
+        h+='<tr id="ar-md-sub-'+gi+'" class="hidden border-t border-surface-100"><td class="px-3 py-1"></td><td colspan="10" class="px-3 py-1.5">';
         h+='<table class="w-full text-xs"><thead><tr class="text-text-secondary">'+['','费用名称','金额(原币)','未核销金额','核销标识','费用时间'].map(function(t){return '<th class="px-2 py-1 text-left font-medium whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
         g.rows.forEach(function(r){
             var idx=_arDetailRows.indexOf(r);
@@ -1017,6 +1045,14 @@ function arMasterDetailHtml(sel,enableFn){
         return '<span class="text-xs px-2.5 py-1.5 rounded-lg bg-primary-50 text-primary-700 font-medium">'+esc(c)+'：'+arFmt(byCur[c])+'</span>';
     }).join('')+'<span class="text-[11px] text-amber-600">'+tr('不同币别不做合并')+'</span></div>';
     return h;
+}
+/* 主行 ▸/▾ 展开收起子表 */
+function arMasterToggle(gi){
+    var row=document.getElementById('ar-md-sub-'+gi);
+    var caret=document.getElementById('ar-md-caret-'+gi);
+    if(!row)return;
+    var open=row.classList.toggle('hidden')===false;
+    if(caret)caret.textContent=open?'▾':'▸';
 }
 /* 主行复选框联动组内可选费用行（已勾上的保持同步） */
 function arMasterGroupToggle(cb,gi){

@@ -1007,6 +1007,8 @@ function renderToolbarAction(action,id){
     else if(action.key==='opInstructionAttach')click='openSelectedOpInstructionAttach(\''+id+'\')';
     else if(action.key==='crmApplyAccount')click='openSelectedCrmAccountApply(\''+id+'\')';
     else if(id==='ow-outbound'&&action.type==='add')click='openOverseasOutboundCreate()';
+    else if(id==='prod-price-store'&&action.type==='add')click='openSpStoreModal(\'add\',\''+id+'\',-1)';
+    else if(id==='prod-price-store'&&action.type==='edit')click='openSelectedSpStoreEdit(\''+id+'\')';
     else if(action.type==='add')click='openCrudModal(\'add\',\''+id+'\',-1)';
     else if((id==='fin-bank-voucher'||id==='fin-ar-receipt')&&action.type==='edit')click='openSelectedVoucherEdit(\''+id+'\')';
     else if(action.type==='edit')click='openSelectedCrud(\'edit\',\''+id+'\')';

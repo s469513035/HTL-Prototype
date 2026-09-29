@@ -240,6 +240,29 @@ function filterRowsByQuery(id,rows){
     return rows.filter(function(row){
         return c.q.every(function(q,idx){
             const raw=values[idx];
+            if(q.type==='daterange'){
+                const parts=String(raw||'').split('~');
+                const from=parts[0]||'',to=parts[1]||'';
+                if(!from&&!to)return true;
+                const rangeCol=findQueryColumnIndex(headers,q);
+                /* 定位到列就查该列；定位不到（label 非表头，如按单号内嵌日期）扫整行取首个日期 */
+                const cells=rangeCol>=0?[row[rangeCol]]:row;
+                let cellDate='';
+                for(let ci=0;ci<cells.length&&!cellDate;ci++){
+                    const text=String(cells[ci]==null?'':cells[ci]);
+                    const dm=/\d{4}-\d{2}-\d{2}/.exec(text);
+                    if(dm)cellDate=dm[0];
+                    else{
+                        /* 单号内嵌日期兜底：LCD-20260905007 / WB-20260522001 → 归一化后取日期 */
+                        const cm=/\d{4}-\d{2}-\d{2}/.exec(text.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3'));
+                        if(cm)cellDate=cm[0];
+                    }
+                }
+                if(!cellDate)return false;
+                if(from&&cellDate<from)return false;
+                if(to&&cellDate>to)return false;
+                return true;
+            }
             if(!String(raw||'').trim())return true;
             const terms=splitQueryTerms(raw);
             if(terms.length===0)return true;

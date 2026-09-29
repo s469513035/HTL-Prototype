@@ -70,6 +70,14 @@ function generateListPage(id,page,statusFilter){
                 h+='</select>';
             }else if(q.type==='date'){
                 h+='<input data-query-index="'+qi+'" type="date" value="'+esc(savedVal)+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50">';
+            }else if(q.type==='daterange'){
+                /* 时间范围：起~止两个日期，合成 "起~止" 写进 carrier（runListSearch 走 multiline 取值路径） */
+                var rangePair=String(savedVal||'').split('~');
+                h+='<div data-query-index="'+qi+'" data-query-range="1" data-query-multiline="1" data-query-value="'+esc(savedVal)+'" class="flex items-center gap-1">';
+                h+='<input type="date" value="'+esc(rangePair[0]||'')+'" onchange="syncRangeQuery(this)" class="h-8 px-1 text-xs border border-surface-200 rounded-lg bg-surface-50 w-1/2 min-w-0">';
+                h+='<span class="text-text-muted text-xs flex-shrink-0">~</span>';
+                h+='<input type="date" value="'+esc(rangePair[1]||'')+'" onchange="syncRangeQuery(this)" class="h-8 px-1 text-xs border border-surface-200 rounded-lg bg-surface-50 w-1/2 min-w-0">';
+                h+='</div>';
             }else if(q.type==='multiselect'){
                 h+='<div data-query-index="'+qi+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50 cursor-pointer flex items-center justify-between" onclick="openMultiSelectQuery(this,\''+id+'\','+qi+')"><span class="truncate text-text-muted">'+esc(lbl)+'</span><svg class="w-4 h-4 text-text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div>';
             }else if(q.type==='checkedDropdown'){

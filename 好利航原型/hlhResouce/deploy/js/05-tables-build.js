@@ -422,7 +422,8 @@ addPrototypeTable('wh-sort-bag','分拣装袋管理','袋号|件数|重量(KG)|�
             {label:'运单号',type:'text',field:'wbNo'},
             {label:'问题件类型',type:'select',field:'issueType',options:CS_ISSUE_TYPES},
             {label:'客户名称',type:'text',field:'custName'},
-            {label:'销售产品',type:'select',field:'salesProduct',options:CS_PRODUCTS}
+            {label:'销售产品',type:'select',field:'salesProduct',options:CS_PRODUCTS},
+            {label:'最新响应时间',type:'daterange'}
         ]
     );
 })();

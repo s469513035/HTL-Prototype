@@ -33,7 +33,8 @@ addPrototypeTable('lcl-cost-detail','成本明细',
     {label:'服务商',type:'select',options:LCL_COST_PROVIDERS},
     {label:'费用科目',type:'select',options:LCL_COST_ACCOUNTS},
     {label:'币别',type:'select',options:['CNY','USD','EUR']},
-    {label:'费用状态',type:'select',options:['待确认','已确认','已生成付款单','已作废']}
+    {label:'费用状态',type:'select',options:['待确认','已确认','已生成付款单','已作废']},
+    {label:'费用日期',type:'daterange'}
 ]);
 TC['lcl-cost-detail'].noExpand=true;
 TC['lcl-cost-detail'].noAutoAudit=true;
@@ -53,7 +54,8 @@ addPrototypeTable('lcl-pay-bill','付款单管理',
     {label:'付款单号',type:'text'},
     {label:'服务商',type:'select',options:LCL_COST_PROVIDERS},
     {label:'币别',type:'select',options:['CNY','USD','EUR']},
-    {label:'付款状态',type:'select',options:['待审核','已审核','待付款','部分付款','已付清','已作废']}
+    {label:'付款状态',type:'select',options:['待审核','已审核','待付款','部分付款','已付清','已作废']},
+    {label:'申请时间',type:'daterange'}
 ]);
 TC['lcl-pay-bill'].noExpand=true;
 TC['lcl-pay-bill'].noAutoAudit=true;

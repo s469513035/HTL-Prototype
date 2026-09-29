@@ -716,6 +716,14 @@ function toggleQueryPanel(btn,tabId){
     if(span)span.textContent=willShow?tr('收起筛选'):tr('查询条件');
 }
 
+/* 时间范围查询：起/止两个 date 输入合成 "起~止" 写进 carrier 的 dataset.queryValue */
+function syncRangeQuery(input){
+    var box=input.closest?input.closest('[data-query-range]'):null;
+    if(!box)return;
+    var ins=box.querySelectorAll('input[type="date"]');
+    var from=(ins[0]&&ins[0].value)||'',to=(ins[1]&&ins[1].value)||'';
+    box.dataset.queryValue=(from||to)?(from+'~'+to):'';
+}
 function runListSearch(tabId){
     if(_activeQueryEdit)closeQueryTextPopover(false);
     const grid=document.getElementById('query-grid-'+tabId);
@@ -767,6 +775,7 @@ function resetQueryForm(tabId){
             if(el.type==='checkbox'||el.type==='radio')el.checked=false;
             else{el.value=''; if(el.dataset.queryMultiline==='1')el.dataset.queryValue='';}
         });
+        grid.querySelectorAll('[data-query-range]').forEach(function(el){el.dataset.queryValue='';});
     }
     delete _queryState[tabId];
     const main=document.getElementById('main-content');

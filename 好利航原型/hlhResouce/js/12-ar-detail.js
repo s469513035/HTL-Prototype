@@ -142,6 +142,7 @@ function arStatusTabsHtml(){
 function arQueryFilteredRows(){
     var v=function(id){return ((document.getElementById(id)||{}).value||'').trim();};
     var qwb=v('ar-q-wb'),qbl=v('ar-q-bl'),qc=v('ar-q-cust'),qs=v('ar-q-sales'),qcyc=v('ar-q-cyc'),qfee=v('ar-q-fee');
+    var qff=v('ar-q-ft-from'),qft=v('ar-q-ft-to');
     return _arDetailRows.filter(function(r){
         if(_arCustFilter&&(_arLeftTab==='sales'?r.sales:r.cust)!==_arCustFilter)return false;
         if(qwb&&String(r.wb||'').indexOf(qwb)<0)return false;
@@ -150,6 +151,8 @@ function arQueryFilteredRows(){
         if(qs&&r.sales!==qs)return false;
         if(qcyc&&r.cyc!==qcyc)return false;
         if(qfee&&r.fee!==qfee)return false;
+        if(qff&&String(r.ftime||'').slice(0,10)<qff)return false;
+        if(qft&&String(r.ftime||'').slice(0,10)>qft)return false;
         return true;
     });
 }
@@ -620,6 +623,7 @@ function generateArDetailPage(id){
     h+=arQueryField('业务员','<select id="ar-q-sales" class="'+selCls+'"><option value="">'+tr('全部')+'</option>'+_arSales.map(function(s){return '<option>'+esc(s.name)+'</option>';}).join('')+'</select>');
     h+=arQueryField('结算周期','<select id="ar-q-cyc" class="'+selCls+'"><option value="">'+tr('全部')+'</option><option>出货票结</option><option>出货月结</option><option>签收月结</option></select>');
     h+=arQueryField('财务科目','<select id="ar-q-fee" class="'+selCls+'"><option value="">'+tr('全部')+'</option><option>运费</option><option>报关费</option><option>应收附加费</option><option>客户理赔费</option><option>派送费</option></select>');
+    h+=arQueryField('费用时间','<div class="flex items-center gap-1"><input id="ar-q-ft-from" type="date" class="'+inpCls+' w-1/2 min-w-0"><span class="text-text-muted text-xs">~</span><input id="ar-q-ft-to" type="date" class="'+inpCls+' w-1/2 min-w-0"></div>');
     h+='</div></div>';
     h+='<div class="flex flex-row xl:flex-col gap-1 flex-shrink-0 xl:pt-4 xl:min-w-[96px]">';
     h+='<button type="button" onclick="resetArQuery()" class="h-8 px-3 text-xs font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer" style="min-width:72px">'+tr('重置')+'</button>';

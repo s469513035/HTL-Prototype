@@ -46,15 +46,14 @@ function renderArBillRows(){
     var rows=_arBillRows.filter(function(b){
         return (!bn||String(b.bn).indexOf(bn)>=0)&&(!ba||String(b.batch).indexOf(ba)>=0)&&(!cu||String(b.cust).indexOf(cu)>=0);
     });
-    if(!rows.length)return '<tr><td colspan="21" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    if(!rows.length)return '<tr><td colspan="20" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
     return rows.map(function(b,i){
         var h='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
         h+='<td class="px-3 py-2.5 text-text-muted">'+(i+1)+'</td>';
         h+='<td class="px-3 py-2.5"><input type="checkbox" class="arbill-check" value="'+esc(b.bn)+'"></td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap"><a onclick="openArBillDetail(\''+esc(b.bn)+'\')" class="font-medium text-primary-700 hover:underline cursor-pointer">'+esc(b.bn)+'</a></td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.batch)+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.masterNo||'—')+'</td>';
-        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.jobNo||'—')+'</td>';
+        h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.masterJob||b.masterNo||'—')+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.cust)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap text-text-secondary">'+esc(b.cur)+'</td>';
         h+='<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-blue-700">'+esc(b.amt)+'</td>';
@@ -1072,7 +1071,7 @@ function generateArBillPage(id){
     h+='</div></div>';
     h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto"><table class="w-full text-sm" style="min-width:2300px;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     h+='<th class="px-3 py-3 text-left font-semibold" style="width:40px">#</th><th class="px-3 py-3 text-left font-semibold" style="width:40px"><input type="checkbox" onchange="document.querySelectorAll(\'.arbill-check\').forEach(function(c){c.checked=this.checked;}.bind(this))"></th>';
-    ['应收账单号','账单批次号','主单号','Job No','客户名称','币别','金额(原币)','已核销金额','待核销金额','已收金额','收款状态','结算周期','账单到期时间','核销状态','备注','数据来源','创建时间','发送人','发送时间'].forEach(function(c){h+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
+    ['应收账单号','账单批次号','主单号/Job No','客户名称','币别','金额(原币)','已核销金额','待核销金额','已收金额','收款状态','结算周期','账单到期时间','核销状态','备注','数据来源','创建时间','发送人','发送时间'].forEach(function(c){h+='<th class="px-3 py-3 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody id="arbill-tbody">'+renderArBillRows()+'</tbody></table></div></div>';
     h+='</div>';
     return h;
@@ -1092,6 +1091,7 @@ function _arBillDeriveRefs(b){
         var d=String(b.ct||''),ds=(d.match(/\d{4}-\d{2}-\d{2}/)||[''])[0].replace(/-/g,'').slice(2);
         b.jobNo='JOB'+(ds||'260000')+String(b.bn||'').replace(/\D/g,'').slice(-3);
     }
+    if(!b.masterJob&&b.masterNo)b.masterJob=b.masterNo+(b.jobNo?(' / '+b.jobNo):'');
     return b;
 }
 (_arBillSeed||[]).forEach(_arBillDeriveRefs);

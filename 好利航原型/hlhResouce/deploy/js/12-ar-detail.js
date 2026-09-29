@@ -475,8 +475,7 @@ function openArGenBillModal(){
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('账单信息')+'</div><div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('账单批次号')+'</label><input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(defaultBatch)+'" placeholder="'+esc(tr('请输入账单批次号'))+'"></div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('账单到期时间')+'</label><input type="date" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+dueStr+'"></div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('主单号')+'</label><input id="ar-gb-master" type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc('MS'+String(sel[0].wb||'').replace(/\D/g,''))+'" placeholder="'+esc(tr('自动生成，可修改'))+'"></div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('Job No')+'</label><input id="ar-gb-job" type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc('JOB'+dateStr+'001')+'" placeholder="'+esc(tr('自动生成，可修改'))+'"></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('主单号/Job No')+'</label><input id="ar-gb-ref" type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc('MS'+String(sel[0].wb||'').replace(/\D/g,'')+' / JOB'+dateStr+'001')+'" placeholder="'+esc(tr('自动生成，可修改'))+'"></div>';
     html+='<div class="md:col-span-3 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('生成备注')+'</label><textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('可选，补充账单备注'))+'"></textarea></div>';
     html+='</div></div>';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用汇总')+'</div>'+arGroupListHtml(groups)+'</div>';
@@ -511,9 +510,11 @@ function arGenBillSubmit(){
  * 所以先把勾中运单的费用明细摊开、选定一条，再进调整弹窗（与新增同一弹窗，运单号不可改）。 */
 function openArAdjustModal(){
     var sel=arGetSelectedRows();
-    if(!sel.length){showToast(tr('请先勾选要调整的运单'));return;}
-    var can=sel.filter(function(r){return r.st!=='作废';});
-    if(!can.length){showToast(tr('所选运单下的费用明细都已作废，无法调整'));return;}
+    if(!sel.length){showToast(tr('请先勾选要调整的费用明细'));return;}
+    var pend=sel.filter(function(r){return r.st==='待确认';});
+    if(!pend.length){showToast(tr('仅「待确认」状态的费用明细可调整'));return;}
+    if(pend.length>1){showToast(tr('一次只能调整一条费用明细，请单选'));return;}
+    openArDetailModal(pend[0]);return;
     var panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='72%';
     document.getElementById('crud-modal-title').textContent=tr('调整')+' - '+tr('选择费用明细');
@@ -1102,9 +1103,8 @@ function arGenBillFinalize(rows){
     var groups=_arGenBillGroups||{};
     var batch=_arGenBillBatch,due=_arGenBillDue;
     var now=(typeof fclNow==='function')?fclNow():((typeof receiptNowStr==='function')?receiptNowStr():'');
-    var masterEl=document.getElementById('ar-gb-master'),jobEl=document.getElementById('ar-gb-job');
+    var masterEl=document.getElementById('ar-gb-ref');
     var masterDef=masterEl?String(masterEl.value||'').trim():'';
-    var jobDef=jobEl?String(jobEl.value||'').trim():'';
     Object.keys(groups).forEach(function(k){
         var g=groups[k];
         var amt=g.rows.reduce(function(a,r){return a+arNum(r.amt);},0);
@@ -1114,8 +1114,7 @@ function arGenBillFinalize(rows){
             used:'0.00',unused:arFmt(amt),cyc:first.cyc||'',due:due,
             st:'待核销',rk:'',src:'账单生成',ct:now,
             fees:g.rows.map(function(r){return {wb:r.wb,cust:r.cust,sales:r.sales,fee:r.fee,amt:r.amt,cur:r.cur,rate:r.rate||'1',rmb:r.rmb||r.amt};}),
-            masterNo:masterDef||('MS'+String(first.wb||'').replace(/\D/g,'')),
-            jobNo:jobDef||('JOB'+String(new Date().getFullYear()).slice(2)+String(g.no).replace(/\D/g,'').slice(-6))};
+            masterJob:masterDef||('MS'+String(first.wb||'').replace(/\D/g,'')+' / JOB'+String(new Date().getFullYear()).slice(2)+String(g.no).replace(/\D/g,'').slice(-6))};
         bill.sender='';bill.sentAt='';bill.recv='0.00';bill.paySt='未收款';
         if(typeof _arBillDeriveRefs==='function')_arBillDeriveRefs(bill);
         if(typeof _arBillRows!=='undefined'&&_arBillRows)_arBillRows.unshift(bill);

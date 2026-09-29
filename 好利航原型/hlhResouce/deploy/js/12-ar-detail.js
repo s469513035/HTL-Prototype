@@ -639,7 +639,7 @@ function generateArDetailPage(id){
     h+=arToolbarBtn('调整','openArAdjustModal()');
     h+=arToolbarBtn('费用确认','openArConfirmModal()','success');
     h+=arToolbarBtn('操作审核','openArAuditModal()','success');
-    h+=arToolbarBtn('申请特价','openArSpecialPriceModal()');
+    h+=arToolbarBtn('申请运费调整','openArSpecialPriceModal()');
     h+=arToolbarBtn('生成账单','arDetailAction(\'genBill\')');
     h+=arToolbarBtn('作废','arDetailAction(\'void\')','danger');
     h+='</div></div>';
@@ -814,7 +814,7 @@ function confirmArDetailImport(){
 /* ===== 角色工作台首页（业务/客服/操作） ===== */
 
 
-/* ===== 申请特价：勾选「运费」费用行 → 优惠/币种调整 → 提交进审批流 =====
+/* ===== 申请运费调整：勾选「运费」费用行 → 优惠/币种调整 → 提交进审批流 =====
  * 仅运费可申请；优惠支持 单价/总价 模式 × 数值/百分比；币种取自销售报价(散货)维护的币别集。 */
 var _arSpCtx={rows:[],blocked:0};
 function arSpUnitOf(r){return arNum(r.amt)/arPcsOf(r.wb);}   /* 单价折算=总价/运单件数（演示口径） */
@@ -898,13 +898,13 @@ function arSpecialPriceQuoteCells(){
 }
 function openArSpecialPriceModal(){
     var sel=arGetSelectedRows();
-    if(!sel.length){showToast(tr('请先勾选要申请特价的费用明细'));return;}
+    if(!sel.length){showToast(tr('请先勾选要申请运费调整的费用明细'));return;}
     var eligible=sel.filter(function(r){return r.fee==='运费'&&r.st==='待确认';});
-    if(!eligible.length){showToast(tr('仅「待确认」状态的运费可申请特价'));return;}
+    if(!eligible.length){showToast(tr('仅「待确认」状态的运费可申请运费调整'));return;}
     _arSpCtx={rows:eligible,blocked:sel.length-eligible.length};
     var panel=document.querySelector('#crud-modal .slide-panel');
     if(panel)panel.style.width='78%';
-    document.getElementById('crud-modal-title').textContent=tr('申请特价')+' - '+tr('应收明细');
+    document.getElementById('crud-modal-title').textContent=tr('申请运费调整')+' - '+tr('应收明细');
     var h='<div class="space-y-5">';
     if(_arSpCtx.blocked>0){
         h+='<div class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">'+tr('已自动跳过')+' '+_arSpCtx.blocked+' '+tr('条非运费/非待确认费用')+'</div>';
@@ -929,7 +929,7 @@ function openArSpecialPriceModal(){
     h+='<div id="ar-sp-sec-cur" class="flex items-center gap-3 bg-white border border-surface-200 rounded-lg p-3 opacity-40 pointer-events-none">';
     h+='<select id="ar-sp-cur" class="h-9 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50" onchange="arSpecialPriceCurChange()"><option value="">'+tr('不调整币种')+'</option>'+(typeof LCL_QUOTE_CURRENCIES!=='undefined'?LCL_QUOTE_CURRENCIES:['人民币','美金','西法']).map(function(c){return '<option>'+esc(c)+'</option>';}).join('')+'</select>';
     h+='<span id="ar-sp-cur-tip" class="text-xs text-text-muted"></span></div></section>';
-    h+='<section><div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('申请备注')+'</label><textarea id="ar-sp-rk" rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('选填，说明特价原因'))+'"></textarea></div></section>';
+    h+='<section><div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('申请备注')+'</label><textarea id="ar-sp-rk" rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('选填，说明调整原因'))+'"></textarea></div></section>';
     h+='</div>';
     document.getElementById('crud-modal-body').innerHTML=h;
     document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
@@ -973,11 +973,11 @@ function arSpecialPriceSubmit(){
         quoteAmt=ps.length?ps.map(function(p){return String(p)+' '+cur;}).join(' / '):tr('没有当前币种的报价');
     }
     fclPushRow('approval-mine',{
-        '申请单号':no,'审批类型':'运费特价申请','申请人':(typeof fclWho==='function'?fclWho():'当前用户'),
+        '申请单号':no,'审批类型':'运费调整申请','申请人':(typeof fclWho==='function'?fclWho():'当前用户'),
         '申请时间':(typeof fclNow==='function'?fclNow():''),
-        '当前审批节点':'1 / 1','提示消息':'你有一条新的「运费特价申请」待审批！','审批状态':'待审批'
+        '当前审批节点':'1 / 1','提示消息':'你有一条新的「运费调整申请」待审批！','审批状态':'待审批'
     });
-    _approvalDetails[no]={title:'运费特价申请信息',fields:[
+    _approvalDetails[no]={title:'运费调整申请信息',fields:[
         ['客户',custs.join('、')],['运单数',String(rows.length)],['费用科目','运费（未确认）'],
         ['调整类型',kind==='sp'?tr('运费优惠'):tr('调整币种')],
         ['优惠模式',modeTxt],['调整方式',wayTxt],['调整值',valTxt],
@@ -985,7 +985,7 @@ function arSpecialPriceSubmit(){
     ],nodes:[{name:'审批节点',status:'待审批',people:'财务主管',approver:'',time:'',remark:''}]};
     if(typeof _listData!=='undefined')delete _listData['approval-mine'];
     closeCrudModal();
-    showToast(tr('特价申请已提交审批')+'：'+no);
+    showToast(tr('运费调整已提交审批')+'：'+no);
 }
 
 
@@ -1078,7 +1078,7 @@ function arMasterGroupToggle(cb,gi){
 }
 
 
-/* ===== 申请特价演示数据：补充多条「待确认运费」（多客户多币别，展示多行与多币种报价效果） ===== */
+/* ===== 申请运费调整演示数据：补充多条「待确认运费」（多客户多币别，展示多行与多币种报价效果） ===== */
 _arDetailSeed.push(
 {wb:'H2609200007',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'3,280.00',cur:'人民币',rate:'1',rmb:'3,280.00',used:'0',unused:'3,280.00',st:'待确认',ftime:'2026-09-20 10:12:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-09-20 10:12:10',cb:'HYD-开发者'},
 {wb:'H2609200008',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'运费',amt:'1,150.50',cur:'人民币',rate:'1',rmb:'1,150.50',used:'0',unused:'1,150.50',st:'待确认',ftime:'2026-09-20 11:03:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-09-20 11:03:10',cb:'梦幻小业务'},

@@ -14,7 +14,7 @@ addPrototypeTable('approval-mine','我的审批',
     ],
     [
         {label:'申请单号',type:'text'},
-        {label:'审批类型',type:'select',options:['财务预付款申请','合同盖章申请','运费特价申请']},
+        {label:'审批类型',type:'select',options:['财务预付款申请','合同盖章申请','运费调整申请']},
         {label:'申请人',type:'text'},
         {label:'审批状态',type:'select',options:['待审批','审核通过','审核驳回']}
     ]

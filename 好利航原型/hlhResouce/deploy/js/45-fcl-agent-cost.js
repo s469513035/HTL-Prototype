@@ -2175,7 +2175,15 @@ var _FCL_PAY_FLOWS={
         {no:'P2606180004',st:'全部抵扣',dc:'支出',cur:'USD',amt:5180,used:5180,
          ourName:'好利航国际物流 / 招商银行 7559-***-013',payeeName:'中远海运集装箱运输',
          payeeBank:'中国银行 上海分行',txNo:'TXN26061800455',feeTime:'2026-06-18 15:30',
-         way:'电汇',memo:'水单_COSCO_0618.pdf'}
+         way:'电汇',memo:'水单_COSCO_0618.pdf'},
+        {no:'P2609090009',st:'待抵扣',dc:'支出',cur:'CNY',amt:20000,used:0,
+         ourName:'好利航国际物流 / 中国银行 4311-***-212',payeeName:'中远海运集装箱运输',
+         payeeBank:'中国银行 上海分行',txNo:'TXN26090901102',feeTime:'2026-09-09 10:15',
+         way:'电汇',memo:'水单_COSCO_CNY_0909.pdf'},
+        {no:'P2609110010',st:'部分抵扣',dc:'支出',cur:'CNY',amt:10000,used:4000,
+         ourName:'好利航国际物流 / 中国银行 4311-***-212',payeeName:'中远海运集装箱运输',
+         payeeBank:'中国银行 上海分行',txNo:'TXN26091101330',feeTime:'2026-09-11 15:40',
+         way:'电汇',memo:'水单_COSCO_CNY_0911.pdf'}
     ],
     '鹏程拖车':[
         {no:'P2606200005',st:'全部抵扣',dc:'支出',cur:'CNY',amt:2000,used:2000,
@@ -2191,7 +2199,11 @@ var _FCL_PAY_FLOWS={
         {no:'P2606040007',st:'全部抵扣',dc:'支出',cur:'CNY',amt:1680,used:1680,
          ourName:'好利航国际物流 / 工商银行 4000-***-772',payeeName:'深圳市中远报关行',
          payeeBank:'工商银行 深圳分行',txNo:'TXN26060400772',feeTime:'2026-06-04 16:20',
-         way:'电汇',memo:'水单_报关行_0604.pdf'}
+         way:'电汇',memo:'水单_报关行_0604.pdf'},
+        {no:'P2609120011',st:'待抵扣',dc:'支出',cur:'CNY',amt:5000,used:0,
+         ourName:'好利航国际物流 / 工商银行 4000-***-772',payeeName:'深圳市中远报关行',
+         payeeBank:'工商银行 深圳分行',txNo:'TXN26091201721',feeTime:'2026-09-12 09:50',
+         way:'电汇',memo:'水单_报关行_0912.pdf'}
     ],
     'CMA CGM':[
         {no:'P2607100008',st:'待抵扣',dc:'支出',cur:'USD',amt:3600,used:0,

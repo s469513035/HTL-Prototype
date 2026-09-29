@@ -1025,8 +1025,8 @@ function arMasterDetailHtml(sel,enableFn){
         if(!byCur[g.cur]){byCur[g.cur]=0;curOrder.push(g.cur);}
         byCur[g.cur]+=g.total;
     });
-    var h='<div class="border border-surface-200 rounded-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-xs min-w-[1080px]">';
-    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['','客户名称','运单号','品名','货物类型','包装方式','体积(CBM)','重量(KG)','币别','费用笔数','应收总费用'].map(function(t){return '<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
+    var h='<div class="border border-surface-200 rounded-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-xs min-w-[1180px]">';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['','客户名称','运单号','品名','货物类型','包装方式','体积(CBM)','重量(KG)','报关类型','币别','费用笔数','应收总费用'].map(function(t){return '<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
     groups.forEach(function(g,gi){
         var pickable=g.rows.filter(enableFn).length;
         h+='<tr class="bg-primary-50/50 border-t border-surface-200">'+
@@ -1038,21 +1038,22 @@ function arMasterDetailHtml(sel,enableFn){
             '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(g.cg.pack||'')+'</td>'+
             '<td class="px-3 py-2 text-right text-text-secondary whitespace-nowrap">'+esc(g.cg.vol||'')+'</td>'+
             '<td class="px-3 py-2 text-right text-text-secondary whitespace-nowrap">'+esc(g.cg.wt||'')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(g.cg.customs||'')+'</td>'+
             '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(g.cur)+'</td>'+
             '<td class="px-3 py-2 whitespace-nowrap">'+g.rows.length+'</td>'+
             '<td class="px-3 py-2 font-semibold text-orange-600 whitespace-nowrap">'+arFmt(g.total)+'</td></tr>';
-        /* 子表：具体费用科目（默认收缩，点主行 ▸ 展开） */
-        h+='<tr id="ar-md-sub-'+gi+'" class="hidden border-t border-surface-100"><td class="px-3 py-1"></td><td colspan="10" class="px-3 py-1.5">';
-        h+='<table class="w-full text-xs"><thead><tr class="text-text-secondary">'+['','费用名称','金额(原币)','未核销金额','核销标识','费用时间'].map(function(t){return '<th class="px-2 py-1 text-left font-medium whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
+        /* 子表：费用科目（默认收缩，点主行 ▸ 展开）。列：费用名称/单价/金额/费用时间 */
+        h+='<tr id="ar-md-sub-'+gi+'" class="hidden border-t border-surface-100"><td class="px-3 py-1"></td><td colspan="11" class="px-3 py-1.5">';
+        h+='<table class="w-full text-xs"><thead><tr class="text-text-secondary">'+['','费用名称','单价','金额(原币)','费用时间'].map(function(t){return '<th class="px-2 py-1 text-left font-medium whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
         g.rows.forEach(function(r){
             var idx=_arDetailRows.indexOf(r);
             var can=enableFn(r);
+            var price=arFmt(arNum(r.amt)/arPcsOf(r.wb));
             h+='<tr class="'+(can?'':'opacity-50')+'">'+
                 '<td class="px-2 py-1.5 w-6"><input type="checkbox" class="ar-fee-pick" data-ar-grp="'+gi+'" value="'+idx+'"'+(can?' checked':' disabled')+'></td>'+
                 '<td class="px-2 py-1.5 whitespace-nowrap">'+esc(r.fee)+'</td>'+
+                '<td class="px-2 py-1.5 text-right whitespace-nowrap">'+price+'</td>'+
                 '<td class="px-2 py-1.5 whitespace-nowrap">'+esc(r.amt)+'</td>'+
-                '<td class="px-2 py-1.5 whitespace-nowrap">'+esc(r.unused)+'</td>'+
-                '<td class="px-2 py-1.5 whitespace-nowrap">'+arStatusBadge(r.st)+'</td>'+
                 '<td class="px-2 py-1.5 whitespace-nowrap">'+esc(r.ftime)+'</td></tr>';
         });
         h+='</tbody></table></td></tr>';

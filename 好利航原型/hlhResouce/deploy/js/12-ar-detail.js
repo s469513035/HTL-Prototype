@@ -404,9 +404,9 @@ function openArConfirmModal(){
     document.getElementById('crud-modal-title').textContent=tr('费用确认');
     var html='<div class="space-y-4">';
     html+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+tr('确认后，勾选的费用明细进入「待审核」，待操作审核通过后才能出账；未勾选的留在「待确认」。')+'</div>';
-    html+='<div class="text-xs text-text-secondary">'+tr('本次涉及')+' <span class="font-semibold text-text-primary">'+groups.length+'</span> '+tr('条费用')+'，'+
-        tr('待确认')+' <span class="font-semibold text-amber-600">'+pend.length+'</span> '+tr('条')+'</div>';
-    html+=arMasterDetailHtml(sel,function(r){return r.st==='待确认';});
+    html+='<div class="text-xs text-text-secondary">'+tr('本次加载')+' <span class="font-semibold text-text-primary">'+pend.length+'</span> '+
+        tr('条待确认费用')+'，'+tr('默认全选')+'</div>';
+    html+=arMasterDetailHtml(pend,function(r){return r.st==='待确认';});
     html+='</div>';
     document.getElementById('crud-modal-body').innerHTML=html;
     document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="arConfirmFees()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 cursor-pointer">'+tr('确认费用')+'</button>';
@@ -437,9 +437,9 @@ function openArAuditModal(){
     document.getElementById('crud-modal-title').textContent=tr('操作审核');
     var html='<div class="space-y-4">';
     html+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+tr('审核通过后，勾选的费用明细进入「待出账」，可以生成账单；未勾选的留在「待审核」。')+'</div>';
-    html+='<div class="text-xs text-text-secondary">'+tr('本次涉及')+' <span class="font-semibold text-text-primary">'+groups.length+'</span> '+tr('条费用')+'，'+
-        tr('待审核')+' <span class="font-semibold text-amber-600">'+pend.length+'</span> '+tr('条')+'</div>';
-    html+=arMasterDetailHtml(sel,function(r){return r.st==='待审核';});
+    html+='<div class="text-xs text-text-secondary">'+tr('本次加载')+' <span class="font-semibold text-text-primary">'+pend.length+'</span> '+
+        tr('条待审核费用')+'，'+tr('默认全选')+'</div>';
+    html+=arMasterDetailHtml(pend,function(r){return r.st==='待审核';});
     html+='</div>';
     document.getElementById('crud-modal-body').innerHTML=html;
     document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button><button onclick="arAuditFees()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 cursor-pointer">'+tr('审核通过')+'</button>';
@@ -475,6 +475,8 @@ function openArGenBillModal(){
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('账单信息')+'</div><div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('账单批次号')+'</label><input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(defaultBatch)+'" placeholder="'+esc(tr('请输入账单批次号'))+'"></div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('账单到期时间')+'</label><input type="date" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+dueStr+'"></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('主单号')+'</label><input id="ar-gb-master" type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc('MS'+String(sel[0].wb||'').replace(/\D/g,''))+'" placeholder="'+esc(tr('自动生成，可修改'))+'"></div>';
+    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('Job No')+'</label><input id="ar-gb-job" type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc('JOB'+dateStr+'001')+'" placeholder="'+esc(tr('自动生成，可修改'))+'"></div>';
     html+='<div class="md:col-span-3 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('生成备注')+'</label><textarea rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('可选，补充账单备注'))+'"></textarea></div>';
     html+='</div></div>';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('费用汇总')+'</div>'+arGroupListHtml(groups)+'</div>';
@@ -497,9 +499,9 @@ function arGenBillSubmit(){
         r.bf='是';
         r.batch=_arGenBillBatch;
         r.due=_arGenBillDue;
-        r.bn='RB'+String(new Date().getFullYear())+String(rows[0].wb||'').replace(/\D/g,'').slice(-6)+'00'+(i+1);
+        arGenBillAssign(r,i,rows);
     });
-    _arGenBillSel=null;
+    arGenBillFinalize(rows);
     closeCrudModal();
     refreshArDetailView();
     showToast(tr('账单生成成功')+'，'+rows.length+' '+tr('条已进入待核销'));
@@ -840,7 +842,9 @@ function arSpecialPriceRowsHtml(){
             '<td class="px-3 py-2 text-right font-semibold whitespace-nowrap">'+esc(r.amt)+'</td>'+
             '<td class="px-3 py-2 text-right text-green-700 whitespace-nowrap" data-sp-u="'+i+'">'+arFmt(c.unit)+'</td>'+
             '<td class="px-3 py-2 text-right text-green-700 whitespace-nowrap" data-sp-t="'+i+'">'+arFmt(c.total)+'</td>'+
-            '<td class="px-3 py-2 text-right text-blue-700 whitespace-nowrap" data-sp-q="'+i+'">—</td>'+
+            '<td class="px-3 py-2 text-right text-blue-700 whitespace-nowrap" data-sp-q0="'+i+'">—</td>'+
+            '<td class="px-3 py-2 text-right text-blue-700 whitespace-nowrap" data-sp-q1="'+i+'">—</td>'+
+            '<td class="px-3 py-2 text-right text-blue-700 whitespace-nowrap" data-sp-q2="'+i+'">—</td>'+
         '</tr>';
     }).join('');
 }
@@ -868,17 +872,24 @@ function arQuotePriceInCur(cur,wb){
 function arSpecialPriceCurChange(){
     var cur=((document.getElementById('ar-sp-cur')||{}).value)||'';
     var tip=document.getElementById('ar-sp-cur-tip');
-    var missing=0;
+    if(!cur){if(tip)tip.textContent='';return;}
+    var missing=_arSpCtx.rows.filter(function(r){return arQuotePriceInCur(cur,r.wb)==null;}).length;
+    if(tip)tip.textContent=missing?(missing+' '+tr('条没有当前币种的报价')):tr('当前币种报价齐全');
+    if(missing)showToast(tr('没有当前币种的报价'));
+}
+/* 各币种报价一起显示：调整币种选中时，逐行填 人民币/美金/西法 三列报价，方便对比 */
+function arSpecialPriceQuoteCells(){
+    var kind=((document.querySelector('input[name="ar-sp-kind"]:checked')||{}).value)||'sp';
+    var curs=(typeof LCL_QUOTE_CURRENCIES!=='undefined'?LCL_QUOTE_CURRENCIES:['人民币','美金','西法']);
     _arSpCtx.rows.forEach(function(r,i){
-        var cell=document.querySelector('[data-sp-q="'+i+'"]');
-        if(!cell)return;
-        if(!cur){cell.textContent='—';return;}
-        var p=arQuotePriceInCur(cur,r.wb);
-        if(p==null){cell.textContent='—';missing++;}
-        else cell.textContent=esc(String(p))+' '+esc(cur);
+        curs.forEach(function(c,ci){
+            var cell=document.querySelector('[data-sp-q'+ci+'="'+i+'"]');
+            if(!cell)return;
+            if(kind!=='cur'){cell.textContent='—';return;}
+            var p=arQuotePriceInCur(c,r.wb);
+            cell.textContent=p==null?'—':esc(String(p))+' '+esc(c);
+        });
     });
-    if(tip)tip.textContent=!cur?'':(missing?tr('有')+' '+missing+' '+tr('条没有当前币种的报价'):tr('已带出所选币别的报价金额'));
-    if(cur&&missing)showToast(tr('没有当前币种的报价'));
 }
 function openArSpecialPriceModal(){
     var sel=arGetSelectedRows();
@@ -895,7 +906,7 @@ function openArSpecialPriceModal(){
     }
     h+='<section><div class="flex items-center gap-2 mb-3"><span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-base font-semibold text-text-primary">'+tr('原始订单运费（单价/总价）')+'</span></div>';
     h+='<div class="border border-surface-200 rounded-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-xs min-w-[820px]">';
-    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['','运单号','客户名称','币别','运费单价(折算)','运费总价','优惠后单价','优惠后总价','币种报价'].map(function(t){return '<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody id="ar-sp-tbody">';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['','运单号','客户名称','币别','运费单价(折算)','运费总价','优惠后单价','优惠后总价','报价(人民币)','报价(美金)','报价(西法)'].map(function(t){return '<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody id="ar-sp-tbody">';
     h+=arSpecialPriceRowsHtml();
     h+='</tbody></table></div></div></section>';
     /* 调整类型二选一：运费优惠 / 调整币种 互斥 */
@@ -928,6 +939,7 @@ function arSpecialPriceKind(){
     var cur=document.getElementById('ar-sp-sec-cur');
     if(disc)disc.className=disc.className.replace(/\s*(opacity-40|pointer-events-none)/g,'')+(kind==='sp'?'':' opacity-40 pointer-events-none');
     if(cur)cur.className=cur.className.replace(/\s*(opacity-40|pointer-events-none)/g,'')+(kind==='cur'?'':' opacity-40 pointer-events-none');
+    arSpecialPriceQuoteCells();
 }
 function arSpecialPriceSubmit(){
     var picked=[];
@@ -1057,4 +1069,56 @@ function arMasterToggle(gi){
 /* 主行复选框联动组内可选费用行（已勾上的保持同步） */
 function arMasterGroupToggle(cb,gi){
     document.querySelectorAll('.ar-fee-pick[data-ar-grp="'+gi+'"]:not(:disabled)').forEach(function(x){x.checked=cb.checked;});
+}
+
+
+/* ===== 申请特价演示数据：补充多条「待确认运费」（多客户多币别，展示多行与多币种报价效果） ===== */
+_arDetailSeed.push(
+{wb:'H2609200007',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'3,280.00',cur:'人民币',rate:'1',rmb:'3,280.00',used:'0',unused:'3,280.00',st:'待确认',ftime:'2026-09-20 10:12:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-09-20 10:12:10',cb:'HYD-开发者'},
+{wb:'H2609200008',cust:'梦幻直客客户',sales:'梦幻小业务',fee:'运费',amt:'1,150.50',cur:'人民币',rate:'1',rmb:'1,150.50',used:'0',unused:'1,150.50',st:'待确认',ftime:'2026-09-20 11:03:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-09-20 11:03:10',cb:'梦幻小业务'},
+{wb:'H2609210003',cust:'星星玩具电商',sales:'BTWOZCW',fee:'运费',amt:'486.00',cur:'美金',rate:'7.1',rmb:'3,450.60',used:'0',unused:'486.00',st:'待确认',ftime:'2026-09-21 09:30:00',cyc:'出货月结',days:'1',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-09-21 09:30:10',cb:'UAT0003'},
+{wb:'H2609210004',cust:'天地直客',sales:'天地销售',fee:'运费',amt:'298,000',cur:'西法',rate:'0.012',rmb:'3,576.00',used:'0',unused:'298,000',st:'待确认',ftime:'2026-09-21 14:45:00',cyc:'出货票结',days:'3',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-09-21 14:45:10',cb:'HYD-开发者'},
+{wb:'H2609220001',cust:'梦幻直客客户',sales:'天地销售',fee:'运费',amt:'5,620.00',cur:'人民币',rate:'1',rmb:'5,620.00',used:'0',unused:'5,620.00',st:'待确认',ftime:'2026-09-22 16:20:00',cyc:'签收月结',days:'2',bf:'否',bn:'',rk:'',src:'人工录入',ct:'2026-09-22 16:20:10',cb:'梦幻管理员'}
+);
+
+/* ===== 生成账单：按 客户+币别 分组出账单号（组内费用行同号）=====
+ * arGenBillAssign 在逐行置状态时给出组账单号；arGenBillFinalize 汇总成账单对象
+ * 推进「应收账单管理」(_arBillRows)，并记录 主单号/Job No（弹窗可手改）。 */
+var _arGenBillGroups=null;
+function arGenBillAssign(r,i,rows){
+    if(!_arGenBillGroups){
+        var map={};
+        rows.forEach(function(x){
+            var k=(x.cust||'')+'||'+(x.cur||'');
+            if(!map[k])map[k]={cust:x.cust,cur:x.cur,rows:[],no:'RB'+String(new Date().getFullYear())+String(x.wb||'').replace(/\D/g,'').slice(-6)+'00'+Object.keys(map).length};
+            map[k].rows.push(x);
+        });
+        _arGenBillGroups=map;
+    }
+    var g=_arGenBillGroups[(r.cust||'')+'||'+(r.cur||'')];
+    r.bn=g?g.no:('RB'+String(new Date().getFullYear())+'TMP'+(i+1));
+}
+function arGenBillFinalize(rows){
+    var groups=_arGenBillGroups||{};
+    var batch=_arGenBillBatch,due=_arGenBillDue;
+    var now=(typeof fclNow==='function')?fclNow():((typeof receiptNowStr==='function')?receiptNowStr():'');
+    var masterEl=document.getElementById('ar-gb-master'),jobEl=document.getElementById('ar-gb-job');
+    var masterDef=masterEl?String(masterEl.value||'').trim():'';
+    var jobDef=jobEl?String(jobEl.value||'').trim():'';
+    Object.keys(groups).forEach(function(k){
+        var g=groups[k];
+        var amt=g.rows.reduce(function(a,r){return a+arNum(r.amt);},0);
+        var first=g.rows[0]||{};
+        var bill={bn:g.no,batch:batch,cust:g.cust,cur:g.cur,amt:arFmt(amt),
+            basecur:g.cur,rmb:arFmt(amt*(parseFloat(first.rate)||1)),
+            used:'0.00',unused:arFmt(amt),cyc:first.cyc||'',due:due,
+            st:'待核销',rk:'',src:'账单生成',ct:now,
+            fees:g.rows.map(function(r){return {wb:r.wb,cust:r.cust,sales:r.sales,fee:r.fee,amt:r.amt,cur:r.cur,rate:r.rate||'1',rmb:r.rmb||r.amt};}),
+            masterNo:masterDef||('MS'+String(first.wb||'').replace(/\D/g,'')),
+            jobNo:jobDef||('JOB'+String(new Date().getFullYear()).slice(2)+String(g.no).replace(/\D/g,'').slice(-6))};
+        bill.sender='';bill.sentAt='';bill.recv='0.00';bill.paySt='未收款';
+        if(typeof _arBillDeriveRefs==='function')_arBillDeriveRefs(bill);
+        if(typeof _arBillRows!=='undefined'&&_arBillRows)_arBillRows.unshift(bill);
+    });
+    _arGenBillGroups=null;
 }

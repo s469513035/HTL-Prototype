@@ -42,6 +42,7 @@ function generateReceiptPage(id){
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('凭证状态')+'</label><select class="'+selCls+'"><option>'+tr('全部')+'</option><option>待认领</option><option>待抵扣</option><option>部分抵扣</option><option>全部抵扣</option><option>作废</option></select></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('币别')+'</label><select class="'+selCls+'"><option>'+tr('全部')+'</option><option>人民币</option><option>美元</option><option>欧元</option></select></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('交易流水号')+'</label><input class="'+inputCls+'" placeholder="'+tr('交易流水号')+'"></div>';
+    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('费用时间')+'</label><div class="flex items-center gap-1"><input id="receipt-q-ft-from" type="date" class="'+inputCls+'"><span class="text-text-muted text-xs">~</span><input id="receipt-q-ft-to" type="date" class="'+inputCls+'"></div></div>';
     h+='</div>';
     h+='<div class="px-4 py-3 flex items-center gap-2 flex-wrap">';
     h+='<button onclick="renderReceiptVouchers()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';
@@ -69,6 +70,18 @@ function receiptVoucherCols(){
 function receiptVoucherRows(){
     var d=(TC['fin-ar-receipt']&&TC['fin-ar-receipt'].d)?TC['fin-ar-receipt'].d:[];
     var cols=receiptVoucherCols();
+    /* 费用时间范围查询（查询区起/止两个 date 输入） */
+    var ftFrom=(document.getElementById('receipt-q-ft-from')||{}).value||'',ftTo=(document.getElementById('receipt-q-ft-to')||{}).value||'';
+    if(ftFrom||ftTo){
+        var ftIdx=cols.indexOf('费用时间');
+        d=d.filter(function(r){
+            var v=String(ftIdx>=0?(r[ftIdx]||''):'').slice(0,10);
+            if(!v)return false;
+            if(ftFrom&&v<ftFrom)return false;
+            if(ftTo&&v>ftTo)return false;
+            return true;
+        });
+    }
     if(!d.length)return '<tr><td colspan="'+(cols.length+2)+'" class="py-8 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
     var rv=function(r,name){return voucherVal('fin-ar-receipt',r,name);};
     return d.map(function(r,i){

@@ -26,7 +26,8 @@ addPrototypeTable('ow-pickup','提货预约管理',
         {label:'客户',type:'text'},
         {label:'目的仓库',type:'select',options:OW_WAREHOUSES},
         {label:'提货方式',type:'select',options:['上门提货','派送']},
-        {label:'状态',type:'select',options:['已放货','待放货']}
+        {label:'状态',type:'select',options:['已放货','待放货']},
+        {label:'预约时段',type:'daterange'}
     ]
 );
 TC['ow-pickup'].fieldOptions={
@@ -59,7 +60,8 @@ addPrototypeTable('ow-arrival','海外仓到货',
         {label:'提单号',type:'text'},
         {label:'目的仓库',type:'select',options:OW_WAREHOUSES},
         {label:'运输方式',type:'select',options:['海运','空运']},
-        {label:'到货状态',type:'select',options:['部分到货','已到齐']}
+        {label:'到货状态',type:'select',options:['部分到货','已到齐']},
+        {label:'到货日期',type:'daterange'}
     ]
 );
 TC['ow-arrival'].noExpand=true;
@@ -79,7 +81,8 @@ addPrototypeTable('ow-outbound','海外仓出库',
         {label:'预约提货单号',type:'text'},
         {label:'客户',type:'text'},
         {label:'目的仓库',type:'select',options:OW_WAREHOUSES},
-        {label:'出库状态',type:'select',options:['待出库','已出库']}
+        {label:'出库状态',type:'select',options:['待出库','已出库']},
+        {label:'操作时间',type:'daterange'}
     ]
 );
 TC['ow-outbound'].noExpand=true;

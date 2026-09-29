@@ -43,8 +43,9 @@ function _arBillFind(bn){ for(var i=0;i<_arBillRows.length;i++){ if(_arBillRows[
 
 function renderArBillRows(){
     var bn=_arBillV('arbill-q-bn'),ba=_arBillV('arbill-q-batch'),cu=_arBillV('arbill-q-cust');
+    var cf=_arBillV('arbill-q-ct-from'),ct=_arBillV('arbill-q-ct-to');
     var rows=_arBillRows.filter(function(b){
-        return (!bn||String(b.bn).indexOf(bn)>=0)&&(!ba||String(b.batch).indexOf(ba)>=0)&&(!cu||String(b.cust).indexOf(cu)>=0);
+        return (!bn||String(b.bn).indexOf(bn)>=0)&&(!ba||String(b.batch).indexOf(ba)>=0)&&(!cu||String(b.cust).indexOf(cu)>=0)&&(!cf||String(b.ct||'').slice(0,10)>=cf)&&(!ct||String(b.ct||'').slice(0,10)<=ct);
     });
     if(!rows.length)return '<tr><td colspan="20" class="py-12 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
     return rows.map(function(b,i){
@@ -1060,6 +1061,7 @@ function generateArBillPage(id){
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('应收账单号')+'</label><input id="arbill-q-bn" class="'+inputCls+'" placeholder="'+tr('应收账单号')+'"></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('账单批次号')+'</label><input id="arbill-q-batch" class="'+inputCls+'" placeholder="'+tr('账单批次号')+'"></div>';
     h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('客户名称')+'</label><input id="arbill-q-cust" class="'+inputCls+'" placeholder="'+tr('客户名称')+'"></div>';
+    h+='<div><label class="text-xs text-text-secondary block mb-1">'+tr('创建时间')+'</label><div class="flex items-center gap-1"><input id="arbill-q-ct-from" type="date" class="'+inputCls+'"><span class="text-text-muted text-xs">~</span><input id="arbill-q-ct-to" type="date" class="'+inputCls+'"></div></div>';
     h+='</div>';
     h+='<div class="px-4 py-3 flex items-center gap-2 flex-wrap">';
     h+='<button onclick="renderArBillTable()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('查询')+'</button>';

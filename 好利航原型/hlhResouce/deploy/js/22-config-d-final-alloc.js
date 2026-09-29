@@ -891,3 +891,6 @@ function runFinalAllocAutoReplenish(id){
     showToast(tr('自动补货已派单')+'，'+tr('共')+' '+cnt+' '+tr('票'));
 }
 
+
+/* 配舱计划列表查询区：单号 + 时间范围（引擎 daterange；单号内嵌日期，行池匹配） */
+TC['wh-final-alloc'].q=[{label:'配舱单号',type:'text'},{label:'配舱日期',type:'daterange'}];

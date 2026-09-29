@@ -1091,7 +1091,7 @@ function _arBillDeriveRefs(b){
         var d=String(b.ct||''),ds=(d.match(/\d{4}-\d{2}-\d{2}/)||[''])[0].replace(/-/g,'').slice(2);
         b.jobNo='JOB'+(ds||'260000')+String(b.bn||'').replace(/\D/g,'').slice(-3);
     }
-    if(!b.masterJob&&b.masterNo)b.masterJob=b.masterNo+(b.jobNo?(' / '+b.jobNo):'');
+    if(!b.masterJob)b.masterJob=b.masterNo||'';
     return b;
 }
 (_arBillSeed||[]).forEach(_arBillDeriveRefs);

@@ -444,7 +444,7 @@ function openArBillReqDocModal(){
     ]));
     h+=sec('快捷核销',li([
         '选择一条已登记收款、未核销的账单，弹出未核销的收款明细进行凭证信息补全；',
-        '凭证字段与银行凭证口径一致（交割方式/币别/汇率/费用时间/我方账户/对方信息）；',
+        '凭证字段与银行凭证口径一致（交割方式/币别/汇率/交易时间/我方账户/对方信息）；',
         '补全完成后生成凭证记录和对应的核销记录：收款单标记已核销并回填凭证号，账单核销金额与状态刷新。'
     ]));
     h+=sec('快捷放行',li([
@@ -535,7 +535,7 @@ function openArBillWriteOffModal(){
     h+='<div>'+lbl('本位币',true)+sel(['人民币'], '人民币','','arwo-basecur')+'</div>';
     h+='<div>'+lbl('金额(本位币)',false)+'<input id="arwo-base-amt" readonly class="'+roCls+'" placeholder="'+esc(tr('自动计算'))+'"></div>';
     h+='<div>'+lbl('交易流水号',false)+'<input id="arwo-serial" type="text" class="'+inCls+'" placeholder="'+esc(tr('请输入交易流水号'))+'"></div>';
-    h+='<div>'+lbl('费用时间',true)+'<input id="arwo-feetime" type="datetime-local" class="'+inCls+'"></div>';
+    h+='<div>'+lbl('交易时间',true)+'<input id="arwo-feetime" type="datetime-local" class="'+inCls+'"></div>';
     h+='<div>'+lbl('我方银行账户',true)+sel(_woBankAccounts(),'','请选择','arwo-ouracct')+'</div>';
     h+='<div>'+lbl('对方账户户名',false)+'<input id="arwo-oppname" type="text" class="'+inCls+'" placeholder="'+esc(tr('请输入对方账户户名'))+'"></div>';
     h+='<div>'+lbl('对方账户开户行',false)+'<input id="arwo-oppbank" type="text" class="'+inCls+'" placeholder="'+esc(tr('请输入对方账户开户行'))+'"></div>';
@@ -649,7 +649,7 @@ function confirmArBillWriteOff(){
     if(!style){ showToast(tr('请选择交割方式')); return; }
     if(!cur){ showToast(tr('请选择币别')); return; }
     if(!rate||!(parseFloat(rate)>0)){ showToast(tr('请填写汇率')); return; }
-    if(!feeTime){ showToast(tr('请选择费用时间')); return; }
+    if(!feeTime){ showToast(tr('请选择交易时间')); return; }
     if(!ourAcct){ showToast(tr('请选择我方银行账户')); return; }
     var amt=parseFloat(r.amt)||0;
     var unused=parseFloat(b.unused)||0;
@@ -1002,17 +1002,17 @@ function arBillReleaseFees(goneBns){
 
 function arBillFeeTableHtml(b){
     var fees=b.fees||[];
-    var cols=['运单号','品名','货物类型','包装类型','体积(CBM)','重量(KG)','报关类型','客户名称','业务员名称','费用名称','单价','金额(原币)','币别'];
+    var cols=['运单号','客户名称','业务员名称','品名','货物类型','包装类型','报关类型','体积(CBM)','重量(KG)','费用名称','币别','单价','金额(原币)'];
     var numCols={'体积(CBM)':1,'重量(KG)':1,'单价':1,'金额(原币)':1};
     var h='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-[#EFF6FF] text-text-secondary"><th class="px-3 py-2.5 text-left font-semibold" style="width:48px">#</th>';
     cols.forEach(function(c){h+='<th class="px-3 py-2.5 text-left font-semibold whitespace-nowrap">'+tr(c)+'</th>';});
     h+='</tr></thead><tbody>';
     if(!fees.length){h+='<tr><td colspan="'+(cols.length+1)+'" class="py-8 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';}
     fees.forEach(function(f,i){
-        /* 品名/货型/包装/体积/重量/报关类型：运单货物属性带出；单价=金额÷运单件数（折算口径，与应收明细一致） */
+        /* 品名/货型/包装/报关类型/体积/重量：运单货物属性带出；单价=金额÷运单件数（折算口径，与应收明细一致） */
         var cg=(typeof arCargoWithCustoms==='function')?arCargoWithCustoms(f.wb):((typeof arCargoOf==='function')?arCargoOf(f.wb):{});
         var price=(typeof arPcsOf==='function'&&typeof arFmt==='function'&&typeof arNum==='function')?arFmt(arNum(f.amt)/arPcsOf(f.wb)):(f.amt||'');
-        var vals=[f.wb,cg.goods||'',cg.cargo||'',cg.pack||'',cg.vol||'',cg.wt||'',cg.customs||'',f.cust,f.sales,f.fee,price,f.amt,f.cur];
+        var vals=[f.wb,f.cust,f.sales,cg.goods||'',cg.cargo||'',cg.pack||'',cg.customs||'',cg.vol||'',cg.wt||'',f.fee,f.cur,price,f.amt];
         h+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">';
         h+='<td class="px-3 py-2.5 text-text-muted">'+(i+1)+'</td>';
         vals.forEach(function(v,vi){
@@ -1071,10 +1071,10 @@ function generateArBillPage(id){
     h+='<button onclick="openArBillRevokeModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('撤销收款')+'</button>';
     h+='<button onclick="openArBillWriteOffModal()" class="h-9 px-4 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('快捷核销')+'</button>';
     h+='<button onclick="openArBillReleaseModal()" class="h-9 px-4 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 cursor-pointer">'+tr('快捷放行')+'</button>';
-    /* 需求说明：四个快捷按钮的业务规则原文，演示评审时点开即看 */
-    h+='<button onclick="openArBillReqDocModal()" class="h-9 px-4 text-sm font-medium text-primary-700 border border-primary-200 bg-white rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('需求说明')+'</button>';
     /* 「下载账单」按钮已隐藏（arBillDownloadSelected 保留备用） */
     h+='<button onclick="arBillDeleteSelected()" class="h-9 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 cursor-pointer">'+tr('撤销账单')+'</button>';
+    /* 需求说明：四个快捷按钮的业务规则原文，演示评审时点开即看。放工具栏最右侧 */
+    h+='<button onclick="openArBillReqDocModal()" class="h-9 px-4 text-sm font-medium text-primary-700 border border-primary-200 bg-white rounded-lg hover:bg-primary-50 cursor-pointer">'+tr('需求说明')+'</button>';
     h+='</div></div>';
     h+='<div class="flex-1 overflow-auto p-4"><div class="bg-white rounded-xl border border-surface-200 overflow-auto"><table class="w-full text-sm" style="min-width:2300px;border-collapse:separate;border-spacing:0"><thead><tr class="bg-[#EFF6FF] text-text-secondary">';
     h+='<th class="px-3 py-3 text-left font-semibold" style="width:40px">#</th><th class="px-3 py-3 text-left font-semibold" style="width:40px"><input type="checkbox" onchange="document.querySelectorAll(\'.arbill-check\').forEach(function(c){c.checked=this.checked;}.bind(this))"></th>';

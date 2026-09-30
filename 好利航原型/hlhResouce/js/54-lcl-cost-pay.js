@@ -812,7 +812,7 @@ function openLclActualCostCreateModal(id){
 }
 function lacSection(title,inner){
     return '<div class="mb-5"><div class="flex items-center gap-2 mb-3">'+
-        '<span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
+        '<span class="w-1 h-4 bg-primary-500 rounded-full"></span>'+
         '<span class="text-sm font-semibold text-text-primary">'+tr(title)+'</span></div>'+inner+'</div>';
 }
 function lacNewBodyHtml(id){
@@ -832,18 +832,18 @@ function lacNewBodyHtml(id){
     var h='';
     /* ① 基本信息（主信息：比代理账单多「单号类型」，主单时分摊规则必选） */
     var g='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
-    g+=fld('服务商账单号',txt('invNo','代理发票上印的账单号'),true);
+    g+=fld('账单名称',txt('invNo','如 6月海运代理账单'),true);
     g+=fld('服务商',sl('agent',LCL_COST_PROVIDERS,'请选择服务商'),true);
-    g+=fld('分摊规则','<div><span id="lac-rule-req" class="hidden text-red-500 text-xs">* </span>'+sl('rule',LCL_ACTUAL_RULES,'暂不指定')+'<div id="lac-rule-hint" class="hidden text-xs text-amber-700 mt-1">'+esc(tr('主单必须选择分摊规则'))+'</div></div>',false);
-    g+=fld('币别',sl('cur',['CNY','USD','EUR'],'请选择币别'),true);
     g+=fld('单号类型',sl('ntype',['运单','主单'],'请选择单号类型'),true);
+    g+=fld('币别',sl('cur',['CNY','USD','EUR'],'请选择币别'),true);
+    g+=fld('分摊规则','<div><span id="lac-rule-req" class="hidden text-red-500 text-xs">* </span>'+sl('rule',LCL_ACTUAL_RULES,'暂不指定')+'<div id="lac-rule-hint" class="hidden text-xs text-primary-600 mt-1">'+esc(tr('主单必须选择分摊规则'))+'</div></div>',false);
     g+=fld('账期时间','<input data-lac="due" type="text" value="'+esc(A.due)+'" oninput="lacSet(\'due\',this.value)" class="'+inCls+'">',true);
     g+=fld('备注','<textarea data-lac="remark" rows="3" oninput="lacSet(\'remark\',this.value)" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'">'+esc(A.remark)+'</textarea>',false,'md:col-span-2');
     g+='</div>';
     h+=lacSection('基本信息',g);
     /* ② 应付明细 —— 上传 Excel 带进来，或直接在表里加行（列口径同代理账单：单号/财务科目/费用金额/备注） */
     var d='';
-    d+='<button type="button" onclick="lacDownloadTpl()" class="h-8 px-3 mb-3 text-xs font-medium text-white bg-amber-500 rounded hover:bg-amber-600 cursor-pointer">'+tr('下载模板')+'</button>';
+    d+='<button type="button" onclick="lacDownloadTpl()" class="h-8 px-3 mb-3 text-xs font-medium text-white bg-primary-600 rounded hover:bg-primary-700 cursor-pointer">'+tr('下载模板')+'</button>';
     d+='<div class="rounded-lg border-2 border-dashed border-surface-200 bg-surface-50/60 py-6 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/20 transition-colors" onclick="document.getElementById(\'lac-xls\').click()">';
     d+='<svg class="w-9 h-9 mx-auto text-success-600 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
     d+='<div class="text-sm text-text-secondary">'+tr('将文件拖到此处，')+'<span class="text-primary-600">'+tr('或点击上传')+'</span></div>';
@@ -1042,7 +1042,7 @@ function lacDelFile(i){
 function submitLclActualCostCreate(id){
     id=id||'lcl-actual-cost';
     var A=_lacNew;
-    if(!String(A.invNo||'').trim()){showToast(tr('请填写服务商账单号'));return;}
+    if(!String(A.invNo||'').trim()){showToast(tr('请填写账单名称'));return;}
     if(!A.agent){showToast(tr('请选择服务商'));return;}
     if(!A.ntype){showToast(tr('请选择单号类型'));return;}
     if(A.ntype==='主单'&&!A.rule){showToast(tr('主单必须选择分摊规则'));return;}

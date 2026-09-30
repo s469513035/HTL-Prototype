@@ -1031,7 +1031,6 @@ function renderToolbarAction(action,id){
     else if(id==='ow-outbound'&&action.type==='add')click='openOverseasOutboundCreate()';
     else if(id==='prod-price-store'&&action.type==='add')click='openSpStoreModal(\'add\',\''+id+'\',-1)';
     else if(id==='prod-price-store'&&action.type==='edit')click='openSelectedSpStoreEdit(\''+id+'\')';
-    else if(id==='lcl-actual-cost'&&action.type==='add')click='openLclActualCostModal(\'add\',\''+id+'\',-1)';
     else if(action.key==='lclActualReconcile')click='openLclActualReconcile(\''+id+'\')';
     else if(action.key==='lclActualGenPay')click='lclActualGenPay(\''+id+'\')';
     else if(action.key==='lclActualVoid')click='submitLclActualVoid(\''+id+'\')';

@@ -1032,9 +1032,9 @@ function renderToolbarAction(action,id){
     else if(id==='prod-price-store'&&action.type==='add')click='openSpStoreModal(\'add\',\''+id+'\',-1)';
     else if(id==='prod-price-store'&&action.type==='edit')click='openSelectedSpStoreEdit(\''+id+'\')';
     else if(id==='lcl-actual-cost'&&action.type==='add')click='openLclActualCostModal(\'add\',\''+id+'\',-1)';
-    else if(id==='lcl-actual-cost'&&action.type==='edit')click='openSelectedLclActualEdit(\''+id+'\')';
     else if(action.key==='lclActualReconcile')click='openLclActualReconcile(\''+id+'\')';
     else if(action.key==='lclActualGenPay')click='lclActualGenPay(\''+id+'\')';
+    else if(action.key==='lclActualVoid')click='submitLclActualVoid(\''+id+'\')';
     else if(action.type==='add')click='openCrudModal(\'add\',\''+id+'\',-1)';
     else if((id==='fin-bank-voucher'||id==='fin-ar-receipt')&&action.type==='edit')click='openSelectedVoucherEdit(\''+id+'\')';
     else if(action.type==='edit')click='openSelectedCrud(\'edit\',\''+id+'\')';
@@ -1752,20 +1752,20 @@ function getToolbarActions(id){
     if(id==='lcl-cost-detail'){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
-            {key:'lclCostAdd',label:'新增数据',variant:'primary'},
-            {key:'lclCostImport',label:'导入'},
             {key:'lclCostConfirm',label:'费用确认'},
             {key:'lclCostGenPay',label:'生成付款单',variant:'primary'},
             {key:'lclCostVoid',label:'作废',variant:'danger'},
             {key:'export',label:'导出数据'}
         ];
     }
-    /* 散货实际成本：账单登记 → 对账分摊（主单必选分摊规则）→ 生成付款单，流转同代理账单 */
+    /* 散货实际成本：账单登记 → 对账分摊（主单必选分摊规则）→ 生成付款单；不作废编辑，作废走专用按钮 */
     if(id==='lcl-actual-cost'){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
+            {type:'add',label:'新增数据',variant:'primary'},
             {key:'lclActualReconcile',label:'对账分摊'},
-            {key:'lclActualGenPay',label:'生成付款单',variant:'primary'}
+            {key:'lclActualGenPay',label:'生成付款单',variant:'primary'},
+            {key:'lclActualVoid',label:'作废',variant:'danger'}
         ];
     }
     /* 散货付款单：由成本明细生成；审核 → 付款核销（挑服务商凭证）→ 反核销 */
@@ -1964,7 +1964,7 @@ function getToolbarActions(id){
 
 // 统一规则：列表行内“操作列”默认只保留“查看”，编辑/删除迁到工具栏操作按钮区。
 // 下列 id 原本行内就不含编辑/删除（只读/特殊页），迁移后也不在工具栏追加，避免给只读页平白加出编辑/删除。
-var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt','fin-invoice','fcl-profit','cs-ticket','lcl-cost-detail','lcl-pay-bill','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill','oms-ticket',
+var _rowNoEditIds=['fcl-agent-cost','fcl-ap-bill','fcl-ar-fee','fcl-ar-receipt','fin-invoice','fcl-profit','cs-ticket','lcl-cost-detail','lcl-pay-bill','lcl-actual-cost','wb-manage','wb-client-manage','fin-bill-mgmt','wh-pallet-info','ow-arrival','ow-outbound','ow-inventory','wh-final-alloc','wh-air-arrival-scan','wh-air-sort-scan','wh-air-checkout-scan','wh-air-checkin-sort-scan','cfg-label-template','wh-sort-bag','wh-stock-check','approval-mine','approval-msg','cs-issue-track','wb-op-instruction','fin-cust-account','oms-order-mgmt','oms-issue-mgmt','oms-bill','oms-ticket',
 /* 单票成本明细全部由「分摊到票」生成，手工编辑会让它和来源成本行对不上 */
 'fcl-shipment-cost',
 /* 代理账单按供应商发票导入，费用明细挂在 Job No 上；改发票要走重新导入，不给行内编辑 */

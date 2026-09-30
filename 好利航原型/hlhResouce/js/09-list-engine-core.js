@@ -1031,6 +1031,10 @@ function renderToolbarAction(action,id){
     else if(id==='ow-outbound'&&action.type==='add')click='openOverseasOutboundCreate()';
     else if(id==='prod-price-store'&&action.type==='add')click='openSpStoreModal(\'add\',\''+id+'\',-1)';
     else if(id==='prod-price-store'&&action.type==='edit')click='openSelectedSpStoreEdit(\''+id+'\')';
+    else if(id==='lcl-actual-cost'&&action.type==='add')click='openLclActualCostModal(\'add\',\''+id+'\',-1)';
+    else if(id==='lcl-actual-cost'&&action.type==='edit')click='openSelectedLclActualEdit(\''+id+'\')';
+    else if(action.key==='lclActualReconcile')click='openLclActualReconcile(\''+id+'\')';
+    else if(action.key==='lclActualGenPay')click='lclActualGenPay(\''+id+'\')';
     else if(action.type==='add')click='openCrudModal(\'add\',\''+id+'\',-1)';
     else if((id==='fin-bank-voucher'||id==='fin-ar-receipt')&&action.type==='edit')click='openSelectedVoucherEdit(\''+id+'\')';
     else if(action.type==='edit')click='openSelectedCrud(\'edit\',\''+id+'\')';
@@ -1754,6 +1758,14 @@ function getToolbarActions(id){
             {key:'lclCostGenPay',label:'生成付款单',variant:'primary'},
             {key:'lclCostVoid',label:'作废',variant:'danger'},
             {key:'export',label:'导出数据'}
+        ];
+    }
+    /* 散货实际成本：账单登记 → 对账分摊（主单必选分摊规则）→ 生成付款单，流转同代理账单 */
+    if(id==='lcl-actual-cost'){
+        return [
+            {key:'search',label:'查询数据',variant:'primary'},
+            {key:'lclActualReconcile',label:'对账分摊'},
+            {key:'lclActualGenPay',label:'生成付款单',variant:'primary'}
         ];
     }
     /* 散货付款单：由成本明细生成；审核 → 付款核销（挑服务商凭证）→ 反核销 */

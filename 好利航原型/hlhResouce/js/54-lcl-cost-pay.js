@@ -735,3 +735,275 @@ function openLclPayBillDetail(id,rowIdx){
         '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('关闭')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
 }
+
+
+/* ===== 实际成本管理 lcl-actual-cost（参考整柜代理账单：账单登记/对账分摊/生成付款单） =====
+ * 与代理账单的差异：单号类型=运单（费用直挂运单）/主单（整单费用摊到主单下各运单，分摊规则必选）。 */
+var LCL_ACTUAL_RULES=['按票数','按件数','按体积','按重量','不分摊'];
+addPrototypeTable('lcl-actual-cost','实际成本管理',
+    '成本单号|服务商|服务商账单号|单号类型|关联单号|账单周期|账期时间|币别|账单金额|涉及票数|分摊规则|导入人|导入时间|备注|账单状态|操作',
+    ['待对账','待请款','待审核','待核销','部分核销','全部核销','作废'],[
+    ['LAC-20260618001','COSCO','COS-LCL-260618','运单','WB-20260522001','2026-06','2026-07-18 23:59','CNY','8,580','1','不分摊','张财务','2026-06-18 09:40','海运费的运单实际成本','待对账'],
+    ['LAC-20260618002','鹏程拖车','PC-LCL-260618','运单','WB-20260522006','2026-06','2026-07-02 23:59','CNY','1,200','1','不分摊','李操作','2026-06-18 10:05','盐田提柜','待对账'],
+    ['LAC-20260619003','深圳报关行','SZ-LCL-260619','运单','WB-20260522003','2026-06','2026-07-19 23:59','CNY','860','1','不分摊','李操作','2026-06-19 11:20','','待请款'],
+    ['LAC-20260620004','COSCO','COS-LCL-ML-0620','主单','MSL-20260901-001','2026-06','2026-07-20 23:59','CNY','12,800','3','按件数','张财务','2026-06-20 14:10','3 票合开主单海运费','待对账'],
+    ['LAC-20260620005','鹏程拖车','PC-LCL-ML-0620','主单','MSL-20260902-002','2026-06','2026-07-05 23:59','CNY','2,700','3','按票数','李操作','2026-06-20 15:30','3 票拖车合开','待对账'],
+    ['LAC-20260621006','深圳报关行','SZ-LCL-ML-0621','主单','MSL-20260903-003','2026-06','2026-07-21 23:59','CNY','1,050','3','按体积','张财务','2026-06-21 09:15','3 票报关合开','待对账']
+],[
+    {label:'成本单号',type:'text'},
+    {label:'服务商',type:'select',options:LCL_COST_PROVIDERS},
+    {label:'单号类型',type:'select',options:['运单','主单']},
+    {label:'币别',type:'select',options:['CNY','USD','EUR']},
+    {label:'账单状态',type:'select',options:['待对账','待请款','待审核','待核销','部分核销','全部核销','作废']}
+]);
+TC['lcl-actual-cost'].noExpand=true;
+TC['lcl-actual-cost'].noAutoAudit=true;
+/* 费用明细：成本单号 -> [{no,feeName,feeKind,cur,amt,remark}]（no=运单号或主单号） */
+var _lclActualCostDetails={
+    'LAC-20260618001':[{no:'WB-20260522001',feeName:'海运费',feeKind:'海运费',cur:'CNY',amt:'8,580',remark:'西非海运专线'}],
+    'LAC-20260618002':[{no:'WB-20260522006',feeName:'拖车费',feeKind:'拖车费',cur:'CNY',amt:'1,200',remark:'蛇口提柜'}],
+    'LAC-20260619003':[{no:'WB-20260522003',feeName:'报关费',feeKind:'报关费',cur:'CNY',amt:'860',remark:''}],
+    'LAC-20260620004':[{no:'MSL-20260901-001',feeName:'海运费',feeKind:'海运费',cur:'CNY',amt:'12,800',remark:'主单合开 3 票'}],
+    'LAC-20260620005':[{no:'MSL-20260902-002',feeName:'拖车费',feeKind:'拖车费',cur:'CNY',amt:'2,700',remark:''}],
+    'LAC-20260621006':[{no:'MSL-20260903-003',feeName:'报关费',feeKind:'报关费',cur:'CNY',amt:'1,050',remark:''}]
+};
+/* 演示主单 -> 运单清单（主单分摊的基数来源） */
+var _LCL_MASTER_WBS={
+    'MSL-20260901-001':['WB-20260522001','WB-20260522002','WB-20260522005'],
+    'MSL-20260902-002':['WB-20260522006','WB-20260522007','WB-20260522010'],
+    'MSL-20260903-003':['WB-20260522003','WB-20260522004','WB-20260522008']
+};
+/* 种子行已带规则，同步进规则表 */
+var _LCL_ACTUAL_RULE={};
+TC['lcl-actual-cost'].d.forEach(function(r){
+    if(String(r[3]||'')==='主单'&&String(r[10]||''))_LCL_ACTUAL_RULE[String(r[0])]=String(r[10]);
+});
+/* 分摊结果：成本单号 -> [{wb,amt}] */
+var _lclActualAlloc={};
+function lclActualCell(row,name){var h=TC['lcl-actual-cost'].h,i=h.indexOf(name);return i>=0&&row?String(row[i]||''):'';}
+function lclActualRuleOf(no){return _LCL_ACTUAL_RULE[no]||'';}
+
+/* ---------- 新增/编辑：单号类型联动 —— 主单时分摊规则必选 ---------- */
+var _lclActualCtx={mode:'add',idx:-1,no:''};
+function openLclActualCostModal(mode,id,rowIdx,rowData){
+    id=id||'lcl-actual-cost';
+    var c=TC[id];
+    var rows=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
+    var row=rowData||(rowIdx>=0?rows[rowIdx]:null);
+    var g=function(n){var i=(c.h||[]).indexOf(n);return i>=0&&row?String(row[i]||''):'';};
+    var no=g('成本单号');
+    if(mode==='add'){
+        var dt=new Date(),pad=function(n){return String(n).padStart(2,'0');};
+        no='LAC-'+String(dt.getFullYear()).slice(2)+pad(dt.getMonth()+1)+pad(dt.getDate())+String((c.d||[]).length+1).padStart(3,'0');
+    }
+    _lclActualCtx={mode:mode,idx:rowIdx==null?-1:rowIdx,no:no};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=(mode==='add'?tr('新增实际成本'):tr('编辑实际成本'))+' - '+no;
+    var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white';
+    var lbl=function(t,req){return '<label class="text-sm font-medium text-text-secondary">'+(req?'<span class="text-red-500 mr-0.5">*</span>':'')+tr(t)+'</label>';};
+    var sel=function(sid,opts,val,extra){return '<select id="'+sid+'" class="'+inCls+'"'+(extra||'')+'>'+opts.map(function(o){return '<option'+(o===val?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';};
+    var h='<div class="space-y-5"><div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">';
+    h+='<div class="flex flex-col gap-1.5">'+lbl('服务商',true)+sel('lac-prov',LCL_COST_PROVIDERS,g('服务商'))+'</div>';
+    h+='<div class="flex flex-col gap-1.5">'+lbl('服务商账单号',true)+'<input id="lac-invno" class="'+inCls+'" value="'+esc(g('服务商账单号'))+'" placeholder="'+esc(tr('代理发票上的账单号'))+'"></div>';
+    h+='<div class="flex flex-col gap-1.5">'+lbl('单号类型',true)+sel('lac-ntype',['运单','主单'],g('单号类型')||'运单',' onchange="lclActualTypeChange()"')+'</div>';
+    h+='<div class="flex flex-col gap-1.5">'+lbl('关联单号',true)+'<input id="lac-nno" class="'+inCls+'" value="'+esc(g('关联单号'))+'" placeholder="'+esc(tr('运单号或主单号'))+'"></div>';
+    h+='<div class="flex flex-col gap-1.5">'+lbl('账单周期')+'<input id="lac-cycle" class="'+inCls+'" value="'+esc(g('账单周期'))+'" placeholder="2026-06"></div>';
+    h+='<div class="flex flex-col gap-1.5">'+lbl('账期时间',true)+'<input id="lac-due" type="date" class="'+inCls+'" value="'+esc((g('账期时间')||'').slice(0,10))+'"></div>';
+    h+='<div class="flex flex-col gap-1.5">'+lbl('币别',true)+sel('lac-cur',['CNY','USD','EUR'],g('币别')||'CNY')+'</div>';
+    h+='<div class="flex flex-col gap-1.5">'+lbl('账单金额',true)+'<input id="lac-amt" type="number" min="0" step="0.01" class="'+inCls+'" value="'+esc(g('账单金额'))+'"></div>';
+    /* 分摊规则：仅主单必填（单号类型切换控制显隐） */
+    h+='<div class="flex flex-col gap-1.5" id="lac-rule-box">'+lbl('分摊规则',true)+sel('lac-rule',LCL_ACTUAL_RULES,g('分摊规则')||lclActualRuleOf(no)||'按票数')+'</div>';
+    h+='<div class="flex flex-col gap-1.5 md:col-span-3">'+lbl('备注')+'<textarea id="lac-rk" rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y">'+esc(g('备注'))+'</textarea></div>';
+    h+='</div></div>';
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitLclActualCost()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认提交')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+    lclActualTypeChange();
+}
+/* 单号类型联动：主单 → 分摊规则显示且必选；运单 → 隐藏并清空 */
+function lclActualTypeChange(){
+    var box=document.getElementById('lac-rule-box');
+    var selEl=document.getElementById('lac-rule');
+    if(!box)return;
+    var t=((document.getElementById('lac-ntype')||{}).value)||'运单';
+    if(t==='主单'){box.classList.remove('hidden');box.style.display='';}
+    else{box.classList.add('hidden');box.style.display='none';if(selEl)selEl.value='';}
+}
+function submitLclActualCost(){
+    var v=function(sid){var e=document.getElementById(sid);return e?String(e.value||'').trim():'';};
+    var prov=v('lac-prov'),invno=v('lac-invno'),ntype=v('lac-ntype'),nno=v('lac-nno'),
+        cycle=v('lac-cycle'),due=v('lac-due'),cur=v('lac-cur'),amt=v('lac-amt'),rule=v('lac-rule'),rk=v('lac-rk');
+    if(!prov||!invno||!nno||!due||!cur||!amt){showToast(tr('请完整填写必填项'));return;}
+    if(ntype==='主单'&&!rule){showToast(tr('主单必须选择分摊规则'));return;}
+    if(ntype==='运单')rule='不分摊';
+    var id='lcl-actual-cost',no=_lclActualCtx.no;
+    var dueStr=due.length===10?(due+' 23:59'):due;
+    if(_lclActualCtx.mode==='add'){
+        fclPushRow(id,{'成本单号':no,'服务商':prov,'服务商账单号':invno,'单号类型':ntype,'关联单号':nno,
+            '账单周期':cycle,'账期时间':dueStr,'币别':cur,'账单金额':amt,
+            '涉及票数':ntype==='主单'?String((_LCL_MASTER_WBS[nno]||[]).length||'1'):'1',
+            '分摊规则':rule,'导入人':(typeof fclWho==='function'?fclWho():'当前用户'),
+            '导入时间':(typeof fclNow==='function'?fclNow():''),'备注':rk,'账单状态':'待对账'});
+    }else{
+        var rows=fclFinRows(id),row=rows[_lclActualCtx.idx];
+        if(row){
+            [['服务商',prov],['服务商账单号',invno],['单号类型',ntype],['关联单号',nno],['账单周期',cycle],
+             ['账期时间',dueStr],['币别',cur],['账单金额',amt],['分摊规则',rule],['备注',rk]].forEach(function(p){fclFinSet(id,row,p[0],p[1]);});
+        }
+    }
+    if(ntype==='主单')_LCL_ACTUAL_RULE[no]=rule;else delete _LCL_ACTUAL_RULE[no];
+    if(typeof _listData!=='undefined')delete _listData[id];
+    closeCrudModal();
+    fclFinRefresh(id);
+    showToast(tr(_lclActualCtx.mode==='add'?'已新增实际成本':'已保存实际成本')+'：'+no);
+}
+function openSelectedLclActualEdit(id){
+    var idx=(typeof getSelectedRowIndex==='function')?getSelectedRowIndex():-1;
+    if(idx<0){showToast(tr('请先选择一条记录'));return;}
+    openLclActualCostModal('edit',id,idx);
+}
+
+/* ---------- 详情：基本信息 + 费用明细 + 主单分摊结果 ---------- */
+function openLclActualCostDetail(id,rowIdx){
+    id=id||'lcl-actual-cost';
+    var rows=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:TC[id].d;
+    var row=rows[rowIdx];
+    if(!row){showToast(tr('未找到数据'));return;}
+    var no=lclActualCell(row,'成本单号'),ntype=lclActualCell(row,'单号类型'),
+        cur=lclActualCell(row,'币别'),rule=lclActualCell(row,'分摊规则')||lclActualRuleOf(no);
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='72%';
+    document.getElementById('crud-modal-title').textContent=tr('实际成本详情')+' - '+no;
+    function fld(l,v){return '<div><div class="text-xs text-text-secondary">'+tr(l)+'</div><div class="text-sm font-medium text-text-primary mt-0.5">'+esc(v||'—')+'</div></div>';}
+    var h='<div class="space-y-5">';
+    h+='<div class="rounded-lg border border-surface-200 bg-white p-4 grid grid-cols-2 md:grid-cols-4 gap-x-5 gap-y-3">'+
+        fld('成本单号',no)+fld('服务商',lclActualCell(row,'服务商'))+fld('服务商账单号',lclActualCell(row,'服务商账单号'))+
+        fld('单号类型',ntype)+fld('关联单号',lclActualCell(row,'关联单号'))+fld('账单金额',cur+' '+lclActualCell(row,'账单金额'))+
+        fld('账单状态',lclActualCell(row,'账单状态'))+fld('分摊规则',ntype==='主单'?(rule||'—'):tr('不分摊'))+'</div>';
+    var det=_lclActualCostDetails[no]||[];
+    h+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-primary-500 rounded"></span><span class="text-sm font-semibold text-text-primary">'+tr('费用明细')+'</span><span class="text-xs text-text-muted">'+det.length+' '+tr('条')+'</span></div>';
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+['费用名称','费用类别','币别','金额','备注'].map(function(t){return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
+    if(!det.length)h+='<tr><td colspan="5" class="px-3 py-6 text-center text-text-muted">'+tr('暂无数据')+'</td></tr>';
+    det.forEach(function(d){
+        h+='<tr class="border-t border-surface-100"><td class="px-3 py-2">'+esc(d.feeName)+'</td><td class="px-3 py-2 text-text-secondary">'+esc(d.feeKind)+'</td><td class="px-3 py-2 text-text-secondary">'+esc(d.cur)+'</td><td class="px-3 py-2 font-semibold text-blue-700">'+esc(d.amt)+'</td><td class="px-3 py-2 text-text-secondary">'+esc(d.remark||'—')+'</td></tr>';
+    });
+    h+='</tbody></table></div></div>';
+    if(ntype==='主单'&&(_lclActualAlloc[no]||[]).length){
+        h+='<div><div class="flex items-center gap-2 mb-2"><span class="w-1 h-4 bg-amber-400 rounded"></span><span class="text-sm font-semibold text-text-primary">'+tr('分摊结果')+'</span><span class="text-xs text-text-muted">'+esc(rule)+'</span></div>';
+        h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+['运单号','分摊金额'].map(function(t){return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
+        _lclActualAlloc[no].forEach(function(a){
+            h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-medium text-primary-700">'+esc(a.wb)+'</td><td class="px-3 py-2 font-semibold text-orange-600">'+esc(cur)+' '+a.amt+'</td></tr>';
+        });
+        h+='</tbody></table></div></div>';
+    }
+    h+='</div>';
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+
+/* ---------- 对账分摊：主单按规则摊到主单下各运单，运单直挂 ---------- */
+var _lclRcCtx=null;
+function openLclActualReconcile(id){
+    id=id||'lcl-actual-cost';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选要对账的实际成本'));return;}
+    var rows=fclFinRows(id);
+    var picked=idxs.map(function(i){return rows[i];}).filter(function(r){return r&&lclActualCell(r,'账单状态')==='待对账';});
+    if(!picked.length){showToast(tr('仅「待对账」状态可发起对账分摊'));return;}
+    var firstMaster=picked.filter(function(r){return lclActualCell(r,'单号类型')==='主单';})[0];
+    var defRule=firstMaster?(lclActualCell(firstMaster,'分摊规则')||lclActualRuleOf(lclActualCell(firstMaster,'成本单号'))||'按票数'):'';
+    _lclRcCtx={id:id,rows:picked,hasMaster:!!firstMaster};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='64%';
+    document.getElementById('crud-modal-title').textContent=tr('对账分摊')+' - '+tr('实际成本管理');
+    var h='<div class="space-y-4">';
+    h+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+esc(tr('确认费用后按规则分摊：主单整单费用摊到主单下各运单（票数/件数/体积/重量），运单直挂。'))+'</div>';
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+['成本单号','服务商','单号类型','关联单号','账单金额','费用明细'].map(function(t){return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
+    picked.forEach(function(r){
+        var no=lclActualCell(r,'成本单号');
+        var det=(_lclActualCostDetails[no]||[]).map(function(d){return d.feeName+' '+d.amt;}).join('；');
+        h+='<tr class="border-t border-surface-100"><td class="px-3 py-2 font-medium text-text-primary">'+esc(no)+'</td><td class="px-3 py-2">'+esc(lclActualCell(r,'服务商'))+'</td><td class="px-3 py-2">'+esc(lclActualCell(r,'单号类型'))+'</td><td class="px-3 py-2 text-primary-700">'+esc(lclActualCell(r,'关联单号'))+'</td><td class="px-3 py-2 font-semibold text-blue-700">'+esc(lclActualCell(r,'币别')+' '+lclActualCell(r,'账单金额'))+'</td><td class="px-3 py-2 text-text-secondary">'+esc(det||'—')+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div class="flex items-center gap-3"><label class="text-sm font-medium text-text-secondary">'+(_lclRcCtx.hasMaster?'<span class="text-red-500 mr-0.5">*</span>':'')+tr('分摊规则')+'</label>'+
+        '<select id="lac-rc-rule" class="h-9 px-2 text-sm border border-surface-200 rounded-lg bg-surface-50">'+LCL_ACTUAL_RULES.map(function(o){return '<option'+(o===defRule?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>'+
+        (_lclRcCtx.hasMaster?'<span class="text-xs text-amber-700">'+esc(tr('含主单，分摊规则必选'))+'</span>':'')+'</div>';
+    h+='</div>';
+    document.getElementById('crud-modal-body').innerHTML=h;
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitLclActualReconcile()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认分摊')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function lclActualBasisOf(rule,wb){
+    if(rule==='按件数')return arPcsOf(wb);
+    var cg=(typeof arCargoOf==='function')?arCargoOf(wb):{};
+    if(rule==='按体积')return parseFloat(cg.vol)||0;
+    if(rule==='按重量')return parseFloat(cg.wt)||0;
+    return 1;   /* 按票数 / 不分摊 */
+}
+function submitLclActualReconcile(){
+    var ctx=_lclRcCtx;
+    if(!ctx){closeCrudModal();return;}
+    var rule=((document.getElementById('lac-rc-rule')||{}).value)||'';
+    if(ctx.hasMaster&&!rule){showToast(tr('主单必须选择分摊规则'));return;}
+    if(!ctx.hasMaster)rule='不分摊';
+    ctx.rows.forEach(function(r){
+        var no=lclActualCell(r,'成本单号'),ntype=lclActualCell(r,'单号类型'),refNo=lclActualCell(r,'关联单号'),
+            amt=fclParseMoney(lclActualCell(r,'账单金额'))||0;
+        if(ntype==='主单'){
+            var wbs=_LCL_MASTER_WBS[refNo]||[];
+            _LCL_ACTUAL_RULE[no]=rule;
+            if(wbs.length){
+                var baseSum=0,bases=wbs.map(function(w){var b=lclActualBasisOf(rule,w);baseSum+=b;return b;});
+                var alloc=[],assigned=0;
+                bases.forEach(function(b,i){
+                    var a=(i===bases.length-1)?+(amt-assigned).toFixed(2):+(amt*b/baseSum).toFixed(2);
+                    assigned=+(assigned+a).toFixed(2);
+                    alloc.push({wb:wbs[i],amt:a.toFixed(2)});
+                });
+                _lclActualAlloc[no]=alloc;
+            }
+        }
+        fclFinSet(ctx.id,r,'分摊规则',ntype==='主单'?rule:'不分摊');
+        fclFinSet(ctx.id,r,'账单状态','待请款');
+    });
+    if(typeof _listData!=='undefined')delete _listData[ctx.id];
+    closeCrudModal();
+    fclFinRefresh(ctx.id);
+    showToast(tr('对账分摊完成')+'：'+ctx.rows.length+' '+tr('笔进入待请款'));
+}
+
+/* ---------- 生成付款单：待请款 → 按服务商+币别合并推 lcl-pay-bill（待审核） ---------- */
+function lclActualGenPay(id){
+    id=id||'lcl-actual-cost';
+    var idxs=(typeof getSelectedRowIndices==='function')?getSelectedRowIndices():[];
+    if(!idxs.length){showToast(tr('请先勾选要生成付款单的实际成本'));return;}
+    var rows=fclFinRows(id);
+    var picked=idxs.map(function(i){return rows[i];}).filter(function(r){return r&&lclActualCell(r,'账单状态')==='待请款';});
+    if(!picked.length){showToast(tr('仅「待请款」状态可生成付款单'));return;}
+    var groups={};
+    picked.forEach(function(r){
+        var k=lclActualCell(r,'服务商')+'||'+lclActualCell(r,'币别');
+        if(!groups[k])groups[k]={prov:lclActualCell(r,'服务商'),cur:lclActualCell(r,'币别'),amt:0,rows:[]};
+        groups[k].amt=+((groups[k].amt)+(fclParseMoney(lclActualCell(r,'账单金额'))||0)).toFixed(2);
+        groups[k].rows.push(r);
+    });
+    var n=0;
+    Object.keys(groups).forEach(function(k){
+        var g=groups[k];
+        var c=TC['lcl-pay-bill'],dt=new Date(),pad=function(x){return String(x).padStart(2,'0');};
+        var no='LCP-'+String(dt.getFullYear()).slice(2)+pad(dt.getMonth()+1)+pad(dt.getDate())+String((c.d||[]).length+n+1).padStart(3,'0');
+        fclPushRow('lcl-pay-bill',{'付款单号':no,'服务商':g.prov,'费用行数':String(g.rows.length),'币别':g.cur,
+            '应付金额':g.amt.toFixed(2),'已付金额':'0','待付金额':g.amt.toFixed(2),
+            '申请人':(typeof fclWho==='function'?fclWho():'当前用户'),'申请时间':(typeof fclNow==='function'?fclNow():''),
+            '付款状态':'待审核'});
+        g.rows.forEach(function(r){fclFinSet(id,r,'账单状态','待审核');});
+        n++;
+    });
+    if(typeof _listData!=='undefined'){delete _listData[id];delete _listData['lcl-pay-bill'];}
+    fclFinRefresh(id);
+    showToast(tr('已生成付款单')+' '+n+' '+tr('张')+'，'+tr('进入付款单管理待审核'));
+}

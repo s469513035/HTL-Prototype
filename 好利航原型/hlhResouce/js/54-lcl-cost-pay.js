@@ -785,127 +785,300 @@ function lclActualRuleOf(no){return _LCL_ACTUAL_RULE[no]||'';}
 /* 关联单号字段已精简：单号来源挂费用明细首行（主单号/运单号在明细行上维护） */
 function lclActualRefNoOf(no){var d=_lclActualCostDetails[no]||[];return d.length?String(d[0].no||''):'';}
 
-/* ---------- 新增：主信息 + 费用信息 + 附件 三段式弹窗 ----------
- * 主单时分摊规则必选：单号类型 onchange 联动显隐；费用行即账单费用明细（对账分摊/详情的数据源）。 */
-var _lclActualCtx={mode:'add',no:''};
-var _lclActualFees=[];
-function openLclActualCostModal(mode,id,rowIdx,rowData){
+/* ---------- 新增：完全照搬代理账单「新增数据」弹窗设计（45 号 openAgentBillCreateModal 同款） ----------
+ * 三段：① 基本信息（主信息，含单号类型→主单分摊规则必选联动）② 应付明细（下载模板+上传灌示例+可编辑表格+行操作条）
+ * ③ 附件信息（类型+拖拽上传+文件列表）。账单金额/涉及票数按明细自动算，不手填。 */
+var LCL_ACTUAL_ATTACH_TYPES=['代理账单','发票扫描件','水单','对账单','其他'];
+var _lacNew=null;
+function lacNewCtx(){
+    return {invNo:'',agent:'',ntype:'运单',rule:'',cur:'CNY',due:'',remark:'',
+        rows:[{sel:false,no:'',acct:'',amt:'',remark:''},
+              {sel:false,no:'',acct:'',amt:'',remark:''},
+              {sel:false,no:'',acct:'',amt:'',remark:''}],
+        attachType:LCL_ACTUAL_ATTACH_TYPES[0],files:[],tableH:240};
+}
+function openLclActualCostCreateModal(id){
     id=id||'lcl-actual-cost';
-    var c=TC[id];
-    var rows=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:(c.d||[]);
-    var row=rowData||(rowIdx>=0?rows[rowIdx]:null);
-    var g=function(n){var i=(c.h||[]).indexOf(n);return i>=0&&row?String(row[i]||''):'';};
-    var no=g('流水号');
-    if(mode==='add'){
-        var dt=new Date(),pad=function(n){return String(n).padStart(2,'0');};
-        no='LAC-'+String(dt.getFullYear()).slice(2)+pad(dt.getMonth()+1)+pad(dt.getDate())+String((c.d||[]).length+1).padStart(3,'0');
-    }
-    _lclActualCtx={mode:mode,idx:rowIdx==null?-1:rowIdx,no:no};
-    /* 费用信息：编辑态取已存明细，新增态给一行空行 */
-    _lclActualFees=(_lclActualCostDetails[no]||[]).map(function(d){
-        return {no:d.no||'',feeName:d.feeName||'',feeKind:d.feeKind||'',cur:d.cur||'CNY',amt:d.amt||'',remark:d.remark||''};
-    });
-    if(!_lclActualFees.length)_lclActualFees=[{no:'',feeName:'',feeKind:'',cur:'CNY',amt:'',remark:''}];
+    _lacNew=lacNewCtx();
+    _lacNew.due=(typeof fclNow==='function')?fclNow():'';
     var panel=document.querySelector('#crud-modal .slide-panel');
-    if(panel)panel.style.width='66%';
-    /* 版式对齐通用新增弹窗：标题=「新增+表名」，流水号作只读字段置于表单首位 */
-    document.getElementById('crud-modal-title').textContent=(mode==='add'?tr('新增'):tr('编辑'))+tr(c.t);
-    var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white';
-    var roCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-100 text-text-secondary cursor-not-allowed';
-    var lbl=function(t,req){return '<label class="text-sm font-medium text-text-secondary">'+(req?'<span class="text-red-500 mr-0.5">*</span>':'')+tr(t)+'</label>';};
-    var sel=function(sid,opts,val,extra){return '<select id="'+sid+'" class="'+inCls+'"'+(extra||'')+'>'+(val? '':'<option value=""></option>')+opts.map(function(o){return '<option'+(o===val?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';};
-    var sec=function(t){return '<div class="text-sm font-semibold text-text-primary mb-3">'+tr(t)+'</div>';};
-    var h='<div class="space-y-5">';
-    /* S1 主信息（字段栅格/必填星标/控件样式与通用弹窗一致） */
-    h+='<section>'+sec('主信息');
-    h+='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-4">';
-    h+='<div class="flex flex-col gap-1.5">'+lbl('流水号')+'<input readonly value="'+esc(no)+'" class="'+roCls+'"></div>';
-    h+='<div class="flex flex-col gap-1.5">'+lbl('服务商',true)+sel('lac-prov',LCL_COST_PROVIDERS,g('服务商'))+'</div>';
-    h+='<div class="flex flex-col gap-1.5">'+lbl('服务商账单号',true)+'<input id="lac-invno" class="'+inCls+'" value="'+esc(g('服务商账单号'))+'" placeholder="'+esc(tr('代理发票上的账单号'))+'"></div>';
-    h+='<div class="flex flex-col gap-1.5">'+lbl('单号类型',true)+sel('lac-ntype',['运单','主单'],g('单号类型')||'运单',' onchange="lclActualTypeChange()"')+'</div>';
-    h+='<div class="flex flex-col gap-1.5">'+lbl('账期时间',true)+'<input id="lac-due" type="date" class="'+inCls+'" value="'+esc((g('账期时间')||'').slice(0,10))+'"></div>';
-    h+='<div class="flex flex-col gap-1.5">'+lbl('币别',true)+sel('lac-cur',['CNY','USD','EUR'],g('币别')||'CNY')+'</div>';
-    h+='<div class="flex flex-col gap-1.5">'+lbl('账单金额',true)+'<input id="lac-amt" type="number" min="0" step="0.01" class="'+inCls+'" value="'+esc(g('账单金额'))+'"></div>';
-    h+='<div class="flex flex-col gap-1.5" id="lac-rule-box">'+lbl('分摊规则',true)+sel('lac-rule',LCL_ACTUAL_RULES,g('分摊规则')||lclActualRuleOf(no)||'按票数')+'</div>';
-    h+='<div class="flex flex-col gap-1.5 md:col-span-3">'+lbl('备注')+'<textarea id="lac-rk" rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y">'+esc(g('备注'))+'</textarea></div>';
-    h+='</div></section>';
-    /* S2 费用信息 */
-    h+='<section><div class="flex items-center justify-between mb-3">'+sec('费用信息')+
-        '<button type="button" onclick="lclActualFeeAdd()" class="h-8 px-3 text-xs font-medium text-primary-700 border border-primary-200 rounded-lg bg-white hover:bg-primary-50 cursor-pointer">+ '+tr('增加费用行')+'</button></div>';
-    h+='<div id="lac-fee-box"></div></section>';
-    /* S3 附件 */
-    h+='<section>'+sec('附件')+
-        '<div class="text-xs text-text-muted mb-2">'+esc(tr('代理发票/对账单等'))+'</div>'+
-        ((typeof crudAttachmentFieldHtml==='function')?crudAttachmentFieldHtml('附件',''):'')+'</section>';
-    h+='</div>';
-    document.getElementById('crud-modal-body').innerHTML=h;
-    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
-        '<button onclick="submitLclActualCost()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认提交')+'</button>';
+    if(panel)panel.style.width='72%';
+    document.getElementById('crud-modal-title').textContent=tr('新增实际成本');
+    document.getElementById('crud-modal-body').innerHTML=lacNewBodyHtml(id);
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="submitLclActualCostCreate(\''+id+'\')" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('确认新增')+'</button>';
     document.getElementById('crud-modal').classList.add('show');
-    lclActualTypeChange();
-    lclActualFeeRedraw();
 }
-/* 单号类型联动：主单 → 分摊规则显示且必选；运单 → 隐藏并清空 */
-function lclActualTypeChange(){
-    var box=document.getElementById('lac-rule-box');
-    var selEl=document.getElementById('lac-rule');
-    if(!box)return;
-    var t=((document.getElementById('lac-ntype')||{}).value)||'运单';
-    if(t==='主单'){box.classList.remove('hidden');box.style.display='';}
-    else{box.classList.add('hidden');box.style.display='none';if(selEl)selEl.value='';}
+function lacSection(title,inner){
+    return '<div class="mb-5"><div class="flex items-center gap-2 mb-3">'+
+        '<span class="w-1 h-4 bg-amber-400 rounded-full"></span>'+
+        '<span class="text-sm font-semibold text-text-primary">'+tr(title)+'</span></div>'+inner+'</div>';
 }
-/* 费用行编辑（数据挂 _lclActualFees，重绘表格） */
-function lclActualFeeRedraw(){
-    var box=document.getElementById('lac-fee-box');
-    if(!box)return;
-    var inCls='h-8 px-2 text-xs border border-surface-200 rounded bg-white';
-    var sum=0;
-    var h='<div class="border border-surface-200 rounded-lg overflow-hidden"><table class="w-full text-xs"><thead class="bg-surface-50 text-text-secondary"><tr>'+
-        ['单号','费用名称','费用类别','币别','金额','备注',''].map(function(t){return '<th class="px-2 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
-    _lclActualFees.forEach(function(f,i){
-        sum+=(fclParseMoney(f.amt)||0);
-        h+='<tr class="border-t border-surface-100 items-center">'+
-            '<td class="px-1 py-1.5"><input value="'+esc(f.no)+'" oninput="lclActualFeeSet('+i+',\'no\',this.value)" class="'+inCls+' w-full" placeholder="'+esc(tr('运单号/主单号'))+'"></td>'+
-            '<td class="px-1 py-1.5"><input value="'+esc(f.feeName)+'" oninput="lclActualFeeSet('+i+',\'feeName\',this.value)" class="'+inCls+' w-full" placeholder="'+esc(tr('如 海运费'))+'"></td>'+
-            '<td class="px-1 py-1.5"><select onchange="lclActualFeeSet('+i+',\'feeKind\',this.value)" class="'+inCls+' w-full">'+[''].concat(LCL_COST_ACCOUNTS).map(function(o){return '<option'+(o===f.feeKind?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></td>'+
-            '<td class="px-1 py-1.5"><select onchange="lclActualFeeSet('+i+',\'cur\',this.value)" class="'+inCls+' w-full">'+['CNY','USD','EUR'].map(function(o){return '<option'+(o===f.cur?' selected':'')+'>'+o+'</option>';}).join('')+'</select></td>'+
-            '<td class="px-1 py-1.5"><input type="number" min="0" step="0.01" value="'+esc(f.amt)+'" oninput="lclActualFeeSet('+i+',\'amt\',this.value)" class="'+inCls+' w-full text-right"></td>'+
-            '<td class="px-1 py-1.5"><input value="'+esc(f.remark)+'" oninput="lclActualFeeSet('+i+',\'remark\',this.value)" class="'+inCls+' w-full"></td>'+
-            '<td class="px-1 py-1.5 text-center"><button type="button" onclick="lclActualFeeDel('+i+')" class="text-xs text-red-500 hover:text-red-600 cursor-pointer">'+tr('删除')+'</button></td></tr>';
+function lacNewBodyHtml(id){
+    var A=_lacNew;
+    var inCls='w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 focus:bg-white';
+    function fld(label,inner,req,span){
+        return '<div class="flex flex-col gap-1.5'+(span?' '+span:'')+'">'+
+            '<label class="text-sm font-medium text-text-secondary">'+(req?'<span class="text-red-500 mr-0.5">*</span>':'')+tr(label)+'</label>'+inner+'</div>';
+    }
+    function txt(k,ph){return '<input data-lac="'+k+'" type="text" value="'+esc(A[k]||'')+'" oninput="lacSet(\''+k+'\',this.value)" placeholder="'+esc(tr(ph||''))+'" class="'+inCls+'">';}
+    function sl(k,opts,ph){
+        var h='<select data-lac="'+k+'" onchange="lacSet(\''+k+'\',this.value)" class="'+inCls+'">';
+        h+='<option value="">'+esc(tr(ph||'请选择'))+'</option>';
+        opts.forEach(function(o){h+='<option value="'+esc(o)+'"'+(A[k]===o?' selected':'')+'>'+esc(tr(o))+'</option>';});
+        return h+'</select>';
+    }
+    var h='';
+    /* ① 基本信息（主信息：比代理账单多「单号类型」，主单时分摊规则必选） */
+    var g='<div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">';
+    g+=fld('服务商账单号',txt('invNo','代理发票上印的账单号'),true);
+    g+=fld('服务商',sl('agent',LCL_COST_PROVIDERS,'请选择服务商'),true);
+    g+=fld('分摊规则','<div><span id="lac-rule-req" class="hidden text-red-500 text-xs">* </span>'+sl('rule',LCL_ACTUAL_RULES,'暂不指定')+'<div id="lac-rule-hint" class="hidden text-xs text-amber-700 mt-1">'+esc(tr('主单必须选择分摊规则'))+'</div></div>',false);
+    g+=fld('币别',sl('cur',['CNY','USD','EUR'],'请选择币别'),true);
+    g+=fld('单号类型',sl('ntype',['运单','主单'],'请选择单号类型'),true);
+    g+=fld('账期时间','<input data-lac="due" type="text" value="'+esc(A.due)+'" oninput="lacSet(\'due\',this.value)" class="'+inCls+'">',true);
+    g+=fld('备注','<textarea data-lac="remark" rows="3" oninput="lacSet(\'remark\',this.value)" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入备注'))+'">'+esc(A.remark)+'</textarea>',false,'md:col-span-2');
+    g+='</div>';
+    h+=lacSection('基本信息',g);
+    /* ② 应付明细 —— 上传 Excel 带进来，或直接在表里加行（列口径同代理账单：单号/财务科目/费用金额/备注） */
+    var d='';
+    d+='<button type="button" onclick="lacDownloadTpl()" class="h-8 px-3 mb-3 text-xs font-medium text-white bg-amber-500 rounded hover:bg-amber-600 cursor-pointer">'+tr('下载模板')+'</button>';
+    d+='<div class="rounded-lg border-2 border-dashed border-surface-200 bg-surface-50/60 py-6 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/20 transition-colors" onclick="document.getElementById(\'lac-xls\').click()">';
+    d+='<svg class="w-9 h-9 mx-auto text-success-600 mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
+    d+='<div class="text-sm text-text-secondary">'+tr('将文件拖到此处，')+'<span class="text-primary-600">'+tr('或点击上传')+'</span></div>';
+    d+='<div class="text-xs text-text-muted mt-1">'+esc(tr('按模板列：单号 / 财务科目 / 费用金额 / 备注'))+'</div>';
+    d+='<input type="file" id="lac-xls" class="hidden" onchange="lacPickXls(this)"></div>';
+    d+='<div data-lac-detail class="mt-3">'+lacNewDetailHtml()+'</div>';
+    h+=lacSection('应付明细',d);
+    /* ③ 附件信息 —— 同代理账单：类型 + 拖拽上传 + 文件列表 */
+    var a='';
+    a+='<div class="flex items-center gap-3 mb-3"><label class="text-sm text-text-secondary whitespace-nowrap">'+tr('请选择附件类型')+'</label>'+
+       '<select onchange="lacSet(\'attachType\',this.value)" class="h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50 w-48">'+
+       selectOptionsHtml(LCL_ACTUAL_ATTACH_TYPES,A.attachType)+'</select></div>';
+    a+='<div class="rounded-lg border-2 border-dashed border-surface-200 bg-surface-50/60 py-7 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/20 transition-colors" onclick="document.getElementById(\'lac-att\').click()">';
+    a+='<svg class="w-9 h-9 mx-auto text-text-muted mb-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>';
+    a+='<div class="text-sm text-text-secondary">'+tr('点击或者拖动文件到该区域来上传')+'</div>';
+    a+='<div class="text-xs text-text-muted mt-1">'+esc(tr('请上传 大小不超过 25MB 格式为 doc/xls/xlsx/txt/pdf/zip/rar/jpg/jpeg/png/gif/bmp 的文件 最多上传10个附件'))+'</div>';
+    a+='<input type="file" id="lac-att" multiple class="hidden" onchange="lacPickAttach(this)"></div>';
+    a+='<div data-lac-files class="mt-3">'+lacNewFilesHtml()+'</div>';
+    h+=lacSection('附件信息',a);
+    return h;
+}
+function lacSet(k,v){
+    if(!_lacNew)return;
+    _lacNew[k]=v;
+    if(k==='ntype')lacTypeToggle();      /* 单号类型联动：主单→规则必选提示 */
+    if(k==='cur')lacRedrawDetail();      /* 币别变了，合计币种跟着变 */
+}
+/* 主单 → 分摊规则标必选 + 提示；运单 → 隐藏提示（提交时自动记「不分摊」） */
+function lacTypeToggle(){
+    var isMaster=(_lacNew&&_lacNew.ntype)==='主单';
+    var req=document.getElementById('lac-rule-req'),hint=document.getElementById('lac-rule-hint');
+    if(req)req.classList.toggle('hidden',!isMaster);
+    if(hint)hint.classList.toggle('hidden',!isMaster);
+}
+function lacDownloadTpl(){
+    showToast(tr('模板已下载')+'：'+tr('实际成本明细模板')+'.xlsx（'+tr('列')+'：'+
+        tr('单号')+' / '+tr('财务科目')+' / '+tr('费用金额')+' / '+tr('备注')+'）');
+}
+/* 原型不解析 Excel：选中文件即按模板列灌一批示例明细，演示「导入后可继续改」 */
+function lacPickXls(input){
+    var f=(input&&input.files&&input.files[0])?input.files[0].name:'';
+    if(!f)return;
+    var sample=[
+        {sel:false,no:'WB-20260522001',acct:'海运费',amt:'4200',remark:'散货海运'},
+        {sel:false,no:'WB-20260522002',acct:'海运费',amt:'3860',remark:''},
+        {sel:false,no:'WB-20260522003',acct:'报关费',amt:'860',remark:''}
+    ];
+    var kept=_lacNew.rows.filter(function(r){return lacRowFilled(r);});
+    _lacNew.rows=kept.concat(sample);
+    lacRedrawDetail();
+    showToast(tr('已从')+' '+f+' '+tr('读取')+' '+sample.length+' '+tr('条明细，可继续修改'));
+}
+function lacRowFilled(r){
+    return String(r.no||'').trim()||String(r.acct||'').trim()||String(r.amt||'').trim();
+}
+function lacValidRows(){
+    return (_lacNew.rows||[]).filter(function(r){
+        return String(r.no||'').trim()&&(typeof fclParseMoney==='function'?fclParseMoney(r.amt)!==null:String(r.amt||'').trim()!=='');
+    });
+}
+function lacTotal(){
+    return lacValidRows().reduce(function(s,r){return s+((typeof fclParseMoney==='function'?fclParseMoney(r.amt):parseFloat(r.amt))||0);},0);
+}
+function lacNewDetailHtml(){
+    var A=_lacNew,rows=A.rows||[];
+    var h='';
+    h+='<div class="flex items-center gap-4 mb-2 text-sm text-text-secondary">'+
+       '<span>'+tr('总条数')+'：<span class="font-semibold text-text-primary">'+lacValidRows().length+'</span></span>'+
+       '<span>'+tr('总金额')+'：<span class="font-semibold text-text-primary">'+esc(A.cur||'')+' '+lacTotal().toFixed(2)+'</span></span>'+
+       '<span class="text-xs text-text-muted">'+esc(tr('账单金额与涉及单号数按这里自动算，不用手填'))+'</span></div>';
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto" style="max-height:'+(A.tableH||240)+'px">';
+    h+='<table class="w-full text-sm"><thead class="bg-surface-50 sticky top-0"><tr>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary w-10">#</th>'+
+       '<th class="px-3 py-2 w-10"><input type="checkbox" onchange="lacToggleAll(this.checked)" class="rounded border-surface-300 text-primary-600"></th>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('单号')+'</th>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('财务科目')+'</th>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('费用金额')+'</th>'+
+       '<th class="px-3 py-2 text-left font-medium text-text-secondary">'+tr('备注')+'</th>'+
+       '</tr></thead><tbody>';
+    rows.forEach(function(r,i){
+        h+='<tr class="border-t border-surface-100">'+
+           '<td class="px-3 py-1.5 text-text-muted">'+(i+1)+'</td>'+
+           '<td class="px-3 py-1.5"><input type="checkbox" data-lac-sel="'+i+'"'+(r.sel?' checked':'')+' onchange="lacRowSet('+i+',\'sel\',this.checked)" class="rounded border-surface-300 text-primary-600"></td>'+
+           '<td class="px-2 py-1.5"><input data-lac-no="'+i+'" type="text" value="'+esc(r.no)+'" oninput="lacRowSet('+i+',\'no\',this.value)" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-white"></td>'+
+           '<td class="px-2 py-1.5"><input data-lac-acct="'+i+'" type="text" list="lac-acct-options" value="'+esc(r.acct)+'" oninput="lacRowSet('+i+',\'acct\',this.value)" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-white"></td>'+
+           '<td class="px-2 py-1.5"><input data-lac-amt="'+i+'" type="number" value="'+esc(r.amt)+'" oninput="lacRowSet('+i+',\'amt\',this.value)" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-white"></td>'+
+           '<td class="px-2 py-1.5"><input data-lac-rmk="'+i+'" type="text" value="'+esc(r.remark)+'" oninput="lacRowSet('+i+',\'remark\',this.value)" class="w-full h-8 px-2 text-sm border border-surface-200 rounded bg-white"></td>'+
+           '</tr>';
     });
     h+='</tbody></table></div>';
-    h+='<div class="mt-1.5 text-xs text-text-secondary">'+tr('费用合计')+' <span class="font-semibold text-text-primary">'+sum.toFixed(2)+'</span>　'+tr('账单金额')+' <span class="font-semibold text-text-primary">'+esc(((document.getElementById('lac-amt')||{}).value)||'—')+'</span>　<span class="text-text-muted">'+esc(tr('运单型每行填运单号，主单型首行填主单号'))+'</span></div>';
-    box.innerHTML=h;
+    h+='<datalist id="lac-acct-options">'+LCL_COST_ACCOUNTS.map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>';
+    /* 行操作条：与代理账单一致「N 新增 / 删除 / 清空 / 表格高度」 */
+    h+='<div class="flex items-center gap-3 mt-2 text-xs text-text-secondary flex-wrap bg-surface-50 border border-surface-200 rounded-lg px-3 py-2">'+
+       '<input id="lac-addn" type="number" min="1" value="1" class="w-14 h-7 px-2 text-xs border border-surface-200 rounded bg-white">'+
+       '<a class="text-primary-600 hover:text-primary-700 cursor-pointer" onclick="lacAddRows()">'+tr('新增')+'</a>'+
+       '<a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="lacDelRows()">'+tr('删除')+'</a>'+
+       '<a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="lacClearRows()">'+tr('清空')+'</a>'+
+       '<span class="ml-2">'+tr('表格高度')+'：<input id="lac-th" type="number" min="120" step="20" value="'+(A.tableH||240)+'" onchange="lacSetTableH(this.value)" class="w-16 h-7 px-2 text-xs border border-surface-200 rounded bg-white"> PX</span>'+
+       '</div>';
+    return h;
 }
-function lclActualFeeSet(i,k,v){if(_lclActualFees[i])_lclActualFees[i][k]=v;}
-function lclActualFeeAdd(){_lclActualFees.push({no:'',feeName:'',feeKind:'',cur:( _lclActualFees.length?(_lclActualFees[0].cur||'CNY'):'CNY'),amt:'',remark:''});lclActualFeeRedraw();}
-function lclActualFeeDel(i){if(_lclActualFees.length<=1){showToast(tr('至少保留一行费用'));return;}_lclActualFees.splice(i,1);lclActualFeeRedraw();}
-function submitLclActualCost(){
-    var v=function(sid){var e=document.getElementById(sid);return e?String(e.value||'').trim():'';};
-    var prov=v('lac-prov'),invno=v('lac-invno'),ntype=v('lac-ntype'),
-        due=v('lac-due'),cur=v('lac-cur'),amt=v('lac-amt'),rule=v('lac-rule'),rk=v('lac-rk');
-    if(!prov||!invno||!due||!cur||!amt){showToast(tr('请完整填写必填项'));return;}
-    if(ntype==='主单'&&!rule){showToast(tr('主单必须选择分摊规则'));return;}
-    if(ntype==='运单')rule='不分摊';
-    var fees=_lclActualFees.filter(function(f){return String(f.feeName||'').trim()&&String(f.amt||'').trim();});
-    if(!fees.length){showToast(tr('请至少填写一行费用信息'));return;}
-    if(ntype==='主单'&&!String(fees[0].no||'').trim()){showToast(tr('主单首行费用请填写主单号'));return;}
-    var id='lcl-actual-cost',no=_lclActualCtx.no;
-    var dueStr=due.length===10?(due+' 23:59'):due;
-    var refNo=String(fees[0].no||'').trim();
-    var wbCount={};fees.forEach(function(f){if(f.no)wbCount[f.no]=1;});
-    fclPushRow(id,{'流水号':no,'服务商':prov,'服务商账单号':invno,'单号类型':ntype,
-        '账期时间':dueStr,'币别':cur,'账单金额':amt,
-        '涉及票数':String(Object.keys(wbCount).length||fees.length),
-        '分摊规则':rule,'导入人':(typeof fclWho==='function'?fclWho():'当前用户'),
-        '导入时间':(typeof fclNow==='function'?fclNow():''),'备注':rk,'账单状态':'待对账'});
-    /* 费用信息落明细：对账分摊/详情的数据源 */
-    _lclActualCostDetails[no]=fees.map(function(f){return {no:f.no,feeName:f.feeName,feeKind:f.feeKind||'其他',cur:f.cur||cur,amt:f.amt,remark:f.remark};});
-    if(ntype==='主单')_LCL_ACTUAL_RULE[no]=rule;else delete _LCL_ACTUAL_RULE[no];
+function lacRedrawDetail(){
+    var box=document.querySelector('[data-lac-detail]');
+    if(box)box.innerHTML=lacNewDetailHtml();
+}
+function lacRowSet(i,k,v){
+    if(!_lacNew||!_lacNew.rows[i])return;
+    _lacNew.rows[i][k]=v;
+    if(k==='amt'||k==='no')lacRefreshTotals();
+}
+function lacRefreshTotals(){
+    var box=document.querySelector('[data-lac-detail]');
+    if(!box)return;
+    var html=box.innerHTML;
+    var re=/(总条数[^<]*<span class="font-semibold text-text-primary">)[^<]*(<\/span>)/;
+    if(re.test(html)){
+        html=html.replace(re,'$1'+lacValidRows().length+'$2');
+        html=html.replace(/(总金额[^<]*<span class="font-semibold text-text-primary">)[^<]*(<\/span>)/,
+            '$1'+esc(_lacNew.cur||'')+' '+lacTotal().toFixed(2)+'$2');
+        box.innerHTML=html;
+    }
+}
+function lacToggleAll(on){
+    (_lacNew.rows||[]).forEach(function(r){r.sel=!!on;});
+    lacRedrawDetail();
+}
+function lacAddRows(){
+    var el=document.getElementById('lac-addn');
+    var n=Math.max(1,parseInt((el&&el.value)||'1',10)||1);
+    for(var i=0;i<n;i++)_lacNew.rows.push({sel:false,no:'',acct:'',amt:'',remark:''});
+    lacRedrawDetail();
+    showToast(tr('已新增')+' '+n+' '+tr('行'));
+}
+function lacDelRows(){
+    var keep=(_lacNew.rows||[]).filter(function(r){return !r.sel;});
+    var n=(_lacNew.rows||[]).length-keep.length;
+    if(!n){showToast(tr('请先勾选要删除的明细行'));return;}
+    _lacNew.rows=keep.length?keep:[{sel:false,no:'',acct:'',amt:'',remark:''}];
+    lacRedrawDetail();
+    showToast(tr('已删除')+' '+n+' '+tr('行'));
+}
+function lacClearRows(){
+    _lacNew.rows=[{sel:false,no:'',acct:'',amt:'',remark:''}];
+    lacRedrawDetail();
+    showToast(tr('明细已清空'));
+}
+function lacSetTableH(v){
+    _lacNew.tableH=Math.max(120,parseInt(v,10)||240);
+    lacRedrawDetail();
+}
+function lacNewFilesHtml(){
+    var files=_lacNew.files||[];
+    var cols=['序号','文件名称','文件类型','缩略图','文件大小(kb)','上传人','上传时间','操作'];
+    var h='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+        cols.map(function(t){return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+
+        '</tr></thead><tbody>';
+    if(!files.length){
+        h+='<tr><td colspan="'+cols.length+'" class="px-3 py-8 text-center text-sm text-text-muted">'+tr('还没有上传附件')+'</td></tr>';
+    }
+    files.forEach(function(f,i){
+        h+='<tr class="border-t border-surface-100">'+
+           '<td class="px-3 py-2 text-text-muted">'+(i+1)+'</td>'+
+           '<td class="px-3 py-2 text-text-primary">'+esc(f.name)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(f.type)+'</td>'+
+           '<td class="px-3 py-2"><span class="inline-flex w-8 h-8 items-center justify-center rounded bg-surface-100 text-[10px] text-text-muted">'+esc(f.ext)+'</span></td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(f.size)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(f.by)+'</td>'+
+           '<td class="px-3 py-2 text-text-secondary">'+esc(f.at)+'</td>'+
+           '<td class="px-3 py-2"><a class="text-red-500 hover:text-red-600 cursor-pointer" onclick="lacDelFile('+i+')">'+tr('删除')+'</a></td></tr>';
+    });
+    return h+'</tbody></table></div>';
+}
+function lacPickAttach(input){
+    var list=(input&&input.files)?input.files:[];
+    if(!list.length)return;
+    for(var i=0;i<list.length;i++){
+        if((_lacNew.files||[]).length>=10){showToast(tr('最多上传 10 个附件'));break;}
+        var nm=String(list[i].name||('附件'+(i+1)));
+        var sz=list[i].size?Math.max(1,Math.round(list[i].size/1024)):Math.round(Math.random()*900+60);
+        _lacNew.files.push({name:nm,type:_lacNew.attachType,
+            ext:(nm.split('.').pop()||'').toUpperCase().slice(0,4),
+            size:String(sz),by:(typeof fclWho==='function')?fclWho():'当前用户',
+            at:(typeof fclNow==='function')?fclNow():''});
+    }
+    lacRedrawFiles();
+}
+function lacRedrawFiles(){
+    var box=document.querySelector('[data-lac-files]');
+    if(box)box.innerHTML=lacNewFilesHtml();
+}
+function lacDelFile(i){
+    _lacNew.files.splice(i,1);
+    lacRedrawFiles();
+    showToast(tr('附件已删除'));
+}
+function submitLclActualCostCreate(id){
+    id=id||'lcl-actual-cost';
+    var A=_lacNew;
+    if(!String(A.invNo||'').trim()){showToast(tr('请填写服务商账单号'));return;}
+    if(!A.agent){showToast(tr('请选择服务商'));return;}
+    if(!A.ntype){showToast(tr('请选择单号类型'));return;}
+    if(A.ntype==='主单'&&!A.rule){showToast(tr('主单必须选择分摊规则'));return;}
+    if(!A.cur){showToast(tr('请选择币别'));return;}
+    if(!String(A.due||'').trim()){showToast(tr('请填写账期时间'));return;}
+    var rows=lacValidRows();
+    if(!rows.length){showToast(tr('应付明细至少要有一行（单号与费用金额都要填）'));return;}
+    var noAcct=rows.filter(function(r){return !String(r.acct||'').trim();});
+    if(noAcct.length){showToast(tr('有')+' '+noAcct.length+' '+tr('行没填财务科目'));return;}
+    if(rows.some(function(r){return ((typeof fclParseMoney==='function'?fclParseMoney(r.amt):parseFloat(r.amt))||0)<=0;})){showToast(tr('费用金额必须大于 0'));return;}
+    if(A.ntype==='主单'&&!String(rows[0].no||'').trim()){showToast(tr('主单首行费用请填写主单号'));return;}
+    var nos=[];
+    rows.forEach(function(r){var n=String(r.no).trim();if(nos.indexOf(n)<0)nos.push(n);});
+    var total=lacTotal();
+    var billNo=(typeof fclSeqNo==='function')?fclSeqNo('LAC',id):('LAC-'+Date.now());
+    var rule=A.ntype==='主单'?A.rule:'不分摊';
+    /* 明细挂到流水号下，后面对账分摊/详情都读它 */
+    _lclActualCostDetails[billNo]=rows.map(function(r){
+        return {no:String(r.no).trim(),feeName:String(r.acct).trim(),feeKind:String(r.acct).trim(),
+            cur:A.cur,amt:String((typeof fclParseMoney==='function'?fclParseMoney(r.amt):parseFloat(r.amt))||0),remark:String(r.remark||'')};
+    });
+    _LCL_ACTUAL_RULE[billNo]=rule;
+    fclPushRow(id,{
+        '流水号':billNo,'服务商':A.agent,'服务商账单号':String(A.invNo).trim(),
+        '单号类型':A.ntype,'账期时间':String(A.due).trim(),
+        '币别':A.cur,'账单金额':total.toFixed(2),'涉及票数':String(nos.length),
+        '分摊规则':rule,'导入人':(typeof fclWho==='function')?fclWho():'当前用户',
+        '导入时间':(typeof fclNow==='function')?fclNow():'',
+        '备注':String(A.remark||''),'账单状态':'待对账'
+    });
     if(typeof _listData!=='undefined')delete _listData[id];
     closeCrudModal();
     fclFinRefresh(id);
-    showToast(tr('已新增实际成本')+'：'+no);
+    showToast(tr('已新增实际成本')+' '+billNo+'：'+rows.length+' '+tr('条明细')+'，'+
+        nos.length+' '+tr('个单号')+'，'+A.cur+' '+total.toFixed(2)+
+        (A.files.length?('，'+A.files.length+' '+tr('个附件')):''));
 }
 /* 作废：仅「待对账 / 待请款」可作废（已生成付款单的不让作废） */
 function submitLclActualVoid(id){

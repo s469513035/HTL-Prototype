@@ -1759,7 +1759,7 @@ function getToolbarActions(id){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
             {type:'add',label:'新增数据',variant:'primary'},
-            {key:'lclActualReconcile',label:'对账分摊'},
+            {key:'lclActualReconcile',label:'手工分摊'},
             {key:'lclActualGenPay',label:'生成付款单',variant:'primary'},
             {key:'lclActualVoid',label:'作废',variant:'danger'}
         ];

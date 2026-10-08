@@ -1751,11 +1751,7 @@ function getToolbarActions(id){
     /* 散货成本明细：运单维度录入（新增可同步应收），确认后勾选生成付款单 */
     if(id==='lcl-cost-detail'){
         return [
-            {key:'search',label:'查询数据',variant:'primary'},
-            {key:'lclCostConfirm',label:'费用确认'},
-            {key:'lclCostGenPay',label:'生成付款单',variant:'primary'},
-            {key:'lclCostVoid',label:'作废',variant:'danger'},
-            {key:'export',label:'导出数据'}
+            {key:'search',label:'查询数据',variant:'primary'}
         ];
     }
     /* 散货实际成本：账单登记 → 对账分摊（主单必选分摊规则）→ 生成付款单；不作废编辑，作废走专用按钮 */

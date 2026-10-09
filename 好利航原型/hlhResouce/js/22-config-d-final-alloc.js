@@ -894,3 +894,102 @@ function runFinalAllocAutoReplenish(id){
 
 /* 配舱计划列表查询区：单号 + 时间范围（引擎 daterange；单号内嵌日期，行池匹配） */
 TC['wh-final-alloc'].q=[{label:'配舱单号',type:'text'},{label:'配舱日期',type:'daterange'}];
+
+
+/* ===== 配舱计划 行内「查看详情」：配舱明细 + 增值服务快速筛选（报关件/木箱件等） =====
+ * 演示口径：配舱单 → 运单/袋明细的映射直接给一份（正式版来自配舱结果）；
+ * 空运单配袋明细（无子行），海运单配运单明细，字段与配舱货源池种子一致。 */
+var _FA_DETAIL_MAP={
+    'ZPCD-20260626-001':{mode:'bag',items:['BAG-20260626-001','BAG-20260626-002','BAG-20260626-003']},
+    'ZPCD-20260625-002':{mode:'wb',items:['YP20260626','YPC-20260627001']},
+    'ZPCD-20260625-001':{mode:'wb',items:['XJWCS2']},
+    '20260624-终配001':{mode:'wb',items:['YP20260626']},
+    'ZPCD-20260622-001':{mode:'wb',items:['XJWCS3','YPC-20260626003']},
+    'ZPCD-20260620-001':{mode:'wb',items:['YPC-TY']},
+    'ZPCD-20260615-001':{mode:'wb',items:['YPC-20260627001','YPC-20260627002']},
+    'ZPCD-20260612-001':{mode:'wb',items:['YPC-20260627002']}
+};
+function faDetailItemsOf(row){
+    var no=String(row&&row[0]||'');
+    var m=_FA_DETAIL_MAP[no];
+    var pool=(m&&m.mode==='bag')?_finalAllocBagSeed:_finalAllocUnselectedSeed;
+    var keys=m?m.items:[];
+    var items=pool.filter(function(p){return keys.indexOf(p.no)>=0;});
+    /* 未登记映射的单据按票数从对应货源池取前 N 条兜底，保证每单都有明细可看 */
+    if(!items.length)items=pool.slice(0,Math.max(1,(parseInt(row&&row[7],10)||1)));
+    return items.map(function(p){
+        return {no:p.no,name:p.name,pcs:p.pcs,wt:p.canWt,vol:p.canVol,
+            packageType:p.packageType,customsType:p.customsType,service:p.service,whRemark:p.whRemark,time:p.time};
+    });
+}
+/* 快速筛选：报关件=增值服务含「报关」；木箱件=包装为木箱或服务含木箱；其余按服务关键字 */
+var _FA_DETAIL_FILTER='';
+var _FA_DETAIL_TAGS=[['','全部'],['customs','报关件'],['wood','木箱件'],['带电','带电件'],['带磁','带磁件'],['贴箱唛','贴箱唛件']];
+function faDetailMatch(it,tag){
+    if(!tag)return true;
+    if(tag==='customs')return (it.service||'').indexOf('报关')>=0;
+    if(tag==='wood')return (it.packageType||'')==='木箱'||(it.service||'').indexOf('木箱')>=0;
+    return (it.service||'').indexOf(tag)>=0;
+}
+var _faDetailCtx=null;
+function openFinalAllocRowDetail(id,rowIdx){
+    id=id||'wh-final-alloc';
+    var rows=(typeof _listData!=='undefined'&&_listData[id])?_listData[id]:TC[id].d;
+    var row=rows[rowIdx];
+    if(!row){showToast(tr('未找到配舱单'));return;}
+    _faDetailCtx={no:String(row[0]||''),row:row,items:faDetailItemsOf(row)};
+    _FA_DETAIL_FILTER='';
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='78%';
+    document.getElementById('crud-modal-title').textContent=tr('配舱明细')+' - '+_faDetailCtx.no;
+    document.getElementById('crud-modal-body').innerHTML=faDetailBodyHtml();
+    document.getElementById('crud-modal-footer').innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer">'+tr('关闭')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function faDetailBodyHtml(){
+    var ctx=_faDetailCtx,row=ctx.row,items=ctx.items;
+    var h='<div class="space-y-4">';
+    h+='<div class="rounded-lg bg-surface-50 border border-surface-200 p-3 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-sm">'+
+        faInfo('配舱单号',row[0])+faInfo('配舱状态',row[6])+faInfo('票数',row[7])+faInfo('运输方式',row[8])+
+        faInfo('柜号',row[4]||'—')+faInfo('封签号',row[5]||'—')+faInfo('Job No',row[2])+faInfo('国家',row[3])+'</div>';
+    /* 快速筛选 chips */
+    h+='<div class="flex items-center gap-2 flex-wrap"><span class="text-xs text-text-secondary">'+tr('快速筛选')+'：</span>';
+    _FA_DETAIL_TAGS.forEach(function(t){
+        var on=_FA_DETAIL_FILTER===t[0];
+        var cnt=items.filter(function(it){return faDetailMatch(it,t[0]);}).length;
+        h+='<button type="button" onclick="faDetailSetFilter(\''+t[0]+'\')" class="h-7 px-3 text-xs rounded-lg border cursor-pointer '+
+            (on?'border-primary-500 bg-primary-50 text-primary-700 font-medium':'border-surface-200 bg-white text-text-secondary hover:bg-surface-50')+'">'+
+            esc(tr(t[1]))+' <span class="text-text-muted">'+cnt+'</span></button>';
+    });
+    h+='</div>';
+    var matched=items.filter(function(it){return faDetailMatch(it,_FA_DETAIL_FILTER);});
+    h+='<div class="border border-surface-200 rounded-lg overflow-auto"><table class="w-full text-sm"><thead class="bg-surface-50"><tr>'+
+        ['单号','品名','件数','重量(KG)','体积(CBM)','包装','报关类型','增值服务','备注'].map(function(t){return '<th class="px-3 py-2 text-left font-medium text-text-secondary whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
+    if(!matched.length){
+        h+='<tr><td colspan="9" class="px-3 py-6 text-center text-text-muted">'+tr('该筛选条件下没有运单')+'</td></tr>';
+    }
+    matched.forEach(function(it){
+        var svc=String(it.service||'—');
+        h+='<tr class="border-t border-surface-100 hover:bg-primary-50/30">'+
+            '<td class="px-3 py-2 font-medium text-primary-700 whitespace-nowrap">'+esc(it.no)+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(it.name||'—')+'</td>'+
+            '<td class="px-3 py-2 whitespace-nowrap">'+esc(String(it.pcs))+'</td>'+
+            '<td class="px-3 py-2 whitespace-nowrap">'+esc(String(it.wt))+'</td>'+
+            '<td class="px-3 py-2 whitespace-nowrap">'+esc(String(parseFloat(it.vol)||0))+'</td>'+
+            '<td class="px-3 py-2 whitespace-nowrap">'+esc(it.packageType||'—')+'</td>'+
+            '<td class="px-3 py-2 whitespace-nowrap">'+esc(it.customsType||'—')+'</td>'+
+            '<td class="px-3 py-2 whitespace-nowrap">'+(svc==='—'?'<span class="text-text-muted">—</span>':'<span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">'+esc(svc)+'</span>')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary">'+esc(it.whRemark||'—')+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div class="text-xs text-text-secondary">'+tr('共')+' '+items.length+' '+tr('票')+'，'+tr('当前筛选')+' '+matched.length+' '+tr('票')+'</div>';
+    h+='</div>';
+    return h;
+}
+function faInfo(label,val){
+    return '<div><span class="text-xs text-text-muted block">'+tr(label)+'</span><span class="font-medium text-text-primary">'+esc(String(val==null||val===''?'—':val))+'</span></div>';
+}
+function faDetailSetFilter(tag){
+    _FA_DETAIL_FILTER=tag;
+    document.getElementById('crud-modal-body').innerHTML=faDetailBodyHtml();
+}

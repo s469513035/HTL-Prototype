@@ -1080,7 +1080,8 @@ function renderToolbarAction(action,id){
     else if(action.key==='invoiceVoid')click='voidFinInvoice(\''+id+'\')';
     else if(action.key==='releaseBooking')click='openFclBookingRelease(\''+id+'\')';
     else if(action.key==='freightRecalc')click='openFreightRecalcConfirm(\''+id+'\')';
-    else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan'].includes(id))click='printSelectedLabels(\''+id+'\')';
+    else if(action.key==='labelPrint'&&['wh-loading-list','wh-parcel-out','wh-air-arrival-scan','wh-sort-bag'].includes(id))click='printSelectedLabels(\''+id+'\')';
+    else if(action.key==='printEmptyBagLabel')click='openSortBagEmptyLabelModal(\''+id+'\')';
     else if(action.key==='finalAllocAdjust')click='openFinalAllocAdjustModal(\''+id+'\')';
     else if(action.key==='finalAllocExAdjust')click='openFinalAllocExAdjustModal(\''+id+'\')';
     else if(action.key==='finalAllocLinkBL')click='openFinalAllocLinkBLModal(\''+id+'\')';
@@ -1805,6 +1806,7 @@ function getToolbarActions(id){
         return [
             {key:'search',label:'查询数据',variant:'primary'},
             {key:'newSortScan',label:'新增分拣扫描',variant:'primary'},
+            {key:'printEmptyBagLabel',label:'打印空袋标签',variant:'primary'},
             {key:'labelPrint',label:'打印袋标签'},
             {key:'export',label:'导出数据'}
         ];

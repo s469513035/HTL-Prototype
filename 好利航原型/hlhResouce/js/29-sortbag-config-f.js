@@ -398,3 +398,81 @@ function saveCodingRuleEdit(id,idx){
     try{if(typeof navigateToTab==='function')navigateToTab('biz-cfg','cfg-coding-rule');}catch(e){}
 }
 
+
+
+/* ===== 打印空袋标签 =====
+ * 业务场景：先批量打印好袋子标签拿在手上，现场装袋封袋时扫描袋号直接绑定，
+ * 所以这里只出「空袋号」标签（不写入装袋列表），封袋扫描时才落数据。 */
+var _sbEmptyLabelCtx={count:10,prefix:'BAG'};
+function openSortBagEmptyLabelModal(id){
+    _sbEmptyLabelCtx={count:10,prefix:'BAG'};
+    var panel=document.querySelector('#crud-modal .slide-panel');
+    if(panel)panel.style.width='62%';
+    document.getElementById('crud-modal-title').textContent=tr('打印空袋标签');
+    document.getElementById('crud-modal-body').innerHTML=sbEmptyLabelBodyHtml();
+    document.getElementById('crud-modal-footer').innerHTML=
+        '<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('取消')+'</button>'+
+        '<button onclick="sbEmptyLabelPrint()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 cursor-pointer ml-2">'+tr('打印')+'</button>';
+    document.getElementById('crud-modal').classList.add('show');
+}
+function sbEmptyLabelBodyHtml(){
+    var A=_sbEmptyLabelCtx;
+    var inCls='h-9 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50';
+    var h='<div class="space-y-4">';
+    h+='<div class="text-xs text-text-secondary bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">'+esc(tr('先打印空袋标签拿在手上，现场装袋封袋时扫描袋号直接绑定；空袋号不会写入装袋列表。'))+'</div>';
+    h+='<div class="flex items-end gap-4 flex-wrap">'+
+        '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary"><span class="text-red-500 mr-0.5">*</span>'+tr('打印数量')+'</label><input id="sb-el-count" type="number" min="1" max="200" value="'+A.count+'" oninput="_sbEmptyLabelCtx.count=parseInt(this.value)||1;sbEmptyLabelRedraw()" class="'+inCls+' w-32"></div>'+
+        '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('袋号前缀')+'</label><input id="sb-el-prefix" type="text" value="'+esc(A.prefix)+'" oninput="_sbEmptyLabelCtx.prefix=this.value||\'BAG\';sbEmptyLabelRedraw()" class="'+inCls+' w-32"></div>'+
+        '<div class="text-xs text-text-muted pb-2">'+esc(tr('袋号按 前缀-日期-序号 生成，打印后现场扫描绑定'))+'</div></div>';
+    h+='<div id="sb-el-preview">'+sbEmptyLabelPreviewHtml()+'</div>';
+    h+='</div>';
+    return h;
+}
+/* 袋号序列：前缀-YYMMDD-序（与 BAG-20260626-001 现有口径一致） */
+function sbEmptyLabelNos(){
+    var A=_sbEmptyLabelCtx;
+    var d=new Date(),p=function(n){return String(n).padStart(2,'0');};
+    var ds=String(d.getFullYear()).slice(2)+p(d.getMonth()+1)+p(d.getDate());
+    var base=(TC['wh-sort-bag'].d||[]).length;
+    var out=[];
+    for(var i=1;i<=Math.min(200,Math.max(1,A.count));i++){
+        out.push(String(A.prefix||'BAG').toUpperCase()+'-'+ds+'-'+String(base+i).padStart(3,'0'));
+    }
+    return out;
+}
+/* 伪条码：按袋号散列生成稳定条宽，纯 CSS 渲染，不需要真实打印组件 */
+function sbFakeBarcode(seed){
+    var n=0,s=String(seed||'');
+    for(var i=0;i<s.length;i++)n=(n*31+s.charCodeAt(i))>>>0;
+    var bars='';
+    for(var b=0;b<24;b++){
+        n=(n*1103515245+12345)>>>0;
+        var w=(n%3)+1;
+        bars+='<span style="display:inline-block;width:'+w+'px;height:34px;background:#111;margin-right:'+(((n>>8)%2)+1)+'px"></span>';
+    }
+    return '<div class="leading-none whitespace-nowrap">'+bars+'</div>';
+}
+function sbEmptyLabelPreviewHtml(){
+    var nos=sbEmptyLabelNos();
+    var h='<div class="text-xs text-text-secondary mb-2">'+tr('预览')+'：'+nos.length+' '+tr('个标签')+'</div>';
+    h+='<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">';
+    nos.forEach(function(no){
+        h+='<div class="border border-surface-300 rounded-lg bg-white p-3 relative">'+
+            '<div class="text-[10px] text-text-muted absolute top-1.5 right-2">'+esc(tr('空袋'))+'</div>'+
+            '<div class="text-xs text-text-secondary mb-1">'+esc(tr('分拣装袋'))+'</div>'+
+            '<div class="flex items-center justify-center py-1.5">'+sbFakeBarcode(no)+'</div>'+
+            '<div class="text-center text-sm font-semibold font-mono tracking-wide mt-1">'+esc(no)+'</div>'+
+            '<div class="text-center text-[10px] text-text-muted mt-0.5">'+esc(tr('待扫描绑定'))+'</div>'+
+            '</div>';
+    });
+    h+='</div>';
+    return h;
+}
+function sbEmptyLabelRedraw(){
+    var box=document.getElementById('sb-el-preview');
+    if(box)box.innerHTML=sbEmptyLabelPreviewHtml();
+}
+function sbEmptyLabelPrint(){
+    showToast(tr('已发送打印')+'：'+sbEmptyLabelNos().length+' '+tr('个空袋标签'));
+    closeCrudModal();
+}

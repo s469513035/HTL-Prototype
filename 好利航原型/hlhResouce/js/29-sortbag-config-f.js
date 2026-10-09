@@ -447,8 +447,8 @@ function sbFakeBarcode(seed){
     var bars='';
     for(var b=0;b<24;b++){
         n=(n*1103515245+12345)>>>0;
-        var w=(n%3)+1;
-        bars+='<span style="display:inline-block;width:'+w+'px;height:34px;background:#111;margin-right:'+(((n>>8)%2)+1)+'px"></span>';
+        var w=(n%3)+2;
+        bars+='<span style="display:inline-block;width:'+w+'px;height:56px;background:#111;margin-right:'+(((n>>8)%2)+1)+'px"></span>';
     }
     return '<div class="leading-none whitespace-nowrap">'+bars+'</div>';
 }
@@ -459,11 +459,8 @@ function sbEmptyLabelPreviewHtml(){
     nos.forEach(function(no){
         var tail=String(no).split('-').pop();
         h+='<div class="border border-surface-300 rounded-lg bg-white p-3 relative flex flex-col items-center justify-center" style="min-height:128px">'+
-            '<div class="text-[10px] text-text-muted absolute top-1.5 right-2">'+esc(tr('空袋'))+'</div>'+
-            '<div class="text-xs text-text-secondary mb-1">'+esc(tr('分拣装袋'))+'</div>'+
             '<div class="py-1">'+sbFakeBarcode(no)+'</div>'+
             '<div class="text-5xl font-bold font-mono tracking-wider leading-none my-2">'+esc(tail)+'</div>'+
-            '<div class="text-[10px] text-text-muted">'+esc(tr('待扫描绑定'))+'</div>'+
             '</div>';
     });
     h+='</div>';

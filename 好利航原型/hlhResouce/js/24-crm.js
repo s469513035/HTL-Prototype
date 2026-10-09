@@ -201,7 +201,6 @@ function openProviderModal(mode,id,rowIdx,rowData){
     const bizLicense=getTableValueByHeader(c,rowData,'营业执照号','');
     const bankAccount=getTableValueByHeader(c,rowData,'银行账号','');
     const bankName=getTableValueByHeader(c,rowData,'开户行','');
-    const invoiceInfo=getTableValueByHeader(c,rowData,'开票信息','');
     const enableStatus=getTableValueByHeader(c,rowData,'是否启用','是');
     const address=getTableValueByHeader(c,rowData,'营业地址','');
     let html='<div class="space-y-5">';
@@ -251,10 +250,6 @@ function openProviderModal(mode,id,rowIdx,rowData){
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(bankName)+'</div>';}
     else{html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(bankName)+'" placeholder="'+tr('请输入开户行')+'">';}
     html+='</div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('开票信息')+'</label>';
-    if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(invoiceInfo)+'</div>';}
-    else{html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(invoiceInfo)+'" placeholder="'+tr('请输入开票信息')+'">';}
-    html+='</div>';
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('启用状态')+'</label>';
     if(readonly){html+='<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+statusBadge(enableStatus)+'</div>';}
     else{html+='<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(['启用','禁用'],enableStatus)+'</select>';}
@@ -264,6 +259,8 @@ function openProviderModal(mode,id,rowIdx,rowData){
     else{html+='<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(address)+'" placeholder="'+tr('请输入联系地址')+'">';}
     html+='</div>';
     html+='</div></div>';
+    /* 开票信息独立板块：参考客户管理（crm-cust）同款八字段 */
+    html+=providerInvoiceSectionHtml(readonly,providerName,rowData,c);
     html+='<div class="modal-remark-half"><div class="text-sm font-semibold text-text-primary mb-3">'+tr('备注')+'</div>';
     if(readonly){html+='<div class="px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 min-h-[60px]">'+esc(remark)+'</div>';}
     else{html+='<textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+tr('请输入备注')+'">'+esc(remark)+'</textarea>';}
@@ -291,6 +288,42 @@ function openProviderModal(mode,id,rowIdx,rowData){
         footerEl.innerHTML='<button onclick="closeCrudModal()" class="px-4 py-2 text-sm font-medium text-text-secondary border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+L.cancel+'</button><button onclick="closeCrudModal();showToast(\''+(mode==='add'?tr('新增成功'):tr('保存成功'))+'\')" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 cursor-pointer">'+tr('确认提交')+'</button>';
     }
     document.getElementById('crud-modal').classList.add('show');
+}
+/* 开票信息板块：参考客户管理（crm-cust）同款八字段。
+ * 抬头默认带服务商全称 —— 专票抬头必须与营业执照一致；申请开票时自动带出。
+ * 开户银行/银行账号是开票资料（票面要打印），与基础信息里的结算账户分开维护。 */
+function providerInvoiceSectionHtml(readonly,providerName,rowData,c){
+    const invType=getTableValueByHeader(c,rowData,'发票类型','增值税专用发票');
+    const invTitle=getTableValueByHeader(c,rowData,'开票抬头',providerName||'');
+    const invTaxNo=getTableValueByHeader(c,rowData,'纳税人识别号','');
+    const invAddr=getTableValueByHeader(c,rowData,'开票地址','');
+    const invPhone=getTableValueByHeader(c,rowData,'开票电话','');
+    const invRate=getTableValueByHeader(c,rowData,'开票税点',(invType==='增值税专用发票'||invType==='增值税普通发票')?'6%':'0%');
+    const invBank=getTableValueByHeader(c,rowData,'开户银行',getTableValueByHeader(c,rowData,'开户行',''));
+    const invAcct=getTableValueByHeader(c,rowData,'银行账号',getTableValueByHeader(c,rowData,'银行账号',''));
+    function fld(label,inner){
+        return '<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr(label)+'</label>'+inner+'</div>';
+    }
+    function txt(v,ph){
+        if(readonly)return '<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(v||'—')+'</div>';
+        return '<input type="text" class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50" value="'+esc(v)+'" placeholder="'+esc(tr(ph||''))+'">';
+    }
+    function sel(opts,v){
+        if(readonly)return '<div class="h-10 px-3 text-sm flex items-center border border-surface-200 rounded-lg bg-surface-50">'+esc(v)+'</div>';
+        return '<select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50">'+selectOptionsHtml(opts,v)+'</select>';
+    }
+    return '<div><div class="flex items-center gap-2 mb-3"><span class="text-sm font-semibold text-text-primary">'+tr('开票信息')+'</span>'+
+        '<span class="text-xs text-text-muted">'+esc(tr('申请开票时自动带出；专票的抬头与税号需与营业执照一致'))+'</span></div>'+
+        '<div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">'+
+        fld('发票类型',sel(['增值税专用发票','增值税普通发票','形式发票(PI)','商业发票(CI)'],invType))+
+        fld('开票抬头',txt(invTitle,'请输入开票抬头'))+
+        fld('纳税人识别号',txt(invTaxNo,'请输入纳税人识别号'))+
+        fld('开票地址',txt(invAddr,'请输入开票地址'))+
+        fld('开票电话',txt(invPhone,'请输入开票电话'))+
+        fld('开票税点',sel(['13%','9%','6%','3%','0%'],invRate))+
+        fld('开户银行',txt(invBank,'请输入开户银行'))+
+        fld('银行账号',txt(invAcct,'请输入银行账号'))+
+        '</div></div>';
 }
 
 function openEmployeeModal(mode,id,rowIdx,rowData){

@@ -207,6 +207,7 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
     const senderCompany=getTableValueByHeader(c,rowData,'发件人公司','');
     const senderPhone=getTableValueByHeader(c,rowData,'发件人电话','');
     const senderAddress=getTableValueByHeader(c,rowData,'发件人地址','');
+    const companyInfo=getTableValueByHeader(c,rowData,'客户公司信息','');
     let html='<div class="space-y-5">';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('客户基本信息')+'</div><div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
     html+=crmInputFieldHtml('客户代码',customerCode,'text',true);
@@ -222,11 +223,15 @@ function openCrmCustomerModal(mode,id,rowIdx,rowData){
      * （销售部员工才有这对搭档），目的国另有一套按国家路由的客服 / 操作，两处都不在客户身上维护。 */
     html+=crmSelectFieldHtml('所属业务员',getEmployeeNameOptions(),salesPerson,readonly);
     html+=crmSelectFieldHtml('结算周期',['出货票结','出货月结','签收月结'],getTableValueByHeader(c,rowData,'结算周期',''),readonly);
-    /* 末行：联系方式与启用状态 */
-    html+=crmInputFieldHtml('联系人',getTableValueByHeader(c,rowData,'联系人',''),'text',readonly);
-    html+=crmInputFieldHtml('联系电话',contactPhone,'tel',readonly);
+    /* 末行：联系方式与启用状态。联系人和联系电话必填 —— 没有联系人，客户等于失联。 */
+    html+=crmInputFieldHtml('联系人',getTableValueByHeader(c,rowData,'联系人',''),'text',readonly,true);
+    html+=crmInputFieldHtml('联系电话',contactPhone,'tel',readonly,true);
     html+=crmInputFieldHtml('客户邮箱',getTableValueByHeader(c,rowData,'客户邮箱',''),'email',readonly);
     html+=crmSelectFieldHtml('启用状态',['启用','禁用'],getTableValueByHeader(c,rowData,'启用状态','启用'),readonly);
+    /* 客户公司信息：必填，整行展示（主营产品/规模/简介等） */
+    html+='<div class="flex flex-col gap-1.5 md:col-span-4"><label class="text-sm font-medium text-text-secondary">'+tr('客户公司信息')+'<span class="text-red-500"> *</span></label>'+
+        (readonly?'<div class="px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-100 min-h-[60px]">'+esc(companyInfo||'—')+'</div>'
+        :'<textarea id="crm-company-info" rows="2" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y" placeholder="'+esc(tr('请输入客户公司信息（主营产品、规模、简介等）'))+'" required>'+esc(companyInfo)+'</textarea>')+'</div>';
     html+='</div></div>';
     html+='<div><div class="text-sm font-semibold text-text-primary mb-3">'+tr('发件人信息')+'</div><div class="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">';
     if(readonly){

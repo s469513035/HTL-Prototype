@@ -406,6 +406,8 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('取重表达式')+'</th>';
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('单件最小')+'</th>';
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('单票最小')+'</th>';
+    html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('单件最小体积')+'</th>';
+    html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('单票最小体积')+'</th>';
     html+='<th class="px-2 py-2 text-left text-xs font-semibold text-text-secondary">'+tr('取整方式')+'</th>';
     html+='<th class="px-2 py-2 text-center text-xs font-semibold text-text-secondary">'+tr('操作')+'</th>';
     html+='</tr></thead><tbody id="weight-rule-tbody">';
@@ -418,19 +420,23 @@ function openProductManageModal(mode,id,rowIdx,rowData){
     document.getElementById('crud-modal').classList.add('show');
 }
 
-function weightRuleRowHtml(customer,conditionExpr,weightExpr,pieceMin,ticketMin,roundType){
+function weightRuleRowHtml(customer,conditionExpr,weightExpr,pieceMin,ticketMin,roundType,pieceMinVol,ticketMinVol){
     customer=customer||'全部客户';
     conditionExpr=conditionExpr||'总重量>100';
     weightExpr=weightExpr||'实际重量';
     pieceMin=pieceMin||'0.5';
     ticketMin=ticketMin||'1';
     roundType=roundType||'进一法';
+    pieceMinVol=pieceMinVol||'0.01';
+    ticketMinVol=ticketMinVol||'0.1';
     return '<tr class="hover:bg-surface-50">'+
         '<td class="px-2 py-1 min-w-[130px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['全部客户','指定客户','鑫达贸易','远洋物流','速达货运','蓝海跨境','华运达国际'],customer)+'</select></td>'+
         '<td class="px-2 py-1 min-w-[170px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(conditionExpr)+'"></td>'+
         '<td class="px-2 py-1 min-w-[180px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['实际重量','体积重量','MAX(实际重量，体积重量)'],weightExpr)+'</select></td>'+
         '<td class="px-2 py-1 min-w-[110px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(pieceMin)+'"></td>'+
         '<td class="px-2 py-1 min-w-[110px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(ticketMin)+'"></td>'+
+        '<td class="px-2 py-1 min-w-[110px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(pieceMinVol)+'" placeholder="'+esc(tr('如 0.01'))+'"></td>'+
+        '<td class="px-2 py-1 min-w-[110px]"><input type="text" class="w-full text-xs border border-surface-200 rounded px-1 py-1" value="'+esc(ticketMinVol)+'" placeholder="'+esc(tr('如 0.1'))+'"></td>'+
         '<td class="px-2 py-1 min-w-[120px]"><select class="w-full text-xs border border-surface-200 rounded px-1 py-1">'+selectOptionsHtml(['进一法','四舍五入','取整'],roundType)+'</select></td>'+
         '<td class="px-2 py-1 text-center"><button class="text-red-500 hover:text-red-600 cursor-pointer" onclick="this.closest(\'tr\').remove()">'+tr('删除')+'</button></td>'+
         '</tr>';

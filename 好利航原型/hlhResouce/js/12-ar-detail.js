@@ -193,6 +193,7 @@ var AR_DETAIL_COLUMNS=[
  * 与 AR_DETAIL_COLUMNS 分开：那份是导入模板/明细弹窗用的全字段（含系统字段），这份是列表展示列。 */
 var AR_LIST_COLUMNS=[
     {label:'运单号',key:'wb'},
+    {label:'配舱单号',key:'allocNo'},
     {label:'客户名称',key:'cust'},
     {label:'业务员名称',key:'sales'},
     {label:'品名',key:'goods'},
@@ -223,6 +224,7 @@ function renderArDetailRows(){
         AR_LIST_COLUMNS.forEach(function(col){
             var v;
             if(col.key==='price')v=arFmt(arNum(r.amt)/arPcsOf(r.wb));
+            else if(col.key==='allocNo')v=arAllocNoOf(r.wb);
             else if(col.key==='goods'||col.key==='cargo'||col.key==='pack'||col.key==='vol'||col.key==='wt'||col.key==='customs')v=cg[col.key]==null?'':String(cg[col.key]);
             else v=r[col.key]==null?'':String(r[col.key]);
             var cls='px-4 py-3 text-sm whitespace-nowrap '+(col.num?'text-right ':'');
@@ -1026,7 +1028,7 @@ function arMasterDetailHtml(sel,enableFn){
         byCur[g.cur]+=g.total;
     });
     var h='<div class="border border-surface-200 rounded-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-xs min-w-[1180px]">';
-    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['','客户名称','运单号','品名','货物类型','包装方式','体积(CBM)','重量(KG)','报关类型','币别','费用笔数','应收总费用'].map(function(t){return '<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
+    h+='<thead class="bg-surface-50 text-text-secondary"><tr>'+['','客户名称','运单号','品名','货物类型','包装方式','体积(CBM)','重量(KG)','附加服务','币别','费用笔数','应收总费用'].map(function(t){return '<th class="px-3 py-2 text-left font-semibold whitespace-nowrap">'+tr(t)+'</th>';}).join('')+'</tr></thead><tbody>';
     groups.forEach(function(g,gi){
         var pickable=g.rows.filter(enableFn).length;
         h+='<tr class="bg-primary-50/50 border-t border-surface-200">'+
@@ -1038,7 +1040,7 @@ function arMasterDetailHtml(sel,enableFn){
             '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(g.cg.pack||'')+'</td>'+
             '<td class="px-3 py-2 text-right text-text-secondary whitespace-nowrap">'+esc(g.cg.vol||'')+'</td>'+
             '<td class="px-3 py-2 text-right text-text-secondary whitespace-nowrap">'+esc(g.cg.wt||'')+'</td>'+
-            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(g.cg.customs||'')+'</td>'+
+            '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(arServiceOf(g.wb))+'</td>'+
             '<td class="px-3 py-2 text-text-secondary whitespace-nowrap">'+esc(g.cur)+'</td>'+
             '<td class="px-3 py-2 whitespace-nowrap">'+g.rows.length+'</td>'+
             '<td class="px-3 py-2 font-semibold text-orange-600 whitespace-nowrap">'+arFmt(g.total)+'</td></tr>';
@@ -1125,4 +1127,30 @@ function arGenBillFinalize(rows){
         if(typeof _arBillRows!=='undefined'&&_arBillRows)_arBillRows.unshift(bill);
     });
     _arGenBillGroups=null;
+}
+
+/* 配舱单号：优先查演示映射，再从配舱明细映射反查运单所属配舱单（22 号模块后载，点击时惰性读取） */
+var _AR_ALLOC_MAP={'H2607090013':'ZPCD-20260625-002','H2607140001':'ZPCD-20260625-001','H2607100001':'ZPCD-20260622-001','H2607060001':'ZPCD-20260620-001','H2607110011':'ZPCD-20260615-001'};
+function arAllocNoOf(wb){
+    if(_AR_ALLOC_MAP[wb])return _AR_ALLOC_MAP[wb];
+    if(typeof _FA_DETAIL_MAP==='undefined')return '—';
+    var keys=Object.keys(_FA_DETAIL_MAP);
+    for(var i=0;i<keys.length;i++){
+        var m=_FA_DETAIL_MAP[keys[i]];
+        if(m&&m.items&&(m.items||[]).indexOf(wb)>=0)return keys[i];
+    }
+    return '—';
+}
+/* 附加服务：优先查演示映射，再从配舱货源池按运单号带出增值服务（报关/木箱/带电/贴箱唛……） */
+var _AR_SERVICE_MAP={'H2607090013':'报关、木箱','H2607140001':'带电','H2607100001':'贴箱唛','H2607060001':'报关','H2607110011':'合并报关'};
+function arServiceOf(wb){
+    if(_AR_SERVICE_MAP[wb])return _AR_SERVICE_MAP[wb];
+    var pools=[];
+    if(typeof _finalAllocUnselectedSeed!=='undefined')pools.push(_finalAllocUnselectedSeed);
+    if(typeof _finalAllocBagSeed!=='undefined')pools.push(_finalAllocBagSeed);
+    for(var p=0;p<pools.length;p++){
+        var hit=(pools[p]||[]).filter(function(x){return x.no===wb;})[0];
+        if(hit)return hit.service||'—';
+    }
+    return '—';
 }

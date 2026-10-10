@@ -96,7 +96,7 @@ var _finalAllocBagSeed=[
 ];
 
 var _finalAllocState={mode:'add',unselected:[],selected:[],expanded:{},filterTransport:'',query:{},
-    header:{no:'',transport:'海运',bl:'',country:'',containerNo:'',label:''}};
+    header:{no:'',transport:'海运',bl:'',country:'',containerNo:'',label:'',eta:'',etd:'',allocType:'自配',outProvider:''}};
 
 /* 左侧「未选数据」的查询字段。放模块作用域是为了让渲染和回填共用同一份 key，
  * 少一处就会出现「填了查不到、查了填不回」。
@@ -147,7 +147,8 @@ function _finalAllocPoolSeed(){
  * 重绘是按 state 重建 DOM 的，不先收回，用户已经填的柜号/提单号会被抹掉。 */
 function finalAllocSyncHeader(){
     const map={no:'final-alloc-no',label:'final-alloc-label',country:'final-alloc-country',
-        containerNo:'final-alloc-container',transport:'final-alloc-transport',bl:'final-alloc-bl'};
+        containerNo:'final-alloc-container',transport:'final-alloc-transport',bl:'final-alloc-bl',
+        eta:'final-alloc-eta',etd:'final-alloc-etd',allocType:'final-alloc-type',outProvider:'final-alloc-out-provider'};
     Object.keys(map).forEach(function(k){
         const el=document.getElementById(map[k]);
         if(el)_finalAllocState.header[k]=el.value;
@@ -510,6 +511,12 @@ function _finalAllocRightPanel(showHeader){
         ['海运','空运','卡航','快递'].forEach(function(o){h+='<option'+(o===hd.transport?' selected':'')+'>'+o+'</option>';});
         h+='</select></div>';
         h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('关联主单')+'</label><input type="text" value="'+esc(hd.bl)+'" placeholder="'+esc(tr('Job No'))+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-bl"></div>';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('ETD')+'（'+tr('预计开船')+'）</label><input type="datetime-local" value="'+esc(hd.etd||'')+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-etd"></div>';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('ETA')+'（'+tr('预计到港')+'）</label><input type="datetime-local" value="'+esc(hd.eta||'')+'" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-eta"></div>';
+        h+='<div class="flex flex-col gap-0.5"><label class="text-xs text-text-secondary">'+tr('配舱类型')+'</label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-type" onchange="faToggleOutProvider()"><option'+(hd.allocType==='自配'?' selected':'')+'>'+tr('自配')+'</option><option'+(hd.allocType==='外配'?' selected':'')+'>'+tr('外配')+'</option></select></div>';
+        h+='<div class="flex flex-col gap-0.5" id="fa-out-provider-box" style="'+((hd.allocType||'自配')==='外配'?'':'display:none;')+'"><label class="text-xs text-text-secondary">'+tr('外配服务商')+' <span class="text-red-500">*</span></label><select class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-surface-50" id="final-alloc-out-provider"><option value="">'+tr('请选择')+'</option>';
+        (typeof FCL_AGENT_OPTIONS!=='undefined'?FCL_AGENT_OPTIONS:['COSCO','MAERSK']).forEach(function(o){h+='<option'+(o===hd.outProvider?' selected':'')+'>'+o+'</option>';});
+        h+='</select></div>';
         h+='</div></div>';
     }
     return h;
@@ -993,3 +1000,24 @@ function faDetailSetFilter(tag){
     _FA_DETAIL_FILTER=tag;
     document.getElementById('crud-modal-body').innerHTML=faDetailBodyHtml();
 }
+
+/* ===== 配舱类型：外配时显示外配服务商选择（默认自配） ===== */
+function faToggleOutProvider(){
+    var t=((document.getElementById('final-alloc-type')||{}).value)||'自配';
+    var box=document.getElementById('fa-out-provider-box');
+    if(box)box.style.display=t==='外配'?'':'none';
+}
+/* ETD/ETA、配舱类型、外配服务商 列表默认值补齐（表头列已由 05 扩展，行数据在此追加） */
+(function(){
+    var c=TC['wh-final-alloc'];
+    if(!c||!c.d)return;
+    c.d.forEach(function(r,i){
+        if(r.length<(c.h.length-1)){
+            var out=(i===1);   /* 演示：第二张单为外配 */
+            r.push(i%2?'2026-06-28 10:00':'2026-06-27 15:00',
+                   i%2?'2026-07-03 18:00':'2026-07-02 09:00',
+                   out?'外配':'自配',
+                   out?'MAERSK':'—');
+        }
+    });
+})();

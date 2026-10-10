@@ -225,9 +225,9 @@ function generateShipmentEntryPage(id,options){
         {label:'预计送货时间',type:'datetime-local'}
     ];
     const sender=[
-        {label:'发件人',value:'',placeholder:'输入联系人模糊匹配，选中自动带出',list:'shipment-sender-options',oninput:'fillShipmentSenderInfo(this)',onchange:'fillShipmentSenderInfo(this)'},
+        {label:'发件人',value:'',required:true,placeholder:'输入联系人模糊匹配，选中自动带出',list:'shipment-sender-options',oninput:'fillShipmentSenderInfo(this)',onchange:'fillShipmentSenderInfo(this)'},
         {label:'发件人公司',value:'',id:'shipment-sender-company',placeholder:'选中发件人后自动填充'},
-        {label:'发件人电话',type:'tel',value:'',id:'shipment-sender-phone',placeholder:'选中发件人后自动填充'},
+        {label:'发件人电话',type:'tel',value:'',required:true,id:'shipment-sender-phone',placeholder:'选中发件人后自动填充'},
         {label:'发件人地址',value:'',id:'shipment-sender-address',placeholder:'选中发件人后自动填充'}
     ];
     let h='';

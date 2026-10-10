@@ -355,12 +355,11 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
     }
     /* 「默认币别」：报价展示与导出用的主币别；下方价格维护按 人民币/美金/西法 三币别同时维护 */
     html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('默认币别')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(LCL_QUOTE_CURRENCIES,'人民币')+'</select></div>';
-    html+='<div class="flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('计重类型')+'</label><select class="w-full h-10 px-3 text-sm border border-surface-200 rounded-lg bg-surface-50"'+roSelectCls+'>'+selectOptionsHtml(['重量','体积'],'重量')+'</select></div>';
     html+='<div class="md:col-span-4 flex flex-col gap-1.5"><label class="text-sm font-medium text-text-secondary">'+tr('备注')+'</label><textarea rows="3" class="w-full px-3 py-2 text-sm border border-surface-200 rounded-lg bg-surface-50 resize-y"'+(isView?' readonly':'')+'>'+tr('按客户、产品、发货仓库和目的仓库维护散货报价。')+'</textarea></div>';
     html+='</div></div>';
     /* 横向/纵向切换已去掉：只保留币别矩阵一种视图，少一个概念少一次误触。
      * 「新增币种」给矩阵动态加一列（选币种 → 确认 → 列表列增加），查看态不给 */
-    html+='<div class="border border-surface-200 rounded-xl overflow-hidden"><div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3"><div class="text-sm font-semibold text-text-primary">'+tr('价格维护')+'</div>'+(isView?'':'<div class="flex items-center gap-2"><button type="button" onclick="addLclWeightPriceRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button><button type="button" onclick="openLclCurrencyPicker()" class="h-8 px-3 text-xs font-medium text-text-secondary bg-white border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">+ '+tr('新增币种')+'</button></div>')+'</div>';
+    html+='<div class="border border-surface-200 rounded-xl overflow-hidden"><div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3"><div class="flex items-center gap-3"><span class="text-sm font-semibold text-text-primary">'+tr('价格维护')+'</span><label class="text-xs text-text-secondary whitespace-nowrap">'+tr('计重类型')+'</label><select id="lq-weight-type" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-white"'+roSelectCls+'>'+selectOptionsHtml(['重量','体积'],'重量')+'</select></div>'+(isView?'':'<div class="flex items-center gap-2"><button type="button" onclick="lclQuoteImportClick()" class="h-8 px-3 text-xs font-medium text-text-secondary bg-white border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('导入')+'</button><button type="button" onclick="addLclWeightPriceRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button><button type="button" onclick="openLclCurrencyPicker()" class="h-8 px-3 text-xs font-medium text-text-secondary bg-white border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">+ '+tr('新增币种')+'</button><input type="file" id="lq-import" class="hidden" accept=".xlsx,.xls,.csv" onchange="lclQuoteImportPick(this)"></div>')+'</div>';
     html+='<div id="lcl-cargo-tabs" class="flex gap-2 border-b border-surface-200 px-4">'+lclCargoTabsHtml()+'</div>';
     html+='<div id="lcl-weight-price-wrap">'+renderLclWeightPriceTable()+'</div></div>';
     html+='</div>';
@@ -941,3 +940,36 @@ function onRoleModuleClick(moduleId){
     }
 }
 
+
+/* ===== 销售报价(散货) · 价格导入 =====
+ * 模板列：计重范围 / 人民币 / 美金 / 西法（一行一个计重范围，三币别单价同列）。
+ * 原型不解析 Excel：选中文件即按模板灌一批示例明细到当前货物类型插页，灌入后可继续手改。 */
+function lclQuoteImportClick(){
+    var el=document.getElementById('lq-import');
+    if(el)el.click();
+}
+function lclQuoteImportPick(input){
+    var f=(input&&input.files&&input.files[0])?input.files[0].name:'';
+    if(!f)return;
+    if(typeof _lclWeightPriceRows==='undefined')return;
+    var sample=[
+        {weightSeg:'0-45',prices:{'人民币':'12.50','美金':'1.80','西法':'1150'}},
+        {weightSeg:'45-100',prices:{'人民币':'9.80','美金':'1.42','西法':'920'}},
+        {weightSeg:'100-300',prices:{'人民币':'8.20','美金':'1.19','西法':'770'}}
+    ];
+    var tab=typeof _lclCargoTab!=='undefined'?_lclCargoTab:'普货';
+    var kept=_lclWeightPriceRows.filter(function(r){return (r.cargoType||'普货')!==tab;});
+    var incoming=[];
+    sample.forEach(function(s){
+        Object.keys(s.prices).forEach(function(cur){
+            incoming.push({weightSeg:s.weightSeg,currency:cur,price:s.prices[cur],cargoType:tab});
+        });
+    });
+    /* 已手填过的同类型行保留在前，导入的追加在后 —— 两种录入方式可混用 */
+    _lclWeightPriceRows=kept.concat(_lclWeightPriceRows.filter(function(r){return (r.cargoType||'普货')===tab;}),incoming);
+    var wrap=document.getElementById('lcl-weight-price-wrap');
+    if(wrap&&typeof renderLclWeightPriceTable==='function')wrap.innerHTML=renderLclWeightPriceTable();
+    if(typeof updateLclTabBadges==='function')updateLclTabBadges();
+    showToast(tr('已从')+' '+f+' '+tr('读取')+' '+sample.length+' '+tr('个计重范围，可继续修改'));
+    if(input)input.value='';
+}

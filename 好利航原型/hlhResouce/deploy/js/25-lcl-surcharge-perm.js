@@ -359,7 +359,7 @@ function openLclQuoteModal(mode,id,rowIdx,rowData){
     html+='</div></div>';
     /* 横向/纵向切换已去掉：只保留币别矩阵一种视图，少一个概念少一次误触。
      * 「新增币种」给矩阵动态加一列（选币种 → 确认 → 列表列增加），查看态不给 */
-    html+='<div class="border border-surface-200 rounded-xl overflow-hidden"><div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3"><div class="flex items-center gap-3"><span class="text-sm font-semibold text-text-primary">'+tr('价格维护')+'</span><label class="text-xs text-text-secondary whitespace-nowrap">'+tr('计重类型')+'</label><select id="lq-weight-type" class="h-8 px-2 text-xs border border-surface-200 rounded-lg bg-white"'+roSelectCls+'>'+selectOptionsHtml(['重量','体积'],'重量')+'</select></div>'+(isView?'':'<div class="flex items-center gap-2"><button type="button" onclick="lclQuoteImportClick()" class="h-8 px-3 text-xs font-medium text-text-secondary bg-white border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('导入')+'</button><button type="button" onclick="addLclWeightPriceRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button><button type="button" onclick="openLclCurrencyPicker()" class="h-8 px-3 text-xs font-medium text-text-secondary bg-white border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">+ '+tr('新增币种')+'</button><input type="file" id="lq-import" class="hidden" accept=".xlsx,.xls,.csv" onchange="lclQuoteImportPick(this)"></div>')+'</div>';
+    html+='<div class="border border-surface-200 rounded-xl overflow-hidden"><div class="px-4 py-3 bg-surface-50 border-b border-surface-200 flex items-center justify-between gap-3"><div class="flex items-center gap-3"><span class="text-sm font-semibold text-text-primary">'+tr('价格维护')+'</span></div>'+(isView?'':'<div class="flex items-center gap-2"><button type="button" onclick="lclQuoteImportClick()" class="h-8 px-3 text-xs font-medium text-text-secondary bg-white border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">'+tr('导入')+'</button><button type="button" onclick="addLclWeightPriceRow()" class="h-8 px-3 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg hover:bg-primary-50 cursor-pointer">+ '+tr('新增')+'</button><button type="button" onclick="openLclCurrencyPicker()" class="h-8 px-3 text-xs font-medium text-text-secondary bg-white border border-surface-200 rounded-lg hover:bg-surface-50 cursor-pointer">+ '+tr('新增币种')+'</button><input type="file" id="lq-import" class="hidden" accept=".xlsx,.xls,.csv" onchange="lclQuoteImportPick(this)"></div>')+'</div>';
     html+='<div id="lcl-cargo-tabs" class="flex gap-2 border-b border-surface-200 px-4">'+lclCargoTabsHtml()+'</div>';
     html+='<div id="lcl-weight-price-wrap">'+renderLclWeightPriceTable()+'</div></div>';
     html+='</div>';
@@ -417,7 +417,7 @@ function lclExcelInput(value,extraClass){
 
 function defaultLclWeightPriceRow(base){
     base=base||{};
-    return {weightSeg:base.weightSeg||'',currency:base.currency||'人民币',price:base.price||'',cargoType:base.cargoType||'普货'};
+    return {weightSeg:base.weightSeg||'',segType:base.segType||'重量',currency:base.currency||'人民币',price:base.price||'',cargoType:base.cargoType||'普货'};
 }
 
 /* 当前插页（货物类型）下的价格行 */
@@ -436,15 +436,17 @@ function getLclHorizontalModel(){
     const tabRows=lclTabRows();
     const segments=[];
     const cells={};
+    const segTypes={};
     tabRows.forEach(function(row){
         const seg=row.weightSeg||'';
         if(!segments.includes(seg))segments.push(seg);
         if(!cells[seg])cells[seg]={};
+        if(segTypes[seg]===undefined)segTypes[seg]=row.segType||'重量';
         cells[seg][row.currency||'人民币']=row.price||'';
     });
-    if(!segments.length){segments.push('');cells['']={};}
+    if(!segments.length){segments.push('');cells['']={};segTypes['']='重量';}
     /* 列 = 当前单的币别集（基准三种 + 本单通过「新增币种」加进来的） */
-    return {segments:segments,cells:cells,currencies:(_lclQuoteCurrencies||LCL_QUOTE_CURRENCIES)};
+    return {segments:segments,cells:cells,segTypes:segTypes,currencies:(_lclQuoteCurrencies||LCL_QUOTE_CURRENCIES)};
 }
 
 /* 用当前插页采集到的行替换该货物类型的行，其它插页数据原样保留 */
@@ -458,8 +460,9 @@ function captureLclWeightPriceRows(){
         const nextRows=[];
         Array.from(horizontal.querySelectorAll('tbody tr[data-horizontal-seg-row]')).forEach(function(row){
             const seg=(row.querySelector('[data-horizontal-weight-seg]')||{}).value||'';
+            const segType=(row.querySelector('[data-horizontal-seg-type]')||{}).value||'重量';
             Array.from(row.querySelectorAll('[data-horizontal-price]')).forEach(function(input){
-                nextRows.push({weightSeg:seg,price:input.value||'',cargoType:_lclCargoTab,currency:input.dataset.currency||'人民币'});
+                nextRows.push({weightSeg:seg,segType:segType,price:input.value||'',cargoType:_lclCargoTab,currency:input.dataset.currency||'人民币'});
             });
         });
         mergeLclTabRows(nextRows);
@@ -473,14 +476,16 @@ function renderLclWeightPriceTable(){
     const matrix=getLclHorizontalModel();
     html+='<div class="overflow-auto max-h-[360px]" id="lcl-weight-price-horizontal"><table class="w-full min-w-[640px] text-xs border-collapse">';
     html+='<thead class="sticky top-0 z-10"><tr class="bg-[#EFF6FF] text-text-secondary">';
-    html+='<th class="text-left px-3 py-2 border border-surface-200 min-w-[140px] bg-[#EFF6FF]">'+tr('计重范围')+'</th>';
+    html+='<th class="text-left px-3 py-2 border border-surface-200 min-w-[140px] bg-[#EFF6FF]">'+tr('重量/体积段')+'</th>';
+    html+='<th class="text-left px-3 py-2 border border-surface-200 min-w-[92px] bg-[#EFF6FF]">'+tr('计重类型')+'</th>';
     matrix.currencies.forEach(function(cur){
         html+='<th class="text-right px-3 py-2 border border-surface-200 min-w-[130px] bg-[#EFF6FF]">'+tr(cur)+tr('单价')+'</th>';
     });
     html+='<th class="sticky right-0 z-20 text-center px-3 py-2 border border-surface-200 min-w-[96px] bg-[#EFF6FF] shadow-[-6px_0_8px_-8px_rgba(15,23,42,.45)]">'+tr('操作')+'</th></tr></thead><tbody>';
     matrix.segments.forEach(function(seg){
         html+='<tr data-horizontal-seg-row class="hover:bg-primary-50/30">';
-        html+='<td class="border border-surface-200 bg-white"><input data-excel-cell data-horizontal-weight-seg onpaste="handleLclExcelPaste(event,this)" class="w-full h-9 px-2 text-xs border border-surface-200 rounded bg-white outline-none focus:bg-primary-50" value="'+esc(seg||'')+'" placeholder="'+esc(tr('如 0-1'))+'"></td>';
+        html+='<td class="border border-surface-200 bg-white"><input data-excel-cell data-horizontal-weight-seg onpaste="handleLclExcelPaste(event,this)" class="w-full h-9 px-2 text-xs border border-surface-200 rounded bg-white outline-none focus:bg-primary-50" value="'+esc(seg||'')+'" placeholder="'+esc(tr('如 0-45 / 0-1'))+'"></td>';
+        html+='<td class="border border-surface-200 bg-white"><select data-horizontal-seg-type class="w-full h-9 px-2 text-xs border border-surface-200 rounded bg-white">'+selectOptionsHtml(['重量','体积'],(matrix.segTypes||{})[seg]||'重量')+'</select></td>';
         matrix.currencies.forEach(function(cur){
             html+='<td class="border border-surface-200 bg-white">'+lclExcelInput((matrix.cells[seg]||{})[cur]||'','text-right').replace('data-excel-cell','data-excel-cell data-horizontal-price data-currency="'+esc(cur)+'"')+'</td>';
         });
